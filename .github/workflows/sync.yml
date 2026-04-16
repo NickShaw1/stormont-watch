@@ -39,6 +39,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Trigger Cloudflare deploy
-        if: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK != '' }}
-        run: curl -X POST ${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}
+      - name: Trigger deploy
+        if: success()
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/NickShaw1/stormont-watch/actions/workflows/deploy.yml/dispatches \
+            -d '{"ref":"main"}'
