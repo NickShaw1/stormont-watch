@@ -24,8 +24,6 @@ function billSlug(billId: string): string {
 import RollCallClient from './RollCallClient'
 import styles from './divisionDetail.module.css'
 
-export const runtime = 'edge'
-
 interface Props {
   params: { id: string }
 }

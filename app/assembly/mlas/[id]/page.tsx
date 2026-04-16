@@ -16,8 +16,6 @@ import VotingRecordClient from './VotingRecordClient'
 import FinancesTabsClient from './FinancesTabsClient'
 import styles from './mlaDetail.module.css'
 
-export const runtime = 'edge'
-
 interface Props {
   params: { id: string }
 }
