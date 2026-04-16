@@ -42,16 +42,18 @@ export default function ConstituencySelector() {
   const mobileTriggerRef = useRef<HTMLButtonElement>(null)
   const desktopListRef = useRef<HTMLUListElement>(null)
   const mobileListRef = useRef<HTMLUListElement>(null)
+  const wasDropdownOpen = useRef(false)
+  const wasMobileDropdownOpen = useRef(false)
 
   useEffect(() => {
     if (dropdownOpen) {
-      // Move focus to the selected item or first item when dropdown opens
+      wasDropdownOpen.current = true
       const list = desktopListRef.current
       if (list) {
         const selected = list.querySelector<HTMLLIElement>('[aria-selected="true"]') ?? list.querySelector<HTMLLIElement>('li')
         selected?.focus()
       }
-    } else {
+    } else if (wasDropdownOpen.current) {
       desktopTriggerRef.current?.focus()
     }
   }, [dropdownOpen])
@@ -68,9 +70,10 @@ export default function ConstituencySelector() {
   }, [dropdownOpen])
 
   useEffect(() => {
-    if (!mobileDropdownOpen) {
+    if (!mobileDropdownOpen && wasMobileDropdownOpen.current) {
       mobileTriggerRef.current?.focus()
     }
+    wasMobileDropdownOpen.current = mobileDropdownOpen
   }, [mobileDropdownOpen])
 
   useEffect(() => {

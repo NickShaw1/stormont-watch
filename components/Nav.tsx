@@ -60,10 +60,12 @@ export default function Nav() {
     setOpen(false)
   }
 
+  const wasOpen = useRef(false)
   useEffect(() => {
     if (open) {
+      wasOpen.current = true
       closeBtnRef.current?.focus()
-    } else {
+    } else if (wasOpen.current) {
       hamburgerRef.current?.focus()
     }
   }, [open])
