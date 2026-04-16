@@ -51,7 +51,7 @@ jobs:
             -d '{"deployment_configs":{"production":{"compatibility_flags":["nodejs_compat"]},"preview":{"compatibility_flags":["nodejs_compat"]}}}'
 
       - name: Deploy to Cloudflare Pages
-        run: npx wrangler pages deploy .vercel/output/static --project-name=stormont-watch
+        run: npx wrangler pages deploy .vercel/output/static --project-name=stormont-watch --commit-dirty=true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
