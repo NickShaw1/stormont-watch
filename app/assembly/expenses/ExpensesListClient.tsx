@@ -21,7 +21,6 @@ export interface ExpenseRow {
 
 interface Props {
   rows: ExpenseRow[]
-  periodLabel: string
   totalMlaCount: number
 }
 
@@ -63,7 +62,7 @@ function partyLabel(party: string): string {
   return abbreviateParty(party) || party
 }
 
-export default function ExpensesListClient({ rows, periodLabel, totalMlaCount }: Props) {
+export default function ExpensesListClient({ rows, totalMlaCount }: Props) {
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const firstNewRef = useRef<HTMLTableRowElement | null>(null)

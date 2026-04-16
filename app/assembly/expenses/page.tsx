@@ -37,8 +37,6 @@ export default async function ExpensesPage() {
     getMlasWithoutExpenses(),
   ])
 
-  const periodLabel = rows[0]?.period ?? null
-
   const mappedRows = rows.map(r => ({
     personId: r.personId,
     fullName: r.fullName,
@@ -142,7 +140,7 @@ export default async function ExpensesPage() {
         </div>
       )}
 
-      <ExpensesListClient rows={mappedRows} periodLabel={periodLabel ?? ''} totalMlaCount={mappedRows.length + missing.length} />
+      <ExpensesListClient rows={mappedRows} totalMlaCount={mappedRows.length + missing.length} />
     </div>
   )
 }
