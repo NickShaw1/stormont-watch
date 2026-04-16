@@ -34,7 +34,13 @@ export async function getAllMembers() {
 }
 
 export async function getAllMembersIncludingFormer() {
-  return db.select({ personId: members.personId }).from(members).orderBy(members.fullName)
+  // Only current-mandate members (2022-present). Static pages for pre-2022 MLAs are not generated
+  // because the site does not cover that era.
+  return db
+    .select({ personId: members.personId })
+    .from(members)
+    .where(and(isNotNull(members.mandateStart), gte(members.mandateStart, '2022-05-05')))
+    .orderBy(members.fullName)
 }
 
 
