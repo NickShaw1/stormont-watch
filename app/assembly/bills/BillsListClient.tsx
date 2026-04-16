@@ -153,7 +153,8 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
         <>
           <div className={styles.weekSectionHead}>
             <h2 className={styles.weekSectionTitle}><span className={styles.weekSectionTitleText}>Progressed this week</span></h2>
-            <p className={styles.weekSubtitle}>Assembly business for the week commencing <strong style={{ color: 'var(--text-primary)' }}>{mondayLabel}</strong>.</p>
+            <p className={`${styles.weekSubtitle} ${styles.weekSubtitleDesktop}`}>Assembly business for the week commencing <strong style={{ color: 'var(--text-primary)' }}>{mondayLabel}</strong>.</p>
+            <p className={`${styles.weekSubtitle} ${styles.weekSubtitleMobile}`}>Assembly business, w/c <strong style={{ color: 'var(--text-primary)' }}>{mondayLabel}</strong></p>
           </div>
           <div className={styles.thisWeekCard}>
             <div className={styles.thisWeekList}>

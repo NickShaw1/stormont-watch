@@ -16,12 +16,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  text-decoration: none;
+  text-decoration: none !important;
   color: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.navBrand:hover {
-  text-decoration: none;
+.navBrand:active,
+.navBrand:visited {
+  text-decoration: none !important;
 }
 
 .navBrand:focus-visible {
@@ -52,8 +54,30 @@
   transform: none;
 }
 
-.navBrand:hover .navWordmark::after {
-  width: 100%;
+@media (hover: hover) {
+  .navBrand:hover {
+    text-decoration: none;
+  }
+
+  .navBrand:hover .navWordmark::after {
+    width: 100%;
+  }
+
+  .navBrand:hover .navWatch {
+    color: #F6CB2F;
+  }
+
+  .navBrand:hover .navLogo {
+    transform: scale(1.1);
+  }
+
+  .navBrand:hover .navLogoIris {
+    r: 5.5;
+  }
+
+  .navBrand:hover .navLogoPupil {
+    transform: scale(1.2);
+  }
 }
 
 .navStormont {
@@ -63,10 +87,6 @@
 .navWatch {
   color: white;
   transition: color 250ms ease;
-}
-
-.navBrand:hover .navWatch {
-  color: #F6CB2F;
 }
 
 .navLogo {
@@ -83,18 +103,6 @@
 .navLogoPupil {
   transform-origin: 12px 12px;
   transition: transform 300ms ease;
-}
-
-.navBrand:hover .navLogo {
-  transform: scale(1.1);
-}
-
-.navBrand:hover .navLogoIris {
-  r: 5.5;
-}
-
-.navBrand:hover .navLogoPupil {
-  transform: scale(1.2);
 }
 
 /* Desktop links */
@@ -179,8 +187,8 @@
   }
 
   .navLogo {
-    width: 26px;
-    height: 26px;
+    width: 35px;
+    height: 35px;
     animation: eyeBlink 10s ease-in-out infinite;
     transform-origin: center;
   }

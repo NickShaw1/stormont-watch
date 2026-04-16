@@ -11,7 +11,8 @@
 
 @media (max-width: 767px) {
   .pageHeader {
-    margin-bottom: 22px;
+    margin-bottom: 40px;
+    padding-top: 40px;
   }
 }
 
@@ -32,7 +33,7 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 0.5rem;
     width: 100%;
-    margin-bottom: 24px;
+    margin-bottom: 40px;
   }
 
   .tab {
@@ -256,7 +257,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-xs);
-  margin-top: 2px;
 }
 
 .speakerBadge {
@@ -403,6 +403,7 @@
 @media (max-width: 640px) {
   .partyPill {
     font-weight: 600;
+    margin-top: 2px;
   }
 }
 
@@ -416,7 +417,7 @@
   }
 
   .pageHeader h1 {
-    font-size: 1.725rem;
+    font-size: 2rem;
   }
 
   .sectionHeading {
@@ -427,6 +428,15 @@
   .personName {
     font-size: 1.2rem;
   }
+
+  .executiveCardInner {
+    align-items: stretch;
+  }
+
+  .executiveInfo {
+    justify-content: center;
+  }
+
 
   .entryDescription {
     font-size: 1rem;

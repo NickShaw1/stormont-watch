@@ -78,17 +78,14 @@
     display: none;
   }
 
-  /* Active panel: in flow, animates in */
+  /* Active panel: in flow, no animation */
   .panelActive {
     display: block;
-    animation: panelFadeIn 200ms ease both;
   }
 
-  /* Outgoing panel: briefly kept in flow while animating out */
+  /* Outgoing panel: hidden immediately */
   .panelFadingOut {
-    display: block;
-    animation: panelFadeOut 150ms ease both;
-    pointer-events: none;
+    display: none;
   }
 }
 

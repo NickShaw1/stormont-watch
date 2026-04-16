@@ -1,3 +1,13 @@
+@media (max-width: 767px) {
+  header.pageHeader {
+    padding-top: 40px;
+  }
+
+  header.pageHeader h1 {
+    font-size: 2rem;
+  }
+}
+
 .section {
   margin-bottom: var(--spacing-xl);
 }
@@ -367,6 +377,14 @@
   border-bottom: none;
 }
 
+.partyDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .cohesionParty {
   display: flex;
   align-items: center;
@@ -734,6 +752,8 @@
   .overviewCard {
     padding: var(--spacing-lg);
     gap: 8px;
+    align-items: flex-start;
+    text-align: left;
   }
 
 }
@@ -891,6 +911,169 @@
 
   .name {
     font-size: 0.875rem;
+  }
+}
+
+/* Full rankings link card */
+.expensesRankingsCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  background: #FFFDF0;
+  border: 1px solid #EAB308;
+  border-radius: 8px;
+  text-decoration: none !important;
+  transition: background 150ms ease, border-color 150ms ease;
+  box-sizing: border-box;
+}
+
+.expensesRankingsCard:hover {
+  background: #FEF9C3;
+  border-color: #CA8A04;
+}
+
+.expensesRankingsCardText {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.expensesRankingsCardArrow {
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+/* Party expenses ranking cards */
+.partyRankingGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+@media (max-width: 640px) {
+  .partyRankingGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.partyRankingCard {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.partyRankingTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.partyRankingSubtitle {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.partyRankingTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.partyRankingTable thead th {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  padding: 0 8px 6px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.partyRankingTable thead th:last-child {
+  text-align: right;
+  padding-right: 0;
+}
+
+.partyRankingTable tbody td {
+  padding: 5px 8px 5px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.partyRankingTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.partyRankingTable tbody td:last-child {
+  text-align: right;
+  padding-right: 0;
+}
+
+.partyRankingParty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.partyRankingBarCell {
+  width: 40%;
+  vertical-align: middle;
+  padding-right: 8px !important;
+}
+
+.partyRankingBarTrack {
+  width: 100%;
+  min-width: 30px;
+  height: 5px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.partyRankingBarFill {
+  height: 100%;
+  border-radius: 99px;
+  opacity: 0.75;
+}
+
+.partyRankingValue {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.partyRankingRank {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .partyRankingCard {
+    padding: 12px;
   }
 }
 

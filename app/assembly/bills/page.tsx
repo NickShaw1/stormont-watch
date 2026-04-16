@@ -104,7 +104,7 @@ export default async function BillsPage() {
           <div className="page-header-rule"></div>
           <p className={styles.subtitle}>Bills and Acts from the Assembly since February 2024.</p>
           <p className={`${styles.disclaimer} ${styles.disclaimerTop}`}>* Stage information is sourced from the NI Assembly Open Data API. Some stages may not be reflected immediately.</p>
-          <p className={`${styles.disclaimer} ${styles.stagesLink}`}>** Not sure what a stage means? <Link href="/assembly/bills/stages" className={styles.disclaimerLink}>Stages explained <span aria-hidden="true">↗</span></Link></p>
+          <p className={`${styles.disclaimer} ${styles.stagesLink}`}>** Not sure what a stage means? <Link href="/assembly/legislation-guide" className={styles.disclaimerLink}>Stages explained <span aria-hidden="true">↗</span></Link></p>
         </header>
         <hr className="section-rule" style={{ margin: '0 0 40px' }} />
       </div>

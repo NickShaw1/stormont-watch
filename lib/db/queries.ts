@@ -441,6 +441,7 @@ export async function getExpensesLeagueTable() {
       party: members.party,
       constituency: members.constituency,
       imgUrl: members.imgUrl,
+      mandateStart: members.mandateStart,
       total: expenses.total,
       staffCosts: expenses.staffCosts,
       constituencyOffice: expenses.constituencyOffice,
@@ -453,6 +454,18 @@ export async function getExpensesLeagueTable() {
     .innerJoin(members, eq(expenses.personId, members.personId))
     .where(eq(members.isCurrent, true))
     .orderBy(desc(expenses.total))
+}
+
+export async function getMlasWithoutExpenses() {
+  const result = await db.execute(sql`
+    SELECT m.person_id, m.full_name, m.party, m.constituency, m.img_url, m.mandate_start
+    FROM members m
+    LEFT JOIN expenses e ON e.person_id = m.person_id
+    WHERE m.is_current = true
+      AND e.person_id IS NULL
+    ORDER BY m.full_name
+  `)
+  return result.rows as { person_id: string; full_name: string; party: string | null; constituency: string | null; img_url: string | null; mandate_start: string | null }[]
 }
 
 export async function getMemberExpenses(personId: string) {
@@ -523,7 +536,6 @@ export async function getExpensesByParty() {
     WHERE e.financial_year = (SELECT MAX(financial_year) FROM expenses)
       AND m.is_current = true
     GROUP BY m.party
-    HAVING COUNT(DISTINCT e.person_id) > 1
     ORDER BY party_total DESC
   `)
   return result.rows as {

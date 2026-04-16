@@ -149,6 +149,14 @@
   border: 0.5px solid var(--border);
 }
 
+@media (max-width: 767px) {
+  .formerPill {
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 3px 8px;
+  }
+}
+
 .metaRows {
   display: flex;
   flex-direction: column;
@@ -1074,10 +1082,27 @@
 
   .roleCell {
     grid-column: 1 / -1;
+    box-shadow: none;
+    border-bottom: 1px solid var(--border);
   }
 
   .statCell {
     flex: unset;
+    box-shadow: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Left-column cells only — counted among statCells, ignoring roleCells */
+  .statCell:nth-child(odd of .statCell) {
+    border-right: 1px solid var(--border);
+  }
+
+  /* Last row: remove bottom border — handles both even and odd statCell counts */
+  .statCell:nth-last-child(1 of .statCell) {
+    border-bottom: none;
+  }
+  .statCell:nth-last-child(2 of .statCell):nth-child(odd of .statCell) {
+    border-bottom: none;
   }
 }
 

@@ -201,16 +201,6 @@ export default function ConstituencyMap({ selected, onSelect, onError }: Constit
           {tooltip.name}
         </div>
       )}
-      <p className={styles.attribution}>
-        * Contains public sector information licensed under the terms of the{' '}
-        <a
-          href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          Open Government Licence v3.0
-        </a>
-      </p>
     </div>
   )
 }

@@ -163,6 +163,21 @@ export default async function HomePage() {
 
       <hr className={styles.rule} />
 
+      {/* Expenses League Table */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <p className={styles.sectionEyebrow}>Public spending</p>
+          <h2 className={styles.sectionTitle}>Expenses League Table</h2>
+          <div className={styles.sectionRule} />
+        </div>
+        <Link href="/assembly/expenses" className={styles.expensesCard}>
+          <span className={styles.expensesCardText}>View full MLA expenses rankings</span>
+          <span className={styles.expensesCardArrow} aria-hidden="true">↗</span>
+        </Link>
+      </section>
+
+      <hr className={styles.rule} />
+
       {/* Latest votes + Bills in progress */}
       <div className={styles.twoCol}>
         <section>

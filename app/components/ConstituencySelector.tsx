@@ -253,32 +253,9 @@ export default function ConstituencySelector() {
             <ConstituencyMap selected={selected} onSelect={handleSelect} onError={() => setMapError(true)} />
           </div>
 
-          {/* Mobile bottom bar */}
-          <div className={styles.mapCardBottom}>
-            <p className={styles.mapAttribution}>
-              * Contains public sector information licensed under the terms of the{' '}
-              <a
-                href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                Open Government Licence v3.0
-              </a>
-              .
-            </p>
-          </div>
-
           {/* Desktop footer bar with attribution */}
           <div className={styles.mapCardFooter}>
-            * Contains public sector information licensed under the terms of the{' '}
-            <a
-              href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              Open Government Licence v3.0
-            </a>
-            {' '}|{' '}Electorate counts:{' '}
+            Electorate counts:{' '}
             <a
               href="https://www.eoni.org.uk/results-data/electorate-statistics/"
               target="_blank"

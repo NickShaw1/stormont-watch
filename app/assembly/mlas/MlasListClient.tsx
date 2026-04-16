@@ -209,7 +209,7 @@ export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull
               >
                 <span className={styles.partyNameFull}>{group.party}</span>
                 <span className={styles.partyNameShort} aria-hidden="true">{abbreviateParty(group.party)}</span>
-                <span className={styles.partyCount}>{group.mlas.length}</span>
+                <span className={styles.partyCount}>{filteredByParty.find(g => g.party === group.party)?.mlas.length ?? group.mlas.length}</span>
               </h2>
               <ul className={styles.mlaGrid} role="list">
                 {group.mlas.map((mla) => (

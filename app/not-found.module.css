@@ -41,6 +41,12 @@
   border-left: 1px solid var(--border);
 }
 
+@media (max-width: 640px) {
+  .links a:not(:first-child) {
+    display: none;
+  }
+}
+
 .resetBtn {
   background: none;
   border: none;
