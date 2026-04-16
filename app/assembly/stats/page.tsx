@@ -29,9 +29,10 @@ export const metadata: Metadata = {
   title: 'Stats',
   description: 'Assembly voting statistics since February 2024.',
   openGraph: {
-    title: 'Stats - Stormont Watch',
+    title: 'Stats — Stormont Watch',
+    description: 'Assembly voting statistics since February 2024.',
   },
-  alternates: { canonical: 'https://stormontwatch.com/assembly/stats' },
+  alternates: { canonical: 'https://www.stormontwatch.com/assembly/stats' },
 }
 
 export default async function StatsPage() {

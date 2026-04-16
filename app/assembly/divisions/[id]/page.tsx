@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${pageTitle} — Stormont Watch`,
       description,
     },
-    alternates: { canonical: `https://stormontwatch.com/assembly/divisions/${params.id}` },
+    alternates: { canonical: `https://www.stormontwatch.com/assembly/divisions/${params.id}` },
   }
 }
 
@@ -112,7 +112,24 @@ export default async function DivisionDetailPage({ params }: Props) {
   const { title: displayTitle, subtitle } = formatDivisionSubject(raw)
   const tabledByClean = formatTabledBy(division.tabledBy)
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.stormontwatch.com'
+
+  const breadcrumbItems = parentBill?.[0]
+    ? [
+        { '@type': 'ListItem', position: 1, name: 'Legislation', item: `${siteUrl}/assembly/bills` },
+        { '@type': 'ListItem', position: 2, name: parentBill[0].shortTitle, item: `${siteUrl}/assembly/bills/${billStage[0]?.billId ?? ''}` },
+        { '@type': 'ListItem', position: 3, name: displayTitle, item: `${siteUrl}/assembly/divisions/${params.id}` },
+      ]
+    : [
+        { '@type': 'ListItem', position: 1, name: 'Votes', item: `${siteUrl}/assembly/votes` },
+        { '@type': 'ListItem', position: 2, name: displayTitle, item: `${siteUrl}/assembly/divisions/${params.id}` },
+      ]
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbItems,
+  }
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -138,6 +155,10 @@ export default async function DivisionDetailPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <header className={styles.divisionHeader}>
         <nav aria-label="Breadcrumb" className={`breadcrumb ${styles.breadcrumb}`}>

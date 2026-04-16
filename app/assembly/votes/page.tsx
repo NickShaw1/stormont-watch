@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Votes — Stormont Watch',
       description,
     },
-    alternates: { canonical: 'https://stormontwatch.com/assembly/votes' },
+    alternates: { canonical: 'https://www.stormontwatch.com/assembly/votes' },
   }
 }
 

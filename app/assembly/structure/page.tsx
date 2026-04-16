@@ -9,9 +9,10 @@ export const metadata: Metadata = {
   title: 'Assembly Structure',
   description: 'The Executive, departments and committee chairs of the Northern Ireland Assembly.',
   openGraph: {
-    title: 'Assembly Structure - Stormont Watch',
+    title: 'Assembly Structure — Stormont Watch',
+    description: 'The Executive, departments and committee chairs of the Northern Ireland Assembly.',
   },
-  alternates: { canonical: 'https://stormontwatch.com/assembly/structure' },
+  alternates: { canonical: 'https://www.stormontwatch.com/assembly/structure' },
 }
 
 const officialLinks: Record<string, string> = {

@@ -22,9 +22,9 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Stormont Watch',
     description: 'Every vote in the Northern Ireland Assembly since February 2024.',
-    url: 'https://stormontwatch.com',
+    url: 'https://www.stormontwatch.com',
   },
-  alternates: { canonical: 'https://stormontwatch.com' },
+  alternates: { canonical: 'https://www.stormontwatch.com' },
 }
 
 export const revalidate = 86400
@@ -40,8 +40,25 @@ export default async function HomePage() {
       getInProgressBills(5),
     ])
 
+  const orgJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Stormont Watch',
+    url: 'https://www.stormontwatch.com',
+    description: 'Every vote in the Northern Ireland Assembly since February 2024.',
+    publisher: {
+      '@type': 'Organization',
+      name: 'Stormont Watch',
+      url: 'https://www.stormontwatch.com',
+    },
+  }
+
   return (
     <div className="container">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+      />
 
       {/* Hero */}
       <section className={styles.hero}>

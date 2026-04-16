@@ -6,7 +6,7 @@ export const revalidate = 86400
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description: 'Privacy policy for Stormont Watch.',
-  alternates: { canonical: 'https://stormontwatch.com/privacy' },
+  alternates: { canonical: 'https://www.stormontwatch.com/privacy' },
   robots: { index: false },
 }
 

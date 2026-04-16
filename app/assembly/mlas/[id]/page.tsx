@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${member.fullName} — Stormont Watch`,
       description,
     },
-    alternates: { canonical: `https://stormontwatch.com/assembly/mlas/${params.id}` },
+    alternates: { canonical: `https://www.stormontwatch.com/assembly/mlas/${params.id}` },
   }
 }
 

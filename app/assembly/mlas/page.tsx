@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'MLAs — Stormont Watch',
       description,
     },
-    alternates: { canonical: 'https://stormontwatch.com/assembly/mlas' },
+    alternates: { canonical: 'https://www.stormontwatch.com/assembly/mlas' },
   }
 }
 

@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${bill.short_title} — Stormont Watch`,
       description,
     },
-    alternates: { canonical: `https://stormontwatch.com/assembly/bills/${params.id}` },
+    alternates: { canonical: `https://www.stormontwatch.com/assembly/bills/${params.id}` },
   }
 }
 
@@ -86,8 +86,22 @@ export default async function BillDetailPage({ params }: Props) {
     getBillSummary(id),
   ])
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.stormontwatch.com'
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Legislation', item: `${siteUrl}/assembly/bills` },
+      { '@type': 'ListItem', position: 2, name: bill.short_title, item: `${siteUrl}/assembly/bills/${id}` },
+    ],
+  }
+
   return (
     <div className="container">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <header className={styles.header}>
         <nav aria-label="Breadcrumb" className={`breadcrumb ${styles.breadcrumb}`}>
           <ol>

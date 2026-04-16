@@ -6,7 +6,7 @@ export const revalidate = 86400
 export const metadata: Metadata = {
   title: 'Terms of Use',
   description: 'Terms of use for Stormont Watch.',
-  alternates: { canonical: 'https://stormontwatch.com/terms' },
+  alternates: { canonical: 'https://www.stormontwatch.com/terms' },
   robots: { index: false },
 }
 

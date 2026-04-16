@@ -7,6 +7,11 @@ export const revalidate = 86400
 export const metadata: Metadata = {
   title: 'How a Bill becomes law — Stormont Watch',
   description: 'A plain English guide to the legislative stages a bill passes through in the Northern Ireland Assembly.',
+  openGraph: {
+    title: 'How a Bill becomes law — Stormont Watch',
+    description: 'A plain English guide to the legislative stages a bill passes through in the Northern Ireland Assembly.',
+  },
+  alternates: { canonical: 'https://www.stormontwatch.com/assembly/legislation-guide' },
 }
 
 export default function LegislationGuidePage() {

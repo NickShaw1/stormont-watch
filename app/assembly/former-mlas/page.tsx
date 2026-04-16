@@ -12,9 +12,10 @@ export const metadata: Metadata = {
   title: 'Former MLAs',
   description: 'Members of the Legislative Assembly who left during the current mandate.',
   openGraph: {
-    title: 'Former MLAs - Stormont Watch',
+    title: 'Former MLAs — Stormont Watch',
+    description: 'Members of the Legislative Assembly who left during the current mandate.',
   },
-  alternates: { canonical: 'https://stormontwatch.com/assembly/former-mlas' },
+  alternates: { canonical: 'https://www.stormontwatch.com/assembly/former-mlas' },
 }
 
 export default async function FormerMlasPage() {

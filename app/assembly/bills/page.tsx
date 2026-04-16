@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Legislation — Stormont Watch',
       description,
     },
-    alternates: { canonical: 'https://stormontwatch.com/assembly/bills' },
+    alternates: { canonical: 'https://www.stormontwatch.com/assembly/bills' },
   }
 }
 

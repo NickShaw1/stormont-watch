@@ -6,7 +6,11 @@ export const revalidate = 86400
 export const metadata: Metadata = {
   title: 'About',
   description: 'About Stormont Watch — tracking every vote in the Northern Ireland Assembly since February 2024.',
-  alternates: { canonical: 'https://stormontwatch.com/about' },
+  openGraph: {
+    title: 'About — Stormont Watch',
+    description: 'About Stormont Watch — tracking every vote in the Northern Ireland Assembly since February 2024.',
+  },
+  alternates: { canonical: 'https://www.stormontwatch.com/about' },
 }
 
 export default function AboutPage() {
