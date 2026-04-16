@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "sync": "tsx scripts/sync.ts",
     "sync:full": "tsx scripts/sync-full.ts",
     "sync:members": "tsx scripts/sync-members.ts",
@@ -20,6 +23,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
+    "@opennextjs/cloudflare": "^1.15.0",
     "@types/d3": "^7.4.3",
     "chart.js": "^4.5.1",
     "d3": "^7.9.0",
@@ -37,6 +41,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.83.0"
   }
 }
