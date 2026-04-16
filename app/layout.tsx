@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: '%s - Stormont Watch',
   },
   description: 'Every vote in the Northern Ireland Assembly since February 2024.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stormontwatch.com'),
   openGraph: {
     siteName: 'Stormont Watch',
     type: 'website',

@@ -2,9 +2,14 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { eq } from 'drizzle-orm'
-import { getDivisionWithVotes, getHansardReportId } from '@/lib/db/queries'
+import { getDivisionWithVotes, getHansardReportId, getAllDivisionsFromDb } from '@/lib/db/queries'
 
 export const revalidate = 86400
+
+export async function generateStaticParams() {
+  const divisions = await getAllDivisionsFromDb()
+  return divisions.map(d => ({ id: d.documentId }))
+}
 import { db } from '@/lib/db/client'
 import * as schema from '@/lib/db/schema'
 import { isPassed } from '@/lib/bills'

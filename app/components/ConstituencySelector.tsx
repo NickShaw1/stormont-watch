@@ -32,6 +32,7 @@ export default function ConstituencySelector() {
   const [selected, setSelected] = useState<string | null>(null)
   const [mlas, setMlas] = useState<MLA[]>([])
   const [loadingMlas, setLoadingMlas] = useState(false)
+  const [fetchError, setFetchError] = useState(false)
   const [mapError, setMapError] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false)
@@ -85,12 +86,15 @@ export default function ConstituencySelector() {
 
   async function fetchMlas(constituency: string) {
     setLoadingMlas(true)
+    setFetchError(false)
     try {
       const res = await fetch(`/api/constituency/${encodeURIComponent(constituency)}`)
+      if (!res.ok) throw new Error('Failed to fetch')
       const data = await res.json()
       setMlas(data)
     } catch {
       setMlas([])
+      setFetchError(true)
     }
     setLoadingMlas(false)
   }
@@ -300,6 +304,8 @@ export default function ConstituencySelector() {
 
           {loadingMlas ? (
             <p className={styles.loading}>Loading…</p>
+          ) : fetchError ? (
+            <p className={styles.loading}>Failed to load MLAs. Please try again.</p>
           ) : (
             <>
               <div className={styles.mlaGrid}>

@@ -48,9 +48,7 @@ export default async function Image({ params }: { params: { id: string } }) {
   const subtitle = [stage, billType].filter(Boolean).join(' · ')
   const pill = bill ? billPill(bill) : { label: 'In progress', bg: '#F6CB2F', color: '#203F59' }
 
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.stormontwatch.com'
 
   const logoSrc = await fetchBase64(`${baseUrl}/logotext.png`)
 
