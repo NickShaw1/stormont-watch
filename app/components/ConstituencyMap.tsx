@@ -28,11 +28,10 @@ const NAME_MAP: Record<string, string> = {
 interface ConstituencyMapProps {
   selected: string | null
   onSelect: (constituency: string) => void
-  onZoomReset?: (fn: () => void) => void
   onError?: () => void
 }
 
-export default function ConstituencyMap({ selected, onSelect, onZoomReset, onError }: ConstituencyMapProps) {
+export default function ConstituencyMap({ selected, onSelect, onError }: ConstituencyMapProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const zoomRef = useRef<any>(null)
   const [tooltip, setTooltip] = useState<{ x: number; y: number; name: string } | null>(null)

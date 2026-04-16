@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
@@ -33,7 +33,6 @@ export default function ConstituencySelector() {
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const mobileDropdownRef = useRef<HTMLDivElement>(null)
-  const zoomResetRef = useRef<(() => void) | null>(null)
   const desktopTriggerRef = useRef<HTMLButtonElement>(null)
   const mobileTriggerRef = useRef<HTMLButtonElement>(null)
   const desktopListRef = useRef<HTMLUListElement>(null)
@@ -79,11 +78,6 @@ export default function ConstituencySelector() {
     document.addEventListener('mousedown', handleOutsideClick)
     return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [mobileDropdownOpen])
-
-  const handleZoomReset = useCallback((fn: () => void) => {
-    zoomResetRef.current = fn
-  }, [])
-
 
   async function fetchMlas(constituency: string) {
     setLoadingMlas(true)
@@ -244,7 +238,7 @@ export default function ConstituencySelector() {
 
           <div className={styles.mapArea}>
             <span className="sr-only">Use the dropdown above to select your constituency</span>
-            <ConstituencyMap selected={selected} onSelect={handleSelect} onZoomReset={handleZoomReset} onError={() => setMapError(true)} />
+            <ConstituencyMap selected={selected} onSelect={handleSelect} onError={() => setMapError(true)} />
           </div>
 
           {/* Mobile bottom bar */}
