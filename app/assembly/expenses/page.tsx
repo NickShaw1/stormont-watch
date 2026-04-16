@@ -61,7 +61,7 @@ export default async function ExpensesPage() {
         </div>
       )}
 
-      <ExpensesListClient rows={mappedRows} totalMlaCount={mappedRows.length + missing.length} />
+      <ExpensesListClient rows={mappedRows} totalMlaCount={mappedRows.length} />
     </div>
   )
 }

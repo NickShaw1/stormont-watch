@@ -33,6 +33,10 @@ export async function getAllMembers() {
   return db.select().from(members).where(eq(members.isCurrent, true)).orderBy(members.fullName)
 }
 
+export async function getAllMembersIncludingFormer() {
+  return db.select({ personId: members.personId }).from(members).orderBy(members.fullName)
+}
+
 
 export async function getDistinctPartyCount(): Promise<number> {
   const result = await db.execute(sql`
@@ -492,7 +496,7 @@ export async function getMemberExpensesWithRank(personId: string) {
         COUNT(*) OVER () as total_members
       FROM expenses e
       JOIN members m ON e.person_id = m.person_id
-      WHERE e.financial_year = '2025-2026'
+      WHERE e.financial_year = (SELECT MAX(financial_year) FROM expenses)
         AND m.is_current = true
     )
     SELECT * FROM ranked

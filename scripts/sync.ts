@@ -3,7 +3,7 @@ import { syncBills } from './sync-bills'
 import { syncContactDetails } from './sync-contact-details'
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
-import { desc, eq, notInArray, sql } from 'drizzle-orm'
+import { and, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 
 const BASE = 'http://data.niassembly.gov.uk'
@@ -610,20 +610,28 @@ async function syncRegisteredInterests(db: Db) {
 }
 
 async function syncCurrentMemberRoles(db: Db) {
-  console.log('[syncCurrentMemberRoles] Fetching roles for current members...')
+  console.log('[syncCurrentMemberRoles] Fetching roles for current members and recently departed members with missing mandate_end...')
 
-  const currentMembers = await db
+  const membersToSync = await db
     .select({ personId: schema.members.personId })
     .from(schema.members)
-    .where(eq(schema.members.isCurrent, true))
+    .where(
+      or(
+        eq(schema.members.isCurrent, true),
+        and(
+          eq(schema.members.isCurrent, false),
+          isNull(schema.members.mandateEnd)
+        )
+      )
+    )
 
-  console.log(`[syncCurrentMemberRoles] Fetching roles for ${currentMembers.length} current members...`)
+  console.log(`[syncCurrentMemberRoles] Fetching roles for ${membersToSync.length} members (current + recently departed with missing mandate_end)...`)
 
   let updated = 0
   let skipped = 0
   let processed = 0
 
-  for (const { personId } of currentMembers) {
+  for (const { personId } of membersToSync) {
     try {
       const res = await fetch(
         `${BASE}/members.asmx/GetMemberRolesByPersonId_JSON?PersonId=${personId}`
@@ -680,7 +688,7 @@ async function syncCurrentMemberRoles(db: Db) {
 
       processed++
       if (processed % 10 === 0) {
-        console.log(`[syncCurrentMemberRoles] Progress: ${processed}/${currentMembers.length}`)
+        console.log(`[syncCurrentMemberRoles] Progress: ${processed}/${membersToSync.length}`)
       }
       await new Promise((resolve) => setTimeout(resolve, 100))
     } catch (err) {

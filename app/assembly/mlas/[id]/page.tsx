@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getMemberExpensesWithRank, getRegisteredInterestsByMember, getAllMembers } from '@/lib/db/queries'
+import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getMemberExpensesWithRank, getRegisteredInterestsByMember, getAllMembersIncludingFormer } from '@/lib/db/queries'
 
 export const revalidate = 86400
 
 export async function generateStaticParams() {
-  const members = await getAllMembers()
+  const members = await getAllMembersIncludingFormer()
   return members.map(m => ({ id: m.personId }))
 }
 import { formatDate, formatMemberName, formatRoleTitle, partyBorderColor, abbreviateParty } from '@/lib/format'
