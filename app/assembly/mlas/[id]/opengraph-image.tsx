@@ -3,6 +3,7 @@ import { ImageResponse } from 'next/og'
 import { getMemberById } from '@/lib/db/queries'
 import { abbreviateParty } from '@/lib/format'
 
+export const runtime = 'edge'
 export const alt = 'MLA profile'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'

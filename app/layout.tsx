@@ -44,6 +44,14 @@ export const metadata: Metadata = {
     site: '@stormontwatch',
     images: ['/opengraph-image.png'],
   },
+  icons: {
+    icon: [
+      { url: '/icon0.svg', type: 'image/svg+xml' },
+      { url: '/icon1.png', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-icon.png' }],
+  },
+  manifest: '/manifest.json',
   robots: {
     index: true,
     follow: true,
