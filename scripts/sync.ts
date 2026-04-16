@@ -693,6 +693,10 @@ async function syncCurrentMemberRoles(db: Db) {
 }
 
 async function main() {
+  const startedAt = new Date()
+  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`)
+  console.log(`Sync started at ${startedAt.toISOString()}`)
+  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`)
   const url = process.env.DATABASE_URL
   if (!url) throw new Error('DATABASE_URL is not set in .env.local')
 
@@ -775,6 +779,8 @@ async function main() {
     const icon = r.status === 'success' ? '✓' : r.status === 'skipped' ? '–' : '✗'
     console.log(`  ${icon} ${r.script}${r.note ? ` — ${r.note}` : ''}`)
   }
+  const durationSec = Math.round((Date.now() - startedAt.getTime()) / 1000)
+  console.log(`Total runtime: ${durationSec}s`)
   const errors = syncResults.filter(r => r.status === 'error')
   if (errors.length > 0) {
     console.error(`\n${errors.length} script(s) failed. See above for details.`)
