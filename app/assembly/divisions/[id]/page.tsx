@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { eq } from 'drizzle-orm'
 import { getDivisionWithVotes, getHansardReportId } from '@/lib/db/queries'
+
+export const revalidate = 86400
 import { db } from '@/lib/db/client'
 import * as schema from '@/lib/db/schema'
 import { isPassed } from '@/lib/bills'
@@ -16,6 +18,8 @@ function billSlug(billId: string): string {
 
 import RollCallClient from './RollCallClient'
 import styles from './divisionDetail.module.css'
+
+export const runtime = 'edge'
 
 interface Props {
   params: { id: string }

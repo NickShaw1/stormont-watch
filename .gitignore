@@ -4,7 +4,9 @@ node_modules/
 # Next.js
 .next/
 out/
-.open-next/
+
+# Cloudflare Pages build output
+.vercel/
 
 # Environment variables
 .env
@@ -45,5 +47,4 @@ drizzle/meta/
 .playwright-mcp/
 
 # Misc
-.vercel
 *.pem

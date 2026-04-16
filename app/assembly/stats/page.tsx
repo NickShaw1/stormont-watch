@@ -16,6 +16,8 @@ import {
   getAllMembers,
 } from '@/lib/db/queries'
 import StatsRankingTabs from './StatsRankingTabs'
+
+export const revalidate = 86400
 import CrossCommunityTrendsClient from './CrossCommunityTrendsClient'
 import AssemblyProductivityClient from './AssemblyProductivityClient'
 import MlaPhoto from '@/components/MlaPhoto'

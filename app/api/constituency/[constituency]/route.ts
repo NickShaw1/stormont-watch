@@ -3,6 +3,8 @@ import { db } from '@/lib/db/client'
 import { members } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 
+export const runtime = 'edge'
+
 export async function GET(
   request: Request,
   { params }: { params: { constituency: string } }

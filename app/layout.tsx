@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Outfit, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
 import Nav from '@/components/Nav'
@@ -44,7 +44,6 @@ export const metadata: Metadata = {
     site: '@stormontwatch',
     images: ['/opengraph-image.png'],
   },
-  themeColor: '#203F59',
   robots: {
     index: true,
     follow: true,
@@ -52,6 +51,10 @@ export const metadata: Metadata = {
   appleWebApp: {
     title: 'Stormont Watch',
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#203F59',
 }
 
 export default function RootLayout({

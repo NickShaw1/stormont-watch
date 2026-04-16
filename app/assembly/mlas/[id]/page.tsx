@@ -2,12 +2,16 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getMemberExpensesWithRank, getRegisteredInterestsByMember } from '@/lib/db/queries'
+
+export const revalidate = 86400
 import { formatDate, formatMemberName, formatRoleTitle, partyBorderColor, abbreviateParty } from '@/lib/format'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
 import VotingRecordClient from './VotingRecordClient'
 import FinancesTabsClient from './FinancesTabsClient'
 import styles from './mlaDetail.module.css'
+
+export const runtime = 'edge'
 
 interface Props {
   params: { id: string }

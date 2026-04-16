@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import styles from './legislation-guide.module.css'
 
+export const revalidate = 86400
+
 export const metadata: Metadata = {
   title: 'How a Bill becomes law — Stormont Watch',
   description: 'A plain English guide to the legislative stages a bill passes through in the Northern Ireland Assembly.',

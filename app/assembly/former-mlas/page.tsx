@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import React from 'react'
 import Link from 'next/link'
 import { getFormerMembers } from '@/lib/db/queries'
+
+export const revalidate = 86400
 import { formatDate, formatMemberName, formatConstituency, partyBorderColor } from '@/lib/format'
 import MlaPhoto from '@/components/MlaPhoto'
 import styles from '../mlas/mlas.module.css'
