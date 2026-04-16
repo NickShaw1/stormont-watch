@@ -56,6 +56,9 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  verification: {
+    google: 'Mz_H-i_CpmLwYrn3nyQWY9CYy7-fraVhGMrY-DGRaSw',
+  },
   appleWebApp: {
     title: 'Stormont Watch',
   },
