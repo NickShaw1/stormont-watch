@@ -56,7 +56,7 @@
 }
 
 .overviewLabel {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -318,7 +318,7 @@
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
   margin-top: 4px;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -491,7 +491,7 @@
 }
 
 .partyStatLabel {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -696,8 +696,49 @@
   font-size: 2rem;
 }
 
+@media (max-width: 767px) {
+  .sectionHeader .sectionTitle {
+    font-size: 1.375rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.375rem;
+  }
+
+  .statsPageHeader {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .overviewLabel {
+    font-size: 0.8125rem;
+  }
+
+  .overviewValue,
+  .overviewValueStat {
+    font-size: 2rem;
+  }
+
+  .overviewVoteAye,
+  .overviewVoteNo {
+    font-size: 2.25rem;
+  }
+
+  .overviewMeta {
+    font-size: 0.875rem;
+  }
+
+  .overviewLink {
+    font-size: 0.9375rem;
+  }
+
+  .overviewCard {
+    padding: var(--spacing-lg);
+    gap: 8px;
+  }
+}
+
 .sectionEyebrow {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -725,7 +766,6 @@
   color: var(--text-secondary);
   margin-top: 0;
   margin-bottom: 16px;
-  font-style: italic;
   max-width: none;
 }
 
@@ -803,7 +843,6 @@
   font-size: 0.875rem;
   color: var(--text-secondary);
   margin-top: var(--spacing-sm);
-  font-style: italic;
   max-width: none;
 }
 
@@ -904,7 +943,7 @@
 }
 
 .glanceCellLabel {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;

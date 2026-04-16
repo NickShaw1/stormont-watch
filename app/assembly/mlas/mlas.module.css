@@ -348,9 +348,9 @@
   }
 
   .partyHeading {
-    margin-top: var(--spacing-lg);
+    margin-top: var(--spacing-md);
     gap: var(--spacing-sm);
-    font-size: 1.375rem;
+    font-size: 1.25rem;
   }
 
   .partyNameFull {
@@ -415,6 +415,7 @@
     grid-area: name !important;
     align-self: end !important;
     margin-top: 0 !important;
+    font-size: 0.9375rem !important;
   }
 
   .mlaConstituency {

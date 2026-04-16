@@ -1,10 +1,8 @@
 import { eq, desc, sql, and, count, countDistinct, isNotNull, isNull, gte, lte, asc } from 'drizzle-orm'
-import { createDb } from './client'
+import { db } from './client'
 import { members, divisions, votes, hansardReports, ministers, committeeChairs, expenses, registeredInterests, bills, billStages } from './schema'
 import { stripHonorifics } from '@/lib/utils/formatNames'
 import { getSurname } from '@/lib/format'
-
-const db = createDb()
 
 export async function getMembersByConstituency(constituency: string) {
   return db

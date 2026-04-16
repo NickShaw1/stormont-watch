@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createDb } from '@/lib/db/client'
+import { db } from '@/lib/db/client'
 import { members } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 
@@ -7,7 +7,6 @@ export async function GET(
   request: Request,
   { params }: { params: { constituency: string } }
 ) {
-  const db = createDb()
   const constituency = decodeURIComponent(params.constituency)
   const mlas = await db
     .select({

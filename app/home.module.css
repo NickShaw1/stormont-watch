@@ -42,7 +42,7 @@
 }
 
 .heroEyebrow {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -142,7 +142,7 @@
 }
 
 .statLabel {
-  font-size: 0.757rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -168,7 +168,7 @@
 .red { color: #A32D2D; }
 
 .statNote {
-  font-size: 0.757rem;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
   line-height: 1.3;
 }
@@ -185,6 +185,12 @@
   margin-bottom: var(--spacing-xl);
 }
 
+@media (max-width: 767px) {
+  .section {
+    margin-bottom: var(--spacing-lg);
+  }
+}
+
 .sectionHeader {
   margin-bottom: 1rem;
 }
@@ -196,6 +202,12 @@
   letter-spacing: 0.08em;
   color: var(--accent);
   margin-bottom: 4px;
+}
+
+@media (max-width: 767px) {
+  .sectionEyebrow {
+    font-size: 0.75rem;
+  }
 }
 
 .sectionTitle {
@@ -556,20 +568,49 @@
 }
 
 @media (max-width: 640px) {
+  .hero {
+    padding-top: 24px;
+  }
+
   .heroImage {
-    height: 240px;
+    height: 220px;
   }
 
   .heroOverlay {
     padding: 0 1.25rem;
   }
 
+  .heroContent {
+    padding: 14px 16px;
+  }
+
   .heroTitle {
-    font-size: 1.25rem;
+    font-size: 1.375rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1.375rem;
   }
 
   .statsGrid {
     grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .statCard {
+    padding: 0.875rem;
+  }
+
+  .statValue {
+    font-size: 1.625rem;
+  }
+
+  .thisWeekGrid {
+    gap: 12px;
+  }
+
+  .twLabel {
+    font-size: 0.875rem;
   }
 
   .striking {

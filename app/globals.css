@@ -235,6 +235,12 @@ a:hover {
   padding-block: var(--spacing-xl);
 }
 
+@media (max-width: 767px) {
+  .page-header {
+    padding-block: var(--spacing-lg);
+  }
+}
+
 .page-header p {
   color: var(--text-secondary);
   margin-top: var(--spacing-sm);

@@ -753,7 +753,7 @@
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 10px 12px;
+    padding: 12px 14px;
     text-decoration: none !important;
     color: inherit;
   }
@@ -778,15 +778,15 @@
   }
 
   .mobileCardTitle {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-primary);
-    line-height: 1.3;
+    line-height: 1.35;
     flex: 1;
   }
 
   .mobileCardDate {
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     color: var(--text-secondary);
     white-space: nowrap;
     flex-shrink: 0;

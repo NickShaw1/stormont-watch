@@ -3,10 +3,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { eq } from 'drizzle-orm'
 import { getDivisionWithVotes, getHansardReportId } from '@/lib/db/queries'
-import { createDb } from '@/lib/db/client'
+import { db } from '@/lib/db/client'
 import * as schema from '@/lib/db/schema'
-
-const db = createDb()
 import { isPassed } from '@/lib/bills'
 import { formatDate, parseBillSlug, parseStageName } from '@/lib/format'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'

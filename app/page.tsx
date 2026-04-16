@@ -89,7 +89,7 @@ export default async function HomePage() {
           <div className={styles.statCard}>
             <div className={styles.statLabel}>
               <span className={styles.hideOnMobile}>Least engaged MLA</span>
-              <span className={styles.showOnMobile}>Least present MLA</span>
+              <span className={styles.showOnMobile}>Lowest Vote %</span>
             </div>
             <div className={`${styles.statValue} ${styles.red}`}>{leastEngaged.attendancePct}%</div>
             <div className={styles.statNote}><Link href={`/assembly/mlas/${leastEngaged.personId}`} className={styles.statNoteLink}>{stripHonorifics(leastEngaged.fullName)}</Link><span className={styles.hideOnMobile}> · {leastEngaged.party}</span></div>
