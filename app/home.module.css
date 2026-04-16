@@ -42,7 +42,7 @@
 }
 
 .heroEyebrow {
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -206,7 +206,7 @@
 
 @media (max-width: 767px) {
   .sectionEyebrow {
-    font-size: 0.75rem;
+    font-size: 0.95rem;
   }
 }
 
@@ -219,7 +219,7 @@
 
 @media (max-width: 640px) {
   .sectionTitle {
-    font-size: 1.375rem;
+    font-size: 1.6rem;
   }
 
   .sectionRule {
@@ -353,7 +353,11 @@
   }
 
   .viewAllBottom {
-    font-size: 0.9rem;
+    font-size: 1rem;
+  }
+
+  .viewAll {
+    font-size: 1rem;
   }
 }
 
@@ -413,9 +417,50 @@
   margin-bottom: 6px;
 }
 
+.divBottomDate {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .divSub {
     font-size: 0.75rem;
+  }
+
+  .divTop {
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 2px;
+  }
+
+  .divTitle {
+    -webkit-line-clamp: unset;
+    display: block;
+    overflow: visible;
+    white-space: normal;
+    font-size: 1rem;
+  }
+
+  .divDate {
+    display: none;
+  }
+
+  .divSub {
+    height: auto;
+    margin-bottom: 6px;
+  }
+
+  .divBottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+  }
+
+  .divBottomDate {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
   }
 }
 
@@ -465,6 +510,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+}
+
+.divBottom {
+  display: flex;
+  align-items: center;
 }
 
 .pillPass {
@@ -558,6 +608,14 @@
     min-height: unset;
   }
 
+  .billTitle {
+    font-size: 1rem;
+    -webkit-line-clamp: unset;
+    display: block;
+    overflow: visible;
+    white-space: normal;
+  }
+
   .divCard {
     min-height: unset;
   }
@@ -585,11 +643,11 @@
   }
 
   .heroTitle {
-    font-size: 1.375rem;
+    font-size: 1.725rem;
   }
 
   .heroSubtitle {
-    font-size: 1.375rem;
+    font-size: 1.725rem;
   }
 
   .statsGrid {
@@ -603,6 +661,14 @@
 
   .statValue {
     font-size: 1.625rem;
+  }
+
+  .statLabel {
+    font-size: 1.0625rem;
+  }
+
+  .statEyebrow {
+    font-size: 0.75rem;
   }
 
   .thisWeekGrid {
@@ -621,5 +687,9 @@
 
   .strikingNumber {
     font-size: 2.5rem;
+  }
+
+  .strikingText {
+    font-size: 1rem;
   }
 }

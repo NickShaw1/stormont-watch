@@ -64,13 +64,7 @@ export default function ConstituencySelector() {
   }, [dropdownOpen])
 
   useEffect(() => {
-    if (mobileDropdownOpen) {
-      const list = mobileListRef.current
-      if (list) {
-        const selected = list.querySelector<HTMLLIElement>('[aria-selected="true"]') ?? list.querySelector<HTMLLIElement>('li')
-        selected?.focus()
-      }
-    } else {
+    if (!mobileDropdownOpen) {
       mobileTriggerRef.current?.focus()
     }
   }, [mobileDropdownOpen])
@@ -164,8 +158,7 @@ export default function ConstituencySelector() {
             ref={dropdownRef}
           >
             {selected ? (
-              <span key={selected} className={`${styles.mapCardHintDesktop} ${styles.mapCardHintAnimate}`}>
-                <span className={`${styles.mapCardHintIcon} ${styles.mapCardHintIconSelected}`}>i</span>
+              <span key={selected} className={styles.mapCardHintDesktop}>
                 <span className={styles.mapCardHintName}>{selected}</span>
                 <span className={styles.mapCardHintDivider} aria-hidden="true">|</span>
                 <span className={styles.mapCardHintElectorate}>
@@ -177,7 +170,6 @@ export default function ConstituencySelector() {
               </span>
             ) : (
               <span className={styles.mapCardHintDesktop}>
-                <span className={`${styles.mapCardHintIcon} ${styles.mapCardHintIconWarning}`}>!</span>
                 Click your constituency on the map or use the dropdown
               </span>
             )}
@@ -216,24 +208,7 @@ export default function ConstituencySelector() {
 
           {/* Mobile top bar */}
           <div className={styles.mapCardTop}>
-            {selected ? (
-              <p key={selected} className={`${styles.mapCardHint} ${styles.mapCardHintAnimate}`}>
-                <span className={`${styles.mapCardHintIcon} ${styles.mapCardHintIconSelected}`}>i</span>
-                Your constituency
-              </p>
-            ) : (
-              <p className={styles.mapCardHint}>
-                <span className={`${styles.mapCardHintIcon} ${styles.mapCardHintIconWarning}`}>!</span>
-                Select a constituency
-              </p>
-            )}
-            <button
-              className={styles.resetBtn}
-              onClick={() => zoomResetRef.current?.()}
-              aria-label="Reset map zoom"
-            >
-              Reset zoom
-            </button>
+            <p className={styles.mapCardHint}>Select your constituency</p>
           </div>
           <div className={`${styles.mapSelectMobile} ${mobileDropdownOpen ? styles.mapSelectMobileOpen : ''}`} ref={mobileDropdownRef}>
             <button
@@ -274,10 +249,6 @@ export default function ConstituencySelector() {
 
           {/* Mobile bottom bar */}
           <div className={styles.mapCardBottom}>
-            <div className={styles.zoomHint}>
-              <span className={styles.zoomIcon}>i</span>
-              Pinch to zoom · Double-tap to reset
-            </div>
             <p className={styles.mapAttribution}>
               * Contains public sector information licensed under the terms of the{' '}
               <a
@@ -320,7 +291,7 @@ export default function ConstituencySelector() {
             <p className={styles.constituencyMetaElectorate}>
               <span>{CONSTITUENCY_ELECTORATE[selected]?.toLocaleString()} registered electors</span>
               {' '}
-              <span className={styles.constituencyMetaDate}>(as of Apr 2026)</span>
+              <span className={styles.constituencyMetaDate}>(Apr 2026)</span>
             </p>
           </div>
           <div className={styles.resultsHeader}>

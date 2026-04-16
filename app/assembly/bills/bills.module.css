@@ -392,12 +392,9 @@
   }
 
   .sectionTitle {
-    font-size: 1.375rem;
+    font-size: 1.6rem;
   }
 
-  .weekSectionTitle {
-    font-size: 1.375rem;
-  }
 
   .scheduledHeading {
     font-size: 1.2rem;
@@ -725,7 +722,7 @@
   }
 
   .thisWeekBillName {
-    font-size: 0.8125rem;
+    font-size: 1rem;
   }
 
   .thisWeekDate {
@@ -778,7 +775,7 @@
   }
 
   .mobileCardTitle {
-    font-size: 0.875rem;
+    font-size: 1rem;
     font-weight: 500;
     color: var(--text-primary);
     line-height: 1.35;
@@ -846,6 +843,26 @@
     background: var(--surface);
     color: var(--text-secondary);
     border: 0.5px solid var(--border);
+  }
+}
+
+@media (max-width: 767px) {
+  .billTitle {
+    font-size: 1rem;
+  }
+
+  .weekSectionTitle {
+    font-size: 1.6rem;
+  }
+
+  .weekSubtitle,
+  .browseSubtitle,
+  .sectionMeta {
+    font-size: 1rem;
+  }
+
+  .guidePrompt {
+    font-size: 1rem !important;
   }
 }
 

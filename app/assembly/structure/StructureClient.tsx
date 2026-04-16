@@ -146,7 +146,7 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
           {[...juniorMinisters].reverse().map((jm) => (
             <div key={jm.personId} className={styles.juniorCard}>
               <div className={styles.executiveCardInner}>
-                <MlaPhoto name={jm.fullName} imgUrl={jm.imgUrl ?? ''} size={64} decorative />
+                <MlaPhoto name={jm.fullName} imgUrl={jm.imgUrl ?? ''} size={88} decorative />
                 <div className={styles.executiveInfo}>
                   <span className={styles.roleTitle}>Junior Minister</span>
                   <Link href={`/assembly/mlas/${jm.personId}`} className={styles.personName}>
@@ -190,7 +190,7 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
               return (
                 <li key={m.personId} className={styles.entryCard}>
                   <div className={styles.entryPerson}>
-                    <MlaPhoto name={m.fullName} imgUrl={m.imgUrl ?? ''} size={64} decorative />
+                    <MlaPhoto name={m.fullName} imgUrl={m.imgUrl ?? ''} size={88} decorative />
                     <div className={styles.personInfo}>
                       <span className={styles.personRole}>{m.roleTitle ?? 'Minister'}</span>
                       <Link href={`/assembly/mlas/${m.personId}`} className={styles.personName}>
@@ -253,7 +253,7 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
               return (
                 <li key={c.personId} className={styles.entryCard}>
                   <div className={styles.entryPerson}>
-                    <MlaPhoto name={c.fullName} imgUrl={c.imgUrl ?? ''} size={64} decorative />
+                    <MlaPhoto name={c.fullName} imgUrl={c.imgUrl ?? ''} size={88} decorative />
                     <div className={styles.personInfo}>
                       <span className={styles.personRole}>Chair</span>
                       <Link href={`/assembly/mlas/${c.personId}`} className={styles.personName}>

@@ -26,11 +26,31 @@
 
 @media (max-width: 767px) {
   .footer {
-    padding-block: 8px;
+    padding-block-start: var(--spacing-lg);
+    padding-block-end: 12px;
   }
 
   .inner {
-    padding-inline: 4px;
+    display: block;
+    text-align: left;
+  }
+
+  .inner p,
+  .inner nav {
+    margin: 0;
+    padding: 0;
+  }
+
+  .links {
+    display: block;
+    margin: 0;
+    padding: 0;
+  }
+
+  .links li {
+    display: block;
+    margin: 8px 0;
+    padding: 0;
   }
 }
 

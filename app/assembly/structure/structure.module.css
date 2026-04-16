@@ -366,7 +366,7 @@
 }
 
 .personName {
-  font-size: 0.875rem;
+  font-size: 1.3125rem;
   font-weight: 600;
   color: var(--text-primary);
   text-decoration: none;
@@ -408,6 +408,27 @@
 
 @media (max-width: 767px) {
   .sectionHeading::after {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
+  }
+
+  .sectionBlurb {
+    font-size: 1rem;
+  }
+
+  .pageHeader h1 {
+    font-size: 1.725rem;
+  }
+
+  .sectionHeading {
+    font-size: 1.6rem;
+  }
+
+  .executiveName,
+  .personName {
+    font-size: 1.2rem;
+  }
+
+  .entryDescription {
+    font-size: 1rem;
   }
 }

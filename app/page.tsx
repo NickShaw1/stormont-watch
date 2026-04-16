@@ -71,23 +71,23 @@ export default async function HomePage() {
       {/* Stat cards */}
       <section className={styles.statsGrid}>
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Total divisions</div>
+          <div className={`${styles.statLabel} ${styles.statEyebrow}`}>Total divisions</div>
           <div className={styles.statValue}>{stats.totalDivisions}</div>
           <div className={styles.statNote}>Since Feb 2024</div>
         </div>
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Acts passed</div>
+          <div className={`${styles.statLabel} ${styles.statEyebrow}`}>Acts passed</div>
           <div className={`${styles.statValue} ${styles.green}`}>{stats.actsCount}</div>
           <div className={styles.statNote}>Bills since Feb 2024</div>
         </div>
         <div className={styles.statCard}>
-          <div className={styles.statLabel}>Voting Rate</div>
+          <div className={`${styles.statLabel} ${styles.statEyebrow}`}>Voting Rate</div>
           <div className={`${styles.statValue} ${styles.amber}`}>{avgAttendance}%</div>
           <div className={styles.statNote}>Across all current MLAs</div>
         </div>
         {leastEngaged && (
           <div className={styles.statCard}>
-            <div className={styles.statLabel}>
+            <div className={`${styles.statLabel} ${styles.statEyebrow}`}>
               <span className={styles.hideOnMobile}>Least engaged MLA</span>
               <span className={styles.showOnMobile}>Lowest Vote %</span>
             </div>
@@ -166,12 +166,15 @@ export default async function HomePage() {
                     <span className={styles.divTitle}>{displayTitle}</span>
                     <span className={styles.divDate}>{formatDate(div.divisionDate?.toISOString())}</span>
                   </div>
-                  <div className={styles.divSub} style={{ visibility: subtitle ? 'visible' : 'hidden' }}>
-                    {subtitle ?? '\u00A0'}
+                  {subtitle && (
+                    <div className={styles.divSub}>{subtitle}</div>
+                  )}
+                  <div className={styles.divBottom}>
+                    <span className={passed ? styles.pillPass : styles.pillFail}>
+                      {passed ? 'Passed' : 'Failed'}
+                    </span>
+                    <span className={styles.divBottomDate}>{formatDate(div.divisionDate?.toISOString())}</span>
                   </div>
-                  <span className={passed ? styles.pillPass : styles.pillFail}>
-                    {passed ? 'Passed' : 'Failed'}
-                  </span>
                 </Link>
               )
             })}

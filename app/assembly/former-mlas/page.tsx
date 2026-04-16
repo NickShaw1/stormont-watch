@@ -48,7 +48,7 @@ export default async function FormerMlasPage() {
           </h2>
           <ul className={styles.mlaGrid} role="list">
             {mlas.map((mla) => (
-              <li key={mla.personId}>
+              <li key={mla.personId} className={styles.mlaCardWrapper} style={{ '--party-color': partyBorderColor(mla.party) } as React.CSSProperties}>
                 <div className={styles.mlaCard}>
                   <MlaPhoto
                     name={mla.fullName}

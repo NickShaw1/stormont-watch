@@ -698,11 +698,11 @@
 
 @media (max-width: 767px) {
   .sectionHeader .sectionTitle {
-    font-size: 1.375rem;
+    font-size: 1.6rem;
   }
 
   .sectionTitle {
-    font-size: 1.375rem;
+    font-size: 1.6rem;
   }
 
   .statsPageHeader {
@@ -735,6 +735,7 @@
     padding: var(--spacing-lg);
     gap: 8px;
   }
+
 }
 
 .sectionEyebrow {
@@ -992,5 +993,36 @@
 
   .glanceCell:last-child {
     border-bottom: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .chartTitle {
+    font-size: 1.5rem;
+  }
+
+  .trendLegend {
+    font-size: 1.0625rem;
+  }
+
+  .expensesMeta {
+    font-size: 1rem;
+  }
+
+  .trendNote {
+    font-size: 1rem;
+  }
+
+  .sectionDesc,
+  .sectionCaveat {
+    font-size: 1rem;
+  }
+
+  .assemblyStatement {
+    font-size: 1rem;
+  }
+
+  .sectionEyebrow {
+    font-size: 0.95rem;
   }
 }

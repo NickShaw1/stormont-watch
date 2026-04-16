@@ -40,7 +40,6 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Trigger deploy
-        if: success()
         run: |
           curl -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \

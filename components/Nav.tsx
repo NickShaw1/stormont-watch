@@ -55,6 +55,11 @@ export default function Nav() {
   const hamburgerRef = useRef<HTMLButtonElement>(null)
   const closeBtnRef = useRef<HTMLButtonElement>(null)
 
+  const handleNavClick = () => {
+    document.body.style.top = ''
+    setOpen(false)
+  }
+
   useEffect(() => {
     if (open) {
       closeBtnRef.current?.focus()
@@ -133,7 +138,7 @@ export default function Nav() {
         aria-hidden={!open}
       >
         <div className={styles.sidebarTop}>
-          <Link href="/" className={styles.navBrand} onClick={() => setOpen(false)}>
+          <Link href="/" className={styles.navBrand} onClick={handleNavClick}>
             <EyeLogo />
             <span className={styles.navWordmark}>
             <span className={styles.navStormont}>Stormont </span>
@@ -157,7 +162,7 @@ export default function Nav() {
               href="/"
               className={`${styles.sidebarLink} ${open ? styles.sidebarLinkVisible : ''}`}
               aria-current={pathname === '/' ? 'page' : undefined}
-              onClick={() => setOpen(false)}
+              onClick={handleNavClick}
             >
               Home
             </Link>
@@ -168,7 +173,7 @@ export default function Nav() {
                 href={href}
                 className={`${styles.sidebarLink} ${open ? styles.sidebarLinkVisible : ''}`}
                 aria-current={pathname.startsWith(href) ? 'page' : undefined}
-                onClick={() => setOpen(false)}
+                onClick={handleNavClick}
               >
                 {label}
               </Link>

@@ -28,11 +28,14 @@ interface Props {
   roleLookupFull: Record<string, string>
 }
 
+const MOBILE_PAGE_SIZE = 25
+
 export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull }: Props) {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
   const [groupMode, setGroupMode] = useState<'party' | 'constituency'>('party')
+  const [visibleCount, setVisibleCount] = useState(MOBILE_PAGE_SIZE)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
@@ -41,6 +44,17 @@ export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull
     if (val && partyFilter !== 'ALL') setPartyFilter('ALL')
     if (timer.current) clearTimeout(timer.current)
     timer.current = setTimeout(() => setDebouncedQuery(val), 150)
+    setVisibleCount(MOBILE_PAGE_SIZE)
+  }
+
+  function handleModeChange(mode: 'party' | 'constituency') {
+    setGroupMode(mode)
+    setVisibleCount(MOBILE_PAGE_SIZE)
+  }
+
+  function handlePartyFilter(party: string) {
+    setPartyFilter(party)
+    setVisibleCount(MOBILE_PAGE_SIZE)
   }
 
   const q = debouncedQuery.toLowerCase().trim()
@@ -85,20 +99,36 @@ export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull
       }))
   })()
 
+  // Paginated party groups — slice flat MLA list then reconstruct groups
+  const allPartyMlas = filteredByParty.flatMap((g) => g.mlas.map((m) => ({ ...m, _party: g.party })))
+  const visiblePartyMlas = new Set(allPartyMlas.slice(0, visibleCount).map((m) => m.person_id))
+  const paginatedByParty = filteredByParty
+    .map((g) => ({ ...g, mlas: g.mlas.filter((m) => visiblePartyMlas.has(m.person_id)) }))
+    .filter((g) => g.mlas.length > 0)
+  const totalPartyMlas = allPartyMlas.length
+
+  // Paginated constituency groups
+  const allConstMlas = filteredByConstituency.flatMap((g) => g.mlas.map((m) => ({ ...m, _constituency: g.constituency })))
+  const visibleConstMlas = new Set(allConstMlas.slice(0, visibleCount).map((m) => m.person_id))
+  const paginatedByConstituency = filteredByConstituency
+    .map((g) => ({ ...g, mlas: g.mlas.filter((m) => visibleConstMlas.has(m.person_id)) }))
+    .filter((g) => g.mlas.length > 0)
+  const totalConstMlas = allConstMlas.length
+
   return (
     <div className="container">
       <div className={styles.modeChips}>
         <button
           aria-pressed={groupMode === 'party'}
           className={`${styles.partyFilterBtn} ${groupMode === 'party' ? `${styles.partyFilterBtnActive} ${styles.partyFilterBtnActiveAll}` : ''}`}
-          onClick={() => setGroupMode('party')}
+          onClick={() => handleModeChange('party')}
         >
           By Party
         </button>
         <button
           aria-pressed={groupMode === 'constituency'}
           className={`${styles.partyFilterBtn} ${groupMode === 'constituency' ? `${styles.partyFilterBtnActive} ${styles.partyFilterBtnActiveAll}` : ''}`}
-          onClick={() => setGroupMode('constituency')}
+          onClick={() => handleModeChange('constituency')}
         >
           By Constituency
         </button>
@@ -109,7 +139,7 @@ export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull
           <button
             aria-pressed={partyFilter === 'ALL'}
             className={`${styles.partyFilterBtn} ${partyFilter === 'ALL' ? `${styles.partyFilterBtnActive} ${styles.partyFilterBtnActiveAll}` : ''}`}
-            onClick={() => setPartyFilter('ALL')}
+            onClick={() => handlePartyFilter('ALL')}
           >
             All
             <span className={styles.partyFilterCount}>{totalMlas}</span>
@@ -127,7 +157,7 @@ export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull
                   color: activeStyle.color,
                   borderColor: activeStyle.borderColor,
                 } : undefined}
-                onClick={() => setPartyFilter(group.party)}
+                onClick={() => handlePartyFilter(group.party)}
               >
                 {formatPartyName(group.party, true)}
                 <span
@@ -162,10 +192,10 @@ export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull
 
       {groupMode === 'party' && (
         <>
-          {filteredByParty.length === 0 && (
+          {paginatedByParty.length === 0 && (
             <p className="text-secondary">No MLAs match your search.</p>
           )}
-          {filteredByParty.map((group, i) => (
+          {paginatedByParty.map((group, i) => (
             <React.Fragment key={group.party}>
             {i > 0 && <hr className={styles.sectionRule} />}
             <section
@@ -237,15 +267,22 @@ export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull
             </section>
             </React.Fragment>
           ))}
+          {visibleCount < totalPartyMlas && (
+            <div className={styles.loadMoreWrap}>
+              <button className={styles.loadMoreBtn} onClick={() => setVisibleCount(v => v + MOBILE_PAGE_SIZE)}>
+                Load more ({totalPartyMlas - visibleCount} remaining)
+              </button>
+            </div>
+          )}
         </>
       )}
 
       {groupMode === 'constituency' && (
         <>
-          {filteredByConstituency.length === 0 && (
+          {paginatedByConstituency.length === 0 && (
             <p className="text-secondary">No MLAs match your search.</p>
           )}
-          {filteredByConstituency.map(({ constituency, mlas }, i) => {
+          {paginatedByConstituency.map(({ constituency, mlas }, i) => {
             const slugId = `constituency-${constituency.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`
             return (
               <React.Fragment key={constituency}>
@@ -323,6 +360,13 @@ export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull
               </React.Fragment>
             )
           })}
+          {visibleCount < totalConstMlas && (
+            <div className={styles.loadMoreWrap}>
+              <button className={styles.loadMoreBtn} onClick={() => setVisibleCount(v => v + MOBILE_PAGE_SIZE)}>
+                Load more ({totalConstMlas - visibleCount} remaining)
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -87,17 +87,6 @@
   border-bottom: 0.5px solid var(--border);
 }
 
-@keyframes hintFadeIn {
-  0%   { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-@keyframes hintIconPop {
-  0%   { transform: scale(0.6); opacity: 0; }
-  60%  { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1);   opacity: 1; }
-}
-
 .mapCardHint {
   font-size: 15.6px;
   color: var(--text-secondary);
@@ -105,36 +94,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.mapCardHintIcon {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1.5px solid var(--accent);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--accent);
-  flex-shrink: 0;
-  line-height: 1;
-}
-
-.mapCardHintIconWarning {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.mapCardHintIconSelected {
-  border-color: var(--accent);
-  color: var(--accent);
-  animation: hintIconPop 500ms ease both;
-}
-
-.mapCardHintAnimate {
-  animation: hintFadeIn 500ms ease both;
 }
 
 .mapCardHintName {
@@ -209,7 +168,7 @@
   border-radius: 999px;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 0.8125rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -404,18 +363,6 @@
     color: var(--text-secondary);
   }
 
-  .mapCardHintDesktop .mapCardHintIcon {
-    width: 26px;
-    height: 26px;
-    font-size: 13px;
-    font-weight: 700;
-    border-width: 2px;
-  }
-
-  .mapCardHintDesktop.mapCardHintAnimate {
-    color: var(--text-primary);
-    font-weight: 500;
-  }
 
 
 
@@ -510,16 +457,8 @@
 
 @media (max-width: 640px) {
   .mapCardHint {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 600;
-  }
-
-  .mapCardHintIcon {
-    width: 26px;
-    height: 26px;
-    font-size: 13px;
-    font-weight: 700;
-    border-width: 2px;
   }
 
   .constituencyMobile {
@@ -551,7 +490,7 @@
   }
 
   .constituencyMetaName {
-    font-size: 18px;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-primary);
     display: inline-block;
@@ -568,7 +507,7 @@
   }
 
   .constituencyMetaElectorate {
-    font-size: 12px;
+    font-size: 1.0625rem;
     color: var(--text-secondary);
     margin: 6px 0 0;
   }
@@ -610,7 +549,7 @@
   }
 
   .resultsTitle {
-    font-size: 18px;
+    font-size: 1.5rem;
     font-weight: 700;
   }
 }
@@ -771,7 +710,7 @@
   }
 
   .mlaName {
-    font-size: 15px;
+    font-size: 1.2rem;
   }
 
   .mlaPhoto {

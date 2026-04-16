@@ -174,7 +174,13 @@
 }
 
 @media (max-width: 767px) {
+  .navWordmark {
+    font-size: 1.6rem;
+  }
+
   .navLogo {
+    width: 26px;
+    height: 26px;
     animation: eyeBlink 10s ease-in-out infinite;
     transform-origin: center;
   }
@@ -307,10 +313,19 @@
   border-bottom: 1px solid rgba(242, 242, 242, 0.15);
   opacity: 0;
   transform: translateY(10px);
+  pointer-events: none;
   transition: transform 200ms ease, color 200ms ease, opacity 300ms ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
-.sidebarLink:hover,
+@media (hover: hover) {
+  .sidebarLink:hover {
+    color: #fff;
+    text-decoration: none;
+  }
+}
+
 .sidebarLink:focus-visible {
   color: #fff;
   text-decoration: none;
@@ -324,6 +339,7 @@
 .sidebarLinkVisible {
   opacity: 1;
   transform: translateY(0);
+  pointer-events: auto;
 }
 
 .sidebarLinks li:nth-child(1) .sidebarLinkVisible { transition-delay: 320ms; }

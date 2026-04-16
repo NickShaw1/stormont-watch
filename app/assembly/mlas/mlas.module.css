@@ -4,6 +4,10 @@
     padding-bottom: 0;
     margin-bottom: 22px;
   }
+
+  .pageHeader h1 {
+    font-size: 1.725rem;
+  }
 }
 
 /* Mode chips (By Party / By Constituency) — always visible */
@@ -171,6 +175,7 @@
 @media (max-width: 767px) {
   .mlaGrid {
     grid-template-columns: 1fr;
+    overflow: hidden;
   }
 }
 
@@ -182,13 +187,14 @@
   .mlaCardWrapper {
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    width: 100%;
   }
 
   .mlaRoleBanner {
     display: block;
     background: var(--surface);
-    color: var(--text-primary);
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: none;
     letter-spacing: 0;
@@ -201,6 +207,8 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .mlaRoleBanner + .mlaCard {
@@ -350,7 +358,7 @@
   .partyHeading {
     margin-top: var(--spacing-md);
     gap: var(--spacing-sm);
-    font-size: 1.25rem;
+    font-size: 1.6rem;
   }
 
   .partyNameFull {
@@ -379,13 +387,12 @@
 
   .mlaCard {
     display: grid !important;
-    grid-template-columns: 64px 1fr !important;
+    grid-template-columns: 88px 1fr !important;
     border-left: 3px solid var(--party-color) !important;
-    grid-template-rows: auto auto auto auto !important;
+    grid-template-rows: auto auto auto !important;
     grid-template-areas:
       "photo name"
       "photo constituency"
-      "photo role"
       "photo attendance" !important;
     align-items: start !important;
     justify-items: start !important;
@@ -393,21 +400,24 @@
     padding: 0.75rem !important;
     gap: 0.15rem 0.75rem !important;
     flex-direction: unset !important;
+    min-height: unset !important;
+    height: auto !important;
+    overflow: hidden !important;
   }
 
   .mlaCard > *:first-child {
     grid-area: photo !important;
-    width: 64px !important;
-    min-width: 64px !important;
-    height: 64px !important;
+    width: 88px !important;
+    min-width: 88px !important;
+    height: 88px !important;
     align-self: start !important;
     flex-shrink: 0 !important;
   }
 
   .mlaCard > *:first-child img,
   .mlaCard > *:first-child > div {
-    width: 64px !important;
-    height: 64px !important;
+    width: 88px !important;
+    height: 88px !important;
     border-radius: 50% !important;
   }
 
@@ -415,12 +425,28 @@
     grid-area: name !important;
     align-self: end !important;
     margin-top: 0 !important;
-    font-size: 0.9375rem !important;
+    font-size: 1.2rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
   }
 
   .mlaConstituency {
     grid-area: constituency !important;
     align-self: start !important;
+    font-size: 1rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+  }
+
+  .attendanceBadge {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
   }
 
   .mlaRoleSlot {
@@ -436,11 +462,44 @@
   }
 }
 
+.loadMoreWrap {
+  display: none;
+}
+
+.loadMoreBtn {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  margin-top: var(--spacing-md);
+  transition: border-color 150ms ease, color 150ms ease;
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+.loadMoreBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .formerMlasLink {
   font-size: 0.875rem;
   color: var(--text-secondary);
   margin-top: var(--spacing-lg);
   margin-bottom: var(--spacing-xl);
+}
+
+@media (max-width: 767px) {
+  .loadMoreWrap {
+    display: block;
+  }
+
+  .formerMlasLink {
+    font-size: 1rem;
+  }
 }
 
 .formerMlasLink a {

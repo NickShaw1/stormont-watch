@@ -239,12 +239,23 @@ a:hover {
   .page-header {
     padding-block: var(--spacing-lg);
   }
+
+  .page-header h1 {
+    font-size: 1.725rem;
+  }
+
 }
 
 .page-header p {
   color: var(--text-secondary);
   margin-top: var(--spacing-sm);
   font-size: 1.0625rem;
+}
+
+@media (max-width: 767px) {
+  .page-header p {
+    font-size: 1rem;
+  }
 }
 
 .page-header-rule {

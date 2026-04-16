@@ -93,28 +93,6 @@ export default function ConstituencyMap({ selected, onSelect, onZoomReset, onErr
 
       zoomRef.current = zoom
 
-      if (isMobile) {
-        svg.call(zoom)
-
-        // Single-touch passthrough (don't block scroll)
-        svgRef.current.addEventListener('touchstart', (e) => {
-          if (e.touches.length === 1) e.stopPropagation()
-        }, { passive: true })
-      }
-
-      if (isMobile) {
-        // Double-tap to reset
-        svg.on('dblclick.zoom', () => {
-          svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity)
-        })
-
-        // Expose reset fn to parent
-        if (onZoomReset) {
-          onZoomReset(() => {
-            svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity)
-          })
-        }
-      }
 
       g.selectAll('path')
         .data(geojson.features)
@@ -193,11 +171,6 @@ export default function ConstituencyMap({ selected, onSelect, onZoomReset, onErr
           if (area < 1200) return ''
           return dbName
         })
-
-      // Restore previous zoom after all elements are drawn so textG exists
-      if (isMobile && prevTransform) {
-        svg.call(zoom.transform, prevTransform)
-      }
 
       setLoading(false)
     } catch (err) {
