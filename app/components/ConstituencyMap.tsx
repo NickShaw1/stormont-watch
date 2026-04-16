@@ -65,11 +65,6 @@ export default function ConstituencyMap({ selected, onSelect, onZoomReset, onErr
         .fitExtent([[inset, inset], [width - inset, height - inset]], geojson)
       const pathGen = d3.geoPath().projection(projection)
 
-      // Save current transform before wiping the DOM
-      const prevTransform = zoomRef.current
-        ? (d3.zoomTransform(svgRef.current) as any)
-        : null
-
       svg.selectAll('g').remove()
 
       const g = svg.append('g')
@@ -179,7 +174,7 @@ export default function ConstituencyMap({ selected, onSelect, onZoomReset, onErr
       onError?.()
       setLoading(false)
     }
-  }, [selected, onSelect, onZoomReset, onError])
+  }, [selected, onSelect, onError])
 
   useEffect(() => {
     drawMap()
