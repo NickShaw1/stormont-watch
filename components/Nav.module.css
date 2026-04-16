@@ -319,6 +319,11 @@
   user-select: none;
 }
 
+.sidebarLink:active,
+.sidebarLink:visited {
+  text-decoration: none;
+}
+
 @media (hover: hover) {
   .sidebarLink:hover {
     color: #fff;

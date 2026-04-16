@@ -92,7 +92,7 @@ export default async function BillDetailPage({ params }: Props) {
         <nav aria-label="Breadcrumb" className={`breadcrumb ${styles.breadcrumb}`}>
           <ol>
             <li><Link href="/assembly/bills">Legislation</Link></li>
-            <li aria-current="page">{bill.short_title}</li>
+            <li aria-current="page"><span>{bill.short_title}</span></li>
           </ol>
         </nav>
         <h1 className={styles.title}>{bill.short_title}</h1>

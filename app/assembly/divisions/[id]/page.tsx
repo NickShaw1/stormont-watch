@@ -146,12 +146,12 @@ export default async function DivisionDetailPage({ params }: Props) {
               <>
                 <li><Link href="/assembly/bills">Legislation</Link></li>
                 <li><Link href={`/assembly/bills/${billSlug(billStage[0].billId ?? '')}`}>{parentBill[0].shortTitle}</Link></li>
-                <li aria-current="page">{displayTitle}</li>
+                <li aria-current="page"><span>{displayTitle}</span></li>
               </>
             ) : (
               <>
                 <li><Link href="/assembly/votes">Votes</Link></li>
-                <li aria-current="page">{displayTitle}</li>
+                <li aria-current="page"><span>{displayTitle}</span></li>
               </>
             )}
           </ol>

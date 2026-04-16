@@ -39,6 +39,8 @@
   background: var(--card-bg);
   transition: background 100ms ease;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .dropdownItem:last-child {
@@ -60,7 +62,7 @@
 }
 
 .dropdownItem:active {
-  background: #d0dce6;
+  background: var(--surface);
 }
 
 .dropdownItemSelected {
@@ -180,7 +182,7 @@
 }
 
 .resetBtn:active {
-  background: #d0dce6;
+  background: var(--surface);
 }
 
 .mapSelectMobile {

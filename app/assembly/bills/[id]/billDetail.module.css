@@ -2,18 +2,6 @@
   padding-block: var(--spacing-xl) 0;
 }
 
-@media (max-width: 767px) {
-  .breadcrumb ol {
-    flex-wrap: nowrap;
-  }
-
-  .breadcrumb li:last-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-  }
-}
 
 .title {
   margin-top: var(--spacing-sm);

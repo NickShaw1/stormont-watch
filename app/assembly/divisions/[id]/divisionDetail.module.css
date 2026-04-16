@@ -3,18 +3,6 @@
   margin-bottom: var(--spacing-xl);
 }
 
-@media (max-width: 767px) {
-  .breadcrumb ol {
-    flex-wrap: nowrap;
-  }
-
-  .breadcrumb li:last-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-  }
-}
 
 .title {
   font-size: 2.5rem;
@@ -64,19 +52,20 @@
 }
 
 .metaLabel {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-secondary);
-  min-width: 60px;
+  min-width: 80px;
   flex-shrink: 0;
 }
 
 .metaValue {
-  font-size: 0.8125rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   line-height: 1.4;
+  flex: 1;
 }
 
 .metaValue a {
@@ -452,12 +441,12 @@
   }
 
   .metaLabel {
-    min-width: 76px;
-    font-size: 1rem;
+    min-width: 80px;
+    font-size: 0.8rem;
   }
 
   .metaValue {
-    font-size: 1rem;
+    font-size: 0.8rem;
   }
 
   .motionText {

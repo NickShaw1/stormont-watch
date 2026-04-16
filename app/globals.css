@@ -335,6 +335,40 @@ a:hover {
   overflow: hidden;
 }
 
+@media (max-width: 767px) {
+  .breadcrumb ol {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    width: 100%;
+    gap: 0;
+  }
+
+  /* Each li is itself a flex row: [separator] [text] */
+  .breadcrumb li {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+
+  /* Separator stays pinned, never shrinks */
+  .breadcrumb li + li::before {
+    flex-shrink: 0;
+    padding: 0 var(--spacing-xs);
+  }
+
+  /* Links and current-page spans truncate at 15ch */
+  .breadcrumb li a,
+  .breadcrumb li > span {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 15ch;
+    min-width: 0;
+  }
+}
+
 .breadcrumb li + li::before {
   content: '/';
   margin-right: var(--spacing-xs);
