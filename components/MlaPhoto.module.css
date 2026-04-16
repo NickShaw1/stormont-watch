@@ -1,0 +1,28 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #fff;
+  flex-shrink: 0;
+  border: 2px solid #fff;
+}
+
+.wrapFallback {
+  background: var(--accent);
+}
+
+.fallback {
+  color: #fff;
+  font-family: var(--font-heading), Georgia, serif;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+.img {
+  object-fit: cover;
+  object-position: center 15%;
+}

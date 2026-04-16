@@ -1,0 +1,14 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.section h2 {
+  margin-bottom: 0;
+  max-width: 65ch;
+}
+
+.section p {
+  color: var(--text-secondary);
+}

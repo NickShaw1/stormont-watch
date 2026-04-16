@@ -1,0 +1,234 @@
+/* Desktop roll call — three columns */
+.rollCallFilters,
+.loadMore,
+.rollCallMobileList {
+  display: none;
+}
+
+/* Filter buttons */
+.filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1px solid #A0B8C8;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filterBtn:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.filterBtnActive {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.filterBtnActive:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.filterBtnActive[data-filter="AYE"] {
+  background: #D1FAE5;
+  color: #065F46;
+  border-color: #6EE7B7;
+}
+
+.filterBtnActive[data-filter="NO"] {
+  background: #FEE2E2;
+  color: #991B1B;
+  border-color: #FCA5A5;
+}
+
+.filterBtnActive[data-filter="NO_SHOW"] {
+  background: #E2E8ED;
+  color: #3A5A70;
+  border-color: var(--border);
+}
+
+.filterBtnActive[data-filter="ABSTAINED"] {
+  background: #EEF4F8;
+  color: #3A5A70;
+  border-color: var(--border);
+}
+
+.filterCount {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--surface);
+  color: var(--text-secondary);
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+.filterBtnActive .filterCount {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  border-color: transparent;
+}
+
+.filterBtnActive[data-filter="AYE"] .filterCount {
+  background: rgba(6, 95, 70, 0.12);
+  color: #065F46;
+  border-color: transparent;
+}
+
+.filterBtnActive[data-filter="NO"] .filterCount {
+  background: rgba(153, 27, 27, 0.12);
+  color: #991B1B;
+  border-color: transparent;
+}
+
+.filterBtnActive[data-filter="NO_SHOW"] .filterCount {
+  background: rgba(58, 90, 112, 0.12);
+  color: #3A5A70;
+  border-color: transparent;
+}
+
+.filterBtnActive[data-filter="ABSTAINED"] .filterCount {
+  background: rgba(58, 90, 112, 0.12);
+  color: #3A5A70;
+  border-color: transparent;
+}
+
+.votePill {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.voteAYE      { background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+.voteNO       { background: #FAE5E5; color: #9B2626; border: 1px solid #FCA5A5; }
+.voteNO_SHOW  { background: #E2E8ED; color: #3A5A70; border: 1px solid var(--border); }
+.voteABSTAINED { background: #EEF4F8; color: #3A5A70; border: 1px solid var(--border); }
+
+@media (max-width: 640px) {
+  .votePill {
+    font-size: 0.6875rem;
+  }
+
+  .rollCall {
+    display: none;
+  }
+
+  .rollCallMobileList {
+    display: flex;
+    flex-direction: column;
+    margin-top: var(--spacing-sm);
+  }
+
+  .mobilePartyGroup {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .mobilePartyRule {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  .mobilePartyHeading {
+    padding-block: var(--spacing-xs);
+    margin-bottom: 4px;
+  }
+
+  .rollCallMobileRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: var(--spacing-xs);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+  }
+
+  .rollCallMobileRow:last-child {
+    border-bottom: none;
+  }
+
+
+  .rollCallName {
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+
+  .rollCallName:hover {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .rollCallFilters {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.375rem;
+    width: 100%;
+    margin-top: 24px;
+    margin-bottom: 24px;
+  }
+
+  .rollCallFilters .filterBtn {
+    text-align: center;
+    justify-content: center;
+    white-space: nowrap;
+    padding: 6px 8px;
+    font-size: 0.8125rem;
+    min-height: unset;
+  }
+
+  .rollCallFilters .filterCount {
+    font-size: 0.6875rem;
+    padding: 1px 4px;
+  }
+}
+
+@media (max-width: 640px) {
+  .loadMore {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    margin-top: var(--spacing-md);
+    transition: border-color 150ms ease, color 150ms ease;
+  }
+
+  .loadMore:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+
+@media (max-width: 380px) {
+  .rollCallFilters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rollCallFilters .filterBtn {
+    padding: 5px 6px;
+    font-size: 0.75rem;
+  }
+}

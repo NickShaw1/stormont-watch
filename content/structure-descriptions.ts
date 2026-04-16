@@ -1,0 +1,31 @@
+export const departmentDescriptions: Record<string, string> = {
+  'Department of Finance': 'Manages the Northern Ireland budget, public spending, civil service pay and government procurement. Sets the financial framework all other departments operate within.',
+  'Department of Agriculture, Environment and Rural Affairs': 'Oversees farming and food production, environmental protection, rural development and climate policy for Northern Ireland.',
+  'Department for Communities': 'Responsible for social welfare, housing, urban regeneration, sport, arts and culture and support for voluntary and community organisations.',
+  'Department for the Economy': 'Drives economic growth through investment, skills, further and higher education, tourism and energy policy.',
+  'Department of Education': 'Sets policy for primary and post-primary schooling, early years provision and the Education Authority which delivers statutory education services.',
+  'Department of Health': 'Responsible for health and social care services, public health, mental health and the commissioning of hospital and community services.',
+  'Department for Infrastructure': 'Plans and maintains roads, public transport, water and sewerage and planning policy across Northern Ireland.',
+  'Department of Justice': 'Oversees courts, legal aid, prisons and probation. Operational policing remains with the PSNI under the Policing Board.',
+}
+
+export const committeeDescriptions: Record<string, string> = {
+  'Committee for The Executive Office': 'Scrutinises the work of the Executive Office including the Programme for Government, equality legislation and the work of the First and Deputy First Ministers.',
+  'Committee for Agriculture, Environment and Rural Affairs': 'Scrutinises DAERA policy on farming, fisheries, rural development and environmental protection and examines related legislation.',
+  'Concurrent Committee for the Committee for Agriculture, Environment and Rural Affairs and the Committee for Infrastructure': 'A joint committee scrutinising work that spans agriculture, environment, rural affairs and infrastructure, convened when issues cut across both departments.',
+  'Committee for Communities': 'Oversees the Department for Communities on housing, social welfare, arts, sport and support for the voluntary sector.',
+  'Committee for the Economy': 'Examines economic development, skills, further and higher education, tourism and energy policy delivered by the Department for the Economy.',
+  'Committee for Education': 'Scrutinises the Department of Education on school policy, curriculum, early years and the Education Authority.',
+  'Committee for Finance': 'Examines the Draft Budget, public expenditure plans and the financial management of all government departments.',
+  'Committee for Health': 'Scrutinises health and social care policy, hospital services, mental health provision and public health strategy.',
+  'Committee for Infrastructure': 'Examines roads, public transport, water infrastructure and planning policy delivered by the Department for Infrastructure.',
+  'Committee for Justice': 'Scrutinises courts, prisons, probation, legal aid and policing policy. One of the most cross-community sensitive roles in the Assembly.',
+  'Public Accounts Committee': 'Examines how public money has been spent by departments and public bodies, working with the Comptroller and Auditor General to ensure value for taxpayers.',
+  'Audit Committee': 'Oversees the governance and financial management of the Northern Ireland Assembly Commission itself.',
+  'Committee on Standards and Privileges': 'Investigates complaints about MLA conduct and upholds the standards expected of elected members.',
+  'Business Committee': 'Manages the timetabling and scheduling of Assembly business, plenary debates and committee work.',
+  'Windsor Framework Democratic Scrutiny Committee': 'Scrutinises new and replacement EU acts that apply in Northern Ireland under the Windsor Framework, engaging with the UK Government and NI Executive on their implications.',
+  'Assembly and Executive Review Committee': 'Reviews the operation of the Assembly and the Executive including devolution arrangements and inter-institutional relations.',
+  'Committee on Procedures': 'Reviews and recommends changes to Assembly Standing Orders and the procedural rules governing how the Assembly operates.',
+  'Northern Ireland Assembly Commission': 'The corporate body responsible for providing the property, staff and services required by the Assembly to carry out its work.',
+}

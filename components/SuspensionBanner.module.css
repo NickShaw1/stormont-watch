@@ -1,0 +1,19 @@
+.banner {
+  background: var(--suspension-bg);
+  color: var(--suspension-text);
+  border-bottom: 1px solid #FCD34D;
+  padding-block: var(--spacing-sm);
+}
+
+.inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs) var(--spacing-md);
+  align-items: baseline;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.inner strong {
+  font-weight: 600;
+}

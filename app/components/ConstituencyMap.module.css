@@ -1,0 +1,52 @@
+.wrap {
+  position: relative;
+  width: 100%;
+}
+
+.loading {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.attribution {
+  font-size: 0.625rem;
+  color: var(--text-secondary);
+  margin: 0 0 8px;
+  line-height: 1.4;
+  text-align: center;
+  width: 100%;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+@media (min-width: 641px) {
+  .attribution {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .attribution {
+    display: none;
+  }
+}
+
+.attribution a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.tooltip {
+  position: absolute;
+  background: var(--accent);
+  color: white;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+}

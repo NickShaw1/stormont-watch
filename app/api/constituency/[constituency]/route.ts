@@ -1,0 +1,25 @@
+import { NextResponse } from 'next/server'
+import { createDb } from '@/lib/db/client'
+import { members } from '@/lib/db/schema'
+import { eq, and } from 'drizzle-orm'
+
+export async function GET(
+  request: Request,
+  { params }: { params: { constituency: string } }
+) {
+  const db = createDb()
+  const constituency = decodeURIComponent(params.constituency)
+  const mlas = await db
+    .select({
+      personId: members.personId,
+      fullName: members.fullName,
+      party: members.party,
+      imgUrl: members.imgUrl,
+    })
+    .from(members)
+    .where(and(
+      eq(members.constituency, constituency),
+      eq(members.isCurrent, true)
+    ))
+  return NextResponse.json(mlas)
+}

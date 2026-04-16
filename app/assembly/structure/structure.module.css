@@ -1,0 +1,413 @@
+/* ── Mobile tab filter ──────────────────────────────────────── */
+
+.tabList {
+  display: none;
+}
+
+.pageHeader {
+  margin-bottom: 40px;
+  padding-bottom: 0;
+}
+
+@media (max-width: 767px) {
+  .pageHeader {
+    margin-bottom: 22px;
+  }
+}
+
+.sectionSeparator {
+  margin: 40px 0;
+}
+
+@media (max-width: 767px) {
+  .sectionSeparator {
+    display: none;
+  }
+}
+
+
+@media (max-width: 767px) {
+  .tabList {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    width: 100%;
+    margin-bottom: 24px;
+  }
+
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 8px;
+    min-height: 44px;
+    border-radius: 999px;
+    border: 1px solid #A0B8C8;
+    background: transparent;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font-body), system-ui, sans-serif;
+    white-space: nowrap;
+  }
+
+  .tab:hover {
+    background: var(--surface);
+    color: var(--text-primary);
+    border-color: var(--accent);
+  }
+
+  .tab[aria-selected='true'],
+  .tabActive {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .tabHideMobile {
+    display: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .tabList {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem;
+  }
+
+  .tab {
+    font-size: 0.75rem;
+    padding: 8px 8px;
+  }
+}
+
+/* ── Section visibility + animation ────────────────────────── */
+
+/* Desktop: all sections always visible regardless of JS state */
+/* Mobile: JS drives visibility via sectionHidden / sectionVisible / sectionFadingOut */
+
+@media (max-width: 767px) {
+  .sectionHidden {
+    display: none !important;
+  }
+}
+
+
+/* Hide dividers when both adjacent sections are not shown — mobile only */
+@media (max-width: 767px) {
+  .hrHidden {
+    display: none;
+  }
+}
+
+/* ── Stat bar ───────────────────────────────────────────────── */
+
+.statBar {
+  display: flex;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-xl);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: var(--surface);
+  border-radius: 8px;
+  flex: 1;
+}
+
+.statValue {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.statLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+}
+
+/* ── Section ────────────────────────────────────────────────── */
+
+.section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.sectionHeader {
+  margin-bottom: var(--spacing-lg);
+}
+
+.sectionHeading {
+  margin-bottom: 0;
+}
+
+.sectionHeading::after {
+  content: '';
+  display: block;
+  height: 2px;
+  width: 40px;
+  background: var(--accent);
+  border-radius: 1px;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sectionBlurb {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: none;
+  margin-bottom: 24px;
+}
+
+.sectionBlurb a {
+  text-decoration: none;
+}
+
+.sectionBlurb a:hover {
+  text-decoration: underline;
+}
+
+/* ── Executive ──────────────────────────────────────────────── */
+
+.executiveGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+}
+
+@media (min-width: 560px) {
+  .executiveGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.executiveCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.executiveCard::before {
+  content: '';
+  display: block;
+  height: 4px;
+  background: var(--party-color, var(--border));
+}
+
+.executiveCardInner {
+  display: flex;
+  gap: var(--spacing-lg);
+  align-items: flex-start;
+  padding: var(--spacing-lg);
+}
+
+.executiveInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.roleTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.executiveName {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 1.3125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+.executiveName:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* ── Junior minister cards ──────────────────────────────────── */
+
+.juniorCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ── Speaker badge ──────────────────────────────────────────── */
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: 2px;
+}
+
+.speakerBadge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+/* ── Entry cards (departments & committees) ─────────────────── */
+
+.cardList {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+@media (max-width: 767px) {
+  .sectionHeader {
+    margin-bottom: 16px;
+  }
+
+  .cardList {
+    grid-template-columns: 1fr;
+  }
+}
+
+.entryCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.entryHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border);
+  margin-top: var(--spacing-md);
+  flex: 1;
+}
+
+.entryTitle {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.entryDescription {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: none;
+}
+
+.entryPerson {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+/* ── Person info ────────────────────────────────────────────── */
+
+.personInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.officialLink {
+  display: inline-block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+  margin-top: auto;
+  padding-top: var(--spacing-sm);
+  align-self: flex-start;
+}
+
+.officialLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.personRole {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+}
+
+.personName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  line-height: 1.3;
+}
+
+.personName:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* ── Party pill ─────────────────────────────────────────────── */
+
+.partyPill {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: none;
+  width: fit-content;
+}
+.partyPill[data-party="Sinn Féin"] { background: #326760; color: white; }
+.partyPill[data-party="DUP"]       { background: #C41E3A; color: white; }
+.partyPill[data-party="Alliance"]  { background: #F6C135; color: #1a1a1a; }
+.partyPill[data-party="UUP"]       { background: #5B8DD9; color: white; }
+.partyPill[data-party="SDLP"]      { background: #2E8B57; color: white; }
+.partyPill[data-party="TUV"]       { background: #1a1a6e; color: white; }
+.partyPill[data-party="PBP"]       { background: #c0392b; color: white; }
+.partyPill[data-party="Ind"]       { background: #888;    color: white; }
+
+@media (max-width: 640px) {
+  .partyPill {
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 767px) {
+  .sectionHeading::after {
+    margin-bottom: 24px;
+  }
+}

@@ -1,0 +1,114 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { getAllBills, getThisWeekLegislation } from '@/lib/db/queries'
+import BillsListClient from './BillsListClient'
+import styles from './bills.module.css'
+
+export const revalidate = 86400
+
+export async function generateMetadata(): Promise<Metadata> {
+  const bills = await getAllBills()
+  const count = bills.length
+  const description = `Browse all ${count} bills and acts in the Northern Ireland Assembly since February 2024. Track progress through legislative stages.`
+  return {
+    title: 'Legislation',
+    description,
+    openGraph: {
+      title: 'Legislation — Stormont Watch',
+      description,
+    },
+    alternates: { canonical: 'https://stormontwatch.com/assembly/bills' },
+  }
+}
+
+
+export interface BillItem {
+  slug: string
+  title: string
+  billType: string | null
+  isAccelerated: boolean
+  latestDate: string
+  currentStage: string
+  passed: boolean | null
+  royalAssentDate: string | null
+  actTitle: string | null
+  category: 'scheduled' | 'in-progress' | 'completed'
+}
+
+function billSlug(billId: string): string {
+  return billId.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
+}
+
+function hasFinalStagePassed(b: { final_stage_has_division: boolean | null; final_stage_outcome: string | null }): boolean {
+  return b.final_stage_has_division === true && /carried/i.test(b.final_stage_outcome ?? '')
+}
+
+function hasFinalStageFailed(b: { final_stage_has_division: boolean | null; final_stage_outcome: string | null }): boolean {
+  return b.final_stage_has_division === true && !/carried/i.test(b.final_stage_outcome ?? '')
+}
+
+export default async function BillsPage() {
+  const [allBills, thisWeekBills] = await Promise.all([getAllBills(), getThisWeekLegislation()])
+  const now = new Date()
+
+  // Rule 1: has royal assent → completed
+  // Rule 2: current_stage is Final Stage and latest_date is in the past → completed
+  // Also catch bills where a Final Stage division result was recorded (passed or failed)
+  // regardless of what current_stage is set to, as it may have been updated after the vote
+  const isCompleted = (b: typeof allBills[number]) =>
+    b.royal_assent_date != null ||
+    (b.current_stage.toLowerCase() === 'final stage' && new Date(b.latest_date) <= now) ||
+    hasFinalStagePassed(b) ||
+    hasFinalStageFailed(b)
+
+  function toItem(b: typeof allBills[number], category: BillItem['category']): BillItem {
+    const passed = b.royal_assent_date != null ? true
+      : hasFinalStagePassed(b) ? true
+      : hasFinalStageFailed(b) ? false
+      : null
+    return {
+      slug: billSlug(b.bill_id),
+      title: b.short_title,
+      billType: b.bill_type,
+      isAccelerated: b.is_accelerated,
+      latestDate: b.latest_date,
+      currentStage: b.display_stage,
+      passed,
+      royalAssentDate: b.royal_assent_date,
+      actTitle: b.act_title,
+      category,
+    }
+  }
+
+  // Rule 3: latest_date in the future (and not already completed) → scheduled
+  const scheduled = allBills
+    .filter(b => !isCompleted(b) && new Date(b.latest_date) > now)
+    .map(b => toItem(b, 'scheduled'))
+    .sort((a, b) => new Date(a.latestDate).getTime() - new Date(b.latestDate).getTime())
+
+  const inProgress = allBills
+    .filter(b => !isCompleted(b) && new Date(b.latest_date) <= now)
+    .map(b => toItem(b, 'in-progress'))
+    .sort((a, b) => new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime())
+
+  const completed = allBills
+    .filter(b => isCompleted(b))
+    .map(b => toItem(b, 'completed'))
+    .sort((a, b) => new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime())
+
+  return (
+    <div>
+      <div className="container">
+        <header className={`page-header ${styles.pageHeader}`}>
+          <h1>Legislation</h1>
+          <div className="page-header-rule"></div>
+          <p className={styles.subtitle}>Bills and Acts from the Assembly since February 2024.</p>
+          <p className={`${styles.disclaimer} ${styles.disclaimerTop}`}>* Stage information is sourced from the NI Assembly Open Data API. Some stages may not be reflected immediately.</p>
+          <p className={`${styles.disclaimer} ${styles.stagesLink}`}>** Not sure what a stage means? <Link href="/assembly/bills/stages" className={styles.disclaimerLink}>Stages explained <span aria-hidden="true">↗</span></Link></p>
+        </header>
+        <hr className="section-rule" style={{ margin: '0 0 40px' }} />
+      </div>
+      <BillsListClient scheduled={scheduled} inProgress={inProgress} completed={completed} thisWeekBills={thisWeekBills} />
+    </div>
+  )
+}

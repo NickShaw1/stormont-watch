@@ -1,0 +1,453 @@
+
+@media (max-width: 767px) {
+  .pageHeader {
+    padding-bottom: 0;
+    margin-bottom: 22px;
+  }
+}
+
+/* Mode chips (By Party / By Constituency) — always visible */
+.modeChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Party filter */
+.partyFilter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+  .partyFilter {
+    display: none;
+  }
+}
+
+.partyFilterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  min-height: 44px;
+  border: 2px solid #A0B8C8;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.partyFilterBtn:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.partyFilterBtnActive {
+  border: 2px solid transparent;
+}
+
+.partyFilterBtnActiveAll {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.partyFilterBtnActiveAll:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.partyFilterBtnActiveAll .partyFilterCount {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  border-color: transparent;
+}
+
+
+.partyFilterCount {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--surface);
+  color: var(--text-secondary);
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+/* Search */
+.searchWrap {
+  margin-bottom: var(--spacing-xl);
+}
+
+.search {
+  width: 100%;
+  max-width: 480px;
+  padding: 10px var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 1rem;
+  outline: none;
+}
+
+.search:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.search::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--text-secondary);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 4l-8 8' stroke='currentColor' stroke-width='2'/%3E%3C/svg%3E");
+  cursor: pointer;
+}
+
+.searchRule,
+.sectionRule {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 40px 0;
+}
+
+/* Party sections */
+.partySection {
+  margin-bottom: var(--spacing-xl);
+  transition: opacity 150ms ease;
+}
+
+.partyHeading {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  padding-left: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.partyNameShort {
+  display: none;
+}
+
+.partyCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--border);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 2px 10px;
+  min-width: 36px;
+  margin-left: var(--spacing-sm);
+}
+
+/* MLA grid */
+.mlaGrid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+@media (max-width: 767px) {
+  .mlaGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mlaRoleBanner {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mlaCardWrapper {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mlaRoleBanner {
+    display: block;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text-secondary);
+    padding: 5px 10px;
+    border-radius: 6px 6px 0 0;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--party-color, var(--border));
+    border-bottom: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mlaRoleBanner + .mlaCard {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top: none;
+  }
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mlaCard {
+    animation: none;
+  }
+}
+
+/* MLA card */
+.mlaCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 0.625rem 0.75rem;
+  gap: 0.2rem;
+  height: 100%;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  animation: fadeSlideIn 200ms ease forwards;
+  transition: background 150ms ease;
+}
+
+.mlaCard::before {
+  content: '';
+  display: block;
+  width: calc(100% + 1.25rem);
+  height: 4px;
+  background: var(--party-color, var(--border));
+  margin: 0 -0.625rem 0.55rem;
+  flex-shrink: 0;
+}
+
+.mlaCard:hover {
+  background: var(--surface);
+}
+
+.mlaCard:active {
+  background: var(--surface);
+}
+
+.mlaName {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin-top: 0.35rem;
+}
+
+.mlaName::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.mlaName,
+.mlaName:hover,
+.mlaName:active,
+.mlaName:focus,
+.mlaName:visited {
+  text-decoration: none !important;
+}
+
+.mlaConstituency {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.mlaRoleSlot {
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.attendanceBadge {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--surface);
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.roleBadge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.partyPill {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  padding: 3px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: none;
+}
+.partyPill[data-party="Sinn Féin"] { background: #326760; color: white; }
+.partyPill[data-party="DUP"]       { background: #C41E3A; color: white; }
+.partyPill[data-party="Alliance"]  { background: #F6C135; color: #1a1a1a; }
+.partyPill[data-party="UUP"]       { background: #5B8DD9; color: white; }
+.partyPill[data-party="SDLP"]      { background: #2E8B57; color: white; }
+.partyPill[data-party="TUV"]       { background: #1a1a6e; color: white; }
+.partyPill[data-party="PBP"]       { background: #c0392b; color: white; }
+.partyPill[data-party="Ind"]       { background: #888;    color: white; }
+
+@media (max-width: 640px) {
+  .partyPill {
+    font-weight: 500;
+  }
+}
+
+@media (max-width: 767px) {
+  .searchWrap {
+    margin-bottom: 0;
+  }
+
+  .partySection {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .partyHeading {
+    margin-top: var(--spacing-lg);
+    gap: var(--spacing-sm);
+    font-size: 1.375rem;
+  }
+
+  .partyNameFull {
+    display: none;
+  }
+
+  .partyNameShort {
+    display: inline;
+  }
+
+  .partyHeadingInd .partyNameFull {
+    display: inline;
+  }
+
+  .partyHeadingInd .partyNameShort {
+    display: none;
+  }
+
+  .mlaCard:active {
+    background: var(--surface);
+  }
+
+  .mlaCard::before {
+    display: none !important;
+  }
+
+  .mlaCard {
+    display: grid !important;
+    grid-template-columns: 64px 1fr !important;
+    border-left: 3px solid var(--party-color) !important;
+    grid-template-rows: auto auto auto auto !important;
+    grid-template-areas:
+      "photo name"
+      "photo constituency"
+      "photo role"
+      "photo attendance" !important;
+    align-items: start !important;
+    justify-items: start !important;
+    text-align: left !important;
+    padding: 0.75rem !important;
+    gap: 0.15rem 0.75rem !important;
+    flex-direction: unset !important;
+  }
+
+  .mlaCard > *:first-child {
+    grid-area: photo !important;
+    width: 64px !important;
+    min-width: 64px !important;
+    height: 64px !important;
+    align-self: start !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mlaCard > *:first-child img,
+  .mlaCard > *:first-child > div {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 50% !important;
+  }
+
+  .mlaName {
+    grid-area: name !important;
+    align-self: end !important;
+    margin-top: 0 !important;
+  }
+
+  .mlaConstituency {
+    grid-area: constituency !important;
+    align-self: start !important;
+  }
+
+  .mlaRoleSlot {
+    display: none;
+  }
+
+  .attendanceBadge {
+    grid-area: attendance !important;
+  }
+
+  .search {
+    max-width: 100%;
+  }
+}
+
+.formerMlasLink {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.formerMlasLink a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.formerMlasLink a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

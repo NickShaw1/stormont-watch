@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stormont Watch
 
-## Getting Started
+Every vote. Every MLA. Since February 2024.
 
-First, run the development server:
+Stormont Watch tracks every division vote in the Northern Ireland Assembly,
+attendance records, expenses and legislation since the Assembly returned in February 2024.
+
+## Tech stack
+
+- Next.js 14 (static generation)
+- TypeScript
+- Neon Postgres + Drizzle ORM
+- Cloudflare Pages
+
+## Data source
+
+All data sourced from the [NI Assembly Open Data API](http://data.niassembly.gov.uk).
+
+## Sync scripts
+
+Daily sync runs automatically via GitHub Actions. See `scripts/` for individual sync scripts.
+
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Requires `DATABASE_URL` in `.env.local`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable                      | Description                                              |
+|-------------------------------|----------------------------------------------------------|
+| `ASSEMBLY_API_BASE`           | NI Assembly API base URL (default: `http://data.niassembly.gov.uk`) |
+| `ASSEMBLY_SUSPENDED`          | Set to `true` to display the suspension banner           |
+| `ASSEMBLY_LAST_SITTING_DATE`  | ISO date of last sitting, shown in the suspension banner |
+| `ASSEMBLY_RETURN_DATE`        | ISO date the Assembly returned, shown in the banner      |
 
-## Learn More
+## Data attribution
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Voting data is sourced from the [NI Assembly Open Data API](http://data.niassembly.gov.uk), published by the Northern Ireland Assembly.

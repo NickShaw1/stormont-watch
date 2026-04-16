@@ -1,0 +1,140 @@
+.header {
+  padding-block: var(--spacing-xl) var(--spacing-lg);
+}
+
+
+
+.title {
+  margin-top: var(--spacing-sm);
+}
+
+.summarySection {
+  margin-bottom: var(--spacing-xl);
+}
+
+.sectionHeading {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.summaryText {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  max-width: 65ch;
+}
+
+/* Impact */
+.impactSection {
+  margin-bottom: var(--spacing-xl);
+}
+
+.impactList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.impactItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.impactLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 160px;
+}
+
+.dotsWrap {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--impact-none);
+}
+
+.dot[data-active='true'][data-level='low']    { background: var(--impact-low); }
+.dot[data-active='true'][data-level='medium'] { background: var(--impact-medium); }
+.dot[data-active='true'][data-level='high']   { background: var(--impact-high); }
+
+.impactValue {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 64px;
+}
+
+.impactValue[data-level='low']    { color: var(--impact-low); }
+.impactValue[data-level='medium'] { color: var(--impact-medium); }
+.impactValue[data-level='high']   { color: var(--impact-high); }
+
+/* Divisions list */
+.divisionList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: var(--spacing-lg);
+}
+
+.divisionItem {
+  border-top: 1px solid var(--border);
+  padding-block: var(--spacing-lg);
+}
+
+.divisionItem:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.divisionMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.875rem;
+}
+
+.divisionTitle {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.divisionTitle a {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.divisionTitle a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.pillCrossCommunity {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: #EDE9FE;
+  color: #5B21B6;
+  white-space: nowrap;
+}
+
+.divisionOutcome {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+  max-width: none;
+}

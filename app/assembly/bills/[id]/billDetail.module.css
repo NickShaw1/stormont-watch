@@ -1,0 +1,405 @@
+.header {
+  padding-block: var(--spacing-xl) 0;
+}
+
+@media (max-width: 767px) {
+  .breadcrumb ol {
+    flex-wrap: nowrap;
+  }
+
+  .breadcrumb li:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+}
+
+.title {
+  margin-top: var(--spacing-sm);
+  margin-bottom: 0;
+}
+
+.title::after {
+  content: '';
+  display: block;
+  height: 2px;
+  width: 40px;
+  background: #E6B800;
+  border-radius: 1px;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.actBanner {
+  background: #D1FAE5;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.actTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #065F46;
+}
+
+.actDate {
+  font-size: 0.8125rem;
+  color: #065F46;
+}
+
+.longTitle {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin-top: 0.375rem;
+  font-style: italic;
+}
+
+.subheading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.625rem;
+  margin-top: 0;
+}
+
+.longTitleSingle {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+  font-style: normal;
+  width: 100%;
+  max-width: none;
+}
+
+
+.summarySection {
+  margin-bottom: var(--spacing-xl);
+}
+
+.summarySection h2 {
+  margin-bottom: var(--spacing-md);
+}
+
+.section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.sectionHeading {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.sectionHeadingRuled {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: var(--spacing-xl);
+  margin-bottom: 0;
+}
+
+.sectionHeadingRuled::after {
+  content: '';
+  display: block;
+  height: 2px;
+  width: 40px;
+  background: var(--accent);
+  border-radius: 1px;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.summaryText {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  max-width: 65ch;
+}
+
+/* Impact */
+.impactSection {
+  margin-bottom: var(--spacing-xl);
+}
+
+.impactList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.impactItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.impactLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 160px;
+}
+
+.dotsWrap {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--impact-none);
+}
+
+.dot[data-active='true'][data-level='low']    { background: var(--impact-low); }
+.dot[data-active='true'][data-level='medium'] { background: var(--impact-medium); }
+.dot[data-active='true'][data-level='high']   { background: var(--impact-high); }
+
+.impactValue {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 64px;
+}
+
+.impactValue[data-level='low']    { color: var(--impact-low); }
+.impactValue[data-level='medium'] { color: var(--impact-medium); }
+.impactValue[data-level='high']   { color: var(--impact-high); }
+
+/* Timeline */
+.stageList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: var(--spacing-lg);
+}
+
+.stageGroup {
+  border-top: 1px solid var(--border);
+  padding-block: var(--spacing-lg);
+}
+
+.stageGroup:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.stageHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.stageDate {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.stageLabelRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.stageLabel {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stageLabel a {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.stageLabel a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.groupMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xs);
+}
+
+.divisionCount {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.expandBtn {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: none;
+  padding: 0.5rem 0;
+  min-height: 44px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.expandBtn:hover {
+  color: var(--accent-hover, var(--accent));
+}
+
+/* Expanded items list */
+.stageItems {
+  list-style: none;
+  margin-top: var(--spacing-md);
+  border-left: 2px solid var(--border);
+  padding-left: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.stageItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.itemLabel {
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+}
+
+.noVoteSummary {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+.divisionLinkList {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin-top: var(--spacing-xs);
+  color: var(--accent);
+}
+
+.divisionLink {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.divisionLink:hover {
+  text-decoration: underline;
+}
+
+.divisionOutcome {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0;
+  max-width: none;
+}
+
+.sectionRule {
+  margin-block: 24px !important;
+}
+
+.guidePrompt {
+  font-size: 0.875rem;
+  margin: 0 !important;
+  margin-bottom: var(--spacing-md);
+}
+
+.guidePrompt a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.guidePrompt a:hover {
+  text-decoration: underline;
+}
+
+.stageInfoLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 0.5px solid var(--border);
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  flex-shrink: 0;
+  margin-left: 0.375rem;
+}
+
+.stageInfoLink:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+@media (max-width: 767px) {
+  .sectionHeading,
+  .sectionHeadingRuled {
+    font-size: 1.375rem;
+    margin-top: 24px;
+  }
+}
+
+.pillPassed,
+.pillFailed,
+.pillBecameLaw {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.pillPassed {
+  background: #D1FAE5;
+  color: #065F46;
+  border: 1px solid #6EE7B7;
+}
+
+.pillFailed {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FECACA;
+}
+
+.pillBecameLaw {
+  background: #D1FAE5;
+  color: #065F46;
+  border: 1px solid #6EE7B7;
+}
+
+.pillCrossCommunity {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  white-space: nowrap;
+  background: #EDE9FE;
+  color: #5B21B6;
+  border: 1px solid #C4B5FD;
+}
