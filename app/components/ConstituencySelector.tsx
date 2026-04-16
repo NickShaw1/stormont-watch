@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { fetchMLAsForConstituency } from './constituencyActions'
 import { abbreviateParty, partyPillStyleSolid } from '@/lib/format'
 import { stripHonorifics } from '@/lib/utils/formatNames'
 import styles from './ConstituencySelector.module.css'
@@ -12,7 +11,12 @@ import { CONSTITUENCY_ELECTORATE } from '@/lib/constants/electorates'
 
 const ConstituencyMap = dynamic(() => import('./ConstituencyMap'), { ssr: false })
 
-type MLA = Awaited<ReturnType<typeof fetchMLAsForConstituency>>[number]
+type MLA = {
+  personId: string
+  fullName: string
+  party: string
+  imgUrl: string | null
+}
 
 const CONSTITUENCIES = [
   'East Antrim', 'East Belfast', 'East Londonderry',
@@ -82,7 +86,8 @@ export default function ConstituencySelector() {
   async function fetchMlas(constituency: string) {
     setLoadingMlas(true)
     try {
-      const data = await fetchMLAsForConstituency(constituency)
+      const res = await fetch(`/api/constituency/${encodeURIComponent(constituency)}`)
+      const data = await res.json()
       setMlas(data)
     } catch {
       setMlas([])
