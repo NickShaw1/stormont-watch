@@ -231,7 +231,7 @@
   display: flex;
   gap: 0.375rem;
   padding: 0;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 @media (max-width: 767px) {
@@ -248,7 +248,8 @@
 }
 
 .financesTab {
-  padding: 0.5rem 1rem 0.5rem 0;
+  padding: 0 1rem 0.5rem 0;
+  margin-top: 0;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -990,7 +991,7 @@
   }
 
   .mobileTitle {
-    font-size: 0.875rem;
+    font-size: 1rem;
     font-weight: 500;
     color: var(--text-primary);
     line-height: 1.35;
