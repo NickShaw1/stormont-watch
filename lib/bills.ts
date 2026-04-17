@@ -1,5 +1,12 @@
 import { parseBillNumber, parseBillSlug, parseBillTitle } from './format'
-import type { DivisionListItem } from './assembly-api'
+
+export interface DivisionListItem {
+  EventID: string
+  DocumentID: string
+  DivisionSubject: string
+  DivisionDate: string
+  DivisonType: string // typo in API — one 'i', do not correct
+}
 
 export interface BillGroup {
   slug: string
