@@ -140,7 +140,7 @@ export default function VotesListClient({ allItems }: Props) {
       {/* Result count */}
       <p className={styles.resultCount}>
         <strong style={{ color: 'var(--text-primary)' }}>{filteredItems.length}</strong> division{filteredItems.length !== 1 ? 's' : ''}
-        {yearFilter !== 'ALL' ? ` in ${yearFilter}` : <> since <strong style={{ color: 'var(--text-primary)' }}>February 2024</strong></>}
+        {yearFilter !== 'ALL' ? ` in ${yearFilter}` : <> since <strong style={{ color: 'var(--text-primary)' }}>May 2022</strong></>}
         {q ? ` matching "${q}"` : ''}
       </p>
 

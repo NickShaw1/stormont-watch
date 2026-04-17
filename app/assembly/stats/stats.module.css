@@ -452,6 +452,11 @@
   max-width: none;
 }
 
+.expensesPeriod {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 @media (max-width: 640px) {
   .expensesMeta {
     display: flex;
@@ -777,7 +782,7 @@
 }
 
 .sectionDesc {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: var(--text-secondary);
   margin-bottom: 16px;
 }
@@ -861,7 +866,7 @@
 }
 
 .trendNote {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: var(--text-secondary);
   margin-top: var(--spacing-sm);
   max-width: none;
@@ -920,19 +925,31 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: 0.625rem 0.875rem;
   margin-bottom: var(--spacing-lg);
-  background: #FFFDF0;
-  border: 1px solid #EAB308;
-  border-radius: 8px;
+  background: #f0f4f7;
+  border-left: 3px solid #203F59;
+  border-radius: 0 6px 6px 0;
   text-decoration: none !important;
-  transition: background 150ms ease, border-color 150ms ease;
+  transition: background 150ms ease;
   box-sizing: border-box;
 }
 
 .expensesRankingsCard:hover {
-  background: #FEF9C3;
-  border-color: #CA8A04;
+  background: #e4eaf0;
+}
+
+.expensesRankingsCardLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.expensesRankingsCardIcon {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  display: block;
 }
 
 .expensesRankingsCardText {
@@ -951,6 +968,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
 }
 

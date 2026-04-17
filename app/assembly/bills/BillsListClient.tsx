@@ -200,7 +200,7 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
       {/* Browse section heading */}
       <div className={styles.browseSectionHead}>
         <h2 className={styles.sectionTitle}>Browse legislation</h2>
-        <p className={styles.browseSubtitle}>Search upcoming legislation, bills in progress, or acts and bills passed into law since February 2024.</p>
+        <p className={styles.browseSubtitle}>Search upcoming legislation, bills in progress, or acts and bills passed into law since May 2022.</p>
       </div>
 
       {/* Tab bar */}

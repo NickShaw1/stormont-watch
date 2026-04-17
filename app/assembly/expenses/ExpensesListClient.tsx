@@ -149,7 +149,7 @@ export default function ExpensesListClient({ rows, totalMlaCount }: Props) {
               <th scope="col">MLA</th>
               <th scope="col" className={styles.hideMobile}>Party</th>
               <th scope="col" className={`${styles.hideMobile} ${styles.hideTablet}`}>Constituency</th>
-              <th scope="col" className={`${styles.hideMobile} ${styles.hideTablet}`}>Service</th>
+              <th scope="col" className={`${styles.hideMobile} ${styles.hideTablet}`} title="Years and months of service since mandate start">Service</th>
               <th scope="col">Expenses</th>
             </tr>
           </thead>

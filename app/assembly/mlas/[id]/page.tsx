@@ -60,7 +60,7 @@ export default async function MlaDetailPage({ params }: Props) {
 
   const mandateStart = member.mandateStart
     ? new Date(member.mandateStart)
-    : new Date('2024-02-01')
+    : new Date('2022-05-01')
 
   const roleStart = member.assemblyRoleStart ? new Date(member.assemblyRoleStart) : null
   const roleEnd = member.assemblyRoleEnd ? new Date(member.assemblyRoleEnd) : null
@@ -243,6 +243,8 @@ export default async function MlaDetailPage({ params }: Props) {
               <span className={styles.statLabel}>Vote Attendance</span>
               {isPresidingOfficer ? (
                 <span className={styles.statMuted}>Does not vote</span>
+              ) : totalDivisions === 0 ? (
+                <span className={styles.statMuted}>N/A</span>
               ) : (
                 <span
                   className={styles.attendanceValue}
@@ -279,10 +281,19 @@ export default async function MlaDetailPage({ params }: Props) {
         <p className={styles.noVotes}>
           {isPresidingOfficer
             ? 'Presiding officers do not participate in divisions.'
-            : 'No voting record available.'}
+            : totalDivisions === 0
+              ? 'No divisions were held during this MLA\'s tenure.'
+              : 'No voting record available.'}
         </p>
       ) : (
-        <VotingRecordClient votes={relevantVotes} memberName={formatMemberName(member.fullName)} noExpensesTab={!latestExpenses && interests.length === 0} />
+        <>
+          {isPresidingOfficer && (
+            <p className={styles.noVotes}>
+              * As {member.assemblyRole}, {formatMemberName(member.fullName)} no longer participates in Assembly divisions. The voting record below reflects divisions held prior to taking up this role.
+            </p>
+          )}
+          <VotingRecordClient votes={relevantVotes} memberName={formatMemberName(member.fullName)} noExpensesTab={!latestExpenses && interests.length === 0} />
+        </>
       )}
     </div>
   )

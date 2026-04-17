@@ -14,6 +14,8 @@ import {
   getPassRateByYear,
   getOverallAgreementRate,
   getAllMembers,
+  getLatestExpensesYear,
+  getSittingDays,
 } from '@/lib/db/queries'
 import StatsRankingTabs from './StatsRankingTabs'
 
@@ -27,16 +29,16 @@ import styles from './stats.module.css'
 
 export const metadata: Metadata = {
   title: 'Stats',
-  description: 'Assembly voting statistics since February 2024.',
+  description: 'Assembly voting statistics since May 2022.',
   openGraph: {
     title: 'Stats — Stormont Watch',
-    description: 'Assembly voting statistics since February 2024.',
+    description: 'Assembly voting statistics since May 2022.',
   },
   alternates: { canonical: 'https://www.stormontwatch.com/assembly/stats' },
 }
 
 export default async function StatsPage() {
-  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, expensesLeague, expensesByParty, crossCommunityTrends, divisionsPerMonth, passRateByYear, overallAgreementRate, allCurrentMembers] = await Promise.all([
+  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, expensesLeague, expensesByParty, crossCommunityTrends, divisionsPerMonth, passRateByYear, overallAgreementRate, allCurrentMembers, latestExpensesYear, sittingDays] = await Promise.all([
     getMlaLeaderboard(),
     getAssemblyStats(),
     getAverageAttendance(),
@@ -50,6 +52,8 @@ export default async function StatsPage() {
     getPassRateByYear(),
     getOverallAgreementRate(),
     getAllMembers(),
+    getLatestExpensesYear(),
+    getSittingDays(),
   ])
 
   const { totalDivisions, crossCommunityCount } = assemblyStats
@@ -81,7 +85,7 @@ export default async function StatsPage() {
         </header>
 
         <p className={styles.assemblyStatement}>
-          Since returning in February 2024, the Assembly has held{' '}
+          Since May 2022, the Assembly has held{' '}
           <strong>{totalDivisions}</strong> votes.{' '}
           <strong>{overallPassRate}%</strong> of divisions passed.
           Unionist and nationalist MLAs voted Aye together on{' '}
@@ -92,7 +96,7 @@ export default async function StatsPage() {
           <div className={styles.glanceCell}>
             <span className={styles.glanceCellLabel}>Total divisions</span>
             <span className={styles.glanceCellValue}>{totalDivisions}</span>
-            <span className={styles.glanceCellMeta}>since Feb 2024</span>
+            <span className={styles.glanceCellMeta}>since May 2022</span>
           </div>
           <div className={styles.glanceCell}>
             <span className={styles.glanceCellLabel}>Current MLAs</span>
@@ -107,7 +111,7 @@ export default async function StatsPage() {
           <div className={styles.glanceCell}>
             <span className={styles.glanceCellLabel}>Expenses claimed</span>
             <span className={styles.glanceCellValue}>£{(totalExpenses / 1000000).toFixed(1)}m</span>
-            <span className={styles.glanceCellMeta}>2025–2026</span>
+            <span className={styles.glanceCellMeta}>{latestExpensesYear}</span>
           </div>
           <div className={styles.glanceCell}>
             <span className={styles.glanceCellLabel}>Busiest year</span>
@@ -181,7 +185,7 @@ export default async function StatsPage() {
               <div className={styles.sectionRule}></div>
             </div>
             <p className={styles.expensesMeta}>
-              {periodLabel}
+              <strong className={styles.expensesPeriod}>{periodLabel}</strong>
               <span className={styles.expensesMetaSep} aria-hidden="true">|</span>
               <span className={styles.expensesStat}>
                 <strong className={styles.expensesStatValue}>{gbp(String(assemblyTotal))}</strong>
@@ -194,7 +198,14 @@ export default async function StatsPage() {
               </span>
             </p>
             <Link href="/assembly/expenses" className={styles.expensesRankingsCard}>
-              <span className={styles.expensesRankingsCardText}>View full MLA expenses rankings</span>
+              <span className={styles.expensesRankingsCardLeft}>
+                <svg className={styles.expensesRankingsCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="10" cy="10" r="10" fill="#203F59"/>
+                  <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+                  <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+                </svg>
+                <span className={styles.expensesRankingsCardText}>View full MLA expenses rankings</span>
+              </span>
               <span className={styles.expensesRankingsCardArrow}>↗</span>
             </Link>
 
@@ -259,29 +270,30 @@ export default async function StatsPage() {
               )
 
               return (
-                <div className={styles.partyRankingGrid}>
-                  <PartyRankingCard
-                    title="Total claimed by party"
-                    subtitle={`All current MLAs · ${periodLabel}`}
-                    rows={byTotal}
-                    getValue={(r) => r.party_total}
-                    getMax={maxTotal}
-                  />
-                  <PartyRankingCard
-                    title="Cost per MLA by party"
-                    subtitle={`Average claim per MLA within each party · ${periodLabel}`}
-                    rows={byAvg}
-                    getValue={(r) => r.per_mla_avg}
-                    getMax={maxAvg}
-                  />
-                </div>
+                <>
+                  <div className={styles.expensesCardGrid}>
+                    <ExpensesCard title="Most expenses claimed" rows={top5} />
+                    <ExpensesCard title="Least expenses claimed" rows={bottom5} />
+                  </div>
+                  <div className={styles.partyRankingGrid}>
+                    <PartyRankingCard
+                      title="Total claimed by party"
+                      subtitle={`All current MLAs · ${periodLabel}`}
+                      rows={byTotal}
+                      getValue={(r) => r.party_total}
+                      getMax={maxTotal}
+                    />
+                    <PartyRankingCard
+                      title="Cost per MLA by party"
+                      subtitle={`Average claim per MLA within each party · ${periodLabel}`}
+                      rows={byAvg}
+                      getValue={(r) => r.per_mla_avg}
+                      getMax={maxAvg}
+                    />
+                  </div>
+                </>
               )
             })()}
-
-            <div className={styles.expensesCardGrid}>
-              <ExpensesCard title="Most expenses claimed" rows={top5} />
-              <ExpensesCard title="Least expenses claimed" rows={bottom5} />
-            </div>
           </section>
         )
       })()}
@@ -410,9 +422,9 @@ export default async function StatsPage() {
           <p className={styles.sectionEyebrow}>Sitting and voting patterns</p>
           <h2 id="productivity-heading" className={styles.sectionTitle}>Assembly activity</h2>
           <div className={styles.sectionRule}></div>
-          <p className={styles.sectionDesc}>How active the Assembly has been since returning in February 2024.</p>
+          <p className={styles.sectionDesc}>How active the Assembly has been since May 2022.</p>
         </div>
-        <AssemblyProductivityClient monthData={divisionsPerMonth} yearData={passRateByYear} />
+        <AssemblyProductivityClient monthData={divisionsPerMonth} yearData={passRateByYear} sittingDays={sittingDays} />
       </section>
 
       <hr className="section-rule" />
@@ -424,7 +436,14 @@ export default async function StatsPage() {
           <h2 id="cross-community-heading" className={styles.sectionTitle}>Cross-community voting</h2>
           <div className={styles.sectionRule}></div>
           <p className={styles.sectionDesc}>How often unionist and nationalist MLAs both voted Aye on the same division.</p>
-          <p className={styles.sectionCaveat}>* Figures cover divisions where a formal vote was called. Items passed without division are not included.</p>
+          <div className="note-card">
+            <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
+              <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+              <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+            </svg>
+            <p>Figures cover divisions where a formal vote was called. Items passed without division are not included.</p>
+          </div>
         </div>
         <CrossCommunityTrendsClient data={crossCommunityTrends} />
       </section>

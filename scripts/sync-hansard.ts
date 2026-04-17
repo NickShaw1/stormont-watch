@@ -4,6 +4,7 @@ import { drizzle } from 'drizzle-orm/neon-http'
 import * as schema from '../lib/db/schema'
 
 const BASE = 'http://data.niassembly.gov.uk'
+const CURRENT_MANDATE = '2022-2027'
 
 type Db = ReturnType<typeof drizzle<typeof schema>>
 
@@ -36,6 +37,7 @@ async function syncHansardReports(db: Db) {
           reportDocId,
           plenaryDate: dateOnly,
           sessionName: sessionName ?? null,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoNothing()
       count++

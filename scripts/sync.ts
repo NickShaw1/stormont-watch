@@ -7,7 +7,8 @@ import { and, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 
 const BASE = 'http://data.niassembly.gov.uk'
-const CUTOFF = '2024-02-01'
+const CUTOFF = '2022-05-01'
+const CURRENT_MANDATE = '2022-2027'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -67,6 +68,13 @@ async function syncMembers(db: Db): Promise<{ knownMemberIds: Set<string>; curre
   const currentIds = new Set(
     currentRaw.map((m: any) => str(m?.PersonID ?? m?.PersonId)).filter(Boolean)
   )
+
+  // Fix 1: Load existing DB members so we don't re-import historical MLAs from past mandates
+  const existingMembers = await db
+    .select({ personId: schema.members.personId })
+    .from(schema.members)
+  const existingIds = new Set(existingMembers.map(m => m.personId))
+
   const seen = new Set<string>()
   const raw = [...currentRaw, ...allRaw].filter((m: any) => {
     const id = str(m?.PersonID ?? m?.PersonId)
@@ -80,47 +88,63 @@ async function syncMembers(db: Db): Promise<{ knownMemberIds: Set<string>; curre
     return { knownMemberIds: new Set(), currentMemberIds: [] }
   }
 
+  const filteredRaw = raw.filter((m: any) => {
+    const id = str(m?.PersonID ?? m?.PersonId)
+    return currentIds.has(id) || existingIds.has(id)
+  })
+  console.log(`[syncMembers] Filtered out ${raw.length - filteredRaw.length} historical members not in current mandate`)
+
   let written = 0
-  let skipped = 0
-  for (const m of raw) {
+  const skippedHistorical = raw.length - filteredRaw.length
+  let skippedInvalid = 0
+  for (const m of filteredRaw) {
     const personId = str(m?.PersonID ?? m?.PersonId)
     if (!personId) {
       console.warn('[syncMembers] Skipping member record with missing PersonID')
-      skipped++
+      skippedInvalid++
       continue
     }
     const fullName = str(m?.MemberFullDisplayName)
     if (!fullName) {
       console.warn(`[syncMembers] Member ${personId} has no MemberFullDisplayName — writing with empty name`)
     }
+    const party = str(m?.PartyName) || null
+    const constituency = str(m?.ConstituencyName) || null
+    const imgUrl = str(m?.MemberImgUrl) || null
+    const isCurrent = currentIds.has(personId)
     await db
       .insert(schema.members)
       .values({
         personId,
         fullName,
-        party: str(m?.PartyName) || null,
-        constituency: str(m?.ConstituencyName) || null,
-        imgUrl: str(m?.MemberImgUrl) || null,
-        isCurrent: currentIds.has(personId),
+        party,
+        constituency,
+        imgUrl,
+        isCurrent,
+        mandate: CURRENT_MANDATE,
       })
       .onConflictDoUpdate({
         target: schema.members.personId,
         set: {
-          fullName,
-          party: str(m?.PartyName) || null,
-          constituency: str(m?.ConstituencyName) || null,
-          imgUrl: sql`CASE WHEN ${schema.members.imgUrl} LIKE '/mla-images/%' THEN ${schema.members.imgUrl} ELSE ${str(m?.MemberImgUrl) || null} END`,
-          isCurrent: currentIds.has(personId),
-          updatedAt: new Date(),
+          // Fix 2: Only update fields when values have actually changed
+          fullName: sql`CASE WHEN ${schema.members.fullName} = ${fullName} THEN ${schema.members.fullName} ELSE ${fullName} END`,
+          party: sql`CASE WHEN ${schema.members.party} IS NOT DISTINCT FROM ${party} THEN ${schema.members.party} ELSE ${party} END`,
+          constituency: sql`CASE WHEN ${schema.members.constituency} IS NOT DISTINCT FROM ${constituency} THEN ${schema.members.constituency} ELSE ${constituency} END`,
+          imgUrl: sql`CASE WHEN ${schema.members.imgUrl} LIKE '/mla-images/%' THEN ${schema.members.imgUrl} ELSE ${imgUrl} END`,
+          isCurrent,
+          updatedAt: sql`CASE WHEN ${schema.members.fullName} = ${fullName} AND ${schema.members.party} IS NOT DISTINCT FROM ${party} AND ${schema.members.constituency} IS NOT DISTINCT FROM ${constituency} AND ${schema.members.isCurrent} = ${isCurrent} THEN ${schema.members.updatedAt} ELSE NOW() END`,
         },
       })
     written++
   }
-  console.log(`[syncMembers] Complete — ${written} written, ${skipped} skipped, ${currentIds.size} marked current`)
+  console.log(`[syncMembers] Complete — ${written} written, ${skippedHistorical} skipped as historical, ${skippedInvalid} skipped as invalid, ${currentIds.size} marked current`)
 
+  // Fix 3: Build knownMemberIds from filteredRaw plus all existing DB members
   const knownMemberIds = new Set<string>(
-    allRaw.map((m: any) => str(m?.PersonID ?? m?.PersonId)).filter(Boolean)
+    filteredRaw.map((m: any) => str(m?.PersonID ?? m?.PersonId)).filter(Boolean)
   )
+  existingIds.forEach(id => knownMemberIds.add(id))
+
   const currentMemberIds: string[] = currentRaw
     .map((m: any) => str(m?.PersonID ?? m?.PersonId))
     .filter(Boolean)
@@ -157,6 +181,7 @@ async function syncHansardReports(db: Db) {
           reportDocId,
           plenaryDate: dateOnly,
           sessionName: sessionName ?? null,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoNothing()
       count++
@@ -227,6 +252,7 @@ async function syncMinisters(db: Db) {
           personId,
           department,
           roleTitle: roleName ?? null,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoUpdate({
           target: schema.ministers.personId,
@@ -315,6 +341,7 @@ async function syncCommitteeChairs(db: Db) {
         .values({
           personId,
           committeeName: committee,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoUpdate({
           target: schema.committeeChairs.personId,
@@ -336,9 +363,9 @@ async function syncCommitteeChairs(db: Db) {
   }
 }
 
-async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemberIds: string[], startDateOverride?: string) {
+async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemberIds: string[], startDateOverride?: string, endDateOverride?: string) {
   if (startDateOverride) {
-    console.log(`[syncNewDivisions] Running with forced start date: ${startDateOverride}`)
+    console.log(`[syncNewDivisions] Running with forced start date: ${startDateOverride}${endDateOverride ? ` to ${endDateOverride}` : ''}`)
   } else {
     console.log('[syncNewDivisions] Finding most recent division in database...')
   }
@@ -366,7 +393,7 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
     startDate = sinceDate.toISOString().slice(0, 10)
   }
 
-  const endDate = new Date().toISOString().slice(0, 10)
+  const endDate = endDateOverride ?? new Date().toISOString().slice(0, 10)
 
   if (startDate > endDate) {
     console.log('[syncNewDivisions] Database is up to date. No new divisions to sync.')
@@ -388,6 +415,15 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
   console.log(`[syncNewDivisions] Found ${newDivisions.length} new divisions`)
 
   console.log(`[syncNewDivisions] Known members: ${knownMemberIds.size}, current members: ${currentMemberIds.length}`)
+
+  // Fetch all members once to avoid N+1 queries in the no-show loop
+  const allMembersForNoShow = await db
+    .select({
+      personId: schema.members.personId,
+      mandateStart: schema.members.mandateStart,
+      mandateEnd: schema.members.mandateEnd,
+    })
+    .from(schema.members)
 
   let processed = 0
   let skipped = 0
@@ -446,6 +482,7 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
         motionText: motionText || null,
         title,
         tabledBy,
+        mandate: CURRENT_MANDATE,
       })
       // Update result fields on conflict. divisionType is included defensively —
       // it rarely changes, but the cross-community count in getAssemblyStats() depends on it being correct.
@@ -486,23 +523,34 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
           personId,
           vote: voteValue,
           designation: str(v?.Designation) || null,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoNothing()
     }
 
-    // No shows for current MLAs only
-    for (const personId of currentMemberIds) {
-      if (!votedIds.has(personId)) {
-        await db
-          .insert(schema.votes)
-          .values({
-            documentId,
-            personId,
-            vote: 'NO_SHOW',
-            designation: null,
-          })
-          .onConflictDoNothing()
-      }
+    // No shows for all members who were serving at the time of this division
+    const divisionDateStr = new Date(divisionDate).toISOString().slice(0, 10)
+
+    for (const member of allMembersForNoShow) {
+      if (votedIds.has(member.personId)) continue
+      if (!member.mandateStart) continue
+
+      const memberStart = member.mandateStart.toString().slice(0, 10)
+      const memberEnd = member.mandateEnd ? member.mandateEnd.toString().slice(0, 10) : null
+
+      if (memberStart > divisionDateStr) continue
+      if (memberEnd && memberEnd < divisionDateStr) continue
+
+      await db
+        .insert(schema.votes)
+        .values({
+          documentId,
+          personId: member.personId,
+          vote: 'NO_SHOW',
+          designation: null,
+          mandate: CURRENT_MANDATE,
+        })
+        .onConflictDoNothing()
     }
 
     processed++
@@ -581,6 +629,7 @@ async function syncRegisteredInterests(db: Db) {
           registerEntryStartDate: interest?.RegisterEntryStartDate
             ? new Date(interest.RegisterEntryStartDate)
             : null,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoUpdate({
           target: [
@@ -726,6 +775,7 @@ async function main() {
   }
 
   const isMonday = new Date().getDay() === 1
+  const isBackfill2022 = process.argv.includes('--backfill-2022')
 
   // Weekly scripts — Mondays only
   let knownMemberIds = new Set<string>()
@@ -779,7 +829,11 @@ async function main() {
     const backfillStart = sevenDaysAgo.toISOString().slice(0, 10)
     await runSync('syncNewDivisions:backfill', () => syncNewDivisions(db, knownMemberIds, currentMemberIds, backfillStart))
   }
-  await runSync('syncBills', () => syncBills(db))
+  if (isBackfill2022) {
+    console.log('[main] --backfill-2022 flag detected — syncing suspension-era divisions (2022-05-01 to 2024-02-01)')
+    await runSync('syncNewDivisions:backfill-2022', () => syncNewDivisions(db, knownMemberIds, currentMemberIds, '2022-05-01', '2024-02-01'))
+  }
+  await runSync('syncBills', () => syncBills(db, false, isBackfill2022 ? '2022-05-01' : undefined))
 
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   console.log('Sync summary:')

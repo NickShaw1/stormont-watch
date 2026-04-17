@@ -35,6 +35,16 @@
   }
 }
 
+.stageQuestion {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-style: normal;
+}
+
+.stageQuestion:hover {
+  text-decoration: underline;
+}
+
 .disclaimerLink {
   font-size: 0.75rem;
   font-style: italic;
@@ -44,6 +54,43 @@
 
 .disclaimerLink:hover {
   text-decoration: underline;
+}
+
+.suspensionCard {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: #f0f4f7;
+  border-left: 3px solid #203F59;
+  border-radius: 0 6px 6px 0;
+  padding: 0.625rem 0.875rem;
+  margin-top: 0.75rem;
+  max-width: none;
+}
+
+@media (max-width: 767px) {
+  .suspensionCard {
+    align-items: flex-start;
+  }
+
+  .suspensionIcon {
+    margin-top: 0.125rem;
+  }
+}
+
+.suspensionIcon {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  display: block;
+}
+
+.suspensionCard p {
+  font-size: 0.875rem;
+  color: #4a5568;
+  max-width: none;
+  margin: 0;
+  line-height: 1.4;
 }
 
 .disclaimer {
@@ -577,7 +624,7 @@
 }
 
 .weekSubtitle {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: var(--text-secondary);
   margin-top: 0.25rem;
   margin-bottom: 0;
@@ -602,7 +649,7 @@
 }
 
 .browseSubtitle {
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: var(--text-secondary);
   margin-top: 0.25rem;
   margin-bottom: 0;

@@ -46,7 +46,14 @@ export default async function ExpensesPage() {
         <h1>MLA expenses</h1>
         <div className="page-header-rule"></div>
         <p className={styles.subtitle}>Every current MLA ranked by total expenses claimed from public funds.</p>
-        <p className={styles.periodLabel}>Figures cover <strong style={{ color: 'var(--text-primary)', fontWeight: 700 }}>April 2025 – December 2025</strong>. Updates automatically when new data is published.</p>
+        <div className={styles.periodCard}>
+          <svg className={styles.periodIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="10" r="10" fill="#203F59"/>
+            <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+            <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+          </svg>
+          <p>Figures cover <strong style={{ color: 'var(--text-primary)', fontWeight: 700 }}>April 2025 – December 2025</strong>. Updates automatically when new data is published.</p>
+        </div>
       </header>
 
       {missing.length > 0 && (
@@ -57,7 +64,14 @@ export default async function ExpensesPage() {
           <div className={styles.tableWrap}>
             <MissingMlasTable missing={missing} />
           </div>
-          <p className={styles.missingFooter}>* Co-opted or elected after the period covered by this data.</p>
+          <div className="note-card">
+            <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
+              <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+              <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+            </svg>
+            <p>Co-opted or elected after the period covered by this data.</p>
+          </div>
         </div>
       )}
 

@@ -1,9 +1,9 @@
 # Stormont Watch
 
-Every vote. Every MLA. Since February 2024.
+Every vote. Every MLA. Since May 2022.
 
 Stormont Watch tracks every division vote in the Northern Ireland Assembly,
-attendance records, expenses and legislation since the Assembly returned in February 2024.
+attendance records, expenses and legislation covering the full 2022-2027 mandate.
 
 ## Tech stack
 

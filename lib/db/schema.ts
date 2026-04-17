@@ -13,6 +13,7 @@ export const members = pgTable('members', {
   assemblyRoleStart: date('assembly_role_start'),
   assemblyRoleEnd: date('assembly_role_end'),
   email: text('email'),
+  mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
@@ -35,6 +36,7 @@ export const divisions = pgTable('divisions', {
   motionText: text('motion_text'),
   title: text('title'),
   tabledBy: text('tabled_by'),
+  mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
@@ -44,6 +46,7 @@ export const votes = pgTable('votes', {
   personId: text('person_id').notNull().references(() => members.personId),
   vote: text('vote').notNull(),
   designation: text('designation'),
+  mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (t) => ({
   unq: unique().on(t.documentId, t.personId),
@@ -53,6 +56,7 @@ export const hansardReports = pgTable('hansard_reports', {
   reportDocId: text('report_doc_id').primaryKey(),
   plenaryDate: date('plenary_date').notNull(),
   sessionName: text('session_name'),
+  mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
@@ -60,12 +64,14 @@ export const ministers = pgTable('ministers', {
   personId: text('person_id').primaryKey().references(() => members.personId),
   department: text('department').notNull(),
   roleTitle: text('role_title'),
+  mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
 export const committeeChairs = pgTable('committee_chairs', {
   personId: text('person_id').primaryKey().references(() => members.personId),
   committeeName: text('committee_name').notNull(),
+  mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
@@ -78,6 +84,7 @@ export const expenses = pgTable('expenses', {
   allowances: numeric('allowances', { precision: 10, scale: 2 }).default('0'),
   staffCosts: numeric('staff_costs', { precision: 10, scale: 2 }).default('0'),
   total: numeric('total', { precision: 10, scale: 2 }).default('0'),
+  mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (t) => ({
   pk: primaryKey({ columns: [t.personId, t.financialYear] }),
@@ -93,6 +100,7 @@ export const bills = pgTable('bills', {
   latestDate: timestamp('latest_date', { withTimezone: true }),
   royalAssentDate: date('royal_assent_date'),
   actTitle: text('act_title'),
+  mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
@@ -103,6 +111,7 @@ export const billStages = pgTable('bill_stages', {
   plenaryDate: timestamp('plenary_date', { withTimezone: true }).notNull(),
   hasDivision: boolean('has_division').default(false),
   divisionId: text('division_id').references(() => divisions.documentId),
+  mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
@@ -123,6 +132,7 @@ export const registeredInterests = pgTable('registered_interests', {
   registerCategory: text('register_category').notNull(),
   registerEntry: text('register_entry').notNull(),
   registerEntryStartDate: timestamp('register_entry_start_date', { withTimezone: true }),
+  mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (t) => ({
   unq: unique().on(t.personId, t.registerCategoryId, t.registerEntry),

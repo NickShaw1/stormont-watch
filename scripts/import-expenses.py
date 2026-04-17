@@ -26,6 +26,7 @@ if not DATABASE_URL:
 # Financial year and period — update these when re-running for new data
 FINANCIAL_YEAR = '2025-2026'
 PERIOD = 'April 2025 - December 2025'
+CURRENT_MANDATE = '2022-2027'
 EXCEL_PATH = 'expenses.xlsx'
 
 # Read Excel
@@ -136,8 +137,8 @@ for person_id, row in matched:
         INSERT INTO expenses (
             person_id, financial_year, period,
             constituency_office, other_expenses, allowances,
-            staff_costs, total, updated_at
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW())
+            staff_costs, total, mandate, updated_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
         ON CONFLICT (person_id, financial_year)
         DO UPDATE SET
             period = EXCLUDED.period,
@@ -146,6 +147,7 @@ for person_id, row in matched:
             allowances = EXCLUDED.allowances,
             staff_costs = EXCLUDED.staff_costs,
             total = EXCLUDED.total,
+            mandate = EXCLUDED.mandate,
             updated_at = NOW()
     """, (
         person_id,
@@ -156,6 +158,7 @@ for person_id, row in matched:
         row['allowances'],
         row['staff_costs'],
         row['total'],
+        CURRENT_MANDATE,
     ))
     inserted += 1
 

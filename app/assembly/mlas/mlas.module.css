@@ -5,6 +5,10 @@
   }
 }
 
+.pageHeader p {
+  max-width: none;
+}
+
 @media (max-width: 767px) {
   .pageHeader {
     padding-top: 40px;
@@ -493,10 +497,9 @@
 }
 
 .formerMlasLink {
-  font-size: 0.875rem;
   color: var(--text-secondary);
-  margin-top: var(--spacing-lg);
-  margin-bottom: var(--spacing-xl);
+  margin-top: var(--spacing-sm);
+  margin-bottom: 0;
 }
 
 @media (max-width: 767px) {
@@ -505,7 +508,7 @@
   }
 
   .formerMlasLink {
-    font-size: 1rem;
+    font-size: 0.875rem;
   }
 }
 

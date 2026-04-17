@@ -1,6 +1,8 @@
 import * as dotenv from 'dotenv'
 dotenv.config({ path: '.env.local' })
 
+const CURRENT_MANDATE = '2022-2027'
+
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
 import { eq, desc, sql } from 'drizzle-orm'
@@ -47,7 +49,7 @@ function extractBillId(title: string): string | null {
   return match ? `NIA Bill ${match[1]}` : null
 }
 
-export async function syncBills(db: Db, forceTitles = false) {
+export async function syncBills(db: Db, forceTitles = false, forceStartDate?: string) {
   console.log('[syncBills] Starting...')
 
   // 1. Incremental sync — only fetch months we haven't seen yet
@@ -56,15 +58,17 @@ export async function syncBills(db: Db, forceTitles = false) {
     .orderBy(desc(billStages.plenaryDate))
     .limit(1)
 
-  const syncFrom = latestStage.length > 0
-    ? new Date(latestStage[0].plenaryDate)
-    : new Date('2024-02-01')
+  const syncFrom = forceStartDate
+    ? new Date(forceStartDate)
+    : latestStage.length > 0
+      ? new Date(latestStage[0].plenaryDate)
+      : new Date('2022-05-01')
 
   // Start from the beginning of the month containing syncFrom
   syncFrom.setDate(1)
 
   const end = new Date()
-  console.log(`[syncBills] Syncing from ${syncFrom.toISOString().slice(0, 10)}`)
+  console.log(`[syncBills] Syncing from ${syncFrom.toISOString().slice(0, 10)}${forceStartDate ? ' (forced)' : ''}`)
 
   const allItems: any[] = []
   let current = new Date(syncFrom.getFullYear(), syncFrom.getMonth(), 1)
@@ -157,6 +161,7 @@ export async function syncBills(db: Db, forceTitles = false) {
         isAccelerated: billData.IsAcceleratedPassage === 'true',
         currentStage: stage,
         latestDate: plenaryDate,
+        mandate: CURRENT_MANDATE,
         updatedAt: new Date(),
       }).onConflictDoUpdate({
         target: bills.billId,
@@ -170,6 +175,7 @@ export async function syncBills(db: Db, forceTitles = false) {
         plenaryDate,
         hasDivision: false,
         divisionId: null,
+        mandate: CURRENT_MANDATE,
         updatedAt: new Date(),
       }).onConflictDoNothing()
 

@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 
 const BASE = 'http://data.niassembly.gov.uk'
+const CURRENT_MANDATE = '2022-2027'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -89,6 +90,7 @@ async function syncMembers(db: Db) {
         constituency: str(m?.ConstituencyName) || null,
         imgUrl: str(m?.MemberImgUrl) || null,
         isCurrent: currentIds.has(personId),
+        mandate: CURRENT_MANDATE,
       })
       .onConflictDoUpdate({
         target: schema.members.personId,

@@ -9,6 +9,10 @@
   padding-bottom: 0;
 }
 
+.pageHeader p {
+  font-size: 1rem;
+}
+
 @media (max-width: 767px) {
   .pageHeader {
     margin-bottom: 40px;
@@ -162,7 +166,7 @@
 }
 
 .sectionBlurb {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   color: var(--text-secondary);
   line-height: 1.6;
   max-width: none;

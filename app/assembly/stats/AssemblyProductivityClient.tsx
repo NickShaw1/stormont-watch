@@ -7,9 +7,11 @@ interface YearRow { year: number; total: number; passed: number; pass_rate: numb
 export default function AssemblyProductivityClient({
   monthData,
   yearData,
+  sittingDays,
 }: {
   monthData: MonthRow[]
   yearData: YearRow[]
+  sittingDays: number
 }) {
   const parsed = monthData.map(r => ({ ...r, total_divisions: Number(r.total_divisions) }))
   const currentMonth = new Date().toISOString().slice(0, 7)
@@ -23,8 +25,6 @@ export default function AssemblyProductivityClient({
     const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
     return `${mn[d.getMonth()]} ${d.getFullYear()}`
   })()
-  const total = parsed.reduce((s, r) => s + r.total_divisions, 0)
-
   const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   const years = [...new Set(parsed.map(r => new Date(r.month).getFullYear()))].sort()
   const maxVal = Math.max(...parsed.map(r => r.total_divisions))
@@ -55,9 +55,9 @@ export default function AssemblyProductivityClient({
     <div>
       <div className={styles.overviewGridThree}>
         <div className={styles.overviewCard}>
-          <span className={styles.overviewLabel}>Total divisions</span>
-          <span className={styles.overviewValue}>{total}</span>
-          <span className={styles.overviewMeta}>last 24 months</span>
+          <span className={styles.overviewLabel}>Sitting days</span>
+          <span className={styles.overviewValue}>{sittingDays}</span>
+          <span className={styles.overviewMeta}>since May 2022</span>
         </div>
         <div className={styles.overviewCard}>
           <span className={styles.overviewLabel}>Busiest month</span>
@@ -159,10 +159,17 @@ export default function AssemblyProductivityClient({
         </table>
       </div>
 
-      <p className={styles.trendNote}>* Months with no colour had no Assembly sittings. The current month is outlined.</p>
+      <div className="note-card">
+        <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
+          <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+          <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+        </svg>
+        <p>Months with no colour had no Assembly sittings. The current month is outlined.</p>
+      </div>
 
       <h3 className={styles.chartTitle}>Pass rate by year</h3>
-      <p className={styles.trendNote} style={{ marginBottom: '1rem' }}>Percentage of divisions that passed in each calendar year since February 2024.</p>
+      <p className={styles.trendNote} style={{ marginBottom: '1rem' }}>Percentage of divisions that passed in each calendar year since May 2022.</p>
 
       <div className={styles.overviewGridThree}>
         {yearData.map((r, i) => (

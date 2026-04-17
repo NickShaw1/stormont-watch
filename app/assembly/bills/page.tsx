@@ -9,7 +9,7 @@ export const revalidate = 86400
 export async function generateMetadata(): Promise<Metadata> {
   const bills = await getAllBills()
   const count = bills.length
-  const description = `Browse all ${count} bills and acts in the Northern Ireland Assembly since February 2024. Track progress through legislative stages.`
+  const description = `Browse all ${count} bills and acts in the Northern Ireland Assembly since May 2022. Track progress through legislative stages.`
   return {
     title: 'Legislation',
     description,
@@ -102,9 +102,28 @@ export default async function BillsPage() {
         <header className={`page-header ${styles.pageHeader}`}>
           <h1>Legislation</h1>
           <div className="page-header-rule"></div>
-          <p className={styles.subtitle}>Bills and Acts from the Assembly since February 2024.</p>
-          <p className={`${styles.disclaimer} ${styles.disclaimerTop}`}>* Stage information is sourced from the NI Assembly Open Data API. Some stages may not be reflected immediately.</p>
-          <p className={`${styles.disclaimer} ${styles.stagesLink}`}>** Not sure what a stage means? <Link href="/assembly/legislation-guide" className={styles.disclaimerLink}>Stages explained <span aria-hidden="true">↗</span></Link></p>
+          <p className={styles.subtitle}>Bills and Acts from the Assembly since May 2022.</p>
+          <div className={styles.suspensionCard}>
+            <svg className={styles.suspensionIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="10" cy="10" r="10" fill="#203F59"/>
+              <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+              <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+            </svg>
+            <p className={styles.suspensionNote}>The Assembly did not sit between May 2022 and February 2024. No legislation progressed during this period.</p>
+          </div>
+          <div className="note-card" style={{ marginTop: '0.75rem', flexDirection: 'column', gap: '0.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+              <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, marginTop: '0.0625rem' }}>
+                <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
+                <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+                <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+              </svg>
+              <div>
+                <p>Stage information is sourced from the NI Assembly Open Data API. Some stages may not be reflected immediately.</p>
+                <p style={{ marginTop: '0.25rem' }}><Link href="/assembly/legislation-guide" className={styles.stageQuestion}>Not sure what a stage means?</Link></p>
+              </div>
+            </div>
+          </div>
         </header>
         <hr className="section-rule" style={{ margin: '0 0 40px' }} />
       </div>

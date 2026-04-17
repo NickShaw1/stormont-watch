@@ -5,6 +5,7 @@ import { notInArray } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 
 const BASE = 'http://data.niassembly.gov.uk'
+const CURRENT_MANDATE = '2022-2027'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -70,6 +71,7 @@ async function syncMinisters(db: Db) {
           personId,
           department,
           roleTitle: roleName ?? null,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoUpdate({
           target: schema.ministers.personId,
@@ -156,6 +158,7 @@ async function syncCommitteeChairs(db: Db) {
         .values({
           personId,
           committeeName: committee,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoUpdate({
           target: schema.committeeChairs.personId,

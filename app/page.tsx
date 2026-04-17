@@ -18,10 +18,10 @@ import styles from './home.module.css'
 
 export const metadata: Metadata = {
   title: 'Stormont Watch',
-  description: 'Every vote in the Northern Ireland Assembly since February 2024.',
+  description: 'Every vote in the Northern Ireland Assembly since May 2022.',
   openGraph: {
     title: 'Stormont Watch',
-    description: 'Every vote in the Northern Ireland Assembly since February 2024.',
+    description: 'Every vote in the Northern Ireland Assembly since May 2022.',
     url: 'https://www.stormontwatch.com',
   },
   alternates: { canonical: 'https://www.stormontwatch.com' },
@@ -45,7 +45,7 @@ export default async function HomePage() {
     '@type': 'WebSite',
     name: 'Stormont Watch',
     url: 'https://www.stormontwatch.com',
-    description: 'Every vote in the Northern Ireland Assembly since February 2024.',
+    description: 'Every vote in the Northern Ireland Assembly since May 2022.',
     publisher: {
       '@type': 'Organization',
       name: 'Stormont Watch',
@@ -73,7 +73,7 @@ export default async function HomePage() {
           />
           <div className={styles.heroOverlay}>
             <div className={styles.heroContent}>
-              <h1 className={styles.heroTitle}>The Assembly has voted {stats.totalDivisions} times since returning.</h1>
+              <h1 className={styles.heroTitle}>The Assembly has held {stats.totalDivisions} votes in the current mandate.</h1>
               <p className={styles.heroSubtitle}>This is the full record.</p>
             </div>
           </div>
@@ -90,12 +90,12 @@ export default async function HomePage() {
         <div className={styles.statCard}>
           <div className={`${styles.statLabel} ${styles.statEyebrow}`}>Total divisions</div>
           <div className={styles.statValue}>{stats.totalDivisions}</div>
-          <div className={styles.statNote}>Since Feb 2024</div>
+          <div className={styles.statNote}>Since May 2022</div>
         </div>
         <div className={styles.statCard}>
           <div className={`${styles.statLabel} ${styles.statEyebrow}`}>Acts passed</div>
           <div className={`${styles.statValue} ${styles.green}`}>{stats.actsCount}</div>
-          <div className={styles.statNote}>Bills since Feb 2024</div>
+          <div className={styles.statNote}>Bills since May 2022</div>
         </div>
         <div className={styles.statCard}>
           <div className={`${styles.statLabel} ${styles.statEyebrow}`}>Voting Rate</div>
@@ -171,7 +171,14 @@ export default async function HomePage() {
           <div className={styles.sectionRule} />
         </div>
         <Link href="/assembly/expenses" className={styles.expensesCard}>
-          <span className={styles.expensesCardText}>View full MLA expenses rankings</span>
+          <span className={styles.expensesCardLeft}>
+            <svg className={styles.expensesCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="10" cy="10" r="10" fill="#203F59"/>
+              <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+              <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+            </svg>
+            <span className={styles.expensesCardText}>View full MLA expenses rankings</span>
+          </span>
           <span className={styles.expensesCardArrow} aria-hidden="true">↗</span>
         </Link>
       </section>

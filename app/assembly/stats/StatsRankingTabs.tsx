@@ -16,6 +16,8 @@ type MlaRow = {
   attendancePct: number
   ayes: number
   noes: number
+  present: number
+  total: number
 }
 
 interface Props {
@@ -29,11 +31,12 @@ const TABS: {
   key: keyof Pick<MlaRow, 'attendancePct' | 'ayes' | 'noes'>
   suffix: string
   desc: boolean
+  showVoteCounts: boolean
 }[] = [
-  { id: 'highest-attendance', label: 'Top Attended',   title: 'Highest Voting Attendance', key: 'attendancePct', suffix: '%', desc: true },
-  { id: 'lowest-attendance',  label: 'Least Attended', title: 'Lowest Voting Attendance',  key: 'attendancePct', suffix: '%', desc: false },
-  { id: 'most-ayes',          label: 'Most Ayes',      title: 'Most Ayes cast',     key: 'ayes',          suffix: '',  desc: true },
-  { id: 'most-noes',          label: 'Most Noes',      title: 'Most Noes cast',     key: 'noes',          suffix: '',  desc: true },
+  { id: 'highest-attendance', label: 'Top Attended',   title: 'Highest Voting Attendance', key: 'attendancePct', suffix: '%', desc: true,  showVoteCounts: true },
+  { id: 'lowest-attendance',  label: 'Least Attended', title: 'Lowest Voting Attendance',  key: 'attendancePct', suffix: '%', desc: false, showVoteCounts: true },
+  { id: 'most-ayes',          label: 'Most Ayes',      title: 'Most Ayes cast',            key: 'ayes',          suffix: '',  desc: true,  showVoteCounts: false },
+  { id: 'most-noes',          label: 'Most Noes',      title: 'Most Noes cast',            key: 'noes',          suffix: '',  desc: true,  showVoteCounts: false },
 ]
 
 function sortRows(
@@ -49,11 +52,13 @@ function StatCard({
   rows,
   valueKey,
   valueSuffix = '',
+  showVoteCounts = false,
 }: {
   title: string
   rows: MlaRow[]
   valueKey: keyof Pick<MlaRow, 'attendancePct' | 'ayes' | 'noes'>
   valueSuffix?: string
+  showVoteCounts?: boolean
 }) {
   return (
     <div className={styles.card}>
@@ -78,7 +83,12 @@ function StatCard({
                 </span>
               )}
             </div>
-            <span className={styles.value}>{m[valueKey]}{valueSuffix}</span>
+            <div className={styles.valueCol}>
+              <span className={styles.value}>{m[valueKey]}{valueSuffix}</span>
+              {showVoteCounts && (
+                <span className={styles.voteCounts}>{m.present.toLocaleString()} / {m.total.toLocaleString()}</span>
+              )}
+            </div>
           </li>
         ))}
       </ol>
@@ -149,6 +159,7 @@ export default function StatsRankingTabs({ data }: Props) {
                 rows={panel.rows}
                 valueKey={panel.key}
                 valueSuffix={panel.suffix}
+                showVoteCounts={panel.showVoteCounts}
               />
             </div>
           )

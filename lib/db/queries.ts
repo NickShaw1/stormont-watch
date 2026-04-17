@@ -4,6 +4,8 @@ import { members, divisions, votes, hansardReports, ministers, committeeChairs, 
 import { stripHonorifics } from '@/lib/utils/formatNames'
 import { getSurname } from '@/lib/format'
 
+const CURRENT_MANDATE = '2022-2027'
+
 export async function getMembersByConstituency(constituency: string) {
   return db
     .select({
@@ -228,7 +230,7 @@ export async function getMlaLeaderboard() {
       divisions,
       and(
         eq(votes.documentId, divisions.documentId),
-        sql`${divisions.divisionDate} >= coalesce(${members.mandateStart}::date, '2024-02-01'::date)`
+        sql`${divisions.divisionDate} >= coalesce(${members.mandateStart}::date, '2022-05-01'::date)`
       )
     )
     .where(and(eq(members.isCurrent, true), sql`${members.assemblyRole} is null`))
@@ -242,10 +244,10 @@ export async function getMlaLeaderboard() {
 
 export async function getAssemblyStats() {
   const [totalDivisions, crossCommunityCount, mostContested, mostUnanimous] = await Promise.all([
-    db.select({ count: sql<number>`count(*)` }).from(divisions),
-    db.select({ count: sql<number>`count(*)` }).from(divisions).where(eq(divisions.divisionType, 'Cross-Community')),
-    db.select().from(divisions).where(sql`total_ayes + total_noes > 0`).orderBy(sql`ABS(total_ayes - total_noes) ASC`).limit(1),
-    db.select().from(divisions).where(sql`total_ayes + total_noes > 0`).orderBy(sql`total_ayes::float / (total_ayes + total_noes) DESC`).limit(1),
+    db.select({ count: sql<number>`count(*)` }).from(divisions).where(eq(divisions.mandate, CURRENT_MANDATE)),
+    db.select({ count: sql<number>`count(*)` }).from(divisions).where(and(eq(divisions.divisionType, 'Cross-Community'), eq(divisions.mandate, CURRENT_MANDATE))),
+    db.select().from(divisions).where(and(sql`total_ayes + total_noes > 0`, eq(divisions.mandate, CURRENT_MANDATE))).orderBy(sql`ABS(total_ayes - total_noes) ASC`).limit(1),
+    db.select().from(divisions).where(and(sql`total_ayes + total_noes > 0`, eq(divisions.mandate, CURRENT_MANDATE))).orderBy(sql`total_ayes::float / (total_ayes + total_noes) DESC`).limit(1),
   ])
   return {
     totalDivisions: Number(totalDivisions[0]?.count ?? 0),
@@ -266,6 +268,7 @@ export async function getAverageAttendance(): Promise<number> {
       JOIN votes v ON m.person_id = v.person_id
       WHERE m.is_current = true
       AND m.assembly_role IS NULL
+      AND v.mandate = ${CURRENT_MANDATE}
       GROUP BY m.person_id
     ) attendance
   `)
@@ -291,6 +294,7 @@ export async function getPartyCohesion(): Promise<{ party: string; cohesionPct: 
       WHERE m2.is_current = true
       AND m2.assembly_role IS NULL
       AND v.vote != 'NO_SHOW'
+      AND v.mandate = ${CURRENT_MANDATE}
       GROUP BY v.document_id, m2.party
     ) party_votes ON m.party = party_votes.party
     WHERE m.is_current = true
@@ -327,6 +331,7 @@ export async function getMostRebelliousMla(): Promise<{
       JOIN members m ON v.person_id = m.person_id
       WHERE m.is_current = true
       AND m.assembly_role IS NULL
+      AND v.mandate = ${CURRENT_MANDATE}
       GROUP BY v.document_id, m.party
     ),
     mla_rebellions AS (
@@ -348,6 +353,7 @@ export async function getMostRebelliousMla(): Promise<{
       WHERE m.is_current = true
       AND m.assembly_role IS NULL
       AND m.party != 'Independent'
+      AND v.mandate = ${CURRENT_MANDATE}
       GROUP BY m.person_id, m.full_name, m.party, m.constituency, m.img_url
       HAVING COUNT(*) FILTER (WHERE v.vote != 'NO_SHOW') > 10
     )
@@ -379,6 +385,7 @@ export async function getMostCrossCommunityAgreement(): Promise<typeof divisions
     FROM divisions
     WHERE nationalist_ayes + nationalist_noes > 3
     AND unionist_ayes + unionist_noes > 3
+    AND mandate = ${CURRENT_MANDATE}
     ORDER BY min_aye_pct DESC
     LIMIT 1
   `)
@@ -692,7 +699,7 @@ export async function getOverallAgreementRate() {
         ) * 100.0 / NULLIF(COUNT(*), 0)
       ) as agreement_pct
     FROM divisions
-    WHERE division_date >= '2024-02-01'
+    WHERE mandate = ${CURRENT_MANDATE}
   `)
   return Number((result.rows[0] as { agreement_pct: unknown }).agreement_pct)
 }
@@ -738,11 +745,26 @@ export async function getPassRateByYear() {
         ) * 100.0 / NULLIF(COUNT(*), 0)
       ) as pass_rate
     FROM divisions
-    WHERE division_date >= '2024-02-01'
+    WHERE mandate = ${CURRENT_MANDATE}
     GROUP BY year
     ORDER BY year ASC
   `)
   return result.rows as { year: number; total: number; passed: number; pass_rate: number }[]
+}
+
+export async function getSittingDays(): Promise<number> {
+  const result = await db.execute(sql`
+    SELECT COUNT(*) as sitting_days
+    FROM hansard_reports
+    WHERE plenary_date >= '2022-05-01'
+    AND mandate = '2022-2027'
+  `)
+  return Number(result.rows[0]?.sitting_days ?? 0)
+}
+
+export async function getLatestExpensesYear(): Promise<string> {
+  const result = await db.execute(sql`SELECT MAX(financial_year) as latest FROM expenses`)
+  return String(result.rows[0]?.latest ?? '')
 }
 
 export async function getHomepageStats() {

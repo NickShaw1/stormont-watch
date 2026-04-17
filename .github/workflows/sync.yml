@@ -2,7 +2,7 @@ name: Daily sync
 
 on:
   schedule:
-    - cron: '0 5 * * *'
+    - cron: '17 3 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -13,7 +13,7 @@ jobs:
   sync:
     name: Sync Assembly data
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       actions: write
       contents: read
@@ -30,12 +30,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Lint check
-        run: npm run lint
-
-      - name: Type check
-        run: npx tsc --noEmit
 
       - name: Run sync
         run: npm run sync

@@ -204,7 +204,14 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
       <div style={{ position: 'relative', width: '100%', height: '260px', marginBottom: '0.5rem' }}>
         <canvas ref={c1} role="img" aria-label="Line chart showing monthly unionist nationalist agreement rate over the last 24 months" />
       </div>
-      <p className={styles.trendNote}>* Percentage of divisions in each month where the majority of unionist and nationalist MLAs both voted Aye. Smaller points indicate months with fewer than 3 divisions, which are less statistically reliable.</p>
+      <div className="note-card">
+        <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
+          <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+          <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+        </svg>
+        <p>Percentage of divisions in each month where the majority of unionist and nationalist MLAs both voted Aye. Smaller points indicate months with fewer than 3 divisions, which are less statistically reliable.</p>
+      </div>
 
       <h3 className={styles.chartTitle}>Cross-community agreement by month</h3>
       <p className={styles.trendNote} style={{ marginBottom: '0.75rem' }}>How many divisions each month saw both unionist and nationalist MLAs vote Aye, compared to the total number of divisions that month.</p>

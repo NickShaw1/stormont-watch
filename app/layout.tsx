@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     default: 'Stormont Watch',
     template: '%s - Stormont Watch',
   },
-  description: 'Every vote in the Northern Ireland Assembly since February 2024.',
+  description: 'Every vote in the Northern Ireland Assembly since May 2022.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stormontwatch.com'),
   openGraph: {
     siteName: 'Stormont Watch',
@@ -58,9 +58,6 @@ export const metadata: Metadata = {
   },
   verification: {
     google: 'Mz_H-i_CpmLwYrn3nyQWY9CYy7-fraVhGMrY-DGRaSw',
-  },
-  appleWebApp: {
-    title: 'Stormont Watch',
   },
 }
 

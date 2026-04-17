@@ -5,10 +5,10 @@ export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'About Stormont Watch — tracking every vote in the Northern Ireland Assembly since February 2024.',
+  description: 'About Stormont Watch — tracking every vote in the Northern Ireland Assembly since May 2022.',
   openGraph: {
     title: 'About — Stormont Watch',
-    description: 'About Stormont Watch — tracking every vote in the Northern Ireland Assembly since February 2024.',
+    description: 'About Stormont Watch — tracking every vote in the Northern Ireland Assembly since May 2022.',
   },
   alternates: { canonical: 'https://www.stormontwatch.com/about' },
 }
@@ -25,7 +25,7 @@ export default function AboutPage() {
           <h2>What we are</h2>
           <p>
             Stormont Watch is an independent civic accountability site that tracks every recorded
-            vote in the Northern Ireland Assembly since February 2024. Our aim is to make the
+            vote in the Northern Ireland Assembly since May 2022. Our aim is to make the
             Assembly&apos;s work accessible and understandable to every citizen.
           </p>
           <p>

@@ -105,6 +105,17 @@
   transition: transform 300ms ease;
 }
 
+@media (min-width: 768px) {
+  .navWordmark {
+    font-size: 19px;
+  }
+
+  .navLogo {
+    width: 24px;
+    height: 24px;
+  }
+}
+
 /* Desktop links */
 .links {
   display: none;

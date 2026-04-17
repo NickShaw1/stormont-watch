@@ -64,15 +64,13 @@ export default async function MlasPage() {
           <h1>MLAs</h1>
           <div className="page-header-rule"></div>
           <p>All current Members of the Legislative Assembly.</p>
+          <p className={styles.subtitle}>Select any MLA to view their full voting record, expenses and registered interests. Attendance is tracked from the start of the 2022 mandate.</p>
+          <p className={styles.formerMlasLink}>
+            <Link href="/assembly/former-mlas">Former MLAs from this mandate <span aria-hidden="true">↗</span></Link>
+          </p>
         </header>
       </div>
       <MlasListClient partyGroups={partyGroups} roleLookup={roleLookup} roleLookupFull={roleLookupFull} />
-      <div className="container">
-        <hr className={styles.searchRule} />
-        <p className={styles.formerMlasLink}>
-          <Link href="/assembly/former-mlas">Former MLAs from this mandate <span aria-hidden="true">↗</span></Link>
-        </p>
-      </div>
     </div>
   )
 }

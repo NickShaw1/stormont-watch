@@ -10,7 +10,7 @@ import styles from './votes.module.css'
 export async function generateMetadata(): Promise<Metadata> {
   const rows = await getAllDivisionsForList()
   const count = rows.length
-  const description = `Browse ${count} votes cast in the Northern Ireland Assembly since February 2024.`
+  const description = `Browse ${count} votes cast in the Northern Ireland Assembly since May 2022.`
   return {
     title: 'Votes',
     description,
@@ -43,7 +43,15 @@ export default async function VotesPage() {
         <header className={`page-header ${styles.pageHeader}`}>
           <h1>Votes</h1>
           <div className="page-header-rule"></div>
-          <p>Every vote in the Northern Ireland Assembly since February 2024.</p>
+          <p>Every vote in the Northern Ireland Assembly since May 2022.</p>
+          <div className={styles.suspensionCard}>
+            <svg className={styles.suspensionIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="10" cy="10" r="10" fill="#203F59"/>
+              <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+              <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+            </svg>
+            <p className={styles.suspensionNote}>The Assembly did not sit between May 2022 and February 2024. The only divisions recorded during this period were procedural Speaker nomination votes.</p>
+          </div>
         </header>
       </div>
       <VotesListClient allItems={allItems} />

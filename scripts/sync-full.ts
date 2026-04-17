@@ -16,7 +16,8 @@ import { syncContactDetails } from './sync-contact-details'
 import { syncBills } from './sync-bills'
 
 const BASE = 'http://data.niassembly.gov.uk'
-const CUTOFF = '2024-02-01'
+const CUTOFF = '2022-05-01'
+const CURRENT_MANDATE = '2022-2027'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -111,6 +112,7 @@ async function syncMembers(db: Db) {
         constituency: str(m?.ConstituencyName) || null,
         imgUrl: str(m?.MemberImgUrl) || null,
         isCurrent: currentIds.has(personId),
+        mandate: CURRENT_MANDATE,
       })
       .onConflictDoUpdate({
         target: schema.members.personId,
@@ -157,6 +159,7 @@ async function syncHansardReports(db: Db) {
           reportDocId,
           plenaryDate: dateOnly,
           sessionName: sessionName ?? null,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoNothing()
       count++
@@ -313,6 +316,7 @@ async function syncMinisters(db: Db) {
           personId,
           department,
           roleTitle: roleName ?? null,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoUpdate({
           target: schema.ministers.personId,
@@ -401,6 +405,7 @@ async function syncCommitteeChairs(db: Db) {
         .values({
           personId,
           committeeName: committee,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoUpdate({
           target: schema.committeeChairs.personId,
@@ -488,6 +493,7 @@ async function syncRegisteredInterests(db: Db) {
           registerEntryStartDate: interest?.RegisterEntryStartDate
             ? new Date(interest.RegisterEntryStartDate)
             : null,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoUpdate({
           target: [
@@ -545,20 +551,20 @@ async function syncDivisionsAndVotes(db: Db) {
     .filter(Boolean)
   const knownMemberIds = new Set(allMemberIds)
 
-  // Current members only — no-shows only apply to currently serving MLAs
-  const currentMembersData = await apiFetch<any>('/members.asmx/GetAllCurrentMembers_JSON')
-  const currentMemberIds: string[] = (currentMembersData?.AllMembersList?.Member ?? [])
-    .map((m: any) => str(m?.PersonID ?? m?.PersonId))
-    .filter(Boolean)
-
   if (allMemberIds.length < 80) {
     throw new Error(`[syncDivisionsAndVotes] GetAllMembers_JSON returned only ${allMemberIds.length} members — aborting to prevent corrupting vote records`)
   }
-  if (currentMemberIds.length < 80) {
-    throw new Error(`[syncDivisionsAndVotes] GetAllCurrentMembers_JSON returned only ${currentMemberIds.length} current members — aborting to prevent corrupting no-show records`)
-  }
 
-  console.log(`[syncDivisionsAndVotes] Known members: ${allMemberIds.length}, current members: ${currentMemberIds.length}`)
+  // Fetch all members with mandate dates once — used for mandate-aware no-show logic
+  const allMembersForNoShow = await db
+    .select({
+      personId: schema.members.personId,
+      mandateStart: schema.members.mandateStart,
+      mandateEnd: schema.members.mandateEnd,
+    })
+    .from(schema.members)
+
+  console.log(`[syncDivisionsAndVotes] Known members: ${allMemberIds.length}, members for no-show: ${allMembersForNoShow.length}`)
 
   async function processDivision(div: any) {
     const documentId = str(div?.DocumentID)
@@ -612,6 +618,7 @@ async function syncDivisionsAndVotes(db: Db) {
         motionText: motionText || null,
         title,
         tabledBy,
+        mandate: CURRENT_MANDATE,
       })
       // Update result fields on conflict. divisionType is included defensively —
       // it rarely changes, but the cross-community count in getAssemblyStats() depends on it being correct.
@@ -652,23 +659,34 @@ async function syncDivisionsAndVotes(db: Db) {
           personId,
           vote: voteValue,
           designation: str(v?.Designation) || null,
+          mandate: CURRENT_MANDATE,
         })
         .onConflictDoNothing()
     }
 
-    // Insert no shows — current MLAs only
-    for (const personId of currentMemberIds) {
-      if (!votedIds.has(personId)) {
-        await db
-          .insert(schema.votes)
-          .values({
-            documentId,
-            personId,
-            vote: 'NO_SHOW',
-            designation: null,
-          })
-          .onConflictDoNothing()
-      }
+    // No shows for all members who were serving at the time of this division
+    const divisionDateStr = new Date(divisionDate).toISOString().slice(0, 10)
+
+    for (const member of allMembersForNoShow) {
+      if (votedIds.has(member.personId)) continue
+      if (!member.mandateStart) continue
+
+      const memberStart = member.mandateStart.toString().slice(0, 10)
+      const memberEnd = member.mandateEnd ? member.mandateEnd.toString().slice(0, 10) : null
+
+      if (memberStart > divisionDateStr) continue
+      if (memberEnd && memberEnd < divisionDateStr) continue
+
+      await db
+        .insert(schema.votes)
+        .values({
+          documentId,
+          personId: member.personId,
+          vote: 'NO_SHOW',
+          designation: null,
+          mandate: CURRENT_MANDATE,
+        })
+        .onConflictDoNothing()
     }
   }
 
