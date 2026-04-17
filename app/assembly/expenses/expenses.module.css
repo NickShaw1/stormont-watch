@@ -453,6 +453,14 @@
     padding-top: 40px;
   }
 
+  .periodCard {
+    align-items: flex-start;
+  }
+
+  .periodIcon {
+    margin-top: 0.125rem;
+  }
+
   .filterBtn {
     font-size: 0.8125rem;
     padding: 10px 12px;
