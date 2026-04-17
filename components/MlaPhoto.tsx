@@ -43,6 +43,7 @@ export default function MlaPhoto({ name, imgUrl, size, borderColor, noOutline, d
           role={decorative ? 'presentation' : undefined}
           width={size}
           height={size}
+          style={{ width: size, height: size }}
           className={styles.img}
           onError={() => setError(true)}
           unoptimized
