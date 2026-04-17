@@ -30,6 +30,7 @@ export interface BillStageItem {
   plenary_date: string
   has_division: boolean
   division_id: string | null
+  item_title: string | null
   outcome: string | null
   total_ayes: number | null
   total_noes: number | null
@@ -84,17 +85,89 @@ export function groupAndSortStages(stages: BillStageItem[]): StageGroup[] {
 }
 
 
-function StageGroupRow({ group }: { group: StageGroup }) {
+function naturalCompareDesc(a: string, b: string): number {
+  return b.localeCompare(a, undefined, { numeric: true, sensitivity: 'base' })
+}
+
+function VotedOnList({ items }: { items: BillStageItem[] }) {
+  const voted = items
+    .filter(i => i.has_division && i.division_id)
+    .sort((a, b) =>
+      new Date(b.plenary_date).getTime() - new Date(a.plenary_date).getTime() ||
+      naturalCompareDesc(a.item_title ?? '', b.item_title ?? '')
+    )
+
+  if (voted.length === 0) return null
+
+  return (
+    <div className={styles.itemColumn}>
+      <div className={styles.itemColumnHeader}>
+        Voted on <span className={styles.itemColumnCount}>({voted.length})</span>
+      </div>
+      <ul className={styles.itemColumnList} role="list">
+        {voted.map(item => {
+          const itemPassed = item.outcome ? isPassed(item.outcome) : null
+          return (
+            <li key={item.document_id} className={styles.itemColumnRowWrap}>
+              <Link href={`/assembly/divisions/${item.division_id}`} className={styles.itemColumnRow}>
+                {(item.item_title || item.outcome) && (
+                  <span className={`${styles.itemLabel} ${styles.votedTitle}`}>
+                    {item.item_title ?? item.outcome}
+                  </span>
+                )}
+                <span className={`${styles.itemColumnDate} ${styles.votedDate}`}>{formatDate(item.plenary_date)}</span>
+                {itemPassed !== null && (
+                  <span className={`${itemPassed ? styles.pillPassed : styles.pillFailed} ${styles.votedPill}`} role="status">
+                    {itemPassed ? 'Passed' : 'Failed'}
+                  </span>
+                )}
+                <span className={`${styles.divisionLink} ${styles.divisionLinkSm} ${styles.votedLink}`} aria-hidden="true">
+                  View vote results <span aria-hidden="true">↗</span>
+                </span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+function NoVoteList({ items }: { items: BillStageItem[] }) {
+  const noVote = items
+    .filter(i => !i.has_division || !i.division_id)
+    .sort((a, b) => naturalCompareDesc(a.item_title ?? '', b.item_title ?? ''))
+
+  if (noVote.length === 0) return null
+
+  return (
+    <div className={styles.itemColumn}>
+      <div className={styles.itemColumnHeader}>
+        Not voted on <span className={styles.itemColumnCount}>({noVote.length})</span>
+      </div>
+      <ul className={styles.itemColumnList} role="list">
+        {noVote.map(item => (
+          <li key={item.document_id} className={styles.itemColumnRow}>
+            <span className={styles.itemLabelMuted}>{item.item_title ?? ''}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function StageGroupRow({ group, billConfirmedPassed }: { group: StageGroup; billConfirmedPassed: boolean }) {
   const [expanded, setExpanded] = useState(false)
   const hasMultiple = group.items.length > 1
   const singleItem = !hasMultiple ? group.items[0] : null
-  const singleDivisionId = singleItem?.division_id ?? null
   const passed = singleItem?.outcome ? isPassed(singleItem.outcome) : null
   const isCrossCommunity = group.items.some(s => s.division_type === 'Cross-Community')
-
-  const itemsWithDivision = hasMultiple ? group.items.filter(i => i.has_division && i.division_id) : []
-  const itemsWithoutDivision = hasMultiple ? group.items.filter(i => !i.has_division || !i.division_id) : []
-  const noDivisionsAtAll = hasMultiple && itemsWithDivision.length === 0
+  const isFinalStage = /final stage/i.test(group.label)
+  const stageInPast = new Date(group.date) <= new Date()
+  const agreedWithoutVote = isFinalStage
+    && stageInPast
+    && billConfirmedPassed
+    && group.items.every(i => !i.has_division && !i.division_id)
 
   return (
     <li className={styles.stageGroup}>
@@ -107,72 +180,32 @@ function StageGroupRow({ group }: { group: StageGroup }) {
               {passed ? 'Passed' : 'Failed'}
             </span>
           )}
+          {agreedWithoutVote && (
+            <span className={styles.pillAgreed} role="status">Agreed</span>
+          )}
           {isCrossCommunity && (
             <span className={styles.pillCrossCommunity}>Cross-community</span>
           )}
         </div>
-        {singleItem?.outcome && (
-          <p className={styles.divisionOutcome}>{singleItem.outcome}</p>
-        )}
-        {singleDivisionId && (
-          <ul className={styles.divisionLinkList}>
-            <li>
-              <Link
-                href={`/assembly/divisions/${singleDivisionId}`}
-                className={styles.divisionLink}
-              >
-                View vote results <span aria-hidden="true">↗</span>
-              </Link>
-            </li>
-          </ul>
-        )}
-        {hasMultiple && noDivisionsAtAll && (
-          <p className={styles.noVoteSummary}>
-            {group.items.length} item{group.items.length !== 1 ? 's' : ''} considered without a recorded vote
-          </p>
-        )}
-        {hasMultiple && !noDivisionsAtAll && (
-          <div className={styles.groupMeta}>
-            <button
-              className={styles.expandBtn}
-              onClick={() => setExpanded(e => !e)}
-              aria-expanded={expanded}
-            >
-              {expanded ? 'Hide items' : `Show ${group.items.length} items`}
-            </button>
-          </div>
-        )}
       </div>
 
-      {expanded && hasMultiple && !noDivisionsAtAll && (
-        <ul className={styles.stageItems} role="list">
-          {itemsWithDivision.map(item => {
-            const itemPassed = item.outcome ? isPassed(item.outcome) : null
-            const itemLabel = item.stage
-              .replace(/\s*-\s*Consideration Stage$/i, '')
-              .replace(/\s*Consideration Stage$/i, '')
-              .trim()
-            return (
-              <li key={item.document_id} className={styles.stageItem}>
-                <span className={styles.itemLabel}>{itemLabel}</span>
-                <Link
-                  href={`/assembly/divisions/${item.division_id}`}
-                  className={styles.divisionLink}
-                >
-                  {itemPassed === true ? 'Passed' : itemPassed === false ? 'Failed' : 'View vote'} <span aria-hidden="true">↗</span>
-                </Link>
-              </li>
-            )
-          })}
-          {itemsWithoutDivision.length > 0 && (
-            <li className={styles.stageItem}>
-              <span className={styles.noVoteSummary}>
-                {itemsWithoutDivision.length} further item{itemsWithoutDivision.length !== 1 ? 's' : ''} considered without a recorded vote
-              </span>
-            </li>
-          )}
-        </ul>
+      <VotedOnList items={group.items} />
+
+      {hasMultiple && group.items.some(i => !i.has_division || !i.division_id) && (
+        <div className={styles.groupMeta}>
+          <button
+            className={styles.expandBtn}
+            onClick={() => setExpanded(e => !e)}
+            aria-expanded={expanded}
+          >
+            {expanded
+              ? 'Hide'
+              : `Not voted on (${group.items.filter(i => !i.has_division || !i.division_id).length})`}
+          </button>
+        </div>
       )}
+
+      {expanded && hasMultiple && <NoVoteList items={group.items} />}
     </li>
   )
 }
@@ -180,10 +213,14 @@ function StageGroupRow({ group }: { group: StageGroup }) {
 interface Props {
   stages: BillStageItem[]
   royalAssentDate?: string | null
+  latestDate?: string | null
 }
 
-export default function BillTimeline({ stages, royalAssentDate }: Props) {
+export default function BillTimeline({ stages, royalAssentDate, latestDate }: Props) {
   const groups = groupAndSortStages(stages)
+  const billConfirmedPassed = !!royalAssentDate || (
+    !!latestDate && new Date(latestDate) <= new Date()
+  )
 
   return (
     <ol className={styles.stageList} role="list">
@@ -199,7 +236,7 @@ export default function BillTimeline({ stages, royalAssentDate }: Props) {
         </li>
       )}
       {groups.map(group => (
-        <StageGroupRow key={`${group.label}-${group.date}`} group={group} />
+        <StageGroupRow key={`${group.label}-${group.date}`} group={group} billConfirmedPassed={billConfirmedPassed} />
       ))}
     </ol>
   )

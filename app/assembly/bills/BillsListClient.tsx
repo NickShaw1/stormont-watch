@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/format'
+import { isPassed } from '@/lib/bills'
 import type { BillItem } from './page'
 import BillStagePill from '@/app/components/BillStagePill'
 import styles from './bills.module.css'
@@ -153,14 +154,14 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
         <>
           <div className={styles.weekSectionHead}>
             <h2 className={styles.weekSectionTitle}><span className={styles.weekSectionTitleText}>Progressed this week</span></h2>
-            <p className={`${styles.weekSubtitle} ${styles.weekSubtitleDesktop}`}>Assembly business for the week commencing <strong style={{ color: 'var(--text-primary)' }}>{mondayLabel}</strong>.</p>
-            <p className={`${styles.weekSubtitle} ${styles.weekSubtitleMobile}`}>Assembly business, w/c <strong style={{ color: 'var(--text-primary)' }}>{mondayLabel}</strong></p>
+            <p className={`${styles.weekSubtitle} ${styles.weekSubtitleDesktop}`}>Legislative stages heard in the Assembly in the week commencing <strong style={{ color: 'var(--text-primary)' }}>{mondayLabel}</strong>. A bill may appear across multiple weeks as it progresses through a stage.</p>
+            <p className={`${styles.weekSubtitle} ${styles.weekSubtitleMobile}`}>Legislative stages heard in the Assembly, w/c <strong style={{ color: 'var(--text-primary)' }}>{mondayLabel}</strong>.</p>
           </div>
           <div className={styles.thisWeekCard}>
             <div className={styles.thisWeekList}>
               {thisWeekBills.map(bill => {
                 const slug = bill.bill_id.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
-                const passed = bill.has_division && /carried/i.test(bill.outcome ?? '')
+                const passed = bill.has_division && isPassed(bill.outcome) === true
                 const fullDate = formatDate(bill.plenary_date)
                 const shortDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(bill.plenary_date))
                 return (

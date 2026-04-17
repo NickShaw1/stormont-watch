@@ -112,6 +112,7 @@ export const billStages = pgTable('bill_stages', {
   hasDivision: boolean('has_division').default(false),
   divisionId: text('division_id').references(() => divisions.documentId),
   mandate: text('mandate').notNull().default('2022-2027'),
+  itemTitle: text('item_title'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 

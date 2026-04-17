@@ -628,6 +628,8 @@
   color: var(--text-secondary);
   margin-top: 0.25rem;
   margin-bottom: 0;
+  max-width: none;
+  width: 100%;
 }
 
 .weekSubtitleMobile {

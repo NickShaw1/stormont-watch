@@ -39,10 +39,27 @@ async function fetchMotionBill(documentId: string) {
 
 function extractStage(title: string): string | null {
   const match = title.match(/^([^:(\[]+)/i)
-  return match ? match[1].trim() : null
+  if (!match) return null
+  let stage = match[1].trim()
+  // Strip clause, schedule, amendment and long title prefixes
+  stage = stage.replace(/^(Clauses?\s+[\d\s,toand]+|Schedules?\s+[\d\s,toand]+|Schedule|Amendment\s+\d+|Long Title)\s*-?\s*/i, '')
+  return stage.trim() || null
 }
 
 
+
+function extractItemTitle(title: string): string | null {
+  // Strip from the first ' - <stage keyword>' or ':' onwards
+  const stripped = title
+    .replace(/\s*-\s*(?:consideration|further|final|second|committee)\b.*$/i, '')
+    .replace(/:.*$/, '')
+    .trim()
+  // Only return if what remains is a recognised sub-item prefix
+  if (/^(?:Clauses?\s+[\d\s,toand]+|Schedules?\s+[\d\s,toand]+|Schedule|Amendment\s+\d+|Long Title)$/i.test(stripped)) {
+    return stripped
+  }
+  return null
+}
 
 function extractBillId(title: string): string | null {
   const match = title.match(/NIA\s+Bill\s+(\d+\/\d{2}-\d{2,4})/i)
@@ -176,6 +193,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
         hasDivision: false,
         divisionId: null,
         mandate: CURRENT_MANDATE,
+        itemTitle: extractItemTitle(item.Title),
         updatedAt: new Date(),
       }).onConflictDoNothing()
 

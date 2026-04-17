@@ -165,7 +165,7 @@ export default async function BillDetailPage({ params }: Props) {
         <p className={styles.guidePrompt}>
           <Link href="/assembly/legislation-guide">How does a bill become law? <span aria-hidden="true">↗</span></Link>
         </p>
-        <BillTimeline stages={stages} royalAssentDate={bill.royal_assent_date} />
+        <BillTimeline stages={stages} royalAssentDate={bill.royal_assent_date} latestDate={bill.latest_date} />
       </section>
     </div>
   )

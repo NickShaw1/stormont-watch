@@ -245,7 +245,7 @@
   color: var(--accent-hover, var(--accent));
 }
 
-/* Expanded items list */
+/* Expanded items list (legacy — kept for fallback) */
 .stageItems {
   list-style: none;
   margin-top: var(--spacing-md);
@@ -264,14 +264,94 @@
 }
 
 .itemLabel {
-  font-size: 0.9375rem;
+  font-size: 0.75rem;
   color: var(--text-primary);
+}
+
+.itemLabelMuted {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
 
 .noVoteSummary {
   font-size: 0.8125rem;
   color: var(--text-secondary);
   margin-top: var(--spacing-xs);
+}
+
+.itemColumn {
+  margin-top: var(--spacing-md);
+  border: 0.5px solid var(--color-border-tertiary, var(--border));
+  border-radius: var(--border-radius-md, 6px);
+  overflow: hidden;
+}
+
+.itemColumnHeader {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  background: var(--surface, var(--bg-secondary));
+  padding: 6px 10px;
+  border-bottom: 0.5px solid var(--color-border-tertiary, var(--border));
+}
+
+.itemColumnCount {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.itemColumnList {
+  list-style: none;
+}
+
+.itemColumnRowWrap {
+  border-bottom: 0.5px solid var(--color-border-tertiary, var(--border));
+}
+
+.itemColumnRowWrap:last-child {
+  border-bottom: none;
+}
+
+.itemColumnRow {
+  display: grid;
+  grid-template-areas: "title date pill";
+  grid-template-columns: 1fr auto auto;
+  gap: 0 8px;
+  align-items: center;
+  padding: 8px 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 100ms ease;
+}
+
+.itemColumnRow:hover {
+  background: var(--surface);
+  text-decoration: none;
+}
+
+.itemColumnDate {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.votedTitle { grid-area: title; }
+.votedDate  { grid-area: date;  white-space: nowrap; }
+.votedPill  { grid-area: pill;  }
+.votedLink  { display: none; }
+
+@media (max-width: 600px) {
+  .itemColumnRowWrap {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .itemColumnRowWrap:last-child {
+    border-bottom: none;
+  }
+
+  .votedTitle { font-size: 1rem; }
 }
 
 .divisionLinkList {
@@ -291,6 +371,10 @@
 
 .divisionLink:hover {
   text-decoration: underline;
+}
+
+.divisionLinkSm {
+  font-size: 0.8rem;
 }
 
 .divisionOutcome {
@@ -375,6 +459,19 @@
   background: #D1FAE5;
   color: #065F46;
   border: 1px solid #6EE7B7;
+}
+
+.pillAgreed {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+  background: #EBF0F5;
+  color: #203F59;
+  border: 1px solid #C0D0DC;
 }
 
 .pillCrossCommunity {
