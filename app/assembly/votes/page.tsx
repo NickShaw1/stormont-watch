@@ -33,7 +33,7 @@ export default async function VotesPage() {
     latestDate: d.divisionDate.toISOString(),
     passed: isPassed(d.outcome ?? null),
     motionText: d.motionText ?? null,
-    isBill: /NIA Bill/i.test(d.subject ?? ''),
+    isBill: /NIA Bill/i.test(d.subject ?? '') || /(?:First|Second|Committee|Consideration|Further Consideration|Final) Stage:/i.test(d.subject ?? ''),
     isCrossCommunity: d.divisionType === 'Cross-Community',
   }))
 
