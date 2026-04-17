@@ -31,6 +31,15 @@ export function formatDivisionSubject(raw: string): {
     }
   }
 
+  // Pattern 4 — stage reading: "Second Stage: Bill Title (NIA Bill...)"
+  const stageReadingMatch = raw.match(/^((?:First|Second|Committee|Consideration|Further Consideration|Final) Stage):\s+(.+?)(?:\s+\(NIA Bill[^)]*\))?(?:\s+\[.+\])?$/i)
+  if (stageReadingMatch) {
+    return {
+      title: stageReadingMatch[2].trim(),
+      subtitle: stageReadingMatch[1].trim(),
+    }
+  }
+
   // Clean member name suffix from main motions: "Title [Mr Member Name]"
   const memberMatch = raw.match(/^(.+?)\s+\[.+\]$/)
   if (memberMatch) {
