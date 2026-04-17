@@ -3,6 +3,10 @@
   .formerBreadcrumb {
     margin-bottom: 40px;
   }
+
+  .formerPageHeader h1 {
+    font-size: 2rem;
+  }
 }
 
 .pageHeader p {

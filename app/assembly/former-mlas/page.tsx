@@ -23,7 +23,7 @@ export default async function FormerMlasPage() {
 
   return (
     <div className="container">
-      <header className="page-header" style={{ paddingBottom: 0 }}>
+      <header className={`page-header ${styles.formerPageHeader}`} style={{ paddingBottom: 0 }}>
         <nav aria-label="Breadcrumb" className={`breadcrumb ${styles.formerBreadcrumb}`}>
           <ol>
             <li><Link href="/assembly/mlas">MLAs</Link></li>
