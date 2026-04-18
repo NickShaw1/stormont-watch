@@ -27,6 +27,14 @@ export const metadata: Metadata = {
     title: 'Stormont Watch',
     description: 'Stormont Watch tracks every vote, bill and expense in the Northern Ireland Assembly. See how your MLA votes, explore the full voting record and follow legislation since the 2022 mandate.',
     url: 'https://www.stormontwatch.com',
+    images: [
+      {
+        url: 'https://www.stormontwatch.com/opengraph-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Stormont Watch — NI Assembly Transparency',
+      },
+    ],
   },
   alternates: { canonical: 'https://www.stormontwatch.com' },
 }

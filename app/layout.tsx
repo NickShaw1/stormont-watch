@@ -34,17 +34,19 @@ export const metadata: Metadata = {
     default: 'Stormont Watch',
     template: '%s - Stormont Watch',
   },
-  description: 'Every vote in the Northern Ireland Assembly since May 2022.',
+  description: 'Stormont Watch tracks every vote, bill and MLA expense in the Northern Ireland Assembly. Independent, plain-language accountability since the 2022 mandate.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stormontwatch.com'),
   openGraph: {
+    title: 'Stormont Watch',
+    description: 'Stormont Watch tracks every vote, bill and MLA expense in the Northern Ireland Assembly. Independent, plain-language accountability since the 2022 mandate.',
     siteName: 'Stormont Watch',
     type: 'website',
     images: [
       {
-        url: '/opengraph-image.png',
+        url: 'https://www.stormontwatch.com/opengraph-image.png',
         width: 1200,
         height: 630,
-        alt: 'Stormont Watch — Northern Ireland Assembly tracker',
+        alt: 'Stormont Watch — NI Assembly Transparency',
       },
     ],
   },
