@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getMembersGroupedByParty, getAllMinisters, getAllCommitteeChairs, getAllMembers } from '@/lib/db/queries'
+import { getMembersGroupedByParty, getAllMinisters, getAllCommitteeChairs } from '@/lib/db/queries'
 
 export const revalidate = 86400
 import MlasListClient from './MlasListClient'
