@@ -6,19 +6,14 @@ import styles from './bills.module.css'
 
 export const revalidate = 86400
 
-export async function generateMetadata(): Promise<Metadata> {
-  const bills = await getAllBills()
-  const count = bills.length
-  const description = `Browse all ${count} bills and acts in the Northern Ireland Assembly since May 2022. Track progress through legislative stages.`
-  return {
-    title: 'Legislation',
-    description,
-    openGraph: {
-      title: 'Legislation — Stormont Watch',
-      description,
-    },
-    alternates: { canonical: 'https://www.stormontwatch.com/assembly/bills' },
-  }
+export const metadata: Metadata = {
+  title: 'Legislation',
+  description: 'Browse all bills and acts in the Northern Ireland Assembly since the 2022 mandate. Track legislation from introduction through to Royal Assent.',
+  openGraph: {
+    title: 'Legislation — Stormont Watch',
+    description: 'Browse all bills and acts in the Northern Ireland Assembly since the 2022 mandate. Track legislation from introduction through to Royal Assent.',
+  },
+  alternates: { canonical: 'https://www.stormontwatch.com/assembly/bills' },
 }
 
 

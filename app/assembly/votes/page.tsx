@@ -7,19 +7,14 @@ import VotesListClient from './VotesListClient'
 import type { VoteItem } from './VotesListClient'
 import styles from './votes.module.css'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const rows = await getAllDivisionsForList()
-  const count = rows.length
-  const description = `Browse ${count} votes cast in the Northern Ireland Assembly since May 2022.`
-  return {
-    title: 'Votes',
-    description,
-    openGraph: {
-      title: 'Votes — Stormont Watch',
-      description,
-    },
-    alternates: { canonical: 'https://www.stormontwatch.com/assembly/votes' },
-  }
+export const metadata: Metadata = {
+  title: 'Votes',
+  description: 'Every recorded vote in the Northern Ireland Assembly since the 2022 mandate. Search and filter divisions by date, outcome and subject.',
+  openGraph: {
+    title: 'Votes — Stormont Watch',
+    description: 'Every recorded vote in the Northern Ireland Assembly since the 2022 mandate. Search and filter divisions by date, outcome and subject.',
+  },
+  alternates: { canonical: 'https://www.stormontwatch.com/assembly/votes' },
 }
 
 export default async function VotesPage() {

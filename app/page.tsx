@@ -18,10 +18,10 @@ import styles from './home.module.css'
 
 export const metadata: Metadata = {
   title: 'Stormont Watch',
-  description: 'Every vote in the Northern Ireland Assembly since May 2022.',
+  description: 'Stormont Watch tracks every vote, bill and expense in the Northern Ireland Assembly. See how your MLA votes, explore the full voting record and follow legislation since the 2022 mandate.',
   openGraph: {
     title: 'Stormont Watch',
-    description: 'Every vote in the Northern Ireland Assembly since May 2022.',
+    description: 'Stormont Watch tracks every vote, bill and expense in the Northern Ireland Assembly. See how your MLA votes, explore the full voting record and follow legislation since the 2022 mandate.',
     url: 'https://www.stormontwatch.com',
   },
   alternates: { canonical: 'https://www.stormontwatch.com' },
@@ -45,7 +45,7 @@ export default async function HomePage() {
     '@type': 'WebSite',
     name: 'Stormont Watch',
     url: 'https://www.stormontwatch.com',
-    description: 'Every vote in the Northern Ireland Assembly since May 2022.',
+    description: 'Stormont Watch tracks every vote, bill and expense in the Northern Ireland Assembly. See how your MLA votes, explore the full voting record and follow legislation since the 2022 mandate.',
     publisher: {
       '@type': 'Organization',
       name: 'Stormont Watch',

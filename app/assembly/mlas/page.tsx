@@ -6,19 +6,14 @@ export const revalidate = 86400
 import MlasListClient from './MlasListClient'
 import styles from './mlas.module.css'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const members = await getAllMembers()
-  const count = members.length
-  const description = `Track how all ${count} current MLAs vote in the Northern Ireland Assembly. View attendance, expenses and registered interests.`
-  return {
-    title: 'MLAs',
-    description,
-    openGraph: {
-      title: 'MLAs — Stormont Watch',
-      description,
-    },
-    alternates: { canonical: 'https://www.stormontwatch.com/assembly/mlas' },
-  }
+export const metadata: Metadata = {
+  title: 'MLAs',
+  description: 'All current Members of the Northern Ireland Legislative Assembly. View voting records, expenses and registered interests for every MLA.',
+  openGraph: {
+    title: 'MLAs — Stormont Watch',
+    description: 'All current Members of the Northern Ireland Legislative Assembly. View voting records, expenses and registered interests for every MLA.',
+  },
+  alternates: { canonical: 'https://www.stormontwatch.com/assembly/mlas' },
 }
 
 export default async function MlasPage() {
