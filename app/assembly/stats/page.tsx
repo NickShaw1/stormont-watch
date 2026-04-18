@@ -81,9 +81,10 @@ export default async function StatsPage() {
     <div className="container">
       {/* 1. Assembly at a glance */}
       <section aria-labelledby="assembly-stats-heading" className={styles.section}>
-        <header className={`page-header ${styles.pageHeader}`} style={{ paddingBottom: 0 }}>
+        <header className="page-header">
+          <span className="eyebrow">Statistics</span>
           <h1 id="assembly-stats-heading">The Assembly at a glance</h1>
-          <div className="page-header-rule"></div>
+          <p className="lede">Assembly voting patterns and attendance since May 2022, with expenses from the most recently published period.</p>
         </header>
 
         <p className={styles.assemblyStatement}>
@@ -153,6 +154,7 @@ export default async function StatsPage() {
                     imgUrl={row.imgUrl ?? ''}
                     size={52}
                     decorative
+                    square
                   />
                   <div className={styles.info}>
                     <Link href={`/assembly/mlas/${row.personId}`} className={styles.name}>
@@ -160,7 +162,7 @@ export default async function StatsPage() {
                     </Link>
                     {row.party && (
                       <span
-                        className={styles.partyPill}
+                        className="party-pill"
                         data-party={abbreviateParty(row.party)}
                       >
                         <PartyName party={row.party} />
@@ -178,8 +180,8 @@ export default async function StatsPage() {
           <section aria-labelledby="expenses-heading" className={styles.section}>
             <div className={styles.sectionHeader}>
               <div className={styles.expensesHeader}>
-                <p className={styles.sectionEyebrow}>Public spending</p>
-                <a href="https://www.niassembly.gov.uk/your-mlas/members-salaries-and-expenses/" target="_blank" rel="noopener noreferrer" className={styles.expensesSourceLink}>
+                <p className="eyebrow">Public spending</p>
+                <a href="https://www.niassembly.gov.uk/your-mlas/members-salaries-and-expenses/" target="_blank" rel="noopener noreferrer" className={`${styles.expensesSourceLink} ${styles.expensesSourceLinkDesktop}`}>
                   Official source
                 </a>
               </div>
@@ -202,9 +204,9 @@ export default async function StatsPage() {
             <Link href="/assembly/expenses" className={styles.expensesRankingsCard}>
               <span className={styles.expensesRankingsCardLeft}>
                 <svg className={styles.expensesRankingsCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="10" cy="10" r="10" fill="#203F59"/>
-                  <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
-                  <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+                  <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
+                  <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
+                  <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
                 </svg>
                 <span className={styles.expensesRankingsCardText}>View full MLA expenses rankings</span>
               </span>
@@ -305,7 +307,7 @@ export default async function StatsPage() {
       {/* 3. Individual performance */}
       <section aria-labelledby="mla-stats-heading" className={styles.section}>
         <div className={styles.sectionHeader}>
-          <p className={styles.sectionEyebrow}>Individual performance</p>
+          <p className="eyebrow">Individual performance</p>
           <h2 id="mla-stats-heading" className={styles.sectionTitle}>MLA Voting</h2>
           <div className={styles.sectionRule}></div>
           <p className={styles.sectionDesc}>Who shows up, who votes Aye and who votes No. The top and bottom 5 MLAs ranked.</p>
@@ -318,7 +320,7 @@ export default async function StatsPage() {
       {/* 4. Party behaviour */}
       <section aria-labelledby="patterns-heading" className={styles.section}>
         <div className={styles.sectionHeader}>
-          <p className={styles.sectionEyebrow}>Party behaviour</p>
+          <p className="eyebrow">Party behaviour</p>
           <h2 id="patterns-heading" className={styles.sectionTitle}>How parties vote</h2>
           <div className={styles.sectionRule}></div>
         </div>
@@ -392,13 +394,13 @@ export default async function StatsPage() {
               <h3 className={styles.overviewLabel}>Most rebellious MLA</h3>
               {rebelliousMla ? (
                 <div className={styles.rebelliousCard}>
-                  <MlaPhoto name={rebelliousMla.fullName} imgUrl={rebelliousMla.imgUrl ?? ''} size={64} decorative />
+                  <MlaPhoto name={rebelliousMla.fullName} imgUrl={rebelliousMla.imgUrl ?? ''} size={64} decorative square />
                   <div className={styles.rebelliousInfo}>
                     <Link href={`/assembly/mlas/${rebelliousMla.personId}`} className={styles.patternName}>
                       {formatMemberName(rebelliousMla.fullName)}
                     </Link>
                     <span
-                      className={styles.partyPill}
+                      className="party-pill"
                       data-party={abbreviateParty(rebelliousMla.party)}
                     >
                       <PartyName party={rebelliousMla.party} />
@@ -421,7 +423,7 @@ export default async function StatsPage() {
       {/* 5. Assembly activity */}
       <section aria-labelledby="productivity-heading" className={styles.section}>
         <div className={styles.sectionHeader}>
-          <p className={styles.sectionEyebrow}>Sitting and voting patterns</p>
+          <p className="eyebrow">Sitting and voting patterns</p>
           <h2 id="productivity-heading" className={styles.sectionTitle}>Assembly activity</h2>
           <div className={styles.sectionRule}></div>
           <p className={styles.sectionDesc}>How active the Assembly has been since May 2022.</p>
@@ -434,7 +436,7 @@ export default async function StatsPage() {
       {/* 6. Cross-community voting */}
       <section aria-labelledby="cross-community-heading" className={styles.section}>
         <div className={styles.sectionHeader}>
-          <p className={styles.sectionEyebrow}>Unionist and nationalist blocs</p>
+          <p className="eyebrow">Unionist and nationalist blocs</p>
           <h2 id="cross-community-heading" className={styles.sectionTitle}>Cross-community voting</h2>
           <div className={styles.sectionRule}></div>
           <p className={styles.sectionDesc}>How often unionist and nationalist MLAs both voted Aye on the same division.</p>

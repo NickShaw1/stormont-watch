@@ -63,10 +63,10 @@ export default function MissingMlasTable({ missing }: { missing: MissingMla[] })
             <td>
               <div className={styles.mlaCell}>
                 <span className={styles.photoDesktop}>
-                  <MlaPhoto name={mla.full_name} imgUrl={mla.img_url ?? ''} size={36} decorative />
+                  <MlaPhoto name={mla.full_name} imgUrl={mla.img_url ?? ''} size={36} decorative square />
                 </span>
                 <span className={styles.photoMobile}>
-                  <MlaPhoto name={mla.full_name} imgUrl={mla.img_url ?? ''} size={50} decorative />
+                  <MlaPhoto name={mla.full_name} imgUrl={mla.img_url ?? ''} size={50} decorative square />
                 </span>
                 <div style={{ minWidth: 0 }}>
                   <Link href={`/assembly/mlas/${mla.person_id}`} className={styles.mlaName}>
@@ -74,7 +74,7 @@ export default function MissingMlasTable({ missing }: { missing: MissingMla[] })
                   </Link>
                   {mla.party && (
                     <span
-                      className={`${styles.partyPill} ${styles.mobilePill}`}
+                      className={`party-pill ${styles.mobilePill}`}
                       data-party={abbreviateParty(mla.party)}
                     >
                       <PartyName party={mla.party} />
@@ -85,7 +85,7 @@ export default function MissingMlasTable({ missing }: { missing: MissingMla[] })
             </td>
             <td className={`${styles.tdParty} ${styles.hideMobile}`}>
               {mla.party && (
-                <span className={styles.partyPill} data-party={abbreviateParty(mla.party)}>
+                <span className="party-pill" data-party={abbreviateParty(mla.party)}>
                   <PartyName party={mla.party} />
                 </span>
               )}

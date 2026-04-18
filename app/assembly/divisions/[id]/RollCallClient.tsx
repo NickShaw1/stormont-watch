@@ -55,7 +55,7 @@ function RollColumn({
       {groups.map(({ party, items }) => (
         <div key={party} className={divStyles.partyGroup}>
           <div className={divStyles.partyGroupHeading}>
-            <span className={divStyles.partyPill} data-party={abbreviateParty(party)}>
+            <span className="party-pill" data-party={abbreviateParty(party)}>
               <PartyName party={party} />
             </span>
           </div>
@@ -140,7 +140,7 @@ export default function RollCallClient({ votes }: { votes: Vote[] }) {
             {i > 0 && <hr className={styles.mobilePartyRule} />}
           <div className={styles.mobilePartyGroup}>
             <div className={styles.mobilePartyHeading}>
-              <span className={divStyles.partyPill} data-party={abbreviateParty(party)}>
+              <span className="party-pill" data-party={abbreviateParty(party)}>
                 <PartyName party={party} />
               </span>
             </div>

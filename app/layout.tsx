@@ -1,21 +1,30 @@
 import type { Metadata, Viewport } from 'next'
-import { Outfit, IBM_Plex_Mono } from 'next/font/google'
+import { Inter, Instrument_Serif, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
 import Nav from '@/components/Nav'
 import SuspensionBanner from '@/components/SuspensionBanner'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
+import RouteAnnouncer from '@/components/RouteAnnouncer'
 
-const outfit = Outfit({
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-body',
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+})
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  variable: '--font-heading',
+  weight: ['400'],
+  style: ['normal', 'italic'],
   display: 'swap',
 })
 
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
-  variable: '--font-mono',
+  variable: '--font-mono-stack',
   weight: ['400', '500'],
   display: 'swap',
 })
@@ -46,12 +55,13 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icon0.svg', type: 'image/svg+xml' },
-      { url: '/icon1.png', type: 'image/png' },
+      { url: '/favicon.svg?v=2', type: 'image/svg+xml' },
+      { url: '/favicon-96x96.png?v=2', type: 'image/png', sizes: '96x96' },
+      { url: '/favicon.ico?v=2' },
     ],
-    apple: [{ url: '/apple-icon.png' }],
+    apple: [{ url: '/apple-touch-icon.png?v=2', sizes: '180x180' }],
   },
-  manifest: '/manifest.json',
+  manifest: '/site.webmanifest?v=2',
   robots: {
     index: true,
     follow: true,
@@ -62,7 +72,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#203F59',
+  themeColor: '#fafafa',
 }
 
 export default function RootLayout({
@@ -71,11 +81,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en-GB" className={`${outfit.variable} ${ibmPlexMono.variable}`}>
+    <html lang="en-GB" className={`${inter.variable} ${instrumentSerif.variable} ${ibmPlexMono.variable}`}>
       <body>
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
+        <RouteAnnouncer />
         <ScrollToTop />
         <Nav />
         <SuspensionBanner />

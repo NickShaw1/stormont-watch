@@ -25,12 +25,16 @@ interface PartyGroup {
 interface Props {
   partyGroups: PartyGroup[]
   roleLookup: Record<string, string>
-  roleLookupFull: Record<string, string>
 }
 
 const MOBILE_PAGE_SIZE = 25
 
-export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull }: Props) {
+function abbreviateRole(role: string): string {
+  return role
+    .replace(/\bPrincipal\b/g, 'Pr.')
+}
+
+export default function MlasListClient({ partyGroups, roleLookup }: Props) {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
@@ -188,46 +192,46 @@ export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull
         />
       </div>
 
-      <hr className={styles.searchRule} />
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {(q || partyFilter !== 'ALL') && (
+          groupMode === 'party'
+            ? `${totalPartyMlas} MLA${totalPartyMlas !== 1 ? 's' : ''} found`
+            : `${totalConstMlas} MLA${totalConstMlas !== 1 ? 's' : ''} found`
+        )}
+      </p>
 
       {groupMode === 'party' && (
         <>
           {paginatedByParty.length === 0 && (
-            <p className="text-secondary">No MLAs match your search.</p>
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--ink-3)', fontStyle: 'italic' }}>No MLAs match your search.</p>
           )}
-          {paginatedByParty.map((group, i) => (
-            <React.Fragment key={group.party}>
-            {i > 0 && <hr className={styles.sectionRule} />}
+          {paginatedByParty.map((group) => (
             <section
+              key={group.party}
               aria-labelledby={`party-${group.party.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`}
               className={styles.partySection}
             >
               <h2
                 id={`party-${group.party.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`}
-                style={{ borderLeft: `4px solid ${partyBorderColor(group.party)}` }}
-                className={`${styles.partyHeading}${group.party === 'Independent' ? ` ${styles.partyHeadingInd}` : ''}`}
+                className={styles.partyHeading}
               >
+                <span className={styles.partySwatch} style={{ background: partyBorderColor(group.party) }} aria-hidden="true" />
                 <span className={styles.partyNameFull}>{group.party}</span>
                 <span className={styles.partyNameShort} aria-hidden="true">{abbreviateParty(group.party)}</span>
-                <span className={styles.partyCount}>{filteredByParty.find(g => g.party === group.party)?.mlas.length ?? group.mlas.length}</span>
+                <span className={styles.partyCount}>{filteredByParty.find(g => g.party === group.party)?.mlas.length ?? group.mlas.length} MLAs</span>
               </h2>
               <ul className={styles.mlaGrid} role="list">
                 {group.mlas.map((mla) => (
-                  <li key={mla.person_id} className={styles.mlaCardWrapper} style={{ '--party-color': partyBorderColor(mla.party) } as React.CSSProperties}>
-                    {(roleLookup[mla.person_id] || (mla.assembly_role && !mla.assembly_role_end)) && (
-                      <div className={styles.mlaRoleBanner}>
-                        {mla.assembly_role && !mla.assembly_role_end ? mla.assembly_role : roleLookupFull[mla.person_id]}
+                  <li key={mla.person_id} className={styles.mlaCardWrapper}>
+                    <div className={styles.mlaCard} style={{ '--party-c': partyBorderColor(mla.party) } as React.CSSProperties}>
+                      {(roleLookup[mla.person_id] || (mla.assembly_role && !mla.assembly_role_end)) && (
+                        <span className={styles.roleBadge}>
+                          {mla.assembly_role && !mla.assembly_role_end ? abbreviateRole(mla.assembly_role) : roleLookup[mla.person_id]}
+                        </span>
+                      )}
+                      <div className={styles.mlaPhoto}>
+                        <MlaPhoto name={mla.full_name} imgUrl={mla.img_url ?? ''} size={64} decorative />
                       </div>
-                    )}
-                    <div
-                      className={styles.mlaCard}
-                    >
-                      <MlaPhoto
-                        name={mla.full_name}
-                        imgUrl={mla.img_url ?? ''}
-                        size={100}
-                        decorative
-                      />
                       <Link
                         href={`/assembly/mlas/${mla.person_id}`}
                         className={styles.mlaName}
@@ -236,36 +240,19 @@ export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull
                         {formatMemberName(mla.full_name)}
                       </Link>
                       <span className={styles.mlaConstituency}>{formatConstituency(mla.constituency)}</span>
-                      <div className={styles.mlaRoleSlot}>
-                        {(roleLookup[mla.person_id] || mla.assembly_role) && (
-                          <span className={styles.roleBadge}>
-                            {mla.assembly_role ?? roleLookup[mla.person_id]}
-                          </span>
+                      <div className={styles.mlaFoot}>
+                        <span className={styles.mlaAtt}>
+                          Att. <strong>{mla.assembly_role && !mla.assembly_role_end ? '—' : (mla.attendance_pct ?? '—')}%</strong>
+                        </span>
+                        {mla.party && (
+                          <span className="party-pill" data-party={abbreviateParty(mla.party)}>{abbreviateParty(mla.party)}</span>
                         )}
                       </div>
-                      <span
-                        className={styles.attendanceBadge}
-                        style={
-                          mla.attendance_pct !== null && !(mla.assembly_role && !mla.assembly_role_end)
-                            ? { color: mla.attendance_pct >= 80 ? '#065F46' : mla.attendance_pct >= 60 ? '#92400E' : '#991B1B' }
-                            : undefined
-                        }
-                        aria-label={
-                          mla.assembly_role && !mla.assembly_role_end
-                            ? 'Attendance data not available'
-                            : `${mla.attendance_pct ?? 0}% voting attendance`
-                        }
-                      >
-                        {mla.assembly_role && !mla.assembly_role_end
-                          ? '— voting attendance'
-                          : `${mla.attendance_pct ?? '—'}% voting attendance`}
-                      </span>
                     </div>
                   </li>
                 ))}
               </ul>
             </section>
-            </React.Fragment>
           ))}
           {visibleCount < totalPartyMlas && (
             <div className={styles.loadMoreWrap}>
@@ -280,41 +267,28 @@ export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull
       {groupMode === 'constituency' && (
         <>
           {paginatedByConstituency.length === 0 && (
-            <p className="text-secondary">No MLAs match your search.</p>
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--ink-3)', fontStyle: 'italic' }}>No MLAs match your search.</p>
           )}
-          {paginatedByConstituency.map(({ constituency, mlas }, i) => {
+          {paginatedByConstituency.map(({ constituency, mlas }) => {
             const slugId = `constituency-${constituency.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`
             return (
-              <React.Fragment key={constituency}>
-              {i > 0 && <hr className={styles.sectionRule} />}
-              <section
-                aria-labelledby={slugId}
-                className={styles.partySection}
-              >
-                <h2
-                  id={slugId}
-                  style={{ borderLeft: '4px solid var(--border)' }}
-                  className={styles.partyHeading}
-                >
+              <section key={constituency} aria-labelledby={slugId} className={styles.partySection}>
+                <h2 id={slugId} className={styles.partyHeading}>
+                  <span className={styles.partySwatch} style={{ background: 'var(--ink-4)' }} aria-hidden="true" />
                   <span>{formatConstituency(constituency)}</span>
                 </h2>
                 <ul className={styles.mlaGrid} role="list">
                   {mlas.map((mla) => (
-                    <li key={mla.person_id} className={styles.mlaCardWrapper} style={{ '--party-color': partyBorderColor(mla.party) } as React.CSSProperties}>
-                      {(roleLookup[mla.person_id] || (mla.assembly_role && !mla.assembly_role_end)) && (
-                        <div className={styles.mlaRoleBanner}>
-                          {mla.assembly_role && !mla.assembly_role_end ? mla.assembly_role : roleLookupFull[mla.person_id]}
+                    <li key={mla.person_id} className={styles.mlaCardWrapper}>
+                      <div className={styles.mlaCard} style={{ '--party-c': partyBorderColor(mla.party) } as React.CSSProperties}>
+                        {(roleLookup[mla.person_id] || (mla.assembly_role && !mla.assembly_role_end)) && (
+                          <span className={styles.roleBadge}>
+                            {mla.assembly_role && !mla.assembly_role_end ? abbreviateRole(mla.assembly_role) : roleLookup[mla.person_id]}
+                          </span>
+                        )}
+                        <div className={styles.mlaPhoto}>
+                          <MlaPhoto name={mla.full_name} imgUrl={mla.img_url ?? ''} size={64} decorative />
                         </div>
-                      )}
-                      <div
-                        className={styles.mlaCard}
-                      >
-                        <MlaPhoto
-                          name={mla.full_name}
-                          imgUrl={mla.img_url ?? ''}
-                          size={100}
-                          decorative
-                        />
                         <Link
                           href={`/assembly/mlas/${mla.person_id}`}
                           className={styles.mlaName}
@@ -323,41 +297,19 @@ export default function MlasListClient({ partyGroups, roleLookup, roleLookupFull
                           {formatMemberName(mla.full_name)}
                         </Link>
                         <span className={styles.mlaConstituency}>{formatConstituency(mla.constituency)}</span>
-                        <div className={styles.mlaRoleSlot}>
+                        <div className={styles.mlaFoot}>
+                          <span className={styles.mlaAtt}>
+                            Att. <strong>{mla.assembly_role && !mla.assembly_role_end ? '—' : (mla.attendance_pct ?? '—')}%</strong>
+                          </span>
                           {mla.party && (
-                            <span className={styles.partyPill} data-party={abbreviateParty(mla.party)}>
-                              {abbreviateParty(mla.party)}
-                            </span>
-                          )}
-                          {(roleLookup[mla.person_id] || mla.assembly_role) && (
-                            <span className={styles.roleBadge}>
-                              {(mla.assembly_role ?? roleLookup[mla.person_id]).replace(/Junior Minister/gi, 'Jr. Min')}
-                            </span>
+                            <span className="party-pill" data-party={abbreviateParty(mla.party)}>{abbreviateParty(mla.party)}</span>
                           )}
                         </div>
-                        <span
-                          className={styles.attendanceBadge}
-                          style={
-                            mla.attendance_pct !== null && !(mla.assembly_role && !mla.assembly_role_end)
-                              ? { color: mla.attendance_pct >= 80 ? '#065F46' : mla.attendance_pct >= 60 ? '#92400E' : '#991B1B' }
-                              : undefined
-                          }
-                          aria-label={
-                            mla.assembly_role && !mla.assembly_role_end
-                              ? 'Attendance data not available'
-                              : `${mla.attendance_pct ?? 0}% attendance`
-                          }
-                        >
-                          {mla.assembly_role && !mla.assembly_role_end
-                            ? '— attendance'
-                            : `${mla.attendance_pct ?? '—'}% attendance`}
-                        </span>
                       </div>
                     </li>
                   ))}
                 </ul>
               </section>
-              </React.Fragment>
             )
           })}
           {visibleCount < totalConstMlas && (

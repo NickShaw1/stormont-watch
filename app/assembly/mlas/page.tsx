@@ -23,49 +23,36 @@ export default async function MlasPage() {
     getAllCommitteeChairs(),
   ])
 
-  // Short labels for desktop badge
   const roleLookup: Record<string, string> = {}
-  // Full labels for mobile banner
-  const roleLookupFull: Record<string, string> = {}
 
   for (const m of ministers) {
     if (m.roleTitle === 'First Minister') {
       roleLookup[m.personId] = 'First Minister'
-      roleLookupFull[m.personId] = 'First Minister'
     } else if (m.roleTitle === 'deputy First Minister') {
       roleLookup[m.personId] = 'Deputy FM'
-      roleLookupFull[m.personId] = 'Deputy First Minister'
     } else if (m.roleTitle?.toLowerCase() === 'junior minister') {
       roleLookup[m.personId] = 'Junior Minister'
-      roleLookupFull[m.personId] = 'Junior Minister'
     } else {
-      const dept = (m.department ?? '').trim()
       roleLookup[m.personId] = 'Minister'
-      roleLookupFull[m.personId] = dept ? `Minister, ${dept}` : 'Minister'
     }
   }
   for (const c of chairs) {
-    if (!roleLookup[c.personId]) {
-      roleLookup[c.personId] = 'Chair'
-      const committeeName = (c.committeeName ?? '').trim()
-      roleLookupFull[c.personId] = committeeName ? `Chair, ${committeeName}` : 'Committee Chair'
-    }
+    if (!roleLookup[c.personId]) roleLookup[c.personId] = 'Chair'
   }
 
   return (
     <div>
       <div className="container">
-        <header className={`page-header ${styles.pageHeader}`}>
-          <h1>MLAs</h1>
-          <div className="page-header-rule"></div>
-          <p>All current Members of the Legislative Assembly.</p>
-          <p className={styles.subtitle}>Select any MLA to view their full voting record, expenses and registered interests. Attendance is tracked from the start of the 2022 mandate.</p>
+        <header className={styles.pageHeader}>
+          <span className="eyebrow">The Assembly</span>
+          <h1>All 90 MLAs</h1>
+          <p className={styles.lede}>Every Member of the Legislative Assembly elected to the 2022–2027 mandate. Filter by party, search by name or constituency, or compare attendance and voting records.</p>
           <p className={styles.formerMlasLink}>
-            <Link href="/assembly/former-mlas">Former MLAs from this mandate <span aria-hidden="true">↗</span></Link>
+            <Link href="/assembly/former-mlas">Former MLAs from this mandate ↗</Link>
           </p>
         </header>
       </div>
-      <MlasListClient partyGroups={partyGroups} roleLookup={roleLookup} roleLookupFull={roleLookupFull} />
+      <MlasListClient partyGroups={partyGroups} roleLookup={roleLookup} />
     </div>
   )
 }

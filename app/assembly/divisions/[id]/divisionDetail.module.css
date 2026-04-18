@@ -1,534 +1,309 @@
+/* ── Header ────────────────────────────────────────────────── */
 .divisionHeader {
-  padding-block: var(--spacing-xl) 0;
-  margin-bottom: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--s-6);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: var(--s-10);
 }
 
+@media (max-width: 767px) {
+  .divisionHeader {
+    padding-top: var(--spacing-lg);
+    padding-bottom: var(--s-4);
+    margin-bottom: var(--s-8);
+  }
+
+  .title {
+    font-size: clamp(32px, 8vw, 48px);
+    letter-spacing: -0.04em;
+  }
+
+  .metaStrip {
+    padding-top: var(--s-4);
+    margin-top: var(--s-2);
+  }
+}
+
+.tags {
+  display: flex;
+  gap: var(--s-2);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--s-4);
+}
 
 .title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 6px;
-  line-height: 1.25;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: clamp(36px, 5vw, 72px);
+  letter-spacing: -0.045em;
+  line-height: 0.96;
+  color: var(--ink);
+  margin: 0 0 var(--s-6);
+}
+
+.titleWithSub {
+  margin-bottom: var(--s-3);
 }
 
 .subtitlePill {
   display: inline-block;
-  font-size: 0.6875rem;
+  font-size: 11px;
   font-weight: 500;
-  padding: 2px 7px;
-  border-radius: 3px;
-  background: var(--surface);
-  color: var(--text-secondary);
-  border: 0.5px solid var(--border);
-  margin-bottom: 12px;
-}
-
-.pillsRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-
-.dateText {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--paper-3);
+  color: var(--ink-2);
+  border: 1px solid var(--rule);
+  margin-bottom: var(--s-4);
+  font-family: var(--font-mono);
 }
 
 .metaStrip {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding-top: 12px;
-  border-top: 0.5px solid var(--border);
+  gap: 5px;
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--rule);
+  margin-top: var(--s-2);
 }
 
 .metaRow {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--s-3);
 }
 
 .metaLabel {
-  font-size: 0.8rem;
+  font-size: 11px;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
-  min-width: 80px;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  min-width: 90px;
   flex-shrink: 0;
 }
 
 .metaValue {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
+  font-size: 13px;
+  color: var(--ink-2);
   line-height: 1.4;
-  flex: 1;
 }
 
 .metaValue a {
-  color: var(--accent);
+  color: var(--teal);
   text-decoration: none;
 }
 
 .metaValue a:hover {
-  color: var(--accent);
   text-decoration: underline;
 }
 
-@media (max-width: 640px) {
-  .title {
-    font-size: 1.725rem;
-  }
-
+/* ── Section headings ──────────────────────────────────────── */
+.sectionHeading {
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: clamp(28px, 3.4vw, 42px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: var(--ink);
+  margin-bottom: var(--s-5);
+  margin-top: 0;
 }
 
+/* ── Motion text ───────────────────────────────────────────── */
 .motionSection {
-  margin-bottom: var(--spacing-lg);
-  width: 100%;
-}
-
-.subheading {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
   margin-bottom: 0;
-}
-
-.subheading::after {
-  content: '';
-  display: block;
-  height: 2px;
-  width: 40px;
-  background: var(--accent);
-  border-radius: 1px;
-  margin-top: 0.5rem;
-  margin-bottom: 24px;
 }
 
 .amendmentNote {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
+  font-size: 13px;
+  color: var(--ink-3);
   font-style: italic;
-  margin-bottom: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  border-left: 2px solid var(--border);
+  margin-bottom: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border-left: 2px solid var(--rule);
 }
 
 .motionText {
-  font-size: 0.9375rem;
-  color: var(--text-secondary);
+  font-size: 15px;
+  color: var(--ink-2);
   line-height: 1.7;
   white-space: pre-wrap;
-  width: 100%;
-  max-width: 100%;
-  margin-bottom: 0;
-}
-
-
-.pillPassed,
-.pillFailed,
-.pillCross {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0;
-  text-transform: none;
-  padding: 2px 7px;
-  border-radius: 3px;
-  white-space: nowrap;
-}
-
-.pillPassed {
-  background: #D1FAE5;
-  color: #065F46;
-  border: 1px solid #6EE7B7;
-}
-
-.pillFailed {
-  background: #FEE2E2;
-  color: #991B1B;
-  border: 1px solid #FECACA;
-}
-
-.pillCross {
-  background: #EDE9FE;
-  color: #5B21B6;
-  border: 1px solid #C4B5FD;
-}
-
-.crossCommunityNote {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-top: var(--spacing-sm);
   max-width: 60ch;
+  margin-bottom: 0;
 }
 
-
-/* Results — stacked rows */
-.section {
-  margin-bottom: var(--spacing-xl);
+/* ── Results section ───────────────────────────────────────── */
+.resultsSection {
+  margin-bottom: var(--s-8);
 }
 
-.resultsRow {
+/* Tally bars */
+.tallyRow {
   display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin-top: var(--spacing-xl);
-  margin-bottom: 0;
-  max-width: 100%;
-  width: 100%;
+  align-items: center;
+  gap: var(--s-4);
+  margin-bottom: var(--s-3);
 }
 
-.sectionTitle {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0;
+.tallyLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  width: 32px;
+  flex-shrink: 0;
 }
 
-.sectionTitle::after {
-  content: '';
-  display: block;
-  height: 2px;
-  width: 40px;
-  background: var(--accent);
-  border-radius: 1px;
-  margin-top: 0.5rem;
-  margin-bottom: var(--spacing-xl);
+.tallyLabelAye { color: var(--forest); }
+.tallyLabelNo  { color: var(--crimson); }
+.tallyLabelAbs { color: var(--ink-3); }
+
+.tallyBar {
+  flex: 1;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--paper-3);
+  overflow: hidden;
 }
 
-/* Counts */
-.countsSection {
-  margin-bottom: 0;
+.tallyBarFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
 }
 
+.tallyBarAye { background: var(--forest); }
+.tallyBarNo  { background: var(--crimson); }
+.tallyBarAbs { background: var(--ink-3); }
+
+.tallyVal {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.tallyValAye { color: var(--forest); }
+.tallyValNo  { color: var(--crimson); }
+.tallyValAbs { color: var(--ink-3); }
+
+/* Counts grid */
 .counts {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--spacing-md);
-  width: 100%;
-  margin-bottom: 0;
+  gap: var(--s-4);
+  margin-top: var(--s-6);
 }
 
 @media (max-width: 480px) {
   .counts {
     grid-template-columns: repeat(2, 1fr);
   }
-
 }
 
 .countItem {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-md);
-  background: var(--surface);
-  border-radius: 6px;
+  gap: var(--s-1);
+  padding: var(--s-4);
+  background: var(--paper-2);
+  border-radius: 3px;
+  border: 1px solid var(--rule);
   text-align: center;
 }
 
 .countNum {
-  font-size: 3.5rem;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 2.5rem;
+  font-weight: 600;
   line-height: 1;
 }
 
 .countLabel {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-secondary);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
 }
 
-.countItemAye .countNum  { color: var(--passed); }
-.countItemNo .countNum   { color: var(--failed); }
-.countItemAbs .countNum  { color: var(--text-secondary); }
-.countItemNs .countNum   { color: #64748B; }
+.countItemAye .countNum { color: var(--forest); }
+.countItemNo .countNum  { color: var(--crimson); }
+.countItemAbs .countNum { color: var(--ink-3); }
+.countItemNs .countNum  { color: var(--ink-3); }
 
-/* Bar */
-.barWrap {
-  width: 100%;
-  margin-top: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-}
-
-.barLabels {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-xs);
-}
-
-.barLabelAye {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--passed);
-}
-
-.barLabelNo {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--failed);
-}
-
-.bar {
-  display: flex;
-  height: 20px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: var(--border);
-}
-
-.barAye {
-  background: var(--passed);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: var(--spacing-xs);
-  transition: width 0.4s ease;
-  min-width: 0;
-}
-
-.barNo {
-  background: var(--failed);
-  display: flex;
-  align-items: center;
-  padding-left: var(--spacing-xs);
-  transition: width 0.4s ease;
-  min-width: 0;
-}
-
-.barPct {
-  font-family: var(--font-body), system-ui, sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #fff;
-  white-space: nowrap;
-}
-
-/* Designation table */
+/* ── Designation breakdown ─────────────────────────────────── */
 .designationSection {
-}
-
-.designationShort {
-  display: none;
-}
-
-@media (max-width: 640px) {
-  .designationFull {
-    display: none;
-  }
-
-  .designationShort {
-    display: inline;
-  }
-}
-
-.noShowShort {
-  display: none;
-}
-
-@media (max-width: 640px) {
-  .noShowFull {
-    display: none;
-  }
-  .noShowShort {
-    display: inline;
-  }
-}
-
-.designationTable {
-  border-collapse: collapse;
-  font-size: 0.875rem;
-  width: 100%;
-}
-
-.designationTable td:not(:first-child),
-.designationTable th:not(:first-child) {
-  padding-left: var(--spacing-xl);
-  color: var(--text-secondary);
-}
-
-.designationTable th,
-.designationTable td {
-  text-align: left;
-  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-sm) 0;
-  color: var(--text-secondary);
-}
-
-.designationTable th {
-  font-weight: 600;
-  font-size: 0.8125rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-}
-
-@media (max-width: 640px) {
-  .designationTable {
-    width: 95%;
-    table-layout: fixed;
-  }
-
-  .designationTable th:first-child,
-  .designationTable td:first-child {
-    width: 40%;
-  }
-
-  .designationTable th:not(:first-child),
-  .designationTable td:not(:first-child) {
-    width: 20%;
-    text-align: center;
-    padding-left: 0;
-    padding-right: 0;
-  }
-}
-
-/* Roll call */
-.rollCallHeading {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
   margin-bottom: 0;
 }
 
-.rollCallHeading::after {
-  content: '';
-  display: block;
-  height: 2px;
-  width: 40px;
-  background: var(--accent);
-  border-radius: 1px;
-  margin-top: 0.5rem;
-  margin-bottom: var(--spacing-xl);
+.designationShort { display: none; }
+
+@media (max-width: 640px) {
+  .designationFull  { display: none; }
+  .designationShort { display: inline; }
 }
 
-.rollCall {
+.blocGrid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--spacing-xl);
-  margin-top: 0;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-3);
 }
 
-@media (max-width: 767px) {
-  .header {
-    padding-bottom: 24px;
-  }
-
-  .divisionHeader {
-    margin-bottom: 24px;
-  }
-
-  .resultsRow {
-    margin-top: 12px;
-  }
-
-  .sectionTitle,
-  .subheading,
-  .rollCallHeading {
-    font-size: 1.6rem;
-  }
-
-  .metaLabel {
-    min-width: 80px;
-    font-size: 0.8rem;
-  }
-
-  .metaValue {
-    font-size: 0.8rem;
-  }
-
-  .motionText {
-    font-size: 1rem;
-  }
-
-  .amendmentNote {
-    font-size: 1rem;
-  }
-
-  .crossCommunityNote {
-    font-size: 1rem;
-  }
-
-  .sectionTitle::after,
-  .subheading::after,
-  .rollCallHeading::after {
-    margin-bottom: 16px;
+@media (max-width: 640px) {
+  .blocGrid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
-@media (min-width: 768px) {
-  .rollCall {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-.columnHeading {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-md);
-  font-family: var(--font-body), system-ui, sans-serif;
-}
-
-.nameList {
-  list-style: none;
+.blocItem {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--s-1);
 }
 
-.nameItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-sm);
-  padding-block: var(--spacing-xs);
-  border-bottom: 1px solid var(--border);
-  font-size: 0.875rem;
+.blocLabel {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.nameItem a {
-  color: var(--text-primary);
-  text-decoration: none;
+.blocValue {
+  font-size: 22px;
+  font-family: var(--font-serif) !important;
+  font-weight: 400 !important;
+  color: var(--ink);
+  display: block;
+  line-height: 1.3;
 }
 
-.nameItem a:hover {
-  color: var(--accent);
-  text-decoration: underline;
-}
+.blocAye { color: var(--forest); }
+.blocNo  { color: var(--crimson); }
+.blocNs  { color: var(--ink-3); }
+.blocSep { color: var(--ink-3); }
 
-.partyGroup {
-  margin-bottom: var(--spacing-md);
-}
-
-.partyGroupHeading {
-  margin-bottom: var(--spacing-xs);
-}
-
+/* ── Party pill ────────────────────────────────────────────── */
 .partyPill {
-  font-size: 0.6875rem;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 3px;
   white-space: nowrap;
   flex-shrink: 0;
   border: none;
 }
+
 .partyPill[data-party="Sinn Féin"] { background: #326760; color: white; }
 .partyPill[data-party="DUP"]       { background: #C41E3A; color: white; }
 .partyPill[data-party="Alliance"]  { background: #F6C135; color: #1a1a1a; }
@@ -538,8 +313,77 @@
 .partyPill[data-party="PBP"]       { background: #c0392b; color: white; }
 .partyPill[data-party="Ind"]       { background: #888;    color: white; }
 
-@media (max-width: 640px) {
-  .partyPill {
-    font-weight: 500;
+/* ── Roll call ─────────────────────────────────────────────── */
+.rollCall {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-10);
+  margin-top: 0;
+}
+
+@media (min-width: 768px) {
+  .rollCall {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
+
+.columnHeading {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  margin-bottom: var(--s-3);
+}
+
+.nameList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.nameItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding-block: var(--s-2);
+  border-bottom: 1px solid var(--rule);
+  font-size: 14px;
+}
+
+.nameItem a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.nameItem a:hover {
+  color: var(--teal);
+}
+
+.partyGroup {
+  margin-bottom: var(--s-8);
+}
+
+.partyGroupHeading {
+  margin-bottom: var(--s-3);
+}
+
+/* Legacy compat — used by RollCallClient */
+.rollCallHeading {
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: clamp(28px, 3.4vw, 42px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: var(--ink);
+  margin-bottom: var(--s-5);
+  margin-top: 0;
+}
+
+.breadcrumb { }
+.pillPassed { }
+.pillFailed { }
+.pillCross  { }

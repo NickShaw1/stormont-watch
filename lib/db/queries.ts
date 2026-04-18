@@ -4,10 +4,13 @@ import { members, divisions, votes, hansardReports, ministers, committeeChairs, 
 import { stripHonorifics } from '@/lib/utils/formatNames'
 import { getSurname } from '@/lib/format'
 
+const mlaImg = (personId: string | null | undefined): string | null =>
+  personId ? `/mla-images/${personId}.jpg` : null
+
 const CURRENT_MANDATE = '2022-2027'
 
 export async function getMembersByConstituency(constituency: string) {
-  return db
+  const rows = await db
     .select({
       personId: members.personId,
       fullName: members.fullName,
@@ -20,6 +23,7 @@ export async function getMembersByConstituency(constituency: string) {
       eq(members.isCurrent, true)
     ))
     .orderBy(asc(members.fullName))
+  return rows.map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
 }
 
 export async function getMemberById(personId: string) {
@@ -28,7 +32,9 @@ export async function getMemberById(personId: string) {
     .from(members)
     .where(eq(members.personId, personId))
     .limit(1)
-  return result[0] ?? null
+  const row = result[0] ?? null
+  if (!row) return null
+  return { ...row, imgUrl: mlaImg(row.personId) }
 }
 
 export async function getAllMembers() {
@@ -197,7 +203,7 @@ export async function getMembersGroupedByParty() {
   for (const row of result.rows as GroupedMlaRow[]) {
     const party = row.party ?? 'Independent'
     if (!grouped[party]) grouped[party] = []
-    grouped[party].push(row)
+    grouped[party].push({ ...row, img_url: mlaImg(String(row.person_id)) })
   }
 
   return Object.entries(grouped)
@@ -238,6 +244,7 @@ export async function getMlaLeaderboard() {
 
   return rows.map((r) => ({
     ...r,
+    imgUrl: mlaImg(r.personId),
     attendancePct: r.total > 0 ? Math.round((r.present / r.total) * 100) : 0,
   }))
 }
@@ -371,7 +378,7 @@ export async function getMostRebelliousMla(): Promise<{
     constituencyName: r.constituency,
     rebellionPct: Number(r.rebellion_pct),
     rebellionCount: Number(r.rebellion_count),
-    imgUrl: r.img_url ?? null,
+    imgUrl: mlaImg(r.person_id),
   }
 }
 
@@ -421,7 +428,7 @@ export async function getMemberStructureRole(personId: string): Promise<
 }
 
 export async function getAllMinisters() {
-  return db
+  const rows = await db
     .select({
       personId: ministers.personId,
       department: ministers.department,
@@ -433,10 +440,11 @@ export async function getAllMinisters() {
     .from(ministers)
     .innerJoin(members, eq(ministers.personId, members.personId))
     .orderBy(ministers.department)
+  return rows.map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
 }
 
 export async function getAllCommitteeChairs() {
-  return db
+  const rows = await db
     .select({
       personId: committeeChairs.personId,
       committeeName: committeeChairs.committeeName,
@@ -448,10 +456,11 @@ export async function getAllCommitteeChairs() {
     .from(committeeChairs)
     .innerJoin(members, eq(committeeChairs.personId, members.personId))
     .orderBy(committeeChairs.committeeName)
+  return rows.map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
 }
 
 export async function getExpensesLeagueTable() {
-  return db
+  const rows = await db
     .select({
       personId: expenses.personId,
       fullName: members.fullName,
@@ -471,6 +480,7 @@ export async function getExpensesLeagueTable() {
     .innerJoin(members, eq(expenses.personId, members.personId))
     .where(eq(members.isCurrent, true))
     .orderBy(desc(expenses.total))
+  return rows.map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
 }
 
 export async function getMlasWithoutExpenses() {
@@ -482,7 +492,8 @@ export async function getMlasWithoutExpenses() {
       AND e.person_id IS NULL
     ORDER BY m.full_name
   `)
-  return result.rows as { person_id: string; full_name: string; party: string | null; constituency: string | null; img_url: string | null; mandate_start: string | null }[]
+  return (result.rows as { person_id: string; full_name: string; party: string | null; constituency: string | null; img_url: string | null; mandate_start: string | null }[])
+    .map(row => ({ ...row, img_url: mlaImg(row.person_id) }))
 }
 
 export async function getMemberExpenses(personId: string) {
@@ -847,6 +858,9 @@ export async function getLeastEngagedMLA() {
       m.person_id,
       m.full_name,
       m.party,
+      m.img_url,
+      COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) as attended,
+      COUNT(*) as total,
       ROUND(
         100.0 * COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) / COUNT(*)
       ) as attendance_pct
@@ -857,7 +871,7 @@ export async function getLeastEngagedMLA() {
     AND (m.assembly_role IS NULL
          OR m.assembly_role NOT ILIKE '%speaker%')
     AND d.division_date >= m.mandate_start
-    GROUP BY m.person_id, m.full_name, m.party
+    GROUP BY m.person_id, m.full_name, m.party, m.img_url
     ORDER BY attendance_pct ASC
     LIMIT 1
   `)
@@ -867,7 +881,46 @@ export async function getLeastEngagedMLA() {
     personId: String(row.person_id),
     fullName: stripHonorifics(String(row.full_name)),
     party: String(row.party),
+    imgUrl: mlaImg(String(row.person_id)),
     attendancePct: Number(row.attendance_pct),
+    attended: Number(row.attended),
+    total: Number(row.total),
+  }
+}
+
+export async function getMostEngagedMLA() {
+  const result = await db.execute(sql`
+    SELECT
+      m.person_id,
+      m.full_name,
+      m.party,
+      m.img_url,
+      COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) as attended,
+      COUNT(*) as total,
+      ROUND(
+        100.0 * COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) / COUNT(*)
+      ) as attendance_pct
+    FROM votes v
+    JOIN members m ON v.person_id = m.person_id
+    JOIN divisions d ON v.document_id = d.document_id
+    WHERE m.is_current = true
+    AND (m.assembly_role IS NULL
+         OR m.assembly_role NOT ILIKE '%speaker%')
+    AND d.division_date >= m.mandate_start
+    GROUP BY m.person_id, m.full_name, m.party, m.img_url
+    ORDER BY attendance_pct DESC
+    LIMIT 1
+  `)
+  const row = result.rows[0]
+  if (!row) return null
+  return {
+    personId: String(row.person_id),
+    fullName: stripHonorifics(String(row.full_name)),
+    party: String(row.party),
+    imgUrl: mlaImg(String(row.person_id)),
+    attendancePct: Number(row.attendance_pct),
+    attended: Number(row.attended),
+    total: Number(row.total),
   }
 }
 
@@ -924,4 +977,40 @@ export async function getInProgressBills(limit = 5) {
     ))
     .orderBy(desc(bills.latestDate))
     .limit(limit)
+}
+
+export async function getInProgressBillsCount(): Promise<number> {
+  const result = await db
+    .select({ count: count() })
+    .from(bills)
+    .where(and(
+      isNull(bills.royalAssentDate),
+      sql`${bills.currentStage} NOT ILIKE '%final stage%'`,
+      lte(bills.latestDate, sql`NOW()`)
+    ))
+  return result[0]?.count ?? 0
+}
+
+export async function getBillsRoyalAssentByMonth() {
+  const result = await db.execute(sql`
+    SELECT
+      gs.month,
+      COALESCE(b.assent_count, 0) as assent_count
+    FROM generate_series(
+      DATE_TRUNC('month', NOW()) - INTERVAL '11 months',
+      DATE_TRUNC('month', NOW()),
+      INTERVAL '1 month'
+    ) AS gs(month)
+    LEFT JOIN (
+      SELECT
+        DATE_TRUNC('month', royal_assent_date::timestamptz) as month,
+        COUNT(*) as assent_count
+      FROM bills
+      WHERE royal_assent_date IS NOT NULL
+        AND royal_assent_date::timestamptz >= DATE_TRUNC('month', NOW()) - INTERVAL '11 months'
+      GROUP BY DATE_TRUNC('month', royal_assent_date::timestamptz)
+    ) b ON gs.month = b.month
+    ORDER BY gs.month ASC
+  `)
+  return result.rows as { month: string; assent_count: number }[]
 }

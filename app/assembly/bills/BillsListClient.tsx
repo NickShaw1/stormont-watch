@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { formatDate } from '@/lib/format'
 import { isPassed } from '@/lib/bills'
 import type { BillItem } from './page'
-import BillStagePill from '@/app/components/BillStagePill'
 import styles from './bills.module.css'
 
 interface ThisWeekBill {
@@ -27,6 +26,33 @@ interface Props {
 
 const tabs = ['scheduled', 'in-progress', 'completed'] as const
 type Tab = typeof tabs[number]
+
+const BILL_STAGES = [
+  'Introduction',
+  'First Stage',
+  'Second Stage',
+  'Committee Stage',
+  'Consideration Stage',
+  'Further Consideration Stage',
+  'Final Stage',
+  'Royal Assent',
+]
+
+function getStageIdx(currentStage: string, royalAssentDate: string | null): number {
+  if (royalAssentDate) return BILL_STAGES.length - 1
+  const lower = currentStage.toLowerCase()
+  let best = 0
+  for (let i = 0; i < BILL_STAGES.length; i++) {
+    if (lower.includes(BILL_STAGES[i].toLowerCase())) best = i
+  }
+  return best
+}
+
+function formatBillNum(billId: string): { main: string; session: string } {
+  const idx = billId.lastIndexOf('/')
+  if (idx === -1) return { main: billId, session: '' }
+  return { main: billId.slice(0, idx), session: billId.slice(idx + 1) }
+}
 
 export default function BillsListClient({ scheduled, inProgress, completed, thisWeekBills }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('scheduled')
@@ -63,14 +89,10 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
   const showInProgress = isSearching ? filteredInProgress.length > 0 || allEmpty : activeTab === 'in-progress'
   const showCompleted = isSearching ? filteredCompleted.length > 0 || allEmpty : activeTab === 'completed'
 
-  const showSectionHeadings = isSearching
-
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab)
     setVisibleCount(20)
-    if (!isSearching) {
-      setPreviousTab(tab)
-    }
+    if (!isSearching) setPreviousTab(tab)
   }
 
   const handleSearch = (value: string) => {
@@ -84,59 +106,6 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
     }
   }
 
-  const BillCard = ({ bill }: { bill: BillItem }) => (
-    <React.Fragment key={bill.slug}>
-      {/* Desktop card */}
-      <Link href={`/assembly/bills/${bill.slug}`} className={`${styles.billCard} ${styles.desktopCard}`}>
-        <div className={styles.billHeader}>
-          <div className={styles.billTitle}>{bill.title}</div>
-          <span className={styles.billDate}>{formatDate(bill.latestDate)}</span>
-        </div>
-        <div className={styles.billPills}>
-          {bill.billType && <span className={styles.billTypePill}>{bill.billType}</span>}
-          {bill.isAccelerated && <span className={styles.pillAccelerated}>Accelerated passage</span>}
-          <BillStagePill category={bill.category} currentStage={bill.currentStage} passed={bill.passed} />
-          {bill.royalAssentDate && (
-            <span className={`${styles.pillBecameLaw} ${styles.pillRight}`} role="status">
-              <span className={styles.pillBecameLawLabel}>Became law</span>
-              <span className={styles.pillSep} aria-hidden="true" />
-              <span className={styles.pillBecameLawDate}>{formatDate(bill.royalAssentDate)}</span>
-            </span>
-          )}
-          {bill.category === 'completed' && !bill.royalAssentDate && (
-            <span className={`${styles.pillAwaitingAssent} ${styles.pillRight}`} role="status">
-              Awaiting Royal Assent
-            </span>
-          )}
-          {bill.passed === false && (
-            <span className={`${styles.pillFailed} ${styles.pillRight}`} role="status">Failed</span>
-          )}
-        </div>
-      </Link>
-      {/* Mobile card */}
-      <Link href={`/assembly/bills/${bill.slug}`} className={styles.mobileCard}>
-        <div className={styles.mobileCardTop}>
-          <div className={styles.mobileCardTitle}>{bill.title}</div>
-          <span className={styles.mobileCardDate}>{formatDate(bill.latestDate)}</span>
-        </div>
-        <div className={styles.mobileCardPills}>
-          {bill.billType && <span className={styles.pillType}>{bill.billType}</span>}
-          {bill.isAccelerated && <span className={styles.pillAccel}>Accelerated</span>}
-          <BillStagePill category={bill.category} currentStage={bill.currentStage} passed={bill.passed} />
-          {bill.royalAssentDate && (
-            <span className={styles.pillLaw}>Became law · {formatDate(bill.royalAssentDate)}</span>
-          )}
-          {bill.category === 'completed' && !bill.royalAssentDate && (
-            <span className={styles.pillAwaiting}>Awaiting Royal Assent</span>
-          )}
-          {bill.passed === false && (
-            <span className={styles.pillFailed}>Failed</span>
-          )}
-        </div>
-      </Link>
-    </React.Fragment>
-  )
-
   const monday = (() => {
     const d = new Date()
     const day = d.getDay()
@@ -144,97 +113,155 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
     d.setDate(d.getDate() + diff)
     return d
   })()
-
   const mondayLabel = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(monday)
 
+  const BillRow = ({ bill }: { bill: BillItem }) => {
+    const { main, session } = formatBillNum(bill.billId)
+    const stageIdx = getStageIdx(bill.currentStage, bill.royalAssentDate)
+    const progress = Math.round((stageIdx / (BILL_STAGES.length - 1)) * 100)
+
+    const becameLaw = bill.category === 'completed' && bill.passed === true && bill.royalAssentDate
+
+    const pillClass =
+      bill.category === 'completed'
+        ? bill.passed === true ? 'pass' : bill.passed === false ? 'fail' : 'neutral'
+        : bill.category === 'scheduled' ? 'accent' : 'neutral'
+
+    const pillLabel =
+      bill.category === 'completed'
+        ? bill.passed === true ? 'Became law' : bill.passed === false ? 'Failed' : 'Completed'
+        : bill.category === 'scheduled' ? 'Scheduled' : 'Active'
+
+    return (
+      <Link href={`/assembly/bills/${bill.slug}`} className={styles.billRow}>
+        <div className={styles.billNum}>
+          <strong className={styles.billNumMain}>{main}</strong>
+          {session && <div className={styles.billNumSession}>{session}</div>}
+          {bill.billType && <div className={styles.billNumType}>{bill.billType}</div>}
+        </div>
+        <div className={styles.billCenter}>
+          <div className={styles.billTitle}>{bill.title}</div>
+          <div className={styles.billStageLine}>
+            {bill.category === 'scheduled' ? 'SCHEDULED STAGE' : 'CURRENT STAGE'} · {bill.currentStage.toUpperCase()} · {formatDate(bill.latestDate)}
+          </div>
+          <div className={styles.billProgress}>
+            {BILL_STAGES.map((s, i) => (
+              <div
+                key={s}
+                className={styles.billProgressSeg}
+                style={{
+                  background:
+                    i < stageIdx ? 'var(--forest)' :
+                    i === stageIdx ? 'var(--teal)' :
+                    'transparent',
+                }}
+              />
+            ))}
+          </div>
+          <div className={styles.billProgressLabels}>
+            <span>INTRO</span>
+            <span>ROYAL ASSENT</span>
+          </div>
+        </div>
+        <div className={styles.billRight}>
+          <span className={`pill ${pillClass}`}>{pillLabel}</span>
+          {becameLaw
+            ? <div className={styles.billPct}>{formatDate(bill.royalAssentDate!)}</div>
+            : <div className={styles.billPct}>{progress}% complete</div>
+          }
+        </div>
+      </Link>
+    )
+  }
+
   return (
-    <div className="container">
+    <>
       {/* This week section */}
       {thisWeekBills.length > 0 && (
         <>
-          <div className={styles.weekSectionHead}>
-            <h2 className={styles.weekSectionTitle}><span className={styles.weekSectionTitleText}>Progressed this week</span></h2>
-            <p className={`${styles.weekSubtitle} ${styles.weekSubtitleDesktop}`}>Legislative stages heard in the Assembly in the week commencing <strong style={{ color: 'var(--text-primary)' }}>{mondayLabel}</strong>. A bill may appear across multiple weeks as it progresses through a stage.</p>
-            <p className={`${styles.weekSubtitle} ${styles.weekSubtitleMobile}`}>Legislative stages heard in the Assembly, w/c <strong style={{ color: 'var(--text-primary)' }}>{mondayLabel}</strong>.</p>
+        <div className={styles.weekSection}>
+          <div className="section-head">
+            <h2>Progressed <em>this week</em></h2>
           </div>
-          <div className={styles.thisWeekCard}>
-            <div className={styles.thisWeekList}>
-              {thisWeekBills.map(bill => {
-                const slug = bill.bill_id.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
-                const passed = bill.has_division && isPassed(bill.outcome) === true
-                const fullDate = formatDate(bill.plenary_date)
-                const shortDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(bill.plenary_date))
-                return (
-                  <React.Fragment key={bill.bill_id}>
-                    {/* Desktop row */}
-                    <Link href={`/assembly/bills/${slug}`} className={`${styles.thisWeekRow} ${styles.thisWeekRowDesktop}`}>
-                      <div className={styles.thisWeekRowLeft}>
-                        <span className={styles.thisWeekBillName}>{bill.short_title}</span>
-                        <div className={styles.thisWeekPills}>
-                          {bill.bill_type && <span className={styles.billTypePill}>{bill.bill_type}</span>}
-                          <span className={styles.thisWeekStagePill}>{bill.stage}</span>
-                          {passed && <span className={styles.thisWeekPassedPill}>Passed</span>}
-                        </div>
-                      </div>
-                      <span className={styles.thisWeekDate}>{fullDate}</span>
-                    </Link>
-                    {/* Mobile row */}
-                    <Link href={`/assembly/bills/${slug}`} className={`${styles.thisWeekRow} ${styles.thisWeekRowMobile}`}>
-                      <div className={styles.thisWeekMobileTop}>
-                        <span className={styles.thisWeekBillName}>{bill.short_title}</span>
-                        <span className={styles.thisWeekDate}>{shortDate}</span>
-                      </div>
-                      <div className={styles.thisWeekPills}>
-                        <span className={styles.thisWeekStagePill}>{bill.stage}</span>
-                        {passed && <span className={styles.thisWeekPassedPill}>Passed</span>}
-                      </div>
-                    </Link>
-                  </React.Fragment>
-                )
-              })}
-            </div>
+          <p className={styles.weekSubtitle}>
+            Legislative stages heard in the Assembly in the week commencing <strong>{mondayLabel}</strong>.
+          </p>
+          <div className={styles.thisWeekList}>
+            {thisWeekBills.map(bill => {
+              const slug = bill.bill_id.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
+              const passed = bill.has_division && isPassed(bill.outcome) === true
+              return (
+                <Link key={bill.bill_id} href={`/assembly/bills/${slug}`} className={styles.thisWeekRow}>
+                  <div className={styles.thisWeekRowLeft}>
+                    <span className={styles.thisWeekBillName}>{bill.short_title}</span>
+                    <div className={styles.thisWeekPills}>
+                      <span className="pill neutral">{bill.stage}</span>
+                      {passed && <span className="pill pass">Passed</span>}
+                    </div>
+                  </div>
+                  <span className={styles.thisWeekDate}>{formatDate(bill.plenary_date)}</span>
+                </Link>
+              )
+            })}
           </div>
-          <hr className="section-rule" style={{ margin: '40px 0' }} />
+        </div>
+        <hr className="section-rule" />
         </>
       )}
 
-      {/* Browse section heading */}
-      <div className={styles.browseSectionHead}>
-        <h2 className={styles.sectionTitle}>Browse legislation</h2>
-        <p className={styles.browseSubtitle}>Search upcoming legislation, bills in progress, or acts and bills passed into law since May 2022.</p>
+      {/* Section title */}
+      <div className="section-head">
+        <h2>Bills before the <em>Assembly</em></h2>
+      </div>
+
+      {/* Progress key */}
+      <div className={styles.progressKey}>
+        <h3 className={styles.progressKeyHeading}>Reading the stage bar</h3>
+        <p className={styles.progressKeyDesc}>Each bill card shows a progress bar across the eight stages from Introduction to Royal Assent. The bar reflects where a bill currently stands in its parliamentary journey.</p>
+        <div className={styles.progressKeyLegend}>
+          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--forest)' }} />Stage passed</span>
+          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--teal)' }} />Current stage</span>
+          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--paper-3)', border: '1px solid var(--rule)' }} />Not yet reached</span>
+        </div>
       </div>
 
       {/* Tab bar */}
-      <div className={styles.tabList} role="tablist" aria-label="Bill sections">
-        {tabs.map(tab => (
-          <button
-            key={tab}
-            role="tab"
-            aria-selected={activeTab === tab}
-            aria-controls={`tabpanel-${tab}`}
-            id={`tab-${tab}`}
-            className={`${styles.tab} ${activeTab === tab ? styles.tabActive : ''} ${activeTab === tab && tab === 'completed' ? styles.tabActiveCompleted : ''}`}
-            onClick={() => handleTabChange(tab)}
-          >
-            {tab === 'scheduled' ? 'Scheduled' : tab === 'in-progress' ? 'In progress' : 'Completed'}
-          </button>
-        ))}
-        {activeTab === 'completed' && (
-          <div className={styles.tabYearFilters}>
-            <div className={styles.filterDivider} />
-            {years.map(y => (
-              <button
-                key={y}
-                className={`${styles.filterBtn} ${yearFilter === y ? styles.filterBtnActive : ''}`}
-                onClick={() => { setYearFilter(y); setVisibleCount(20) }}
-                aria-pressed={yearFilter === y}
-              >
-                {y === 'ALL' ? 'All years' : y}
-              </button>
-            ))}
-          </div>
-        )}
+      <div className={styles.billTabs} role="tablist" aria-label="Bill sections">
+        {tabs.map(tab => {
+          const count = tab === 'scheduled' ? scheduled.length : tab === 'in-progress' ? inProgress.length : completed.length
+          const label = tab === 'scheduled' ? 'Scheduled' : tab === 'in-progress' ? 'In progress' : 'Completed'
+          return (
+            <button
+              key={tab}
+              role="tab"
+              aria-selected={activeTab === tab && !isSearching}
+              aria-controls={`tabpanel-${tab}`}
+              id={`tab-${tab}`}
+              className={`${styles.billTabBtn} ${activeTab === tab && !isSearching ? styles.billTabBtnActive : ''}`}
+              onClick={() => handleTabChange(tab)}
+            >
+              {label}
+              <span className={styles.billTabN}>{count}</span>
+            </button>
+          )
+        })}
       </div>
+
+      {/* Year filter (completed tab only) */}
+      {activeTab === 'completed' && !isSearching && (
+        <div className={styles.yearFilter}>
+          {years.map(y => (
+            <button
+              key={y}
+              className={`${styles.yearBtn} ${yearFilter === y ? styles.yearBtnActive : ''}`}
+              onClick={() => { setYearFilter(y); setVisibleCount(20) }}
+              aria-pressed={yearFilter === y}
+            >
+              {y === 'ALL' ? 'All years' : y}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Search */}
       <div className={styles.searchWrap}>
@@ -256,92 +283,49 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
         </p>
       )}
 
-      {/* Scheduled section */}
+      {/* Scheduled */}
       {showScheduled && (
-        <section
-          id="tabpanel-scheduled"
-          role="tabpanel"
-          aria-labelledby="tab-scheduled"
-          className={styles.section}
-        >
-          {showSectionHeadings && <h2 className={styles.sectionTitle}>Scheduled for debate</h2>}
-          {(activeTab === 'scheduled' || showSectionHeadings) && (
-            <h3 className={styles.scheduledHeading}>Upcoming schedule</h3>
-          )}
+        <section id="tabpanel-scheduled" role="tabpanel" aria-labelledby="tab-scheduled">
+          {isSearching && <h2 className={styles.sectionTitle}>Scheduled for debate</h2>}
           <div className={styles.billList}>
-            {filteredScheduled.length === 0 ? (
-              <p className={styles.emptyState}>No bills match your search.</p>
-            ) : (
-              filteredScheduled.map(bill => <BillCard key={bill.slug} bill={bill} />)
-            )}
+            {filteredScheduled.length === 0
+              ? <p className={styles.emptyState}>No bills match your search.</p>
+              : filteredScheduled.map(bill => <BillRow key={bill.slug} bill={bill} />)
+            }
           </div>
         </section>
       )}
 
-      {showSectionHeadings && showScheduled && showInProgress && (
-        <hr className="section-rule" />
-      )}
-
-      {/* In progress section */}
+      {/* In progress */}
       {showInProgress && (
-        <section
-          id="tabpanel-in-progress"
-          role="tabpanel"
-          aria-labelledby="tab-in-progress"
-          className={styles.section}
-        >
-          {showSectionHeadings && <h2 className={styles.sectionTitle}>In progress</h2>}
-          {(activeTab === 'in-progress' || showSectionHeadings) && (
-            <h3 className={styles.scheduledHeading}>Bills currently going through the Assembly</h3>
-          )}
+        <section id="tabpanel-in-progress" role="tabpanel" aria-labelledby="tab-in-progress" style={isSearching && showScheduled ? { marginTop: 'var(--s-8)' } : undefined}>
+          {isSearching && <h2 className={styles.sectionTitle}>In progress</h2>}
           <div className={styles.billList}>
-            {filteredInProgress.length === 0 ? (
-              <p className={styles.emptyState}>No bills match your search.</p>
-            ) : (
-              filteredInProgress.map(bill => <BillCard key={bill.slug} bill={bill} />)
-            )}
+            {filteredInProgress.length === 0
+              ? <p className={styles.emptyState}>No bills match your search.</p>
+              : filteredInProgress.map(bill => <BillRow key={bill.slug} bill={bill} />)
+            }
           </div>
         </section>
       )}
 
-      {showSectionHeadings && (showScheduled || showInProgress) && showCompleted && (
-        <hr className="section-rule" />
-      )}
-
-      {/* Completed section */}
+      {/* Completed */}
       {showCompleted && (
-        <section
-          id="tabpanel-completed"
-          role="tabpanel"
-          aria-labelledby="tab-completed"
-          className={styles.section}
-        >
-          {showSectionHeadings && <h2 className={styles.sectionTitle}>Completed</h2>}
-
-{!isSearching && (
-            <h3 className={styles.scheduledHeading}>
-              {filteredCompleted.length} bill{filteredCompleted.length !== 1 ? 's' : ''} and act{filteredCompleted.length !== 1 ? 's' : ''} passed into law or awaiting Royal Assent{yearFilter !== 'ALL' ? ` in ${yearFilter}` : ''}
-            </h3>
-          )}
-
+        <section id="tabpanel-completed" role="tabpanel" aria-labelledby="tab-completed" style={isSearching && (showScheduled || showInProgress) ? { marginTop: 'var(--s-8)' } : undefined}>
+          {isSearching && <h2 className={styles.sectionTitle}>Completed</h2>}
           <div className={styles.billList}>
-            {visibleCompleted.length === 0 ? (
-              <p className={styles.emptyState}>No bills match your search.</p>
-            ) : (
-              visibleCompleted.map(bill => <BillCard key={bill.slug} bill={bill} />)
-            )}
+            {visibleCompleted.length === 0
+              ? <p className={styles.emptyState}>No bills match your search.</p>
+              : visibleCompleted.map(bill => <BillRow key={bill.slug} bill={bill} />)
+            }
           </div>
-
           {hasMore && !isSearching && (
-            <button
-              className={styles.loadMore}
-              onClick={() => setVisibleCount(c => c + 20)}
-            >
+            <button className={styles.loadMore} onClick={() => setVisibleCount(c => c + 20)}>
               Load more ({filteredCompleted.length - visibleCount} remaining)
             </button>
           )}
         </section>
       )}
-    </div>
+    </>
   )
 }

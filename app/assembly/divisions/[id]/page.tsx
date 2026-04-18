@@ -32,11 +32,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await getDivisionWithVotes(params.id)
   if (!data) return { title: 'Division not found' }
   const stage = parseStageName(data.division.subject)
-  const billSlug = parseBillSlug(data.division.subject)
-  const billTitle = billSlug
+  const billSlugStr = parseBillSlug(data.division.subject)
+  const billTitle = billSlugStr
     ? data.division.subject.match(/NIA\s+Bill\s+[\d]+\/[\d]+-[\d]+/i)?.[0] ?? data.division.subject
     : data.division.subject
-  const pageTitle = billSlug ? `${stage}: ${billTitle}` : stage
+  const pageTitle = billSlugStr ? `${stage}: ${billTitle}` : stage
   const date = formatDate(data.division.divisionDate?.toISOString())
   const outcome = data.division.outcome ?? 'unknown outcome'
   const description = `${pageTitle} — voted ${date}, ${outcome}. ${data.division.totalAyes ?? 0} ayes, ${data.division.totalNoes ?? 0} noes.`
@@ -68,7 +68,6 @@ export default async function DivisionDetailPage({ params }: Props) {
   if (!data) notFound()
 
   const { division, votes } = data
-
   const documentId = params.id
 
   const billStage = await db
@@ -100,10 +99,7 @@ export default async function DivisionDetailPage({ params }: Props) {
   const totalNoes = division.totalNoes ?? noes.length
   const totalAbstain = division.totalAbstains ?? abstains.length
   const totalNoShow = noShows.length
-  const votedTotal = totalAyes + totalNoes
-
-  const ayePct = votedTotal > 0 ? Math.round((totalAyes / votedTotal) * 100) : 0
-  const noePct = votedTotal > 0 ? Math.round((totalNoes / votedTotal) * 100) : 0
+  const votedTotal = totalAyes + totalNoes + totalAbstain
 
   const passed = isPassed(division.outcome)
 
@@ -164,16 +160,12 @@ export default async function DivisionDetailPage({ params }: Props) {
 
   return (
     <div className="container">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+
       <header className={styles.divisionHeader}>
-        <nav aria-label="Breadcrumb" className={`breadcrumb ${styles.breadcrumb}`}>
+        {/* Breadcrumb */}
+        <nav aria-label="Breadcrumb" className="breadcrumb">
           <ol>
             {parentBill?.[0] ? (
               <>
@@ -190,55 +182,53 @@ export default async function DivisionDetailPage({ params }: Props) {
           </ol>
         </nav>
 
-        <h1 className={styles.title}>{displayTitle}</h1>
-        {subtitle && (
-          <span className={styles.subtitlePill}>{subtitle}</span>
+        {/* Tags */}
+        <div className={styles.tags}>
+          <span className="tag" style={{ fontFamily: 'var(--font-mono)' }}>DIVISION {documentId.toUpperCase()}</span>
+          {passed === true && <span className="pill pass">Passed</span>}
+          {passed === false && <span className="pill fail">Failed</span>}
+          {division.divisionType === 'Cross-Community' && (
+            <span className="tag" style={{ color: 'var(--ochre)', borderColor: 'var(--ochre)' }}>Cross-community</span>
+          )}
+          <span className="tag">{formatDate(division.divisionDate.toISOString())}</span>
+        </div>
+
+        {/* Title */}
+        <h1 className={`${styles.title} ${subtitle ? styles.titleWithSub : ''}`}>{displayTitle}</h1>
+        {subtitle && <span className={styles.subtitlePill}>{subtitle}</span>}
+
+        {/* Meta strip */}
+        {(tabledByClean || officialReportUrl) && (
+          <div className={styles.metaStrip}>
+            {tabledByClean && (
+              <div className={styles.metaRow}>
+                <span className={styles.metaLabel}>Tabled by</span>
+                <span className={styles.metaValue}>{tabledByClean}</span>
+              </div>
+            )}
+            {officialReportUrl && (
+              <div className={styles.metaRow}>
+                <span className={styles.metaLabel}>Report</span>
+                <span className={styles.metaValue}>
+                  <a href={officialReportUrl} target="_blank" rel="noopener noreferrer">
+                    Official Report <span aria-hidden="true">↗</span>
+                  </a>
+                </span>
+              </div>
+            )}
+          </div>
         )}
-
-        <div className={styles.pillsRow}>
-          {passed === true && <span className={styles.pillPassed} role="status">Passed</span>}
-          {passed === false && <span className={styles.pillFailed} role="status">Failed</span>}
-          <span className={styles.dateText}>{formatDate(division.divisionDate.toISOString())}</span>
-        </div>
-
-        <div className={styles.metaStrip}>
-          {division.divisionType && (
-            <div className={styles.metaRow}>
-              <span className={styles.metaLabel}>Type</span>
-              <span className={styles.metaValue}>{division.divisionType}</span>
-            </div>
-          )}
-          {tabledByClean && (
-            <div className={styles.metaRow}>
-              <span className={styles.metaLabel}>Tabled by</span>
-              <span className={styles.metaValue}>{tabledByClean}</span>
-            </div>
-          )}
-          {officialReportUrl && (
-            <div className={styles.metaRow}>
-              <span className={styles.metaLabel}>Report</span>
-              <span className={styles.metaValue}>
-                <a href={officialReportUrl} target="_blank" rel="noopener noreferrer">
-                  Official Report <span aria-hidden="true">↗</span>
-                </a>
-              </span>
-            </div>
-          )}
-        </div>
       </header>
 
+      {/* Motion text */}
       {division.motionText && (() => {
-        const isAmendment = /^leave out|^at end insert|^after .+ insert/i.test(
-          division.motionText?.trim() ?? ''
-        )
+        const isAmendment = /^leave out|^at end insert|^after .+ insert/i.test(division.motionText?.trim() ?? '')
         return (
           <>
             <section className={styles.motionSection}>
-              <h2 className={styles.subheading}>Motion text</h2>
+              <h2 className={styles.sectionHeading}>Motion text</h2>
               {isAmendment && (
-                <p className={styles.amendmentNote}>
-                  This amendment proposes changes to the original motion text.
-                </p>
+                <p className={styles.amendmentNote}>This amendment proposes changes to the original motion text.</p>
               )}
               <p className={styles.motionText}>{division.motionText}</p>
             </section>
@@ -247,89 +237,79 @@ export default async function DivisionDetailPage({ params }: Props) {
         )
       })()}
 
-      <div className={styles.resultsRow}>
-        {/* Vote counts + bar */}
-        <section aria-labelledby="vote-counts-heading" className={styles.countsSection}>
-          <h2 id="vote-counts-heading" className={styles.sectionTitle}>Vote Results</h2>
+      {/* Vote results */}
+      <section className={styles.resultsSection} aria-labelledby="vote-results-heading">
+        <h2 id="vote-results-heading" className={styles.sectionHeading}>Vote results</h2>
 
-          <div className={styles.barWrap} role="img" aria-label={`${ayePct}% Ayes, ${noePct}% Noes`}>
-            <div className={styles.barLabels}>
-              <span className={styles.barLabelAye}>Aye</span>
-              <span className={styles.barLabelNo}>No</span>
-            </div>
-            <div className={styles.bar}>
-              <div className={styles.barAye} style={{ width: `${ayePct}%` }}>
-                {ayePct > 8 && <span className={styles.barPct}>{ayePct}%</span>}
+        {/* Tally bars */}
+        <div>
+          {[
+            { label: 'Aye', val: totalAyes, total: votedTotal, cls: 'Aye' },
+            { label: 'No',  val: totalNoes, total: votedTotal, cls: 'No' },
+            { label: 'Abs', val: totalAbstain, total: votedTotal, cls: 'Abs' },
+          ].map(({ label, val, total, cls }) => (
+            <div key={label} className={styles.tallyRow}>
+              <span className={`${styles.tallyLabel} ${styles[`tallyLabel${cls}`]}`}>{label}</span>
+              <div className={styles.tallyBar}>
+                <div
+                  className={`${styles.tallyBarFill} ${styles[`tallyBar${cls}`]}`}
+                  style={{ width: total > 0 ? `${(val / total) * 100}%` : '0%' }}
+                />
               </div>
-              <div className={styles.barNo} style={{ width: `${noePct}%` }}>
-                {noePct > 8 && <span className={styles.barPct}>{noePct}%</span>}
-              </div>
+              <span className={`${styles.tallyVal} ${styles[`tallyVal${cls}`]}`}>{val}</span>
             </div>
+          ))}
+        </div>
+
+        {/* Count cards */}
+        <div className={styles.counts}>
+          <div className={`${styles.countItem} ${styles.countItemAye}`}>
+            <span className={styles.countNum}>{totalAyes}</span>
+            <span className={styles.countLabel}>Ayes</span>
           </div>
-
-          <div className={styles.counts}>
-            <div className={`${styles.countItem} ${styles.countItemAye}`}>
-              <span className={`${styles.countNum} mono`}>{totalAyes}</span>
-              <span className={styles.countLabel}>Ayes</span>
-            </div>
-            <div className={`${styles.countItem} ${styles.countItemNo}`}>
-              <span className={`${styles.countNum} mono`}>{totalNoes}</span>
-              <span className={styles.countLabel}>Noes</span>
-            </div>
-            <div className={`${styles.countItem} ${styles.countItemAbs}`}>
-              <span className={`${styles.countNum} mono`}>{totalAbstain}</span>
-              <span className={styles.countLabel}>Abstain</span>
-            </div>
-            <div className={`${styles.countItem} ${styles.countItemNs}`}>
-              <span className={`${styles.countNum} mono`}>{totalNoShow}</span>
-              <span className={styles.countLabel}>No Show</span>
-            </div>
+          <div className={`${styles.countItem} ${styles.countItemNo}`}>
+            <span className={styles.countNum}>{totalNoes}</span>
+            <span className={styles.countLabel}>Noes</span>
           </div>
-        </section>
+          <div className={`${styles.countItem} ${styles.countItemAbs}`}>
+            <span className={styles.countNum}>{totalAbstain}</span>
+            <span className={styles.countLabel}>Abstain</span>
+          </div>
+          <div className={`${styles.countItem} ${styles.countItemNs}`}>
+            <span className={styles.countNum}>{totalNoShow}</span>
+            <span className={styles.countLabel}>No Show</span>
+          </div>
+        </div>
+      </section>
 
-      </div>
-
-      {hasDesignationBreakdown && <hr className="section-rule" />}
+      {/* Designation breakdown */}
       {hasDesignationBreakdown && (
-        <section aria-labelledby="designation-heading" className={styles.designationSection}>
-          <h2 id="designation-heading" className={styles.sectionTitle}>
-            <span className={styles.designationFull}>Designation breakdown</span>
-            <span className={styles.designationShort}>Breakdown</span>
-          </h2>
-          <table className={styles.designationTable}>
-            <thead>
-              <tr>
-                <th scope="col">Designation</th>
-                <th scope="col">Ayes</th>
-                <th scope="col">Noes</th>
-                <th scope="col">
-                  <span className={styles.noShowFull}>No Show</span>
-                  <span className={styles.noShowShort}>Absent</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Unionist</td>
-                <td className="mono">{division.unionistAyes ?? 0}</td>
-                <td className="mono">{division.unionistNoes ?? 0}</td>
-                <td className="mono">{noShowByDesignation.Unionist}</td>
-              </tr>
-              <tr>
-                <td>Nationalist</td>
-                <td className="mono">{division.nationalistAyes ?? 0}</td>
-                <td className="mono">{division.nationalistNoes ?? 0}</td>
-                <td className="mono">{noShowByDesignation.Nationalist}</td>
-              </tr>
-              <tr>
-                <td>Other</td>
-                <td className="mono">{division.otherAyes ?? 0}</td>
-                <td className="mono">{division.otherNoes ?? 0}</td>
-                <td className="mono">{noShowByDesignation.Other}</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
+        <>
+          <hr className="section-rule" />
+          <section className={styles.designationSection} aria-labelledby="designation-heading">
+            <h2 id="designation-heading" className={styles.sectionHeading}>
+              <span className={styles.designationFull}>Designation breakdown</span>
+              <span className={styles.designationShort}>Breakdown</span>
+            </h2>
+            <div className={styles.blocGrid}>
+              {[
+                { label: 'Unionist',    ayes: division.unionistAyes ?? 0,    noes: division.unionistNoes ?? 0,    ns: noShowByDesignation.Unionist },
+                { label: 'Nationalist', ayes: division.nationalistAyes ?? 0, noes: division.nationalistNoes ?? 0, ns: noShowByDesignation.Nationalist },
+                { label: 'Other',       ayes: division.otherAyes ?? 0,       noes: division.otherNoes ?? 0,       ns: noShowByDesignation.Other },
+              ].map(({ label, ayes, noes, ns }) => (
+                <div key={label} className={styles.blocItem}>
+                  <span className={styles.blocLabel}>{label}</span>
+                  <b className={styles.blocValue}>
+                    <span className={styles.blocAye}>{ayes} Aye</span>
+                    {' · '}
+                    <span className={styles.blocNo}>{noes} No</span>
+                    {ns > 0 && <><span className={styles.blocSep}> · </span><span className={styles.blocNs}>{ns} Abs</span></>}
+                  </b>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
       )}
 
       <hr className="section-rule" />

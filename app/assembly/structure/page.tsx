@@ -64,10 +64,9 @@ export default async function StructurePage() {
 
   return (
     <div className="container">
-      <header className={`page-header ${styles.pageHeader}`}>
+      <header className={styles.pageHeader}>
         <h1>Assembly Structure</h1>
-        <div className="page-header-rule"></div>
-        <p>The Executive, ministerial departments and committee chairs.</p>
+        <p className={styles.lede}>The power-sharing Executive, ministerial departments and committee chairs of the Northern Ireland Assembly.</p>
       </header>
       <StructureClient
         fm={fm}

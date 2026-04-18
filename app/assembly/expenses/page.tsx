@@ -36,24 +36,16 @@ export default async function ExpensesPage() {
 
   return (
     <div className="container">
-      <header className={`page-header ${styles.pageHeader}`}>
+      <header className="page-header">
         <nav aria-label="Breadcrumb" className="breadcrumb">
           <ol>
             <li><Link href="/assembly/stats">Stats</Link></li>
             <li aria-current="page">MLA expenses</li>
           </ol>
         </nav>
+        <span className="eyebrow">Public accounts</span>
         <h1>MLA expenses</h1>
-        <div className="page-header-rule"></div>
-        <p className={styles.subtitle}>Every current MLA ranked by total expenses claimed from public funds.</p>
-        <div className={styles.periodCard}>
-          <svg className={styles.periodIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="10" cy="10" r="10" fill="#203F59"/>
-            <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
-            <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
-          </svg>
-          <p>Figures cover <strong style={{ color: 'var(--text-primary)', fontWeight: 700 }}>April 2025 – December 2025</strong>. Updates automatically when new data is published.</p>
-        </div>
+        <p className="lede">Every pound claimed by every MLA — office costs, travel, constituency support and staff salaries. Published by the Assembly Commission, made searchable here.</p>
       </header>
 
       {missing.length > 0 && (
@@ -72,6 +64,7 @@ export default async function ExpensesPage() {
             </svg>
             <p>Co-opted or elected after the period covered by this data.</p>
           </div>
+          <hr className="section-rule" />
         </div>
       )}
 

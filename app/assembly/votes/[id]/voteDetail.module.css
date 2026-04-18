@@ -127,8 +127,8 @@
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 3px;
-  background: #EDE9FE;
-  color: #5B21B6;
+  background: var(--xc-wash);
+  color: var(--xc);
   white-space: nowrap;
 }
 

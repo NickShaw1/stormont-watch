@@ -55,20 +55,22 @@ export default function FinancesTabsClient({ expenses: latestExpenses, interests
 
   return (
     <div className={styles.financesCard}>
-      <div className={styles.financesTabs}>
+      <div className={styles.financesTabs} role="tablist">
         <button
+          role="tab"
+          aria-selected={activeTab === 'expenses'}
           className={`${styles.financesTab} ${activeTab === 'expenses' ? styles.financesTabActive : ''}`}
           onClick={() => setActiveTab('expenses')}
-          aria-pressed={activeTab === 'expenses'}
         >
-          <span className={styles.financesTabLabel}>Expenses</span>
+          Expenses
         </button>
         <button
+          role="tab"
+          aria-selected={activeTab === 'interests'}
           className={`${styles.financesTab} ${activeTab === 'interests' ? styles.financesTabActive : ''}`}
           onClick={() => setActiveTab('interests')}
-          aria-pressed={activeTab === 'interests'}
         >
-          <span className={styles.financesTabLabel}>Register of Interests</span>
+          Register of Interests
         </button>
       </div>
 
@@ -77,40 +79,28 @@ export default function FinancesTabsClient({ expenses: latestExpenses, interests
           <p className={styles.sectionMeta}>{latestExpenses.period}</p>
           <div className={styles.expensesGrid}>
             <div className={styles.expensesCard}>
-              <div className={styles.expenseRow}>
-                <span className={styles.expenseLabel}>Staff costs</span>
-                <span className={styles.expenseValue}>{gbp(latestExpenses.staff_costs)}</span>
-              </div>
+              <span className={styles.expenseLabel}>Staff costs</span>
+              <span className={styles.expenseValue}>{gbp(latestExpenses.staff_costs)}</span>
             </div>
             <div className={styles.expensesCard}>
-              <div className={styles.expenseRow}>
-                <span className={styles.expenseLabel}>Constituency office</span>
-                <span className={styles.expenseValue}>{gbp(latestExpenses.constituency_office)}</span>
-              </div>
+              <span className={styles.expenseLabel}>Constituency office</span>
+              <span className={styles.expenseValue}>{gbp(latestExpenses.constituency_office)}</span>
             </div>
             <div className={styles.expensesCard}>
-              <div className={styles.expenseRow}>
-                <span className={styles.expenseLabel}>Allowances</span>
-                <span className={styles.expenseValue}>{gbp(latestExpenses.allowances)}</span>
-              </div>
+              <span className={styles.expenseLabel}>Allowances</span>
+              <span className={styles.expenseValue}>{gbp(latestExpenses.allowances)}</span>
             </div>
             <div className={styles.expensesCard}>
-              <div className={styles.expenseRow}>
-                <span className={styles.expenseLabel}>Other expenses</span>
-                <span className={styles.expenseValue}>{gbp(latestExpenses.other_expenses)}</span>
-              </div>
+              <span className={styles.expenseLabel}>Other expenses</span>
+              <span className={styles.expenseValue}>{gbp(latestExpenses.other_expenses)}</span>
             </div>
             <div className={styles.expensesCard}>
-              <div className={styles.expenseRow}>
-                <span className={styles.expenseLabel}>Expenses ranking</span>
-                <span className={styles.expenseValue}>{latestExpenses.rank}/{latestExpenses.total_members}</span>
-              </div>
+              <span className={styles.expenseLabel}>Expenses ranking</span>
+              <span className={styles.expenseValue}>{latestExpenses.rank}/{latestExpenses.total_members}</span>
             </div>
-            <div className={`${styles.expensesCard} ${styles.expensesCardTotal}`}>
-              <div className={styles.expenseRow}>
-                <span className={styles.expenseLabel}>Total</span>
-                <span className={styles.expenseValue}>{gbp(latestExpenses.total)}</span>
-              </div>
+            <div className={styles.expensesCard}>
+              <span className={styles.expenseLabel}>Total</span>
+              <span className={styles.expenseValue}>{gbp(latestExpenses.total)}</span>
             </div>
           </div>
         </div>

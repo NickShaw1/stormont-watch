@@ -9,10 +9,10 @@ import styles from './votes.module.css'
 
 export const metadata: Metadata = {
   title: 'Votes',
-  description: 'Every recorded vote in the Northern Ireland Assembly since the 2022 mandate. Search and filter divisions by date, outcome and subject.',
+  description: 'Every recorded division in the Northern Ireland Assembly since the 2022 mandate. Search and filter by date, outcome and subject.',
   openGraph: {
     title: 'Votes — Stormont Watch',
-    description: 'Every recorded vote in the Northern Ireland Assembly since the 2022 mandate. Search and filter divisions by date, outcome and subject.',
+    description: 'Every recorded division in the Northern Ireland Assembly since the 2022 mandate. Search and filter by date, outcome and subject.',
   },
   alternates: { canonical: 'https://www.stormontwatch.com/assembly/votes' },
 }
@@ -30,25 +30,18 @@ export default async function VotesPage() {
     motionText: d.motionText ?? null,
     isBill: /NIA Bill/i.test(d.subject ?? '') || /(?:First|Second|Committee|Consideration|Further Consideration|Final) Stage:/i.test(d.subject ?? ''),
     isCrossCommunity: d.divisionType === 'Cross-Community',
+    totalAyes: d.totalAyes ?? null,
+    totalNoes: d.totalNoes ?? null,
   }))
 
   return (
-    <div>
-      <div className="container">
-        <header className={`page-header ${styles.pageHeader}`}>
-          <h1>Votes</h1>
-          <div className="page-header-rule"></div>
-          <p>Every vote in the Northern Ireland Assembly since May 2022.</p>
-          <div className={styles.suspensionCard}>
-            <svg className={styles.suspensionIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="10" cy="10" r="10" fill="#203F59"/>
-              <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
-              <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
-            </svg>
-            <p className={styles.suspensionNote}>The Assembly did not sit between May 2022 and February 2024. The only divisions recorded during this period were procedural Speaker nomination votes.</p>
-          </div>
-        </header>
-      </div>
+    <div className="container">
+      <header className={`${styles.pageHeader} page-header`}>
+        <span className="eyebrow">The vote record</span>
+        <h1>Divisions</h1>
+        <p className={styles.lede}>Every recorded division in the Assembly since May 2022 including cross-community votes, opposition motions and bill stages. Click any division to see the full roll-call.</p>
+      </header>
+      <p className={styles.notice}>The Assembly did not sit between May 2022 and February 2024. No divisions were recorded during this period aside from procedural Speaker nomination votes.</p>
       <VotesListClient allItems={allItems} />
     </div>
   )

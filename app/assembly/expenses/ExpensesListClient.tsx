@@ -126,7 +126,7 @@ export default function ExpensesListClient({ rows, totalMlaCount }: Props) {
       </div>
 
       {/* Result count */}
-      <p className={styles.resultCount}>
+      <p className={styles.resultCount} aria-live="polite" aria-atomic="true">
         <strong style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{displayCount}</strong>{' '}
         <span className={styles.resultCountDesktop}>{partyFilter === 'ALL' ? 'current' : partyLabel(partyFilter)} MLA{displayCount !== 1 ? 's' : ''} with published expenses for this period</span>
         <span className={styles.resultCountMobile}>Current MLA{displayCount !== 1 ? 's' : ''}</span>
@@ -175,10 +175,10 @@ export default function ExpensesListClient({ rows, totalMlaCount }: Props) {
                   <td>
                     <div className={styles.mlaCell}>
                       <span className={styles.photoDesktop}>
-                        <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={36} decorative />
+                        <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={36} decorative square />
                       </span>
                       <span className={styles.photoMobile}>
-                        <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={50} decorative />
+                        <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={50} decorative square />
                       </span>
                       <div style={{ minWidth: 0 }}>
                         <Link
@@ -190,7 +190,7 @@ export default function ExpensesListClient({ rows, totalMlaCount }: Props) {
                         </Link>
                         {row.party && partyFilter === 'ALL' && (
                           <span
-                            className={`${styles.partyPill} ${styles.mobilePill}`}
+                            className={`party-pill ${styles.mobilePill}`}
                             data-party={abbreviateParty(row.party)}
                           >
                             <PartyName party={row.party} />
@@ -202,7 +202,7 @@ export default function ExpensesListClient({ rows, totalMlaCount }: Props) {
 
                   <td className={`${styles.tdParty} ${styles.hideMobile}`}>
                     {row.party && (
-                      <span className={styles.partyPill} data-party={abbreviateParty(row.party)}>
+                      <span className="party-pill" data-party={abbreviateParty(row.party)}>
                         <PartyName party={row.party} />
                       </span>
                     )}

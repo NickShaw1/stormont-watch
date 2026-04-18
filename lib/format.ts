@@ -133,7 +133,7 @@ const PARTY_COLORS: Record<string, { bg: string; color: string; border: string; 
 
 const PARTY_SOLID_COLORS: Record<string, { bg: string; color: string }> = {
   'Sinn Féin':                      { bg: '#326760', color: 'white' },
-  'DUP':                            { bg: '#D46A4C', color: 'white' },
+  'DUP':                            { bg: '#C41E3A', color: 'white' },
   'Alliance':                       { bg: '#F6C135', color: '#1a1a1a' },
   'UUP':                            { bg: '#5B8DD9', color: 'white' },
   'SDLP':                           { bg: '#2E8B57', color: 'white' },
@@ -157,15 +157,14 @@ export function partyPillStyle(party: string | null | undefined): { background: 
 }
 
 export function partyFilterActiveStyle(party: string | null | undefined): { background: string; color: string; borderColor: string; countBg: string; countColor: string } | null {
-  const abbr = abbreviateParty(party)
-  const colors = PARTY_COLORS[abbr]
-  if (!colors) return null
+  const c = partyBorderColor(party)
+  if (!c) return null
   return {
-    background: colors.bg,
-    color: colors.color,
-    borderColor: colors.border,
-    countBg: colors.countBg,
-    countColor: colors.color,
+    background: 'transparent',
+    color: c,
+    borderColor: c,
+    countBg: 'transparent',
+    countColor: c,
   }
 }
 

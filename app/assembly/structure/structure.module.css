@@ -1,343 +1,345 @@
-/* ── Mobile tab filter ──────────────────────────────────────── */
-
-.tabList {
-  display: none;
-}
-
+/* ── Page header ────────────────────────────────────────────── */
 .pageHeader {
-  margin-bottom: 40px;
-  padding-bottom: 0;
+  padding-block: var(--s-12) var(--s-8);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: var(--s-10);
 }
 
-.pageHeader p {
-  font-size: 1rem;
+.pageHeader h1 {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: clamp(48px, 6vw, 96px);
+  letter-spacing: -0.045em;
+  line-height: 0.96;
 }
 
-@media (max-width: 767px) {
-  .pageHeader {
-    margin-bottom: 40px;
-    padding-top: 40px;
-  }
+.lede {
+  font-size: 15px;
+  color: var(--ink-2);
+  max-width: 60ch;
+  margin-top: var(--s-4);
+  line-height: 1.5;
 }
 
-.sectionSeparator {
-  margin: 40px 0;
+@media (max-width: 640px) {
+  .pageHeader { padding-block: var(--s-8) var(--s-6); }
+  .pageHeader h1 { font-size: 44px; letter-spacing: -0.045em; }
+  .lede { font-size: 15px; }
 }
 
-@media (max-width: 767px) {
-  .sectionSeparator {
-    display: none;
-  }
-}
-
-
-@media (max-width: 767px) {
-  .tabList {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-    width: 100%;
-    margin-bottom: 40px;
-  }
-
-  .tab {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 8px;
-    min-height: 44px;
-    border-radius: 999px;
-    border: 1px solid #A0B8C8;
-    background: transparent;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-family: var(--font-body), system-ui, sans-serif;
-    white-space: nowrap;
-  }
-
-  .tab:hover {
-    background: var(--surface);
-    color: var(--text-primary);
-    border-color: var(--accent);
-  }
-
-  .tab[aria-selected='true'],
-  .tabActive {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-  }
-
-  .tabHideMobile {
-    display: none;
-  }
-}
-
-@media (max-width: 360px) {
-  .tabList {
-    grid-template-columns: 1fr 1fr;
-    gap: 0.25rem;
-  }
-
-  .tab {
-    font-size: 0.75rem;
-    padding: 8px 8px;
-  }
-}
-
-/* ── Section visibility + animation ────────────────────────── */
-
-/* Desktop: all sections always visible regardless of JS state */
-/* Mobile: JS drives visibility via sectionHidden / sectionVisible / sectionFadingOut */
-
-@media (max-width: 767px) {
-  .sectionHidden {
-    display: none !important;
-  }
-}
-
-
-/* Hide dividers when both adjacent sections are not shown — mobile only */
-@media (max-width: 767px) {
-  .hrHidden {
-    display: none;
-  }
-}
-
-/* ── Stat bar ───────────────────────────────────────────────── */
-
-.statBar {
+/* ── Section head ───────────────────────────────────────────── */
+.sectionHead {
   display: flex;
-  gap: var(--spacing-lg);
-  margin-top: var(--spacing-xl);
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-8);
 }
 
-.statItem {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--spacing-lg) var(--spacing-xl);
-  background: var(--surface);
-  border-radius: 8px;
-  flex: 1;
-}
-
-.statValue {
-  font-size: clamp(2rem, 4vw, 2.75rem);
-  font-weight: 800;
-  color: var(--accent);
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-
-.statLabel {
-  font-size: 0.8125rem;
-  font-weight: 600;
+.sectionEyebrow {
+  font-size: 12px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+  color: var(--teal);
+  margin-bottom: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-/* ── Section ────────────────────────────────────────────────── */
-
-.section {
-  margin-bottom: var(--spacing-xl);
-}
-
-.sectionHeader {
-  margin-bottom: var(--spacing-lg);
-}
-
-.sectionHeading {
-  margin-bottom: 0;
-}
-
-.sectionHeading::after {
+.sectionEyebrow::before {
   content: '';
-  display: block;
-  height: 2px;
-  width: 40px;
-  background: var(--accent);
-  border-radius: 1px;
-  margin-top: 0.5rem;
-  margin-bottom: 1rem;
+  width: 6px;
+  height: 6px;
+  background: var(--teal);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sectionTitle {
+  font-size: clamp(28px, 3.4vw, 42px);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin: var(--s-1) 0 0;
+}
+
+.sectionMeta {
+  font-size: 11px;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-bottom: 2px;
 }
 
 .sectionBlurb {
-  font-size: 1rem;
-  color: var(--text-secondary);
+  font-size: 15px;
+  color: var(--ink-2);
   line-height: 1.6;
-  max-width: none;
-  margin-bottom: 24px;
+  max-width: 72ch;
+  margin-bottom: var(--s-8);
 }
 
-.sectionBlurb a {
-  text-decoration: none;
+.sectionBlurb a { color: var(--teal); text-decoration: none; }
+.sectionBlurb a:hover { text-decoration: underline; }
+
+/* ── Section spacing ────────────────────────────────────────── */
+.section {
+  margin-bottom: var(--s-16);
 }
 
-.sectionBlurb a:hover {
-  text-decoration: underline;
+.sectionSeparator {
+  margin: var(--s-10) 0;
 }
 
-/* ── Executive ──────────────────────────────────────────────── */
-
-.executiveGrid {
+/* ── Executive cards (FM / DFM) ─────────────────────────────── */
+.execTop {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--spacing-md);
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-5);
+  margin-bottom: var(--s-8);
 }
 
-@media (min-width: 560px) {
-  .executiveGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+@media (max-width: 640px) {
+  .execTop { grid-template-columns: 1fr; }
 }
 
-.executiveCard {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+.execCard {
+  padding: var(--s-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-3);
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: var(--s-4);
+  align-items: center;
+  background: var(--paper);
+  text-decoration: none;
+  transition: border-color 150ms, background 100ms;
+}
+
+.execCard:hover { border-color: var(--teal); background: var(--paper-2); text-decoration: none; }
+.execCard:hover .execName { color: var(--teal); }
+
+.execPhoto {
+  aspect-ratio: 1;
+  border-radius: var(--r-2);
   overflow: hidden;
+  background: var(--paper-3);
+  width: 72px;
+  height: 72px;
 }
 
-.executiveCard::before {
-  content: '';
-  display: block;
-  height: 4px;
-  background: var(--party-color, var(--border));
+.execPhoto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.executiveCardInner {
-  display: flex;
-  gap: var(--spacing-lg);
-  align-items: flex-start;
-  padding: var(--spacing-lg);
-}
-
-.executiveInfo {
+.execInfo {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: 4px;
   min-width: 0;
 }
 
-.roleTitle {
-  font-size: 0.75rem;
-  font-weight: 700;
+.execMinistry {
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-secondary);
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
 }
 
-.executiveName {
-  font-family: var(--font-heading), Georgia, serif;
-  font-size: 1.3125rem;
-  font-weight: 700;
-  color: var(--text-primary);
+.execName {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: var(--ink);
   text-decoration: none;
-  line-height: 1.2;
+  transition: color 120ms;
 }
 
-.executiveName:hover {
-  color: var(--accent);
-  text-decoration: underline;
-}
+.execName:hover { color: var(--teal); text-decoration: none; }
 
-/* ── Junior minister cards ──────────────────────────────────── */
-
-.juniorCard {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-/* ── Speaker badge ──────────────────────────────────────────── */
-
-.pillRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.speakerBadge {
-  display: inline-block;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: var(--surface);
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-  width: fit-content;
-}
-
-/* ── Entry cards (departments & committees) ─────────────────── */
-
-.cardList {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-md);
-}
-
-@media (max-width: 767px) {
-  .sectionHeader {
-    margin-bottom: 16px;
-  }
-
-  .cardList {
-    grid-template-columns: 1fr;
-  }
-}
-
-.entryCard {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: var(--spacing-lg);
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.entryHeader {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  padding-top: var(--spacing-md);
-  border-top: 1px solid var(--border);
-  margin-top: var(--spacing-md);
-  flex: 1;
-}
-
-.entryTitle {
-  font-size: 1.0625rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.3;
-}
-
-.entryDescription {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  line-height: 1.55;
+.execNote {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin-top: var(--s-3);
   max-width: none;
 }
 
-.entryPerson {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
+/* ── Junior minister grid wrapper ───────────────────────────── */
+.juniorGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--s-4);
 }
 
-/* ── Person info ────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .juniorGrid { grid-template-columns: 1fr; }
+}
 
+/* ── Junior minister cards ──────────────────────────────────── */
+.juniorCard {
+  padding: var(--s-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-3);
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: var(--s-4);
+  align-items: center;
+  background: var(--paper);
+  text-decoration: none;
+  transition: border-color 150ms, background 100ms;
+}
+
+.juniorCard:hover { border-color: var(--teal); background: var(--paper-2); text-decoration: none; }
+.juniorCard:hover .personName { color: var(--teal); }
+
+.juniorCard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--party-c, var(--rule));
+  border-radius: var(--r-3) var(--r-3) 0 0;
+}
+
+/* ── Dept grid ──────────────────────────────────────────────── */
+.deptGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--s-5);
+}
+
+@media (max-width: 640px) {
+  .deptGrid { grid-template-columns: 1fr; }
+}
+
+.deptBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.deptBlockHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: 0 var(--s-1);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.deptItem {
+  padding: var(--s-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-3);
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: var(--s-4);
+  align-items: center;
+  text-decoration: none;
+  background: var(--paper);
+  transition: background 100ms, border-color 100ms;
+}
+
+.deptItem:hover { background: var(--paper-2); border-color: var(--teal); text-decoration: none; }
+.deptItem:hover .deptArrow { color: var(--teal); }
+
+.deptPhoto {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-2);
+  overflow: hidden;
+  background: var(--paper-3);
+  flex-shrink: 0;
+  border: 1px solid var(--rule);
+}
+
+.deptPhoto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.deptInfo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.deptLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.deptMlaName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 120ms;
+}
+
+.deptItem:hover .deptMlaName { color: var(--teal); }
+
+.deptName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  text-decoration: none;
+}
+
+a.deptName:hover { text-decoration: underline; }
+
+.deptItem:hover .deptName { color: var(--teal); }
+
+.deptParty {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+.deptDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.deptArrow {
+  font-size: 14px;
+  color: var(--ink-4);
+  transition: color 120ms;
+}
+
+
+
+/* ── Person info (committees) ───────────────────────────────── */
 .personInfo {
   display: flex;
   flex-direction: column;
@@ -345,104 +347,59 @@
   min-width: 0;
 }
 
-.officialLink {
-  display: inline-block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--accent);
-  text-decoration: none;
-  margin-top: auto;
-  padding-top: var(--spacing-sm);
-  align-self: flex-start;
-}
-
-.officialLink:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
 .personRole {
-  font-size: 0.6875rem;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
 }
 
 .personName {
-  font-size: 1.3125rem;
+  font-size: 15px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--ink);
   text-decoration: none;
   line-height: 1.3;
+  transition: color 120ms;
 }
 
-.personName:hover {
-  color: var(--accent);
-  text-decoration: underline;
+.personName:hover { color: var(--teal); text-decoration: none; }
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
 }
 
-/* ── Party pill ─────────────────────────────────────────────── */
+.speakerBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1px 5px;
+  border-radius: var(--r-1);
+  background: var(--paper-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: var(--ink-3);
+  border: 1px solid var(--rule);
+}
 
-.partyPill {
+.officialLink {
   display: inline-block;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: 0;
-  padding: 3px 8px;
-  border-radius: 3px;
-  border: none;
-  width: fit-content;
-}
-.partyPill[data-party="Sinn Féin"] { background: #326760; color: white; }
-.partyPill[data-party="DUP"]       { background: #C41E3A; color: white; }
-.partyPill[data-party="Alliance"]  { background: #F6C135; color: #1a1a1a; }
-.partyPill[data-party="UUP"]       { background: #5B8DD9; color: white; }
-.partyPill[data-party="SDLP"]      { background: #2E8B57; color: white; }
-.partyPill[data-party="TUV"]       { background: #1a1a6e; color: white; }
-.partyPill[data-party="PBP"]       { background: #c0392b; color: white; }
-.partyPill[data-party="Ind"]       { background: #888;    color: white; }
-
-@media (max-width: 640px) {
-  .partyPill {
-    font-weight: 600;
-    margin-top: 2px;
-  }
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--teal);
+  text-decoration: none;
+  margin-top: auto;
+  padding-top: var(--s-2);
+  align-self: flex-start;
+  transition: opacity 150ms;
 }
 
-@media (max-width: 767px) {
-  .sectionHeading::after {
-    margin-bottom: 16px;
-  }
-
-  .sectionBlurb {
-    font-size: 1rem;
-  }
-
-  .pageHeader h1 {
-    font-size: 2rem;
-  }
-
-  .sectionHeading {
-    font-size: 1.6rem;
-  }
-
-  .executiveName,
-  .personName {
-    font-size: 1.2rem;
-  }
-
-  .executiveCardInner {
-    align-items: stretch;
-  }
-
-  .executiveInfo {
-    justify-content: center;
-  }
-
-
-  .entryDescription {
-    font-size: 1rem;
-  }
-}
+.officialLink:hover { opacity: 0.75; text-decoration: none; }

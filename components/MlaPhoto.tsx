@@ -12,9 +12,10 @@ interface Props {
   borderColor?: string
   noOutline?: boolean
   decorative?: boolean
+  square?: boolean
 }
 
-export default function MlaPhoto({ name, imgUrl, size, borderColor, noOutline, decorative }: Props) {
+export default function MlaPhoto({ name, imgUrl, size, borderColor, noOutline, decorative, square }: Props) {
   const [error, setError] = useState(false)
   const showFallback = !imgUrl || error
 
@@ -24,7 +25,7 @@ export default function MlaPhoto({ name, imgUrl, size, borderColor, noOutline, d
   return (
     <span
       className={`${styles.wrap}${showFallback ? ` ${styles.wrapFallback}` : ''}`}
-      style={{ width: size, height: size, minWidth: size, outline: showOutline ? `3px solid ${borderColor}` : undefined, outlineOffset: '2px' }}
+      style={{ width: size, height: size, minWidth: size, borderRadius: square ? 'var(--r-2)' : undefined, border: square ? 'none' : undefined, outline: showOutline ? `3px solid ${borderColor}` : undefined, outlineOffset: '2px' }}
     >
       {showFallback ? (
         <span
@@ -46,7 +47,6 @@ export default function MlaPhoto({ name, imgUrl, size, borderColor, noOutline, d
           style={{ width: size, height: size }}
           className={styles.img}
           onError={() => setError(true)}
-          unoptimized
         />
       )}
     </span>

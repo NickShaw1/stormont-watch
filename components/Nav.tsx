@@ -2,41 +2,26 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import styles from './Nav.module.css'
 
 function EyeLogo() {
   return (
     <svg
       className={styles.navLogo}
-      width="22"
-      height="22"
+      width="18"
+      height="18"
       viewBox="0 0 24 24"
       fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <path
-        d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      <circle
-        cx="12"
-        cy="12"
-        r="4"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className={styles.navLogoIris}
-      />
-      <circle
-        cx="12"
-        cy="12"
-        r="2"
-        fill="currentColor"
-        className={styles.navLogoPupil}
-      />
+      <path d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z" strokeLinejoin="round"/>
+      <circle cx="12" cy="12" r="4"/>
+      <circle cx="12" cy="12" r="2" fill="currentColor"/>
     </svg>
   )
 }
@@ -49,49 +34,77 @@ const navLinks = [
   { href: '/assembly/stats', label: 'Stats' },
 ]
 
+const allLinks = [
+  { href: '/', label: 'Home' },
+  ...navLinks,
+]
+
 export default function Nav() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const hamburgerRef = useRef<HTMLButtonElement>(null)
-  const closeBtnRef = useRef<HTMLButtonElement>(null)
+  const drawerRef = useRef<HTMLDivElement>(null)
+  const didOpen = useRef(false)
 
-  const handleNavClick = () => {
-    document.body.style.top = ''
-    setOpen(false)
-  }
+  const handleNavClick = () => setOpen(false)
 
-  const wasOpen = useRef(false)
+  // Focus into drawer on open; return focus to hamburger on close
   useEffect(() => {
     if (open) {
-      wasOpen.current = true
-      closeBtnRef.current?.focus()
-    } else if (wasOpen.current) {
+      didOpen.current = true
+      requestAnimationFrame(() => {
+        const first = drawerRef.current?.querySelector<HTMLElement>('a[href], button:not([disabled])')
+        first?.focus()
+      })
+    } else if (didOpen.current) {
       hamburgerRef.current?.focus()
     }
   }, [open])
 
   useEffect(() => {
+    if (!open) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [open])
+
+  // Focus trap: keep Tab cycling inside the drawer
+  const handleDrawerKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Tab') return
+    const el = drawerRef.current
+    if (!el) return
+    const focusable = Array.from(el.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    ))
+    if (focusable.length === 0) return
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus() }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus() }
+    }
+  }, [])
+
+  useEffect(() => {
     if (open) {
       const scrollY = window.scrollY
-      document.body.style.overflow = 'hidden'
       document.body.style.position = 'fixed'
       document.body.style.top = `-${scrollY}px`
       document.body.style.width = '100%'
     } else {
-      const scrollY = document.body.style.top
-      document.body.style.overflow = ''
+      const top = document.body.style.top
       document.body.style.position = ''
       document.body.style.top = ''
       document.body.style.width = ''
-      window.scrollTo(0, parseInt(scrollY || '0') * -1)
+      window.scrollTo(0, -parseInt(top || '0'))
     }
     return () => {
-      const scrollY = document.body.style.top
-      document.body.style.overflow = ''
+      const top = document.body.style.top
       document.body.style.position = ''
       document.body.style.top = ''
       document.body.style.width = ''
-      if (scrollY) window.scrollTo(0, parseInt(scrollY) * -1)
+      if (top) window.scrollTo(0, -parseInt(top))
     }
   }, [open])
 
@@ -99,7 +112,7 @@ export default function Nav() {
     <nav className={styles.nav} aria-label="Main navigation">
       <div className={`container ${styles.inner}`}>
         <Link href="/" className={styles.navBrand}>
-          <EyeLogo />
+          <span className={styles.navLogoWrap}><EyeLogo /></span>
           <span className={styles.navWordmark}>
             <span className={styles.navStormont}>Stormont </span>
             <span className={styles.navWatch}>Watch</span>
@@ -119,70 +132,55 @@ export default function Nav() {
           ))}
         </ul>
 
-        <button
-          ref={hamburgerRef}
-          className={styles.hamburger}
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-          aria-label={open ? 'Close menu' : 'Open menu'}
-          onClick={() => setOpen((v) => !v)}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-      </div>
-
-      {/* Full-screen sidebar */}
-      <div
-        id="mobile-menu"
-        className={`${styles.sidebar} ${open ? styles.sidebarOpen : ''}`}
-        aria-hidden={!open}
-      >
-        <div className={styles.sidebarTop}>
-          <Link href="/" className={styles.navBrand} onClick={handleNavClick}>
-            <EyeLogo />
-            <span className={styles.navWordmark}>
-            <span className={styles.navStormont}>Stormont </span>
-            <span className={styles.navWatch}>Watch</span>
-          </span>
-          </Link>
+        <div className={styles.navRight}>
           <button
-            ref={closeBtnRef}
-            className={styles.closeBtn}
-            aria-label="Close menu"
-            onClick={() => setOpen(false)}
+            ref={hamburgerRef}
+            className={styles.hamburger}
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            onClick={() => setOpen((v) => !v)}
           >
-            <span />
-            <span />
+            {open
+              ? <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" fill="none" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              : <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            }
           </button>
         </div>
-
-        <ul className={styles.sidebarLinks} role="list">
-          <li>
-            <Link
-              href="/"
-              className={`${styles.sidebarLink} ${open ? styles.sidebarLinkVisible : ''}`}
-              aria-current={pathname === '/' ? 'page' : undefined}
-              onClick={handleNavClick}
-            >
-              Home
-            </Link>
-          </li>
-          {navLinks.map(({ href, label }) => (
-            <li key={href}>
-              <Link
-                href={href}
-                className={`${styles.sidebarLink} ${open ? styles.sidebarLinkVisible : ''}`}
-                aria-current={pathname.startsWith(href) ? 'page' : undefined}
-                onClick={handleNavClick}
-              >
-                {label}
-              </Link>
-            </li>
-          ))}
-        </ul>
       </div>
+
+      {open && typeof document !== 'undefined' && createPortal(
+        <>
+          <div className={styles.mobileDrawerBackdrop} onClick={() => setOpen(false)} aria-hidden="true" />
+          <div id="mobile-menu" ref={drawerRef} className={styles.sidebar} role="dialog" aria-modal="true" aria-label="Navigation menu" onKeyDown={handleDrawerKeyDown}>
+            <div className={styles.sidebarBody}>
+            <ul className={styles.sidebarLinks} role="list">
+              {allLinks.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className={styles.sidebarLink}
+                    aria-current={href === '/' ? pathname === '/' ? 'page' : undefined : pathname.startsWith(href) ? 'page' : undefined}
+                    onClick={handleNavClick}
+                  >
+                    <span>{label}</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className={styles.mobileMeta}>
+              <Link href="/about" onClick={handleNavClick}>About</Link>
+              <span>·</span>
+              <Link href="/privacy" onClick={handleNavClick}>Privacy</Link>
+              <span>·</span>
+              <Link href="/terms" onClick={handleNavClick}>Terms</Link>
+            </div>
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
     </nav>
   )
 }

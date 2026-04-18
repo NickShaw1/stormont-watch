@@ -72,13 +72,14 @@ function StatCard({
               imgUrl={m.imgUrl ?? ''}
               size={48}
               decorative
+              square
             />
             <div className={styles.info}>
               <Link href={`/assembly/mlas/${m.personId}`} className={styles.name}>
                 {formatMemberName(m.fullName)}
               </Link>
               {m.party && (
-                <span className={styles.partyPill} data-party={abbreviateParty(m.party)}>
+                <span className="party-pill" data-party={abbreviateParty(m.party)}>
                   <PartyName party={m.party} />
                 </span>
               )}

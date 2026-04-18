@@ -13,7 +13,7 @@
   padding: 10px 16px;
   min-height: 44px;
   border-radius: 999px;
-  border: 1px solid #A0B8C8;
+  border: 1px solid var(--rule);
   background: transparent;
   font-size: 0.875rem;
   font-weight: 600;
@@ -41,26 +41,26 @@
 }
 
 .filterBtnActive[data-filter="AYE"] {
-  background: #D1FAE5;
-  color: #065F46;
-  border-color: #6EE7B7;
+  background: var(--forest-wash);
+  color: var(--forest);
+  border-color: var(--forest-border);
 }
 
 .filterBtnActive[data-filter="NO"] {
-  background: #FEE2E2;
-  color: #991B1B;
-  border-color: #FCA5A5;
+  background: var(--crimson-wash);
+  color: var(--crimson);
+  border-color: var(--crimson-border);
 }
 
 .filterBtnActive[data-filter="NO_SHOW"] {
-  background: #E2E8ED;
-  color: #3A5A70;
+  background: var(--no-show-wash);
+  color: var(--no-show);
   border-color: var(--border);
 }
 
 .filterBtnActive[data-filter="ABSTAINED"] {
-  background: #EEF4F8;
-  color: #3A5A70;
+  background: var(--abstain-wash);
+  color: var(--no-show);
   border-color: var(--border);
 }
 
@@ -81,26 +81,26 @@
 }
 
 .filterBtnActive[data-filter="AYE"] .filterCount {
-  background: rgba(6, 95, 70, 0.12);
-  color: #065F46;
+  background: color-mix(in srgb, var(--forest) 12%, transparent);
+  color: var(--forest);
   border-color: transparent;
 }
 
 .filterBtnActive[data-filter="NO"] .filterCount {
-  background: rgba(153, 27, 27, 0.12);
-  color: #991B1B;
+  background: color-mix(in srgb, var(--crimson) 12%, transparent);
+  color: var(--crimson);
   border-color: transparent;
 }
 
 .filterBtnActive[data-filter="NO_SHOW"] .filterCount {
-  background: rgba(58, 90, 112, 0.12);
-  color: #3A5A70;
+  background: color-mix(in srgb, var(--no-show) 12%, transparent);
+  color: var(--no-show);
   border-color: transparent;
 }
 
 .filterBtnActive[data-filter="ABSTAINED"] .filterCount {
-  background: rgba(58, 90, 112, 0.12);
-  color: #3A5A70;
+  background: color-mix(in srgb, var(--no-show) 12%, transparent);
+  color: var(--no-show);
   border-color: transparent;
 }
 
@@ -109,14 +109,14 @@
   font-size: 0.75rem;
   font-weight: 600;
   padding: 2px 8px;
-  border-radius: 3px;
+  border-radius: 999px;
   white-space: nowrap;
 }
 
-.voteAYE      { background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
-.voteNO       { background: #FAE5E5; color: #9B2626; border: 1px solid #FCA5A5; }
-.voteNO_SHOW  { background: #E2E8ED; color: #3A5A70; border: 1px solid var(--border); }
-.voteABSTAINED { background: #EEF4F8; color: #3A5A70; border: 1px solid var(--border); }
+.voteAYE      { background: var(--forest-wash);  color: var(--forest);  border: 1px solid var(--forest-border); }
+.voteNO       { background: var(--crimson-wash); color: var(--crimson); border: 1px solid var(--crimson-border); }
+.voteNO_SHOW  { background: var(--no-show-wash); color: var(--no-show); border: 1px solid var(--border); }
+.voteABSTAINED { background: var(--abstain-wash); color: var(--no-show); border: 1px solid var(--border); }
 
 @media (max-width: 640px) {
   .votePill {
@@ -199,9 +199,7 @@
     font-size: 0.6875rem;
     padding: 1px 4px;
   }
-}
 
-@media (max-width: 640px) {
   .loadMore {
     display: block;
     width: 100%;

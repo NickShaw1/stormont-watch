@@ -118,6 +118,13 @@ export default async function MlaDetailPage({ params }: Props) {
     areaServed: member.constituency ?? undefined,
   }
 
+  const eyebrow = member.assemblyRole
+    ?? (structureRole?.type === 'minister' ? formatRoleTitle(structureRole.roleTitle) : null)
+    ?? (structureRole?.type === 'committeeChair' ? `Chair, ${structureRole.committeeName}` : null)
+    ?? 'Member of the Legislative Assembly'
+
+  const isSpecialRole = eyebrow !== 'Member of the Legislative Assembly'
+
   return (
     <div className="container">
       <script
@@ -127,144 +134,113 @@ export default async function MlaDetailPage({ params }: Props) {
       <header className={styles.header}>
         <nav aria-label="Breadcrumb" className="breadcrumb">
           <ol>
-            {member.isCurrent ? (
-              <>
-                <li><Link href="/assembly/mlas">MLAs</Link></li>
-                <li aria-current="page">{formatMemberName(member.fullName)}</li>
-              </>
-            ) : (
-              <>
-                <li><Link href="/assembly/mlas">MLAs</Link></li>
-                <li><Link href="/assembly/former-mlas">Former MLAs</Link></li>
-                <li aria-current="page">{formatMemberName(member.fullName)}</li>
-              </>
-            )}
+            <li><Link href={member.isCurrent ? '/assembly/mlas' : '/assembly/former-mlas'}>{member.isCurrent ? 'MLAs' : 'Former MLAs'}</Link></li>
+            <li aria-current="page">{formatMemberName(member.fullName)}</li>
           </ol>
         </nav>
 
-        <div className={styles.profileCard} style={{ '--party-color': partyBorderColor(member.party) } as React.CSSProperties}>
-          <div className={styles.profileSection}>
+        <div
+          className={styles.mlaHero}
+          style={{ '--party-color': partyBorderColor(member.party) } as React.CSSProperties}
+        >
+          <div className={styles.heroPhoto}>
             <MlaPhoto
               name={member.fullName}
               imgUrl={member.imgUrl ?? ''}
-              size={88}
+              size={112}
               decorative
             />
-            <div className={styles.profileInfo}>
-              <h1 className={styles.mlaName}>{formatMemberName(member.fullName)}</h1>
-              <div className={styles.pills}>
-                {member.party && (
-                  <span
-                    className={styles.partyPill}
-                    style={{ '--party-color': partyBorderColor(member.party) } as React.CSSProperties}
-                    data-party={abbreviateParty(member.party)}
-                  >
-                    <PartyName party={member.party} />
-                  </span>
-                )}
-                {!member.isCurrent && (
-                  <span className={styles.formerPill}>Former MLA</span>
-                )}
-                {member.assemblyRole && (
-                  <span className={`${styles.rolePill} ${styles.rolePillInline}`}>{member.assemblyRole}</span>
-                )}
-                {structureRole?.type === 'minister' && (
-                  <span className={`${styles.rolePill} ${styles.rolePillInline}`}>{formatRoleTitle(structureRole.roleTitle)}</span>
-                )}
-                {structureRole?.type === 'committeeChair' && (
-                  <span className={`${styles.rolePill} ${styles.rolePillInline}`}>Chair, {structureRole.committeeName}</span>
-                )}
-              </div>
-              <div className={styles.metaRows}>
-                {member.constituency && (
-                  <div className={styles.metaRow}>
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6C3.5 9.5 8 14.5 8 14.5C8 14.5 12.5 9.5 12.5 6C12.5 3.5 10.5 1.5 8 1.5ZM8 7.5C7.2 7.5 6.5 6.8 6.5 6C6.5 5.2 7.2 4.5 8 4.5C8.8 4.5 9.5 5.2 9.5 6C9.5 6.8 8.8 7.5 8 7.5Z" fill="currentColor"/>
-                    </svg>
-                    <span>{member.constituency}</span>
-                  </div>
-                )}
-                {member.email && member.isCurrent && (
-                  <div className={styles.metaRow}>
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M2 4a1 1 0 011-1h10a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1V4zm1 0v.5l5 3.5 5-3.5V4H3zm0 2v6h10V6L8 9.5 3 6z" fill="currentColor"/>
-                    </svg>
-                    <a href={`mailto:${member.email}`} className={styles.emailLink}>
-                      <span className={styles.emailFull}>{member.email}</span>
-                      <span className={styles.emailShort}>Contact MLA</span>
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
-          {structureRole && (
-            <div className={styles.rolePillsMobile}>
-              {structureRole.type === 'minister' && (
-                <div className={styles.rolePillCard}>
-                  <span className={styles.rolePillValue}>{formatRoleTitle(structureRole.roleTitle)}</span>
-                </div>
+          <div className={styles.heroInfo}>
+            <span className={`eyebrow${isSpecialRole ? ` ${styles.specialRoleEyebrow}` : ` ${styles.defaultRoleEyebrow}`}`}>{eyebrow}</span>
+            <h1 className={styles.heroName}>{formatMemberName(member.fullName)}</h1>
+            <div className={styles.heroRoleLine}>
+              {member.party && (
+                <span className="party-pill" data-party={abbreviateParty(member.party)}>
+                  <PartyName party={member.party} />
+                </span>
               )}
-              {structureRole.type === 'committeeChair' && (
-                <div className={styles.rolePillCard}>
-                  <span className={styles.rolePillType}>Committee Chair</span>
-                  <span className={styles.rolePillValue}>{structureRole.committeeName}</span>
-                </div>
+              {!member.isCurrent && (
+                <span className={styles.formerPill}>Former MLA</span>
               )}
+              {member.constituency && (
+                <>
+                  <span className={styles.roleDot} aria-hidden>·</span>
+                  <span>{member.constituency}</span>
+                </>
+              )}
+            </div>
+            {member.email && member.isCurrent && (
+              <div className={styles.emailRow}>
+                <a href={`mailto:${member.email}`} className={styles.emailLink}>
+                  <span className={styles.emailFull}>{member.email}</span>
+                  <span className={styles.emailMobile}>Contact MLA</span>
+                </a>
+                {member.party && (
+                  <span className={`party-pill ${styles.emailRowPill}`} data-party={abbreviateParty(member.party)}>
+                    {abbreviateParty(member.party)}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.profileStats}>
+          {member.mandateStart && (
+            <div className={styles.statCell}>
+              <div className={styles.statLbl}>Mandate start</div>
+              <div className={styles.statVal}>{formatDate(member.mandateStart)}</div>
             </div>
           )}
-
-          <div className={styles.statsBar}>
-            {member.assemblyRole && (
-              <div className={styles.roleCell}>{member.assemblyRole}</div>
-            )}
-            {member.mandateStart && (
-              <div className={styles.statCell}>
-                <span className={styles.statLabel}>Mandate start</span>
-                <span className={styles.statValue}>{formatDate(member.mandateStart)}</span>
-              </div>
-            )}
-            {!member.isCurrent && member.mandateEnd && (
-              <div className={styles.statCell}>
-                <span className={styles.statLabel}>Left Assembly</span>
-                <span className={styles.statValue}>{formatDate(member.mandateEnd)}</span>
-              </div>
-            )}
+          {!member.isCurrent && member.mandateEnd && (
             <div className={styles.statCell}>
-              <span className={styles.statLabel}>Votes present</span>
-              <span className={styles.statValue}>
-                {isPresidingOfficer
-                  ? <span className={styles.statMuted}>—</span>
-                  : <>{present}<span className={styles.statOf}>/{totalDivisions}</span></>}
-              </span>
+              <div className={styles.statLbl}>Left Assembly</div>
+              <div className={styles.statVal}>{formatDate(member.mandateEnd)}</div>
             </div>
-            <div className={styles.statCell}>
-              <span className={styles.statLabel}>Vote Attendance</span>
-              {isPresidingOfficer ? (
-                <span className={styles.statMuted}>Does not vote</span>
-              ) : totalDivisions === 0 ? (
-                <span className={styles.statMuted}>N/A</span>
-              ) : (
-                <span
-                  className={styles.attendanceValue}
+          )}
+          <div className={styles.statCell}>
+            <div className={styles.statLbl}>Divisions present</div>
+            <div className={styles.statVal}>
+              {isPresidingOfficer
+                ? <span className={styles.statMuted}>—</span>
+                : <>{present}<span className={styles.statFraction}>/{totalDivisions}</span></>}
+            </div>
+          </div>
+          <div className={styles.statCell}>
+            <div className={styles.statLbl}>Vote attendance</div>
+            {isPresidingOfficer ? (
+              <div className={styles.statMuted}>Does not vote</div>
+            ) : totalDivisions === 0 ? (
+              <div className={styles.statMuted}>N/A</div>
+            ) : (
+              <>
+                <div
+                  className={styles.statVal}
                   style={{
-                    color: attendancePct >= 80 ? '#065F46' : attendancePct >= 60 ? '#92400E' : '#991B1B',
+                    color: attendancePct >= 80 ? 'var(--forest)' : attendancePct >= 60 ? '#92400E' : 'var(--crimson)',
                   }}
                 >
                   {attendancePct}%
-                </span>
-              )}
-            </div>
-            {member.isCurrent && (
-              <div className={styles.statCell}>
-                <span className={styles.statLabel}>Family employed</span>
-                <span className={styles.statValue} style={{ color: employsFamily ? '#991B1B' : '#065F46' }}>
-                  {employsFamily ? 'Yes' : 'No'}
-                </span>
-              </div>
+                </div>
+                <div className={styles.statSub}>
+                  {attendancePct >= 80 ? 'Above average' : attendancePct >= 60 ? 'Below average' : 'Significantly below average'}
+                </div>
+              </>
             )}
           </div>
+          {member.isCurrent && (
+            <div className={styles.statCell}>
+              <div className={styles.statLbl}>Family employed</div>
+              <div
+                className={styles.statVal}
+                style={{ color: employsFamily ? 'var(--crimson)' : 'var(--forest)' }}
+              >
+                {employsFamily ? 'Yes' : 'No'}
+              </div>
+            </div>
+          )}
         </div>
       </header>
 

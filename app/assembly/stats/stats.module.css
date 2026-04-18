@@ -1,26 +1,26 @@
-@media (max-width: 767px) {
-  header.pageHeader {
-    padding-top: 40px;
-  }
-
-  header.pageHeader h1 {
-    font-size: 2rem;
-  }
-}
 
 .section {
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--s-12);
+  margin-top: var(--s-12);
+}
+
+.section:first-child {
+  margin-top: 0;
 }
 
 .sectionTitle {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-md);
+  font-family: var(--font-sans);
+  font-size: clamp(28px, 3.4vw, 42px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: var(--ink);
+  margin-bottom: var(--s-5);
+  margin-top: 0;
 }
 
 .sectionTitleLg {
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-size: clamp(28px, 3.4vw, 42px);
 }
 
 .overviewGrid {
@@ -54,10 +54,10 @@
 }
 
 .overviewCard {
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
   padding: var(--spacing-lg) var(--spacing-lg);
-  background: var(--surface);
+  background: var(--paper-2);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -66,24 +66,25 @@
 }
 
 .overviewLabel {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
 }
 
 .overviewValue {
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--ink);
   line-height: 1.1;
 }
 
 .overviewValueStat {
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--ink);
   line-height: 1.1;
   flex: 1;
   display: flex;
@@ -100,14 +101,14 @@
 .overviewVoteAye {
   font-size: 2rem;
   font-weight: 800;
-  color: #065F46;
+  color: var(--forest);
   line-height: 1.1;
 }
 
 .overviewVoteNo {
   font-size: 2rem;
   font-weight: 800;
-  color: #9B2626;
+  color: var(--crimson);
   line-height: 1.1;
 }
 
@@ -136,7 +137,7 @@
 
 .overviewMeta {
   font-size: 0.8125rem;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   margin-top: auto;
 }
 
@@ -158,10 +159,10 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
   overflow: hidden;
-  background: var(--surface);
+  background: var(--paper-2);
 }
 
 .patternStackItem {
@@ -169,7 +170,7 @@
   flex-direction: column;
   gap: 6px;
   padding: var(--spacing-md) var(--spacing-lg);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
   flex: 1;
   justify-content: center;
 }
@@ -212,10 +213,10 @@
 }
 
 .patternCard {
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
   padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--surface);
+  background: var(--paper-2);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -226,16 +227,23 @@
 .patternBigValue {
   font-size: 2rem;
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--ink);
   line-height: 1;
 }
 
 .patternName {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  color: var(--ink);
   text-decoration: none;
   line-height: 1.2;
+}
+
+/* Square MLA photos */
+.photoSquare :global(.wrap),
+.photoSquare :global(.wrapFallback) {
+  border-radius: 3px !important;
 }
 
 .patternName:hover {
@@ -245,12 +253,12 @@
 
 .patternMeta {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--ink-3);
 }
 
 .patternNote {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
+  font-size: 13px;
+  color: var(--ink-3);
 }
 
 .patternStatRow {
@@ -265,7 +273,7 @@
 .patternStatLabel {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--ink);
   line-height: 1.3;
 }
 
@@ -277,7 +285,7 @@
 .cohesionValue {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   text-align: center;
   white-space: nowrap;
 }
@@ -326,13 +334,13 @@
   display: flex;
   align-items: center;
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
   margin-top: 4px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
+  color: var(--ink-3);
 }
 
 .cohesionHeaderParty {
@@ -369,7 +377,7 @@
   align-items: center;
   gap: 0;
   flex: 1;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
   padding-block: var(--spacing-xs);
 }
 
@@ -391,7 +399,7 @@
   gap: 6px;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--ink);
   flex: 0 0 25%;
   white-space: nowrap;
   text-align: left;
@@ -399,7 +407,7 @@
 
 .cohesionMembers {
   font-size: 0.8125rem;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   flex: 0 0 25%;
   text-align: center;
 }
@@ -409,14 +417,14 @@
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   margin-left: var(--spacing-sm);
 }
 
 /* Expenses section */
 .expensesSource {
   font-size: 0.8125rem;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   margin-top: var(--spacing-md);
 }
 
@@ -432,6 +440,17 @@
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 600;
+  font-family: var(--font-sans);
+}
+
+.expensesSourceLinkDesktop {
+  display: inline;
+}
+
+@media (max-width: 767px) {
+  .expensesSourceLinkDesktop {
+    display: none;
+  }
 }
 
 .expensesSourceLink::after {
@@ -447,14 +466,14 @@
 
 .expensesMeta {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   margin-bottom: var(--spacing-md);
   max-width: none;
 }
 
 .expensesPeriod {
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--ink);
 }
 
 @media (max-width: 640px) {
@@ -482,12 +501,12 @@
 }
 
 .expensesStatValue {
-  color: var(--text-primary);
+  color: var(--ink);
   font-weight: 700;
 }
 
 .expensesStatLabel {
-  color: var(--text-secondary);
+  color: var(--ink-3);
 }
 
 .partyExpensesGrid {
@@ -504,9 +523,9 @@
 }
 
 .partyStatCard {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
   padding: var(--spacing-lg);
   display: flex;
   flex-direction: column;
@@ -518,7 +537,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   margin: 0;
   max-width: none;
 }
@@ -526,7 +545,7 @@
 .partyStatTotal {
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--ink);
   margin: 0;
   max-width: none;
   line-height: 1.1;
@@ -534,7 +553,7 @@
 
 .partyStatMeta {
   font-size: 0.8125rem;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   margin: 0;
   max-width: none;
 }
@@ -548,20 +567,21 @@
 
 /* Shared stat card (expenses + future reuse) */
 .card {
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
   padding: var(--spacing-lg);
-  background: var(--surface);
+  background: var(--paper-2);
   overflow: hidden;
 }
 
 .cardTitle {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-md);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  margin-bottom: var(--s-4);
 }
 
 .list {
@@ -577,7 +597,7 @@
   align-items: center;
   gap: var(--spacing-md);
   padding-block: var(--spacing-sm);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
   min-width: 0;
   overflow: hidden;
 }
@@ -594,7 +614,7 @@
 .rank {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   width: 20px;
   flex-shrink: 0;
   text-align: center;
@@ -609,9 +629,10 @@
 }
 
 .name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
@@ -619,47 +640,26 @@
 }
 
 .name:hover {
-  color: var(--accent);
+  color: var(--teal);
   text-decoration: underline;
 }
 
 .meta {
   font-size: 0.8125rem;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .value {
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
   flex-shrink: 0;
-  font-family: var(--font-heading), Georgia, serif;
+  font-family: var(--font-mono);
 }
 
-.partyPill {
-  display: inline-block;
-  width: fit-content;
-  align-self: flex-start;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: 0;
-  padding: 3px 8px;
-  border-radius: 3px;
-  border: none;
-  margin-top: 3px;
-}
-.partyPill[data-party="Sinn Féin"] { background: #326760; color: white; }
-.partyPill[data-party="DUP"]       { background: #C41E3A; color: white; }
-.partyPill[data-party="Alliance"]  { background: #F6C135; color: #1a1a1a; }
-.partyPill[data-party="UUP"]       { background: #5B8DD9; color: white; }
-.partyPill[data-party="SDLP"]      { background: #2E8B57; color: white; }
-.partyPill[data-party="TUV"]       { background: #1a1a6e; color: white; }
-.partyPill[data-party="PBP"]       { background: #c0392b; color: white; }
-.partyPill[data-party="Ind"]       { background: #888;    color: white; }
 
 /* Cohesion table */
 .cohesionTableWrapper {
@@ -682,10 +682,10 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   padding: 0 8px 6px;
   text-align: left;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
   white-space: nowrap;
 }
 
@@ -696,7 +696,7 @@
 
 .cohesionTable tbody td {
   padding: 5px 8px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
   vertical-align: middle;
 }
 
@@ -711,23 +711,14 @@
 
 /* Cross-community trends */
 .sectionHeader {
-  margin-bottom: 0;
+  margin-bottom: var(--s-8);
 }
 
 .sectionHeader .sectionTitle {
-  margin-bottom: 0;
-  font-size: 2rem;
+  margin-bottom: var(--s-3);
 }
 
 @media (max-width: 767px) {
-  .sectionHeader .sectionTitle {
-    font-size: 1.6rem;
-  }
-
-  .sectionTitle {
-    font-size: 1.6rem;
-  }
-
   .statsPageHeader {
     margin-bottom: var(--spacing-lg);
   }
@@ -764,41 +755,164 @@
 }
 
 .sectionEyebrow {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--teal);
   margin-bottom: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sectionEyebrow::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--teal);
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .sectionRule {
-  height: 2px;
-  background: var(--accent);
-  width: 40px;
-  margin-top: 0.5rem;
-  margin-bottom: 1rem;
-  border-radius: 1px;
+  display: none;
+}
+
+/* ── Stat grid (design system) ────────────────────────────── */
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-5);
+  margin-bottom: var(--s-10);
+}
+
+@media (max-width: 900px) {
+  .statGrid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 500px) {
+  .statGrid { grid-template-columns: 1fr; }
+}
+
+.statBlock {
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  padding: var(--s-5);
+  background: var(--paper);
+  box-shadow: var(--shadow-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.statBlockTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.statBlockSub {
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-bottom: var(--s-2);
+}
+
+.statBlockBig {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.statBlockBig .statSuffix {
+  font-size: 1.25rem;
+  color: var(--ochre);
+}
+
+.statNote {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: auto;
+}
+
+/* ── Bar list (cohesion, attendance, etc.) ────────────────── */
+.barList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  gap: var(--s-3);
+  align-items: center;
+}
+
+.barRow .barLbl {
+  font-size: 12px;
+  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barTrack {
+  height: 6px;
+  background: var(--paper-3);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+
+.barTrack i {
+  display: block;
+  height: 100%;
+  background: var(--teal);
+  border-radius: var(--r-pill);
+}
+
+.barVal {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--ink-3);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.partyDotSm {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .sectionDesc {
-  font-size: 1rem;
-  color: var(--text-secondary);
-  margin-bottom: 16px;
+  font-size: 15px;
+  font-family: var(--font-sans);
+  color: var(--ink-2);
+  margin-bottom: var(--s-5);
+  max-width: 65ch;
 }
 
 .sectionCaveat {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   margin-top: 0;
   margin-bottom: 16px;
-  max-width: none;
+  max-width: 65ch;
 }
 
 .chartTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--ink);
   margin-bottom: var(--spacing-sm);
   margin-top: var(--spacing-xl);
 }
@@ -809,7 +923,7 @@
   gap: 16px;
   margin-bottom: 12px;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   align-items: center;
 }
 
@@ -867,9 +981,9 @@
 
 .trendNote {
   font-size: 1rem;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   margin-top: var(--spacing-sm);
-  max-width: none;
+  max-width: 65ch;
 }
 
 /* Heatmap responsive layout */
@@ -924,43 +1038,45 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-  padding: 0.625rem 0.875rem;
-  margin-bottom: var(--spacing-lg);
-  background: #f0f4f7;
-  border-left: 3px solid #203F59;
-  border-radius: 0 6px 6px 0;
+  padding: var(--s-5) var(--s-6);
+  margin-block: var(--s-6);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: var(--r-3);
   text-decoration: none !important;
-  transition: background 150ms ease;
-  box-sizing: border-box;
+  transition: background 160ms, border-color 160ms;
 }
 
 .expensesRankingsCard:hover {
-  background: #e4eaf0;
+  background: var(--teal);
+  border-color: var(--teal);
 }
 
 .expensesRankingsCardLeft {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: var(--s-3);
 }
 
 .expensesRankingsCardIcon {
   flex-shrink: 0;
-  width: 1rem;
-  height: 1rem;
-  display: block;
+  width: 18px;
+  height: 18px;
+  color: var(--paper);
+  opacity: 0.6;
 }
 
 .expensesRankingsCardText {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--accent);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--paper);
+  font-family: var(--font-sans);
 }
 
 .expensesRankingsCardArrow {
-  font-size: 1rem;
-  color: var(--accent);
+  font-size: 18px;
+  color: var(--paper);
+  opacity: 0.6;
 }
 
 /* Party expenses ranking cards */
@@ -979,10 +1095,10 @@
 }
 
 .partyRankingCard {
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
   padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--surface);
+  background: var(--paper-2);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -991,17 +1107,18 @@
 }
 
 .partyRankingTitle {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
   margin-bottom: 2px;
 }
 
 .partyRankingSubtitle {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
+  font-size: 13px;
+  color: var(--ink-2);
   margin-bottom: 6px;
 }
 
@@ -1015,10 +1132,10 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   padding: 0 8px 6px 0;
   text-align: left;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
   white-space: nowrap;
 }
 
@@ -1029,7 +1146,7 @@
 
 .partyRankingTable tbody td {
   padding: 5px 8px 5px 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
   vertical-align: middle;
 }
 
@@ -1046,9 +1163,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
   white-space: nowrap;
 }
 
@@ -1074,16 +1191,17 @@
 }
 
 .partyRankingValue {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--ink);
   white-space: nowrap;
 }
 
 .partyRankingRank {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   width: 16px;
   text-align: center;
   flex-shrink: 0;
@@ -1101,24 +1219,25 @@
 }
 
 .assemblyStatement {
-  font-size: 1rem;
-  line-height: 1.8;
-  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  font-family: var(--font-sans);
   font-weight: 400;
-  margin-bottom: var(--spacing-lg);
-  max-width: none;
+  margin-bottom: var(--s-8);
+  max-width: 75ch;
 }
 
 .assemblyStatement strong {
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--ink);
 }
 
 .glanceBar {
   display: none;
   grid-template-columns: repeat(5, 1fr);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
   overflow: hidden;
   margin-bottom: var(--spacing-xl);
 }
@@ -1136,7 +1255,7 @@
   align-items: center;
   text-align: center;
   gap: 6px;
-  padding: var(--spacing-lg) var(--spacing-xl);
+  padding: var(--s-6);
   border-right: 1px solid var(--border);
 }
 
@@ -1145,29 +1264,29 @@
 }
 
 .glanceCellLabel {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
   line-height: 1.4;
-  min-height: calc(0.75rem * 1.4 * 2);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
   text-align: center;
 }
 
 .glanceCellValue {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--ink);
   line-height: 1.1;
 }
 
 .glanceCellMeta {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
+  font-size: 12px;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
 }
 
 @media (min-width: 641px) and (max-width: 900px) {
@@ -1176,7 +1295,7 @@
   }
 
   .glanceCell {
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--rule);
   }
 
   .glanceCell:nth-child(3n) {
@@ -1195,7 +1314,7 @@
 
   .glanceCell {
     border-right: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--rule);
   }
 
   .glanceCell:last-child {
@@ -1226,10 +1345,11 @@
   }
 
   .assemblyStatement {
-    font-size: 1rem;
+    font-size: 15px;
   }
 
   .sectionEyebrow {
     font-size: 0.95rem;
   }
 }
+

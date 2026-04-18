@@ -2,19 +2,12 @@
   padding-bottom: 0;
 }
 
-.subtitle {
-  font-size: 1rem;
-  color: var(--text-secondary);
-  margin-top: var(--spacing-sm);
-  margin-bottom: 0;
-}
-
 .periodCard {
   display: flex;
   align-items: center;
   gap: 0.625rem;
   background: #f0f4f7;
-  border-left: 3px solid #203F59;
+  border-left: 3px solid var(--ink);
   border-radius: 0 6px 6px 0;
   padding: 0.625rem 0.875rem;
   margin-top: 0.75rem;
@@ -57,7 +50,7 @@
   gap: 6px;
   padding: 10px 16px;
   min-height: 44px;
-  border: 2px solid #A0B8C8;
+  border: 2px solid var(--rule);
   border-radius: 999px;
   background: transparent;
   color: var(--text-secondary);
@@ -105,8 +98,8 @@
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
 }
 
 /* Table */
@@ -132,15 +125,16 @@
 }
 
 .table thead th {
-  background: var(--surface);
-  font-size: 0.6875rem;
-  font-weight: 700;
+  background: var(--paper-2);
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
   padding: 10px 12px;
   text-align: left;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 2px solid var(--rule);
   white-space: nowrap;
   user-select: none;
 }
@@ -158,8 +152,8 @@
 
 /* Body rows */
 .table tbody tr {
-  border-bottom: 1px solid var(--border);
-  background: var(--card-bg);
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
   transition: background 100ms ease;
 }
 
@@ -206,9 +200,10 @@
 }
 
 .mlaName {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
@@ -217,36 +212,13 @@
 }
 
 .mlaName:hover {
-  color: inherit;
-  text-decoration: none;
+  color: var(--teal);
 }
 
 /* Party cell */
 .tdParty {
   white-space: nowrap;
 }
-
-.partyPill {
-  display: inline-block;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: 0;
-  padding: 3px 8px;
-  border-radius: 3px;
-  border: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-  width: fit-content;
-}
-.partyPill[data-party="Sinn Féin"] { background: #326760; color: white; }
-.partyPill[data-party="DUP"]       { background: #C41E3A; color: white; }
-.partyPill[data-party="Alliance"]  { background: #F6C135; color: #1a1a1a; }
-.partyPill[data-party="UUP"]       { background: #5B8DD9; color: white; }
-.partyPill[data-party="SDLP"]      { background: #2E8B57; color: white; }
-.partyPill[data-party="TUV"]       { background: #1a1a6e; color: white; }
-.partyPill[data-party="PBP"]       { background: #c0392b; color: white; }
-.partyPill[data-party="Ind"]       { background: #888;    color: white; }
 
 /* Constituency cell */
 .tdConstituency {
@@ -293,13 +265,13 @@
 }
 
 .expensesValue {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
   white-space: nowrap;
   min-width: 78px;
   text-align: right;
-  font-family: var(--font-heading), Georgia, serif;
+  font-family: var(--font-mono);
   flex-shrink: 0;
 }
 
@@ -307,8 +279,8 @@
 .loadMore {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
   background: transparent;
   color: var(--text-secondary);
   font-size: 0.875rem;
@@ -324,24 +296,23 @@
 
 /* Missing expenses section */
 .missingSection {
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--s-10);
 }
 
 .missingHeading {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 16px;
+  font-family: var(--font-sans);
+  font-size: clamp(20px, 2.5vw, 28px);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin-bottom: var(--s-5);
+  max-width: 30ch;
 }
 
-.missingHeading::after {
-  content: '';
-  display: block;
-  height: 2px;
-  width: 40px;
-  background: var(--accent);
-  border-radius: 1px;
-  margin-top: 0.4rem;
+/* Square MLA photos */
+.photoSquare :global(.wrap),
+.photoSquare :global(.wrapFallback) {
+  border-radius: 3px !important;
 }
 
 .missingFooter {
@@ -445,14 +416,6 @@
 }
 
 @media (max-width: 767px) {
-  header.pageHeader h1 {
-    font-size: 2rem;
-  }
-
-  header.pageHeader {
-    padding-top: 40px;
-  }
-
   .periodCard {
     align-items: flex-start;
   }

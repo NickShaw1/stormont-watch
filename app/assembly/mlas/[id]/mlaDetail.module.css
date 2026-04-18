@@ -1,3 +1,4 @@
+/* ── Header ── */
 .header {
   padding-block: var(--spacing-xl) var(--spacing-sm);
 }
@@ -8,228 +9,331 @@
   }
 }
 
+.emailRowPill {
+  display: none;
+  font-size: 12px !important;
+}
 
-.profileCard {
-  border: 0.5px solid var(--border);
-  border-radius: 12px;
+/* ── Hero ── */
+.mlaHero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s-8);
+  align-items: stretch;
+  padding-bottom: var(--s-8);
+  border-bottom: 1px solid var(--border);
+}
+
+.heroPhoto {
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  min-height: 80px;
+  max-height: 160px;
+  flex-shrink: 0;
+  border-radius: var(--r-3);
   overflow: hidden;
-  background: var(--surface);
+  background: var(--paper-3);
 }
 
-.profileCard::before {
-  content: '';
-  display: block;
-  height: 4px;
-  background: var(--party-color, var(--border));
+@media (max-width: 480px) {
+  .mlaHero {
+    position: relative;
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: var(--s-4);
+    align-items: start;
+    padding: var(--s-4);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-3);
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+  }
+  .heroPhoto {
+    width: 120px;
+    height: 120px;
+    min-height: unset;
+    max-height: 120px;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--r-2);
+  }
+  .heroPhoto > span {
+    border-radius: var(--r-2) !important;
+  }
+  .heroInfo {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+  }
+  .heroInfo :global(.eyebrow) {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 10px;
+    padding: 2px 6px;
+    background: var(--teal);
+    color: var(--paper);
+    border-radius: var(--r-1);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .heroInfo :global(.eyebrow)::before {
+    display: none;
+  }
+  .defaultRoleEyebrow {
+    display: none !important;
+  }
+  .heroName {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.01em !important;
+    line-height: 1.2 !important;
+    margin: var(--s-6) 0 0 !important;
+  }
+  .roleDot {
+    display: none;
+  }
+  .heroRoleLine {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: var(--s-1);
+    margin-top: 0;
+    font-size: 12px;
+    width: 100%;
+  }
+  .heroRoleLine :global(.party-pill) {
+    display: none;
+  }
+  .emailRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--s-3);
+    padding-top: var(--s-2);
+    border-top: 1px solid var(--rule);
+    font-size: 12px !important;
+    width: 100%;
+    gap: var(--s-3);
+  }
+  .emailRow a,
+  .emailRow a span {
+    font-size: 12px !important;
+  }
+  .emailRowPill {
+    display: inline-flex !important;
+    align-self: center !important;
+    align-items: center !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    flex-shrink: 0;
+  }
+  .emailRow a {
+    line-height: 1;
+    display: flex;
+    align-items: center;
+  }
 }
 
-.profileSection {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 1.25rem;
+/* Override MlaPhoto's circular/bordered defaults */
+.heroPhoto > span {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: unset !important;
+  border-radius: var(--r-3) !important;
+  border: none !important;
 }
 
-.profileInfo {
-  flex: 1;
+.heroPhoto img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  object-position: center 15%;
+}
+
+
+.heroInfo {
   min-width: 0;
 }
 
-.mlaName {
-  font-size: 1.375rem;
-  font-weight: 700;
+/* eyebrow: global .eyebrow class used in page.tsx with inline party color */
+
+.heroName {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: clamp(40px, 4.2vw, 64px);
+  letter-spacing: -0.04em;
+  line-height: 0.98;
   color: var(--text-primary);
-  margin: 0 0 6px;
+  margin: 8px 0 var(--s-3);
 }
 
-.partyPill {
-  display: inline-block;
-  width: fit-content;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: 0;
-  padding: 3px 8px;
-  border-radius: 3px;
-  border: none;
-}
-.partyPill[data-party="Sinn Féin"] { background: #326760; color: white; }
-.partyPill[data-party="DUP"]       { background: #C41E3A; color: white; }
-.partyPill[data-party="Alliance"]  { background: #F6C135; color: #1a1a1a; }
-.partyPill[data-party="UUP"]       { background: #5B8DD9; color: white; }
-.partyPill[data-party="SDLP"]      { background: #2E8B57; color: white; }
-.partyPill[data-party="TUV"]       { background: #1a1a6e; color: white; }
-.partyPill[data-party="PBP"]       { background: #c0392b; color: white; }
-.partyPill[data-party="Ind"]       { background: #888;    color: white; }
-
-@media (max-width: 767px) {
-  .partyPill {
-    font-size: 1rem;
-    font-weight: 500;
-  }
-}
-
-.pills {
+.heroRoleLine {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
-  margin-bottom: 8px;
+  line-height: 1;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  margin-top: var(--s-3);
 }
 
-.rolePillsMobile {
-  display: none;
+.heroRoleLine :global(.party-pill) {
+  align-self: center !important;
+  font-size: var(--fs-sm);
 }
 
-@media (min-width: 641px) {
-  .rolePillsMobile {
-    display: none !important;
-  }
+.roleDot {
+  color: var(--rule-strong);
+  user-select: none;
 }
 
-.rolePill {
-  display: inline-block;
-  width: fit-content;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: 0;
-  padding: 3px 8px;
-  border-radius: 3px;
-  background: #E6F1FB;
-  color: #0C447C;
-  border: 1px solid #B8D4ED;
-}
-
-@media (max-width: 640px) {
-  .rolePillInline {
-    display: none;
-  }
-
-  .rolePillsMobile {
-    display: block;
-  }
-
-  .profileSection {
-    border-bottom: 0.5px solid var(--border);
-  }
-
-  .rolePillCard {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    padding: 0.75rem 14px;
-    border-bottom: 0.5px solid var(--border);
-    background: var(--surface);
-  }
-
-  .rolePillType {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-secondary);
-  }
-
-  .rolePillValue {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    line-height: 1.3;
-  }
-}
+/* party-pill: global class used — no local override needed */
 
 .formerPill {
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 3px;
-  background: var(--surface);
-  color: var(--text-secondary);
-  border: 0.5px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 400;
+  border-radius: var(--r-pill);
+  background: var(--paper-3);
+  color: var(--ink-3);
+  border: 1px solid var(--rule);
 }
 
-@media (max-width: 767px) {
-  .formerPill {
-    font-size: 1rem;
-    font-weight: 500;
-    padding: 3px 8px;
-  }
-}
-
-.metaRows {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.metaRow {
+.emailRow {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-}
-
-@media (max-width: 767px) {
-  .metaRow {
-    font-size: 1rem;
-  }
-}
-
-.metaRow svg {
-  opacity: 0.5;
-  flex-shrink: 0;
+  margin-top: var(--s-3);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
 }
 
 .emailLink {
-  color: var(--link);
+  color: var(--ink-2);
   text-decoration: none;
 }
 
+.emailFull { display: inline; }
+.emailMobile { display: none; }
+
+@media (max-width: 480px) {
+  .emailFull { display: none; }
+  .emailMobile { display: inline; }
+}
+
 .emailLink:hover {
-  color: var(--link);
+  color: var(--teal);
   text-decoration: underline;
 }
 
-.emailFull {
-  display: inline;
+/* ── Profile stats grid ── */
+.profileStats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-top: var(--spacing-xl);
+  overflow: hidden;
 }
 
-.emailShort {
-  display: none;
-}
-
-@media (max-width: 640px) {
-  .emailFull {
-    display: none;
+@media (max-width: 767px) {
+  .profileStats {
+    grid-template-columns: 1fr 1fr;
+    margin-top: var(--spacing-lg);
   }
-  .emailShort {
-    display: inline;
+}
+
+.statCell {
+  padding: var(--s-6) var(--s-5);
+  border-right: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statCell:last-child {
+  border-right: none;
+}
+
+@media (max-width: 767px) {
+  .statCell {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    padding: var(--s-4);
+  }
+
+  .statCell:nth-child(odd) {
+    border-right: 1px solid var(--rule);
+  }
+
+  .statCell:nth-last-child(1),
+  .statCell:nth-last-child(2):nth-child(odd) {
+    border-bottom: none;
   }
 }
 
+.statLbl {
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+}
+
+.statVal {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.statFraction {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+@media (max-width: 767px) {
+  .statVal {
+    font-size: 14px;
+  }
+}
+
+.statSub {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.statMuted {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+/* ── Section headings ── */
 .expensesSection {
   margin-bottom: var(--spacing-xl);
 }
 
 .sectionHeading {
-  font-size: 2rem;
-  font-weight: 700;
+  font-family: var(--font-sans);
+  font-size: clamp(28px, 3.4vw, 42px);
+  font-weight: 500;
+  font-style: normal;
+  letter-spacing: -0.035em;
+  line-height: 1;
   color: var(--text-primary);
   margin-bottom: 0;
 }
 
-@media (max-width: 767px) {
-  .sectionHeading {
-    font-size: 1.6rem;
-  }
-}
-
-.noExpensesTop {
-  margin-top: 0;
-}
 
 /* Finances card + tabs */
 .financesCard {
@@ -238,49 +342,45 @@
   gap: 0.5rem;
 }
 
+/* Tabs — matches handoff .tabs pattern */
 .financesTabs {
   display: flex;
-  gap: 0.375rem;
-  padding: 0;
-  margin-bottom: 0;
+  gap: 0;
+  border-bottom: 1px solid var(--rule);
+  margin-top: var(--s-8);
+  margin-bottom: var(--s-5);
 }
 
+.financesTab {
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--ink-3);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.financesTab:hover {
+  color: var(--ink);
+}
+
+.financesTabActive {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
 
 .financesContent {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: var(--spacing-md);
   background: var(--card-bg);
-}
-
-.financesTab {
-  padding: 0 1rem 0.5rem 0;
-  margin-top: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: transparent;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  transition: color 150ms ease;
-}
-
-.financesTabLabel {
-  border-bottom: 3px solid transparent;
-  transition: border-color 150ms ease;
-}
-
-.financesTab:hover {
-  color: var(--text-primary);
-}
-
-.financesTabActive {
-  color: var(--text-primary);
-}
-
-.financesTabActive .financesTabLabel {
-  border-bottom-color: #E6B800;
 }
 
 /* Register of interests */
@@ -297,21 +397,10 @@
 }
 
 .interestCategoryHeading {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   color: var(--text-primary);
-  margin: 0;
-}
-
-.interestCategoryHeading::after {
-  content: '';
-  display: block;
-  height: 2px;
-  width: 40px;
-  background: var(--accent);
-  border-radius: 1px;
-  margin-top: 0.5rem;
-  margin-bottom: 16px;
+  margin: 0 0 var(--spacing-xs);
 }
 
 .interestList {
@@ -341,8 +430,10 @@
 }
 
 .interestsEmpty {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink-3);
+  font-style: italic;
   margin: 0;
 }
 
@@ -362,21 +453,12 @@
   text-underline-offset: 2px;
 }
 
-.sectionHeading::after {
-  content: '';
-  display: block;
-  height: 2px;
-  width: 40px;
-  background: var(--accent);
-  border-radius: 1px;
-  margin-top: 0.5rem;
-  margin-bottom: 1rem;
-}
 
 .sectionMeta {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  color: var(--ink-3);
   margin-bottom: var(--spacing-md);
 }
 
@@ -390,7 +472,10 @@
 }
 
 .expensesCard {
-  padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--s-5) var(--s-5);
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
@@ -403,37 +488,23 @@
   border-bottom: none;
 }
 
-
-.expenseRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
 .expenseLabel {
-  flex-shrink: 0;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-secondary);
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
 }
 
 .expenseValue {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  text-align: right;
+  font-size: 1.25rem;
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-
-/* statRowDivider: invisible on desktop (flex row), full-width separator on mobile grid */
-.statRowDivider {
-  display: none;
-}
 
 @media (max-width: 767px) {
   .financesContent {
@@ -449,9 +520,6 @@
     padding: var(--spacing-sm) var(--spacing-md);
     margin-bottom: 0;
     border-bottom: 1px solid var(--border);
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text-primary);
   }
 
   .expensesGrid {
@@ -473,9 +541,6 @@
     border-bottom: none;
   }
 
-  .statRowDivider {
-    display: none;
-  }
 }
 
 .noVotes {
@@ -486,99 +551,6 @@
   max-width: none;
 }
 
-.statsBar {
-  border-top: 0.5px solid var(--border);
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.roleCell {
-  display: none;
-  width: 100%;
-  flex: 1 1 100%;
-  padding: 0.625rem 1rem;
-  box-shadow: 0 1px 0 0 var(--border);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-secondary);
-  background: var(--surface);
-}
-
-@media (max-width: 640px) {
-  .roleCell {
-    display: block;
-    font-size: 0.75rem;
-  }
-}
-
-.statCell {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  flex: 1 1 140px;
-  padding: 0.875rem 1rem;
-  box-shadow: 1px 0 0 0 var(--border), 0 1px 0 0 var(--border);
-}
-
-.statCellBreakdown {
-  flex: 2;
-}
-
-.statCellDivider {
-  display: none;
-}
-
-.statLabel {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.statValue {
-  font-size: 1.125rem;
-  font-weight: 700;
-  font-family: var(--font-heading), Georgia, serif;
-  line-height: 1.2;
-  color: var(--text-primary);
-  white-space: nowrap;
-}
-
-.statOf {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.statMuted {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.attendanceValue {
-  font-size: 1.5rem;
-  font-weight: 800;
-  font-family: var(--font-heading), Georgia, serif;
-  line-height: 1;
-}
-
-.breakdownPills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: center;
-}
-
-.breakdownPills :global(.vote-pill) {
-  padding: 2px 7px;
-  font-size: 0.7rem;
-}
-
 /* Record header */
 .recordHeader {
   display: flex;
@@ -586,13 +558,14 @@
   justify-content: space-between;
   gap: var(--spacing-lg);
   flex-wrap: wrap;
+  margin-bottom: var(--s-5);
 }
 
 /* Filters */
 .filters {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-sm);
+  gap: var(--s-2);
 }
 
 .filterBtn {
@@ -602,145 +575,88 @@
   padding: 10px 16px;
   min-height: 44px;
   border-radius: 999px;
-  border: 1px solid #A0B8C8;
+  border: 2px solid var(--rule);
   background: transparent;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  color: var(--ink-2);
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .filterBtn:hover {
-  background: var(--surface);
-  color: var(--text-primary);
-  border-color: var(--accent);
+  background: var(--paper-2);
+  color: var(--ink);
 }
 
-/* Default active — navy */
 .filterBtnActive {
-  background: var(--accent);
+  background: var(--teal);
   color: #fff;
-  border-color: var(--accent);
+  border-color: var(--teal);
 }
 
-.filterBtnActive:hover {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-
-/* Aye active — green */
 .filterBtnActive[data-filter="AYE"] {
-  background: #D1FAE5;
-  color: #065F46;
-  border-color: #6EE7B7;
+  background: var(--forest-wash);
+  color: var(--forest);
+  border-color: var(--forest);
 }
 
-/* No active — red */
 .filterBtnActive[data-filter="NO"] {
-  background: #FEE2E2;
-  color: #991B1B;
-  border-color: #FCA5A5;
+  background: var(--crimson-wash);
+  color: var(--crimson);
+  border-color: var(--crimson);
 }
 
-/* No Show active — grey-blue */
-.filterBtnActive[data-filter="NO_SHOW"] {
-  background: #E2E8ED;
-  color: #3A5A70;
-  border-color: var(--border);
-}
-
-/* Abstain active */
+.filterBtnActive[data-filter="NO_SHOW"],
 .filterBtnActive[data-filter="ABSTAINED"] {
-  background: #EEF4F8;
-  color: #3A5A70;
-  border-color: var(--border);
+  background: var(--paper-3);
+  color: var(--ink-2);
+  border-color: var(--ink-3);
 }
 
 .filterCount {
-  font-size: 0.75rem;
-  font-weight: 700;
-  background: var(--surface);
-  color: var(--text-secondary);
-  padding: 1px 7px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
 }
 
 .filterBtnActive .filterCount {
-  background: rgba(255, 255, 255, 0.25);
-  color: #fff;
-  border-color: transparent;
-}
-
-.filterBtnActive[data-filter="AYE"] .filterCount {
-  background: rgba(6, 95, 70, 0.12);
-  color: #065F46;
-  border-color: transparent;
-}
-
-.filterBtnActive[data-filter="NO"] .filterCount {
-  background: rgba(153, 27, 27, 0.12);
-  color: #991B1B;
-  border-color: transparent;
-}
-
-.filterBtnActive[data-filter="NO_SHOW"] .filterCount {
-  background: rgba(58, 90, 112, 0.12);
-  color: #3A5A70;
-  border-color: transparent;
-}
-
-.filterBtnActive[data-filter="ABSTAINED"] .filterCount {
-  background: rgba(58, 90, 112, 0.12);
-  color: #3A5A70;
-  border-color: transparent;
+  color: inherit;
+  opacity: 0.7;
 }
 
 /* Table */
 .voteCount {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: var(--s-5);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--s-3);
 }
 
 .filterPill {
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   padding: 2px 8px;
-  border-radius: 3px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-secondary);
+  border-radius: var(--r-pill);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+  background: var(--paper-3);
 }
 
-.filterPillAYE {
-  background: #D1FAE5;
-  color: #065F46;
-  border-color: #6EE7B7;
-}
-
-.filterPillNO {
-  background: #FEE2E2;
-  color: #991B1B;
-  border-color: #FCA5A5;
-}
-
-.filterPillNO_SHOW {
-  background: #E2E8ED;
-  color: #3A5A70;
-  border-color: var(--border);
-}
-
-.filterPillABSTAINED {
-  background: #EEF4F8;
-  color: #3A5A70;
-  border-color: var(--border);
-}
+.filterPillAYE      { color: var(--forest);  background: var(--forest-wash); }
+.filterPillNO       { color: var(--crimson); background: var(--crimson-wash); }
+.filterPillNO_SHOW  { color: var(--ink-2);   background: var(--paper-3); }
+.filterPillABSTAINED { color: var(--ink-2);  background: var(--paper-3); }
 
 .loadMore {
   width: 100%;
@@ -772,7 +688,7 @@
 
 .colVote   { width: 84px; }
 .colResult { width: 64px; }
-.colDate   { width: 100px; }
+.colDate   { width: 140px; }
 
 .table {
   width: 100%;
@@ -861,11 +777,11 @@
 }
 
 .outcomeDot[data-passed='true'] {
-  background: #34D399;
+  background: var(--forest);
 }
 
 .outcomeDot[data-passed='false'] {
-  background: #F87171;
+  background: var(--crimson);
 }
 
 .subjectCell {
@@ -907,14 +823,12 @@
   }
 }
 
-@media (max-width: 640px) {
-  .statsBar {
-    border-top: none;
-  }
-}
-
 .dateCell {
-  padding-right: 1rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  padding-right: var(--s-8);
   white-space: nowrap;
 }
 
@@ -998,16 +912,16 @@
   }
 
   .mobileTitle {
-    font-size: 1rem;
+    font-size: 15px;
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--ink);
     line-height: 1.35;
     margin-bottom: 4px;
   }
 
   .mobileSub {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
+    font-size: 12px;
+    color: var(--ink-3);
     margin-bottom: 8px;
     line-height: 1;
     height: 13px;
@@ -1034,95 +948,66 @@
   }
 
   .mobilePillLabel {
-    font-size: 0.6875rem;
-    color: var(--text-secondary);
+    font-size: 11px;
+    color: var(--ink-3);
     font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
 
   .outcomePass,
   .outcomeFail {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    font-size: 0.6875rem;
+    font-size: 11px;
     font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     padding: 2px 8px;
-    border-radius: 3px;
+    border-radius: var(--r-pill);
     white-space: nowrap;
   }
 
   .outcomePass {
-    background: #D1FAE5;
-    color: #065F46;
-    border: 1px solid #6EE7B7;
+    color: var(--forest);
+    background: var(--forest-wash);
   }
 
   .outcomeFail {
-    background: #FEE2E2;
-    color: #991B1B;
-    border: 1px solid #FECACA;
+    color: var(--crimson);
+    background: var(--crimson-wash);
   }
 
   .mobileDate {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-  }
-}
-
-/* Responsive */
-@media (max-width: 640px) {
-  .statsBar {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .roleCell {
-    grid-column: 1 / -1;
-    box-shadow: none;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .statCell {
-    flex: unset;
-    box-shadow: none;
-    border-bottom: 1px solid var(--border);
-  }
-
-  /* Left-column cells only — counted among statCells, ignoring roleCells */
-  .statCell:nth-child(odd of .statCell) {
-    border-right: 1px solid var(--border);
-  }
-
-  /* Last row: remove bottom border — handles both even and odd statCell counts */
-  .statCell:nth-last-child(1 of .statCell) {
-    border-bottom: none;
-  }
-  .statCell:nth-last-child(2 of .statCell):nth-child(odd of .statCell) {
-    border-bottom: none;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
   }
 }
 
 @media (max-width: 767px) {
 
   .recordHeader {
-    gap: 0;
+    flex-direction: column;
+    gap: var(--s-5);
+    margin-bottom: var(--s-5);
   }
 
   /* Filter bar: 2-column grid */
   .filters {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
+    gap: var(--s-2);
     width: 100%;
   }
 
   .filterBtn {
-    text-align: center;
     justify-content: center;
   }
 
   .voteCount {
-    margin-top: 16px;
+    margin-top: var(--s-3);
   }
 
   /* Table: fill container; switch to auto layout so hidden cols don't reserve space */
@@ -1146,7 +1031,7 @@
 
   .table td:last-child,
   .table th:last-child {
-    padding-right: 1rem;
+    padding-right: var(--s-5);
   }
 
   .dateCol,

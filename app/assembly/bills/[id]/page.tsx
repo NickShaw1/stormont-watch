@@ -8,6 +8,27 @@ import { getBillSummary } from '@/lib/summaries'
 import BillTimeline from './BillTimeline'
 import styles from './billDetail.module.css'
 
+const BILL_STAGES = [
+  'Introduction',
+  'First Stage',
+  'Second Stage',
+  'Committee Stage',
+  'Consideration Stage',
+  'Further Consideration Stage',
+  'Final Stage',
+  'Royal Assent',
+]
+
+function getStageIdx(currentStage: string, royalAssentDate: string | null): number {
+  if (royalAssentDate) return BILL_STAGES.length - 1
+  const lower = currentStage.toLowerCase()
+  let best = 0
+  for (let i = 0; i < BILL_STAGES.length; i++) {
+    if (lower.includes(BILL_STAGES[i].toLowerCase())) best = i
+  }
+  return best
+}
+
 function billSlug(billId: string): string {
   return billId.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
 }
@@ -55,10 +76,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-function formatLongTitle(longTitle: string | null) {
-  if (!longTitle) return null
-  return <p className={styles.longTitleSingle}>{longTitle}</p>
-}
 
 const IMPACT_LABELS: { key: string; label: string }[] = [
   { key: 'fiscal', label: 'Fiscal' },
@@ -108,29 +125,63 @@ export default async function BillDetailPage({ params }: Props) {
     ],
   }
 
+  const stageIdx = getStageIdx(bill.current_stage, bill.royal_assent_date)
+  const billPassed = bill.royal_assent_date != null
+  const billFailed = !billPassed && bill.current_stage.toLowerCase().includes('final stage') && new Date(bill.latest_date) <= new Date()
+
   return (
-    <div className="container">
+    <div className="container" style={{ paddingBottom: 'var(--s-20)' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
+
+      {/* Breadcrumb */}
+      <nav aria-label="Breadcrumb" className={`breadcrumb ${styles.pageTop}`}>
+        <ol>
+          <li><Link href="/assembly/bills">Legislation</Link></li>
+          <li aria-current="page"><span>{bill.short_title}</span></li>
+        </ol>
+      </nav>
+
+      {/* Header */}
       <header className={styles.header}>
-        <nav aria-label="Breadcrumb" className={`breadcrumb ${styles.breadcrumb}`}>
-          <ol>
-            <li><Link href="/assembly/bills">Legislation</Link></li>
-            <li aria-current="page"><span>{bill.short_title}</span></li>
-          </ol>
-        </nav>
+        <div className={styles.tags}>
+          <span className="tag" style={{ fontFamily: 'var(--font-mono)' }}>BILL {bill.bill_id}</span>
+          {bill.bill_type && <span className="tag">{bill.bill_type}</span>}
+          {billPassed && <span className="pill pass">Became law</span>}
+          {billFailed && <span className="pill fail">Failed</span>}
+        </div>
         <h1 className={styles.title}>{bill.short_title}</h1>
-        {bill.long_title && (
-          <>
-            <h2 className={styles.sectionHeadingRuled}>Overview</h2>
-            {formatLongTitle(bill.long_title)}
-          </>
-        )}
+        {bill.long_title && <p className={styles.lede}>{bill.long_title}</p>}
       </header>
 
-      <hr className={`section-rule ${styles.sectionRule}`} />
+      {/* Stage tracker */}
+      <section className={styles.stagesSection}>
+        <h2 className={styles.stagesSectionHead}>Progress</h2>
+        <div className={styles.stages}>
+          {BILL_STAGES.map((s, i) => (
+            <div
+              key={s}
+              className={`${styles.stage} ${i < stageIdx ? styles.stageDone : i === stageIdx ? styles.stageCurrent : ''}`}
+            >
+              {s}
+            </div>
+          ))}
+        </div>
+        <div className={styles.stagesMobileBar}>
+          {BILL_STAGES.map((s, i) => (
+            <div
+              key={s}
+              className={`${styles.stagesMobileSeg} ${i < stageIdx ? styles.stageDone : i === stageIdx ? styles.stageCurrent : ''}`}
+            />
+          ))}
+        </div>
+        <p className={styles.stagesMobileLabel}>
+          <span className={styles.stagesMobileCount}>{stageIdx + 1} of {BILL_STAGES.length}</span>
+          {' · '}{BILL_STAGES[stageIdx]}
+        </p>
+      </section>
 
       {summary && (
         <>
@@ -140,7 +191,7 @@ export default async function BillDetailPage({ params }: Props) {
           </section>
 
           <section aria-labelledby="impact-heading" className={styles.impactSection}>
-            <h2 id="impact-heading" className="sr-only">Impact areas</h2>
+            <h2 id="impact-heading" className={styles.sectionHeading}>Impact areas</h2>
             <ul className={styles.impactList} role="list">
               {IMPACT_LABELS.map(({ key, label }) => {
                 type ImpactKey = 'fiscal' | 'rights' | 'publicServices' | 'crossCommunity' | 'environment'
@@ -156,12 +207,13 @@ export default async function BillDetailPage({ params }: Props) {
               })}
             </ul>
           </section>
-
         </>
       )}
 
-      <section aria-labelledby="stages-heading" className={styles.section}>
-        <h2 id="stages-heading" className={styles.sectionHeadingRuled}>Legislative stages</h2>
+      <hr className="section-rule" />
+
+      <section aria-labelledby="stages-heading">
+        <h2 id="stages-heading" className={styles.sectionHeading}>Legislative stages</h2>
         <p className={styles.guidePrompt}>
           <Link href="/assembly/legislation-guide">How does a bill become law? <span aria-hidden="true">↗</span></Link>
         </p>

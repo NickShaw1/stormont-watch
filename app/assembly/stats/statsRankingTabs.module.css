@@ -41,11 +41,11 @@
     justify-content: center;
     padding: 6px 14px;
     border-radius: 999px;
-    border: 1px solid #A0B8C8;
+    border: 1px solid var(--rule);
     background: transparent;
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--ink-3);
     cursor: pointer;
     font-family: var(--font-body), system-ui, sans-serif;
     white-space: nowrap;
@@ -53,7 +53,7 @@
 
   .tab:hover {
     background: var(--surface);
-    color: var(--text-primary);
+    color: var(--ink);
     border-color: var(--accent);
   }
 
@@ -113,19 +113,21 @@
 
 /* ── Card ────────────────────────────────────────────────── */
 .card {
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
   padding: var(--spacing-lg);
-  background: var(--surface);
+  background: var(--paper-2);
 }
 
 .cardTitle {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-md);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  margin-bottom: var(--s-4);
+  margin-top: 0;
 }
 
 /* ── List ────────────────────────────────────────────────── */
@@ -142,7 +144,7 @@
   align-items: center;
   gap: var(--spacing-md);
   padding-block: var(--spacing-sm);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
 }
 
 .row:last-child {
@@ -157,7 +159,7 @@
 .rank {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   width: 16px;
   flex-shrink: 0;
   text-align: center;
@@ -172,9 +174,10 @@
 }
 
 .name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
@@ -182,7 +185,7 @@
 }
 
 .name:hover {
-  color: var(--accent);
+  color: var(--teal);
   text-decoration: underline;
 }
 
@@ -195,37 +198,24 @@
 }
 
 .value {
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--ink);
 }
 
 .voteCounts {
   font-size: 0.6875rem;
-  color: var(--text-secondary);
+  color: var(--ink-3);
   white-space: nowrap;
   font-family: var(--font-body), system-ui, sans-serif;
 }
 
-.partyPill {
-  display: inline-block;
-  width: fit-content;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0;
-  padding: 3px 8px;
-  border-radius: 3px;
-  border: none;
-  margin-top: 3px;
+/* Square MLA photos */
+.photoSquare :global(.wrap),
+.photoSquare :global(.wrapFallback) {
+  border-radius: 3px !important;
 }
-.partyPill[data-party="Sinn Féin"] { background: #326760; color: white; }
-.partyPill[data-party="DUP"]       { background: #C41E3A; color: white; }
-.partyPill[data-party="Alliance"]  { background: #F6C135; color: #1a1a1a; }
-.partyPill[data-party="UUP"]       { background: #5B8DD9; color: white; }
-.partyPill[data-party="SDLP"]      { background: #2E8B57; color: white; }
-.partyPill[data-party="TUV"]       { background: #1a1a6e; color: white; }
-.partyPill[data-party="PBP"]       { background: #c0392b; color: white; }
-.partyPill[data-party="Ind"]       { background: #888;    color: white; }
 
 @media (max-width: 767px) {
   .card {
