@@ -198,7 +198,7 @@ export default async function HomePage() {
           <div className={styles.cardList}>
             {latestDivisions.map((div) => {
               const { title: displayTitle, subtitle } = formatDivisionSubject(div.title ?? div.subject)
-              const passed = div.outcome?.toLowerCase().includes('carried') || div.outcome?.toLowerCase().includes('passed')
+              const passed = /carried/i.test(div.outcome ?? '') || /passed/i.test(div.outcome ?? '')
               return (
                 <Link key={div.documentId} href={`/assembly/divisions/${div.documentId}`} className={styles.divCard}>
                   <div className={styles.divTop}>

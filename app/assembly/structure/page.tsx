@@ -49,11 +49,11 @@ export default async function StructurePage() {
   ])
 
   const fm = ministers.find(
-    (m) => m.roleTitle?.toLowerCase().includes('first minister') &&
-    !m.roleTitle?.toLowerCase().includes('deputy'),
+    (m) => /first minister/i.test(m.roleTitle ?? '') &&
+    !/deputy/i.test(m.roleTitle ?? ''),
   )
   const dfm = ministers.find(
-    (m) => m.roleTitle?.toLowerCase().includes('deputy first minister'),
+    (m) => /deputy first minister/i.test(m.roleTitle ?? ''),
   )
   const juniorMinisters = ministers.filter(
     (m) => m.roleTitle?.toLowerCase() === 'junior minister',

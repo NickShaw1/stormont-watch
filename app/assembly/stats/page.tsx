@@ -63,7 +63,9 @@ export default async function StatsPage() {
   const allPassRates = passRateByYear.map(r => ({ year: Number(r.year), total: Number(r.total), passed: Number(r.passed) }))
   const totalPassed = allPassRates.reduce((s, r) => s + r.passed, 0)
   const overallPassRate = totalDivisions > 0 ? Math.round(totalPassed * 100 / totalDivisions) : 0
-  const busiestYear = allPassRates.reduce((best, r) => r.total > best.total ? r : best, allPassRates[0])
+  const busiestYear = allPassRates.length > 0
+    ? allPassRates.reduce((best, r) => r.total > best.total ? r : best, allPassRates[0])
+    : null
 
   const currentMlaCount = allCurrentMembers.length
 
