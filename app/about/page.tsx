@@ -39,8 +39,10 @@ export default function AboutPage() {
         <section className={styles.section}>
           <h2>Methodology</h2>
           <p>
-            Voting data is sourced directly from the Assembly&apos;s open data API.
-            We do not alter or interpret the raw vote data.
+            Voting data is sourced directly from the NI Assembly Open Data API. Where noted,
+            some figures such as voting attendance, party cohesion and cross-community agreement
+            rates are calculations derived by Stormont Watch from the raw data. They are not
+            published by the Assembly.
           </p>
           <p>
             The &quot;No Show&quot; category is derived by comparing the full list of current MLAs
