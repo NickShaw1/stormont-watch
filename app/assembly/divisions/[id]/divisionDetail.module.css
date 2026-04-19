@@ -241,6 +241,64 @@
 .countItemAbs .countNum { color: var(--ink-3); }
 .countItemNs .countNum  { color: var(--ink-3); }
 
+/* ── Party breakdown table (used inside designationLayout card) ─ */
+.partyBlocGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border: none;
+  background: var(--paper);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.partyBlocHeaderRow {
+  display: grid;
+  grid-template-columns: 1fr repeat(4, minmax(36px, auto));
+  padding: var(--s-2) var(--s-4);
+  border-bottom: 1px solid var(--rule);
+}
+
+.partyBlocItem {
+  display: grid;
+  grid-template-columns: 1fr repeat(4, minmax(36px, auto));
+  align-items: center;
+  padding: var(--s-2) var(--s-4);
+  border-bottom: 1px solid var(--rule);
+}
+
+.partyBlocItem:last-child {
+  border-bottom: none;
+}
+
+.partyBlocLabel {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* ── Roll call chart canvas wrapper ─────────────────────────── */
+.rollCallChart {
+  min-width: 0;
+  min-height: 180px;
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  display: flex;
+  flex-direction: column;
+}
+
+.rollCallChart canvas {
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 640px) {
+  .rollCallChart {
+    padding: var(--s-3) var(--s-3) var(--s-4);
+    min-height: 200px;
+    height: 200px;
+  }
+}
+
 /* ── Designation breakdown ─────────────────────────────────── */
 .designationSection {
   margin-bottom: 0;
@@ -284,12 +342,6 @@
   .designationChart { padding: var(--s-4); height: 200px; }
 }
 
-.designationShort { display: none; }
-
-@media (max-width: 640px) {
-  .designationFull  { display: none; }
-  .designationShort { display: inline; }
-}
 
 .blocGrid {
   display: grid;
@@ -341,10 +393,8 @@
 
 .blocLabel {
   font-size: 12px;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-2);
 }
 
 .blocAye { color: var(--forest); }

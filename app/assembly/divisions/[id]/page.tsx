@@ -23,6 +23,7 @@ function billSlug(billId: string): string {
 
 import RollCallClient from './RollCallClient'
 import DesignationChartClient from './DesignationChartClient'
+import PartyBreakdownClient from './PartyBreakdownClient'
 import styles from './divisionDetail.module.css'
 
 interface Props {
@@ -116,6 +117,15 @@ export default async function DivisionDetailPage({ params }: Props) {
     Nationalist: noShows.filter((v) => NATIONALIST_PARTIES.has(v.party ?? '')).length,
     Other: noShows.filter((v) => !UNIONIST_PARTIES.has(v.party ?? '') && !NATIONALIST_PARTIES.has(v.party ?? '')).length,
   }
+
+  const abstainByDesignation = {
+    Unionist: abstains.filter((v) => UNIONIST_PARTIES.has(v.party ?? '')).length,
+    Nationalist: abstains.filter((v) => NATIONALIST_PARTIES.has(v.party ?? '')).length,
+    Other: abstains.filter((v) => !UNIONIST_PARTIES.has(v.party ?? '') && !NATIONALIST_PARTIES.has(v.party ?? '')).length,
+  }
+
+  const hasDesignationNoShow = noShows.length > 0
+  const hasDesignationAbstain = abstains.length > 0
 
   const raw = division.title ?? division.subject
   const { title: displayTitle, subtitle } = formatDivisionSubject(raw)
@@ -283,38 +293,55 @@ export default async function DivisionDetailPage({ params }: Props) {
         </div>
       </section>
 
+      {/* Party breakdown */}
+      {votes.length > 0 && (
+        <>
+          <hr className="section-rule" />
+          <section aria-labelledby="party-breakdown-heading">
+            <h2 id="party-breakdown-heading" className={styles.sectionHeading}>Party breakdown</h2>
+            <PartyBreakdownClient votes={votes} />
+          </section>
+        </>
+      )}
+
       {/* Designation breakdown */}
       {hasDesignationBreakdown && (
         <>
           <hr className="section-rule" />
           <section className={styles.designationSection} aria-labelledby="designation-heading">
             <h2 id="designation-heading" className={styles.sectionHeading}>
-              <span className={styles.designationFull}>Designation breakdown</span>
-              <span className={styles.designationShort}>Breakdown</span>
+              Designation breakdown
             </h2>
+            {(() => {
+              const dataCols = 2 + (hasDesignationNoShow ? 1 : 0) + (hasDesignationAbstain ? 1 : 0)
+              const gridCols = `1fr repeat(${dataCols}, minmax(40px, auto))`
+              return (
             <div className={styles.designationLayout}>
               <div className={styles.blocGrid} style={{ border: 'none', borderRadius: 0, maxWidth: 'none' }}>
-                <div className={styles.blocHeaderRow}>
+                <div className={styles.blocHeaderRow} style={{ gridTemplateColumns: gridCols }}>
                   <span />
                   <span className={styles.blocColHead}>Aye</span>
                   <span className={styles.blocColHead}>No</span>
-                  <span className={styles.blocColHead}>Abs</span>
+                  {hasDesignationNoShow  && <span className={styles.blocColHead}>NS</span>}
+                  {hasDesignationAbstain && <span className={styles.blocColHead}>Abs</span>}
                 </div>
                 {[
-                  { label: 'Unionist',    ayes: division.unionistAyes ?? 0,    noes: division.unionistNoes ?? 0,    ns: noShowByDesignation.Unionist },
-                  { label: 'Nationalist', ayes: division.nationalistAyes ?? 0, noes: division.nationalistNoes ?? 0, ns: noShowByDesignation.Nationalist },
-                  { label: 'Other',       ayes: division.otherAyes ?? 0,       noes: division.otherNoes ?? 0,       ns: noShowByDesignation.Other },
-                ].map(({ label, ayes, noes, ns }) => (
-                  <div key={label} className={styles.blocItem}>
+                  { label: 'Unionist',    ayes: division.unionistAyes ?? 0,    noes: division.unionistNoes ?? 0,    ns: noShowByDesignation.Unionist,    abs: abstainByDesignation.Unionist },
+                  { label: 'Nationalist', ayes: division.nationalistAyes ?? 0, noes: division.nationalistNoes ?? 0, ns: noShowByDesignation.Nationalist, abs: abstainByDesignation.Nationalist },
+                  { label: 'Other',       ayes: division.otherAyes ?? 0,       noes: division.otherNoes ?? 0,       ns: noShowByDesignation.Other,       abs: abstainByDesignation.Other },
+                ].map(({ label, ayes, noes, ns, abs }) => (
+                  <div key={label} className={styles.blocItem} style={{ gridTemplateColumns: gridCols }}>
                     <span className={styles.blocLabel}>{label}</span>
                     <span className={styles.blocCell}>{ayes}</span>
                     <span className={styles.blocCell}>{noes}</span>
-                    <span className={styles.blocCell}>{ns}</span>
+                    {hasDesignationNoShow  && <span className={styles.blocCell}>{ns || 0}</span>}
+                    {hasDesignationAbstain && <span className={styles.blocCell}>{abs || 0}</span>}
                     <b className={styles.blocValueDesktop}>
                       <span className={styles.blocAye}>{ayes} Aye</span>
                       {' · '}
                       <span className={styles.blocNo}>{noes} No</span>
-                      {ns > 0 && <><span className={styles.blocSep}> · </span><span className={styles.blocNs}>{ns} Abs</span></>}
+                      {ns  > 0 && <><span className={styles.blocSep}> · </span><span className={styles.blocNs}>{ns} NS</span></>}
+                      {abs > 0 && <><span className={styles.blocSep}> · </span><span className={styles.blocNs}>{abs} Abs</span></>}
                     </b>
                   </div>
                 ))}
@@ -323,15 +350,20 @@ export default async function DivisionDetailPage({ params }: Props) {
               <DesignationChartClient
                 unionistAyes={division.unionistAyes ?? 0}
                 unionistNoes={division.unionistNoes ?? 0}
-                unionistAbs={noShowByDesignation.Unionist}
+                unionistNs={noShowByDesignation.Unionist}
+                unionistAbs={abstainByDesignation.Unionist}
                 nationalistAyes={division.nationalistAyes ?? 0}
                 nationalistNoes={division.nationalistNoes ?? 0}
-                nationalistAbs={noShowByDesignation.Nationalist}
+                nationalistNs={noShowByDesignation.Nationalist}
+                nationalistAbs={abstainByDesignation.Nationalist}
                 otherAyes={division.otherAyes ?? 0}
                 otherNoes={division.otherNoes ?? 0}
-                otherAbs={noShowByDesignation.Other}
+                otherNs={noShowByDesignation.Other}
+                otherAbs={abstainByDesignation.Other}
               />
             </div>
+              )
+            })()}
           </section>
         </>
       )}

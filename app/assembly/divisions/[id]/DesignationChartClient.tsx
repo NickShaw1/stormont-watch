@@ -5,12 +5,15 @@ import styles from './divisionDetail.module.css'
 interface Props {
   unionistAyes: number
   unionistNoes: number
+  unionistNs: number
   unionistAbs: number
   nationalistAyes: number
   nationalistNoes: number
+  nationalistNs: number
   nationalistAbs: number
   otherAyes: number
   otherNoes: number
+  otherNs: number
   otherAbs: number
 }
 
@@ -19,15 +22,23 @@ const N_COLOR = '#2e7d32'
 const O_COLOR = '#9e9e9e'
 
 export default function DesignationChartClient({
-  unionistAyes, unionistNoes, unionistAbs,
-  nationalistAyes, nationalistNoes, nationalistAbs,
-  otherAyes, otherNoes, otherAbs,
+  unionistAyes, unionistNoes, unionistNs, unionistAbs,
+  nationalistAyes, nationalistNoes, nationalistNs, nationalistAbs,
+  otherAyes, otherNoes, otherNs, otherAbs,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const chartRef = useRef<{ destroy: () => void } | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+
+    const hasNoShow = unionistNs + nationalistNs + otherNs > 0
+    const hasAbstain = unionistAbs + nationalistAbs + otherAbs > 0
+
+    const labels = ['Aye', 'No']
+    if (hasNoShow) labels.push('No Show')
+    if (hasAbstain) labels.push('Abstain')
+
     import('chart.js/auto').then(({ Chart }) => {
       if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
       if (!canvasRef.current) return
@@ -35,21 +46,21 @@ export default function DesignationChartClient({
       chartRef.current = new Chart(canvasRef.current, {
         type: 'bar',
         data: {
-          labels: ['Aye', 'No', 'Abs'],
+          labels,
           datasets: [
             {
               label: 'Unionist',
-              data: [unionistAyes, unionistNoes, unionistAbs],
+              data: [unionistAyes, unionistNoes, ...(hasNoShow ? [unionistNs] : []), ...(hasAbstain ? [unionistAbs] : [])],
               backgroundColor: U_COLOR,
             },
             {
               label: 'Nationalist',
-              data: [nationalistAyes, nationalistNoes, nationalistAbs],
+              data: [nationalistAyes, nationalistNoes, ...(hasNoShow ? [nationalistNs] : []), ...(hasAbstain ? [nationalistAbs] : [])],
               backgroundColor: N_COLOR,
             },
             {
               label: 'Other',
-              data: [otherAyes, otherNoes, otherAbs],
+              data: [otherAyes, otherNoes, ...(hasNoShow ? [otherNs] : []), ...(hasAbstain ? [otherAbs] : [])],
               backgroundColor: O_COLOR,
             },
           ],
@@ -87,7 +98,7 @@ export default function DesignationChartClient({
       })
     })
     return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null } }
-  }, [unionistAyes, unionistNoes, unionistAbs, nationalistAyes, nationalistNoes, nationalistAbs, otherAyes, otherNoes, otherAbs])
+  }, [unionistAyes, unionistNoes, unionistNs, unionistAbs, nationalistAyes, nationalistNoes, nationalistNs, nationalistAbs, otherAyes, otherNoes, otherNs, otherAbs])
 
   return (
     <div className={styles.designationChart}>
