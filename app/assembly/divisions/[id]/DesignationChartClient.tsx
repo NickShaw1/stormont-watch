@@ -70,11 +70,7 @@ export default function DesignationChartClient({
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: {
-              display: true,
-              position: 'bottom',
-              labels: { font: { size: 11 }, boxWidth: 12, padding: 12 },
-            },
+            legend: { display: false },
             tooltip: {
               callbacks: {
                 label: (item) => `${item.dataset.label}: ${item.raw}`,

@@ -339,6 +339,28 @@ a:hover {
 .party-pill[data-party="PBP"]       { --dot-c: #c0392b; }
 .party-pill[data-party="Ind"]       { --dot-c: #888;    }
 
+.designation-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.designation-pill::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--dot-c, #888);
+  flex-shrink: 0;
+}
+.designation-pill[data-designation='unionist']    { --dot-c: #e67e22; }
+.designation-pill[data-designation='nationalist'] { --dot-c: #2e7d32; }
+.designation-pill[data-designation='other']       { --dot-c: #9e9e9e; }
+
 /* ── Section head ──────────────────────────────────────────── */
 .section-head {
   display: flex;

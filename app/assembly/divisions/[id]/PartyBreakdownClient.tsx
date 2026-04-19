@@ -36,7 +36,8 @@ function buildPartyRows(votes: Vote[]): PartyRow[] {
 export default function PartyBreakdownClient({ votes }: { votes: Vote[] }) {
   const rows = buildPartyRows(votes)
   const hasNoShow = votes.some((v) => v.vote === 'NO_SHOW')
-  const hasAbstain = votes.some((v) => v.vote === 'ABSTAINED')
+
+  const fmt = (n: number) => n === 0 ? '-' : n
 
   return (
     <div className={styles.designationLayout}>
@@ -45,8 +46,8 @@ export default function PartyBreakdownClient({ votes }: { votes: Vote[] }) {
           <span />
           <span className={styles.blocColHead}>Aye</span>
           <span className={styles.blocColHead}>No</span>
-          {hasNoShow  && <span className={styles.blocColHead}>NS</span>}
-          {hasAbstain && <span className={styles.blocColHead}>Abs</span>}
+          {hasNoShow && <span className={styles.blocColHead}>NS</span>}
+          <span className={styles.blocColHead}>Abs</span>
         </div>
         {rows.map((row) => (
           <div key={row.party} className={styles.partyBlocItem}>
@@ -55,10 +56,10 @@ export default function PartyBreakdownClient({ votes }: { votes: Vote[] }) {
                 <PartyName party={row.party} />
               </span>
             </span>
-            <span className={styles.blocCell}>{row.ayes || 0}</span>
-            <span className={styles.blocCell}>{row.noes || 0}</span>
-            {hasNoShow  && <span className={styles.blocCell}>{row.noShows  || 0}</span>}
-            {hasAbstain && <span className={styles.blocCell}>{row.abstains || 0}</span>}
+            <span className={styles.blocCell}>{fmt(row.ayes)}</span>
+            <span className={styles.blocCell}>{fmt(row.noes)}</span>
+            {hasNoShow && <span className={styles.blocCell}>{fmt(row.noShows)}</span>}
+            <span className={styles.blocCell}>{fmt(row.abstains)}</span>
           </div>
         ))}
       </div>
