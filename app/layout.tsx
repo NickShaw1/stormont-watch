@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'https://www.stormontwatch.com/opengraph-image.png',
+        url: 'https://www.stormontwatch.com/opengraph-image-v2.png',
         width: 1200,
         height: 630,
         alt: 'Stormont Watch — NI Assembly Transparency',
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@stormontwatch',
-    images: ['/opengraph-image.png'],
+    images: ['/opengraph-image-v2.png'],
   },
   icons: {
     icon: [
