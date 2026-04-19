@@ -10,7 +10,7 @@ import {
   getInProgressBills,
   getInProgressBillsCount,
   getDivisionsPerMonth,
-  getCrossCommunityTrends,
+  getBillsPassedPerMonth,
 } from '@/lib/db/queries'
 import Sparkline from '@/components/Sparkline'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
@@ -44,7 +44,7 @@ export const revalidate = 86400
 export default async function HomePage() {
   const now = new Date()
   const [stats, avgAttendance, leastEngaged, mostEngaged, latestDivisions, inProgressBills,
-    inProgressBillsCount, divisionsPerMonth, crossCommunityTrends] =
+    inProgressBillsCount, divisionsPerMonth, billsPassedPerMonth] =
     await Promise.all([
       getHomepageStats(),
       getAverageAttendance(),
@@ -54,16 +54,25 @@ export default async function HomePage() {
       getInProgressBills(5),
       getInProgressBillsCount(),
       getDivisionsPerMonth(),
-      getCrossCommunityTrends(),
+      getBillsPassedPerMonth(),
     ])
 
   // Last 12 months of sparkline data
   const divisionsSparkline = divisionsPerMonth.slice(-12).map((r) => Number(r.total_divisions))
-  const crossCommunitySparkline = crossCommunityTrends.slice(-12).map((r) => Number(r.agreed_divisions))
+  const billsPassedSparkline = billsPassedPerMonth.slice(-12).map((r) => Number(r.bills_passed))
 
   // Current month stats
   const divisionsThisMonth = divisionsPerMonth.at(-1)?.total_divisions ?? 0
-  const crossCommunityThisMonth = crossCommunityTrends.at(-1)?.agreed_divisions ?? 0
+  const divisionsLastMonth = divisionsPerMonth.at(-2)?.total_divisions ?? 0
+  const divisionsDelta = Number(divisionsThisMonth) - Number(divisionsLastMonth)
+  const thisYear = now.getFullYear()
+  const billsThisYear = billsPassedPerMonth
+    .filter(r => new Date(r.month).getFullYear() === thisYear)
+    .reduce((sum, r) => sum + Number(r.bills_passed), 0)
+  const billsLastYear = billsPassedPerMonth
+    .filter(r => new Date(r.month).getFullYear() === thisYear - 1)
+    .reduce((sum, r) => sum + Number(r.bills_passed), 0)
+  const billsYearDelta = billsThisYear - billsLastYear
 
   const orgJsonLd = {
     '@context': 'https://schema.org',
@@ -143,17 +152,25 @@ export default async function HomePage() {
         <div className={styles.kfig}>
           <div className={styles.kfigLabel}>Divisions this month</div>
           <div className={styles.kfigNum}>{Number(divisionsThisMonth)}</div>
-          <div className={styles.kfigSub}>vs. last month</div>
+          <div className={styles.kfigSub}>
+            <span style={{ color: divisionsDelta > 0 ? 'var(--forest)' : divisionsDelta < 0 ? 'var(--crimson)' : 'inherit' }}>
+              {divisionsDelta > 0 ? `↑ ${divisionsDelta}` : divisionsDelta < 0 ? `↓ ${Math.abs(divisionsDelta)}` : '='}
+            </span>{' '}vs last month
+          </div>
           <div className={styles.kfigSpark}>
             <Sparkline data={divisionsSparkline} color="var(--teal)" />
           </div>
         </div>
         <div className={styles.kfig}>
-          <div className={styles.kfigLabel}>Cross-community votes</div>
-          <div className={`${styles.kfigNum} ${styles.amber}`}>{Number(crossCommunityThisMonth)}</div>
-          <div className={styles.kfigSub}>of {Number(divisionsThisMonth)} this month</div>
+          <div className={styles.kfigLabel}>Bills passed this year</div>
+          <div className={`${styles.kfigNum} ${styles.amber}`}>{billsThisYear}</div>
+          <div className={styles.kfigSub}>
+            <span style={{ color: billsYearDelta > 0 ? 'var(--forest)' : billsYearDelta < 0 ? 'var(--crimson)' : 'inherit' }}>
+              {billsYearDelta > 0 ? `↑ ${billsYearDelta}` : billsYearDelta < 0 ? `↓ ${Math.abs(billsYearDelta)}` : '='}
+            </span>{' '}vs last year
+          </div>
           <div className={styles.kfigSpark}>
-            <Sparkline data={crossCommunitySparkline} color="var(--ochre)" />
+            <Sparkline data={billsPassedSparkline} color="var(--ochre)" />
           </div>
         </div>
         {mostEngaged ? (
@@ -174,7 +191,7 @@ export default async function HomePage() {
         ) : <div className={`${styles.kfig} ${styles.kfigMlaCard}`} />}
         {leastEngaged ? (
           <Link href={`/assembly/mlas/${leastEngaged.personId}`} className={`${styles.kfig} ${styles.kfigMlaCard}`}>
-            <div className={styles.kfigLabel}>Low Voter</div>
+            <div className={styles.kfigLabel}>Lowest Voter</div>
             <div className={styles.kfigMlaPhoto}>
               {leastEngaged.imgUrl && <Image src={leastEngaged.imgUrl} alt="" fill sizes="96px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
             </div>
@@ -255,7 +272,7 @@ export default async function HomePage() {
         {/* Headers — each occupies one column in the shared grid */}
         <div className={styles.sectionHead}>
           <div>
-            <span className={styles.sectionEyebrow}>Plenary floor</span>
+            <span className={styles.sectionEyebrow}>Assembly floor</span>
             <h2 className={styles.sectionTitle}>Recent divisions</h2>
           </div>
           <Link href="/assembly/votes" className={styles.viewAll}>All divisions →</Link>

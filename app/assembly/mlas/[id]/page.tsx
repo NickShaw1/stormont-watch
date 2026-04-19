@@ -125,6 +125,12 @@ export default async function MlaDetailPage({ params }: Props) {
 
   const isSpecialRole = eyebrow !== 'Member of the Legislative Assembly'
 
+  const mobileBadgeLabel = member.assemblyRole
+    ? member.assemblyRole.replace(/\bPrincipal\b/g, 'Pr.')
+    : structureRole?.type === 'minister' ? 'Minister'
+    : structureRole?.type === 'committeeChair' ? 'Chair'
+    : eyebrow
+
   return (
     <div className="container">
       <script
@@ -153,7 +159,10 @@ export default async function MlaDetailPage({ params }: Props) {
           </div>
 
           <div className={styles.heroInfo}>
-            <span className={`eyebrow${isSpecialRole ? ` ${styles.specialRoleEyebrow}` : ` ${styles.defaultRoleEyebrow}`}`}>{eyebrow}</span>
+            <span className={`eyebrow${isSpecialRole ? ` ${styles.specialRoleEyebrow}` : ` ${styles.defaultRoleEyebrow}`}`}>
+              <span className={styles.eyebrowDesktop}>{eyebrow}</span>
+              <span className={styles.eyebrowMobile}>{mobileBadgeLabel}</span>
+            </span>
             <h1 className={styles.heroName}>{formatMemberName(member.fullName)}</h1>
             <div className={styles.heroRoleLine}>
               {member.party && (

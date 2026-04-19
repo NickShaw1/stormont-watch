@@ -156,6 +156,13 @@
 }
 
 
+.eyebrowMobile { display: none; }
+
+@media (max-width: 480px) {
+  .eyebrowDesktop { display: none; }
+  .eyebrowMobile  { display: inline; }
+}
+
 .heroInfo {
   min-width: 0;
 }

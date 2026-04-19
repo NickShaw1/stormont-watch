@@ -740,6 +740,29 @@ export async function getDivisionsPerMonth() {
   return result.rows as { month: string; total_divisions: number }[]
 }
 
+export async function getBillsPassedPerMonth() {
+  const result = await db.execute(sql`
+    SELECT
+      gs.month,
+      COALESCE(b.bills_passed, 0) as bills_passed
+    FROM generate_series(
+      DATE_TRUNC('month', NOW()) - INTERVAL '23 months',
+      DATE_TRUNC('month', NOW()),
+      INTERVAL '1 month'
+    ) AS gs(month)
+    LEFT JOIN (
+      SELECT
+        DATE_TRUNC('month', royal_assent_date) as month,
+        COUNT(*) as bills_passed
+      FROM bills
+      WHERE royal_assent_date >= '2022-05-01'
+      GROUP BY DATE_TRUNC('month', royal_assent_date)
+    ) b ON gs.month = b.month
+    ORDER BY gs.month ASC
+  `)
+  return result.rows as { month: string; bills_passed: number }[]
+}
+
 export async function getPassRateByYear() {
   const result = await db.execute(sql`
     SELECT 

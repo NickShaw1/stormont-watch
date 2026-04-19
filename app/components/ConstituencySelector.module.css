@@ -11,6 +11,12 @@
   .mapWrap { min-height: 0; aspect-ratio: unset; max-width: 100%; padding-top: 0; }
 }
 
+@media (max-width: 640px) {
+  .searchDesc { margin-bottom: 0 !important; }
+}
+
+
+
 /* Map container — sizes from SVG content, not sibling panel */
 .mapWrap {
   background: var(--paper-2);

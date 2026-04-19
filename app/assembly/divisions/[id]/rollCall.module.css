@@ -189,7 +189,8 @@
   .rollCallFilters .filterBtn {
     text-align: center;
     justify-content: center;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
     padding: 6px 8px;
     font-size: 0.8125rem;
     min-height: unset;

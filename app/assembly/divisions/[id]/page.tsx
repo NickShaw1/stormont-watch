@@ -22,6 +22,7 @@ function billSlug(billId: string): string {
 }
 
 import RollCallClient from './RollCallClient'
+import DesignationChartClient from './DesignationChartClient'
 import styles from './divisionDetail.module.css'
 
 interface Props {
@@ -291,31 +292,45 @@ export default async function DivisionDetailPage({ params }: Props) {
               <span className={styles.designationFull}>Designation breakdown</span>
               <span className={styles.designationShort}>Breakdown</span>
             </h2>
-            <div className={styles.blocGrid}>
-              <div className={styles.blocHeaderRow}>
-                <span />
-                <span className={styles.blocColHead}>Aye</span>
-                <span className={styles.blocColHead}>No</span>
-                <span className={styles.blocColHead}>Abs</span>
-              </div>
-              {[
-                { label: 'Unionist',    ayes: division.unionistAyes ?? 0,    noes: division.unionistNoes ?? 0,    ns: noShowByDesignation.Unionist },
-                { label: 'Nationalist', ayes: division.nationalistAyes ?? 0, noes: division.nationalistNoes ?? 0, ns: noShowByDesignation.Nationalist },
-                { label: 'Other',       ayes: division.otherAyes ?? 0,       noes: division.otherNoes ?? 0,       ns: noShowByDesignation.Other },
-              ].map(({ label, ayes, noes, ns }) => (
-                <div key={label} className={styles.blocItem}>
-                  <span className={styles.blocLabel}>{label}</span>
-                  <span className={styles.blocCell}>{ayes}</span>
-                  <span className={styles.blocCell}>{noes}</span>
-                  <span className={styles.blocCell}>{ns}</span>
-                  <b className={styles.blocValueDesktop}>
-                    <span className={styles.blocAye}>{ayes} Aye</span>
-                    {' · '}
-                    <span className={styles.blocNo}>{noes} No</span>
-                    {ns > 0 && <><span className={styles.blocSep}> · </span><span className={styles.blocNs}>{ns} Abs</span></>}
-                  </b>
+            <div className={styles.designationLayout}>
+              <div className={styles.blocGrid} style={{ border: 'none', borderRadius: 0, maxWidth: 'none' }}>
+                <div className={styles.blocHeaderRow}>
+                  <span />
+                  <span className={styles.blocColHead}>Aye</span>
+                  <span className={styles.blocColHead}>No</span>
+                  <span className={styles.blocColHead}>Abs</span>
                 </div>
-              ))}
+                {[
+                  { label: 'Unionist',    ayes: division.unionistAyes ?? 0,    noes: division.unionistNoes ?? 0,    ns: noShowByDesignation.Unionist },
+                  { label: 'Nationalist', ayes: division.nationalistAyes ?? 0, noes: division.nationalistNoes ?? 0, ns: noShowByDesignation.Nationalist },
+                  { label: 'Other',       ayes: division.otherAyes ?? 0,       noes: division.otherNoes ?? 0,       ns: noShowByDesignation.Other },
+                ].map(({ label, ayes, noes, ns }) => (
+                  <div key={label} className={styles.blocItem}>
+                    <span className={styles.blocLabel}>{label}</span>
+                    <span className={styles.blocCell}>{ayes}</span>
+                    <span className={styles.blocCell}>{noes}</span>
+                    <span className={styles.blocCell}>{ns}</span>
+                    <b className={styles.blocValueDesktop}>
+                      <span className={styles.blocAye}>{ayes} Aye</span>
+                      {' · '}
+                      <span className={styles.blocNo}>{noes} No</span>
+                      {ns > 0 && <><span className={styles.blocSep}> · </span><span className={styles.blocNs}>{ns} Abs</span></>}
+                    </b>
+                  </div>
+                ))}
+              </div>
+              <div className={styles.designationSep} />
+              <DesignationChartClient
+                unionistAyes={division.unionistAyes ?? 0}
+                unionistNoes={division.unionistNoes ?? 0}
+                unionistAbs={noShowByDesignation.Unionist}
+                nationalistAyes={division.nationalistAyes ?? 0}
+                nationalistNoes={division.nationalistNoes ?? 0}
+                nationalistAbs={noShowByDesignation.Nationalist}
+                otherAyes={division.otherAyes ?? 0}
+                otherNoes={division.otherNoes ?? 0}
+                otherAbs={noShowByDesignation.Other}
+              />
             </div>
           </section>
         </>
