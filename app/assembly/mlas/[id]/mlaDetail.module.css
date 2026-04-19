@@ -41,7 +41,7 @@
     display: grid;
     grid-template-columns: 120px 1fr;
     gap: var(--s-4);
-    align-items: start;
+    align-items: stretch;
     padding: var(--s-4);
     border: 1px solid var(--rule);
     border-radius: var(--r-3);
@@ -65,11 +65,13 @@
     flex-direction: column;
     gap: 0;
     min-width: 0;
+    justify-content: flex-start;
   }
   .heroInfo :global(.eyebrow) {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    bottom: 0px;
+    left: 75px;
+    transform: translateX(-50%);
     font-size: 10px;
     padding: 2px 6px;
     background: var(--teal);
@@ -90,7 +92,8 @@
     font-weight: 600 !important;
     letter-spacing: -0.01em !important;
     line-height: 1.2 !important;
-    margin: var(--s-6) 0 0 !important;
+    margin: 0 !important;
+    order: 1;
   }
   .roleDot {
     display: none;
@@ -102,33 +105,32 @@
     margin-top: 0;
     font-size: 12px;
     width: 100%;
+    order: 2;
   }
   .heroRoleLine :global(.party-pill) {
-    display: none;
+    display: inline-flex !important;
+    align-self: flex-start !important;
+    width: auto !important;
   }
   .emailRow {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    margin-top: var(--s-3);
+    justify-content: flex-end;
+    margin-top: auto !important;
     padding-top: var(--s-2);
     border-top: 1px solid var(--rule);
     font-size: 12px !important;
     width: 100%;
     gap: var(--s-3);
+    order: 3;
   }
   .emailRow a,
   .emailRow a span {
     font-size: 12px !important;
   }
   .emailRowPill {
-    display: inline-flex !important;
-    align-self: center !important;
-    align-items: center !important;
-    font-size: 12px !important;
-    line-height: 1 !important;
-    flex-shrink: 0;
+    display: none !important;
   }
   .emailRow a {
     line-height: 1;
@@ -182,7 +184,7 @@
 }
 
 .heroRoleLine :global(.party-pill) {
-  align-self: center !important;
+  align-self: center;
   font-size: var(--fs-sm);
 }
 
@@ -539,6 +541,14 @@
 
   .expensesCard:last-child {
     border-bottom: none;
+  }
+
+  .expenseValue {
+    font-size: 14px;
+  }
+
+  .noVotes {
+    font-size: 14px;
   }
 
 }

@@ -292,6 +292,12 @@ export default async function DivisionDetailPage({ params }: Props) {
               <span className={styles.designationShort}>Breakdown</span>
             </h2>
             <div className={styles.blocGrid}>
+              <div className={styles.blocHeaderRow}>
+                <span />
+                <span className={styles.blocColHead}>Aye</span>
+                <span className={styles.blocColHead}>No</span>
+                <span className={styles.blocColHead}>Abs</span>
+              </div>
               {[
                 { label: 'Unionist',    ayes: division.unionistAyes ?? 0,    noes: division.unionistNoes ?? 0,    ns: noShowByDesignation.Unionist },
                 { label: 'Nationalist', ayes: division.nationalistAyes ?? 0, noes: division.nationalistNoes ?? 0, ns: noShowByDesignation.Nationalist },
@@ -299,7 +305,10 @@ export default async function DivisionDetailPage({ params }: Props) {
               ].map(({ label, ayes, noes, ns }) => (
                 <div key={label} className={styles.blocItem}>
                   <span className={styles.blocLabel}>{label}</span>
-                  <b className={styles.blocValue}>
+                  <span className={styles.blocCell}>{ayes}</span>
+                  <span className={styles.blocCell}>{noes}</span>
+                  <span className={styles.blocCell}>{ns}</span>
+                  <b className={styles.blocValueDesktop}>
                     <span className={styles.blocAye}>{ayes} Aye</span>
                     {' · '}
                     <span className={styles.blocNo}>{noes} No</span>

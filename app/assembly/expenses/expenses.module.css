@@ -306,7 +306,7 @@
   letter-spacing: -0.03em;
   color: var(--ink);
   margin-bottom: var(--s-5);
-  max-width: 30ch;
+  max-width: none;
 }
 
 /* Square MLA photos */

@@ -118,7 +118,7 @@ export default async function MlaDetailPage({ params }: Props) {
     areaServed: member.constituency ?? undefined,
   }
 
-  const eyebrow = member.assemblyRole
+  const eyebrow = (member.assemblyRole?.replace(/\bPrincipal\b/g, 'Pr.'))
     ?? (structureRole?.type === 'minister' ? formatRoleTitle(structureRole.roleTitle) : null)
     ?? (structureRole?.type === 'committeeChair' ? `Chair, ${structureRole.committeeName}` : null)
     ?? 'Member of the Legislative Assembly'

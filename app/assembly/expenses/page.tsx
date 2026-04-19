@@ -45,7 +45,7 @@ export default async function ExpensesPage() {
         </nav>
         <span className="eyebrow">Public accounts</span>
         <h1>MLA expenses</h1>
-        <p className="lede">Every pound claimed by every MLA — office costs, travel, constituency support and staff salaries. Published by the Assembly Commission, made searchable here.</p>
+        <p className="lede">Expenses claimed by every MLA: office costs, travel, constituency support and staff salaries. Published by the Assembly Commission and made searchable here.</p>
       </header>
 
       {missing.length > 0 && (
@@ -55,14 +55,6 @@ export default async function ExpensesPage() {
           </h2>
           <div className={styles.tableWrap}>
             <MissingMlasTable missing={missing} />
-          </div>
-          <div className="note-card">
-            <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
-              <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
-              <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
-            </svg>
-            <p>Co-opted or elected after the period covered by this data.</p>
           </div>
           <hr className="section-rule" />
         </div>

@@ -181,7 +181,7 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
         <>
         <div className={styles.weekSection}>
           <div className="section-head">
-            <h2>Progressed <em>this week</em></h2>
+            <h2>Progressed this week</h2>
           </div>
           <p className={styles.weekSubtitle}>
             Legislative stages heard in the Assembly in the week commencing <strong>{mondayLabel}</strong>.
@@ -211,12 +211,12 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
 
       {/* Section title */}
       <div className="section-head">
-        <h2>Bills before the <em>Assembly</em></h2>
+        <h2>Bills before the Assembly</h2>
       </div>
 
       {/* Progress key */}
       <div className={styles.progressKey}>
-        <h3 className={styles.progressKeyHeading}>Reading the stage bar</h3>
+        <h3 className={styles.progressKeyHeading}>Reading the <em>stage bar</em></h3>
         <p className={styles.progressKeyDesc}>Each bill card shows a progress bar across the eight stages from Introduction to Royal Assent. The bar reflects where a bill currently stands in its parliamentary journey.</p>
         <div className={styles.progressKeyLegend}>
           <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--forest)' }} />Stage passed</span>

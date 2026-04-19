@@ -214,8 +214,8 @@
   align-items: center;
   gap: var(--s-1);
   padding: var(--s-4);
-  background: var(--paper-2);
-  border-radius: 3px;
+  background: var(--paper);
+  border-radius: var(--r-3);
   border: 1px solid var(--rule);
   text-align: center;
 }
@@ -255,21 +255,50 @@
 
 .blocGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--s-3);
+  grid-template-columns: 1fr;
+  gap: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-3);
+  background: var(--paper);
+  overflow: hidden;
 }
 
-@media (max-width: 640px) {
-  .blocGrid {
-    grid-template-columns: 1fr 1fr;
-  }
+.blocHeaderRow {
+  display: grid;
+  grid-template-columns: 1fr repeat(3, 80px);
+  padding: var(--s-2) var(--s-5);
+  border-bottom: 1px solid var(--rule);
+}
+
+.blocColHead {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  text-align: right;
 }
 
 .blocItem {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
+  display: grid;
+  grid-template-columns: 1fr repeat(3, 80px);
+  align-items: center;
+  padding: var(--s-3) var(--s-5);
+  border-bottom: 1px solid var(--rule);
 }
+
+.blocItem:last-child {
+  border-bottom: none;
+}
+
+.blocCell {
+  display: block;
+  font-size: 15px;
+  color: var(--ink);
+  text-align: right;
+}
+
+.blocValueDesktop { display: none; }
 
 .blocLabel {
   font-size: 12px;
@@ -277,15 +306,6 @@
   font-family: var(--font-mono);
   letter-spacing: 0.05em;
   text-transform: uppercase;
-}
-
-.blocValue {
-  font-size: 22px;
-  font-family: var(--font-serif) !important;
-  font-weight: 400 !important;
-  color: var(--ink);
-  display: block;
-  line-height: 1.3;
 }
 
 .blocAye { color: var(--forest); }

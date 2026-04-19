@@ -61,9 +61,16 @@
 .progressKeyHeading {
   font-size: 20px;
   font-weight: 500;
+  font-family: var(--font-serif);
   color: var(--ink);
   letter-spacing: -0.02em;
   margin-bottom: var(--s-2);
+}
+
+.progressKeyHeading em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--teal);
 }
 
 .progressKeyDesc {
@@ -99,6 +106,19 @@
   height: 6px;
   border-radius: 2px;
   flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .progressKeyLegend {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-3);
+    padding: var(--s-4);
+    gap: var(--s-3);
+  }
 }
 
 /* ── Notice (ochre left-border callout) ───────────────────────── */

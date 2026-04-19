@@ -206,7 +206,7 @@ export default async function HomePage() {
         <div className={styles.sectionHead}>
           <div>
             <span className={styles.sectionEyebrow}>Assembly activity</span>
-            <h2 className={styles.sectionTitle}>This week at <em>Stormont</em></h2>
+            <h2 className={styles.sectionTitle}>This week at Stormont</h2>
           </div>
         </div>
         <div className={styles.twStrip}>
@@ -234,7 +234,7 @@ export default async function HomePage() {
         <div className={styles.sectionHead}>
           <div>
             <span className={styles.sectionEyebrow}>Public spending</span>
-            <h2 className={styles.sectionTitle}><em>Expenses</em> League Table</h2>
+            <h2 className={styles.sectionTitle}>Expenses League Table</h2>
           </div>
         </div>
         <Link href="/assembly/expenses" className={styles.expensesCard}>
