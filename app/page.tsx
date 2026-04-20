@@ -211,7 +211,7 @@ export default async function HomePage() {
 
       {/* Expenses promo */}
       <section className={styles.section}>
-        <div className={styles.sectionHead}>
+        <div className={`${styles.sectionHead}`}>
           <div>
             <span className={styles.sectionEyebrow}>Public spending</span>
             <h2 className={styles.sectionTitle}>Expenses League Table</h2>
@@ -314,6 +314,7 @@ export default async function HomePage() {
                       const billId = billIdMatch ? `NIA Bill ${billIdMatch[1]}` : null
                       const displayTitle = rawTitle.replace(BILL_ID_RE, '').trim()
                       const slug = billId ? billId.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-') : null
+                      const isProcedural = typeLabel === 'Motion' || typeLabel === 'Debate'
                       return (
                         <div key={item.document_id} className={styles.agendaItem}>
                           {slug ? (
@@ -321,7 +322,7 @@ export default async function HomePage() {
                           ) : (
                             <span className={styles.agendaTitle}>{displayTitle}</span>
                           )}
-                          <span className={styles.agendaType}>{typeLabel}</span>
+                          <span className={isProcedural ? styles.agendaTypeProcedural : styles.agendaType}>{typeLabel}</span>
                         </div>
                       )
                     })}

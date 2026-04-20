@@ -750,7 +750,7 @@ async function syncCurrentMemberRoles(db: Db) {
 }
 
 async function syncPlenaryItems(db: Db) {
-  console.log('[syncPlenaryItems] Syncing plenary agenda for current + next week...')
+  console.log('[syncPlenaryItems] Syncing plenary agenda for current week...')
 
   const now = new Date()
   const day = now.getDay()

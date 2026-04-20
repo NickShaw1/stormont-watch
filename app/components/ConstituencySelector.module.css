@@ -17,7 +17,7 @@
 
 
 
-/* Map container — sizes from SVG content, not sibling panel */
+/* Map container — on desktop, height is driven by the right panel */
 .mapWrap {
   background: var(--paper-2);
   border-radius: var(--r-3);
@@ -26,7 +26,9 @@
   position: relative;
   overflow: hidden;
   border: 1px solid var(--rule);
-  align-self: start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Search / selection panel */

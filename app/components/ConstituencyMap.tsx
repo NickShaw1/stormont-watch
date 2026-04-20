@@ -165,7 +165,7 @@ export default function ConstituencyMap({ selected, onSelect, onError }: Constit
       <svg
         ref={svgRef}
         viewBox="0 0 480 360"
-        style={{ width: '100%', height: 'auto', display: loading ? 'none' : 'block' }}
+        style={{ width: '100%', height: '100%', maxHeight: '100%', display: loading ? 'none' : 'block' }}
         aria-hidden="true"
         focusable="false"
       />

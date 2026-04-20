@@ -435,7 +435,7 @@
   align-items: baseline;
   margin-top: var(--s-10);
   margin-bottom: var(--s-2);
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 2px solid var(--ink);
   padding-bottom: var(--s-3);
 }
 
@@ -505,10 +505,27 @@ a.agendaTitle:hover {
 }
 
 .agendaType {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--ink-3);
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
   white-space: nowrap;
+  background: #CCFBF1;
+  color: #0F766E;
+}
+
+.agendaTypeProcedural {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+  background: var(--paper-3);
+  color: var(--ink-3);
 }
 
 @media (max-width: 640px) {
@@ -589,6 +606,10 @@ a.agendaTitle:hover {
 
 @media (max-width: 640px) {
   .rule { margin-block: var(--s-10); }
+}
+
+.sectionHeadTight {
+  margin-bottom: 0;
 }
 
 /* ── Expenses promo ────────────────────────────────────────── */

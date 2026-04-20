@@ -5,6 +5,10 @@
  * This script is for recovery and backfill purposes only.
  * Do NOT add this to any cron job or automated workflow.
  * For routine daily/weekly syncs use: npm run sync
+ *
+ * After a full recovery, the following require manual attention:
+ *   - royal_assent_date and act_title on the bills table (not populated by any sync script)
+ *   - plenary_items data (syncPlenaryItems only fetches the current week — historical agenda data is not recoverable)
  */
 
 import './load-env'
@@ -703,6 +707,79 @@ async function syncDivisionsAndVotes(db: Db) {
   console.log(`[syncDivisionsAndVotes] Complete — processed ${allDivisions.length} divisions`)
 }
 
+async function syncPlenaryItems(db: Db) {
+  console.log('[syncPlenaryItems] Syncing plenary agenda for current week...')
+
+  const now = new Date()
+  const day = now.getDay()
+  const diffToMonday = day === 0 ? -6 : 1 - day
+  const monday = new Date(now)
+  monday.setDate(now.getDate() + diffToMonday)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+
+  const startDate = monday.toISOString().slice(0, 10)
+  const endDate = sunday.toISOString().slice(0, 10)
+
+  const items = await apiFetch<any>(
+    `/plenary.asmx/GetPlenaryItemsPlenaryDate_JSON?startDate=${startDate}&endDate=${endDate}`
+  )
+
+  if (items === null) {
+    console.log('[syncPlenaryItems] API call failed — skipping')
+    return
+  }
+
+  const raw: any[] = items?.PlenaryList?.Plenary ?? []
+  const list = Array.isArray(raw) ? raw : [raw]
+
+  if (list.length === 0) {
+    console.log('[syncPlenaryItems] API returned zero items — skipping')
+    return
+  }
+
+  const ALLOWED_TYPE_IDS = new Set(['1', '2', '5'])
+  const CLAUSE_RE = /^(Clauses?\s|Schedules?\s|Schedule\s|Amendment\s\d|Long Title\s*-)/i
+  const SUSPENSION_RE = /Suspension of Standing Orders/i
+
+  let written = 0
+  let skipped = 0
+
+  for (const item of list) {
+    const documentId = str(item?.DocumentID)
+    const title = str(item?.Title).trim()
+    const plenaryTypeId = str(item?.PlenaryTypeID)
+    const plenaryType = str(item?.PlenaryType)
+
+    if (!documentId || !title) { skipped++; continue }
+    if (!ALLOWED_TYPE_IDS.has(plenaryTypeId)) { skipped++; continue }
+    if (CLAUSE_RE.test(title)) { skipped++; continue }
+    if (SUSPENSION_RE.test(title)) { skipped++; continue }
+
+    const plenaryDate = str(item?.PlenaryDate).slice(0, 10)
+    const tabledDate = item?.TabledDate ? str(item.TabledDate).slice(0, 10) : null
+
+    await db.execute(sql`
+      INSERT INTO plenary_items
+        (document_id, title, plenary_date, plenary_type, plenary_type_id, motion_category, motion_category_id, text, tabled_date, mandate, updated_at)
+      VALUES
+        (${documentId}, ${title}, ${plenaryDate}, ${plenaryType}, ${plenaryTypeId},
+         ${str(item?.MotionCategory) || null}, ${str(item?.MotionCategoryID) || null},
+         ${str(item?.Text) || null}, ${tabledDate}, ${CURRENT_MANDATE}, NOW())
+      ON CONFLICT (document_id) DO UPDATE SET
+        title = EXCLUDED.title,
+        text = EXCLUDED.text,
+        updated_at = NOW()
+    `)
+    written++
+  }
+
+  if (written === 0 && skipped > 0) {
+    console.warn(`[syncPlenaryItems] All ${skipped} items were filtered out — check filter rules if this is unexpected`)
+  }
+  console.log(`[syncPlenaryItems] Complete — ${written} written, ${skipped} skipped`)
+}
+
 async function main() {
   const url = process.env.DATABASE_URL
   if (!url) throw new Error('DATABASE_URL is not set in .env.local')
@@ -735,9 +812,7 @@ async function main() {
   await runSync('syncRegisteredInterests', () => syncRegisteredInterests(db))
   await runSync('syncDivisionsAndVotes', () => syncDivisionsAndVotes(db))
   await runSync('syncBills', () => syncBills(db))
-  // NOTE: After full recovery, manually restore royal_assent_date and act_title
-  // on the bills table for all Acts that have received Royal Assent.
-  // These fields are not populated by any sync script.
+  await runSync('syncPlenaryItems', () => syncPlenaryItems(db))
   await runSync('syncContactDetails', () => syncContactDetails(db))
 
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
