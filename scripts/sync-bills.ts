@@ -152,7 +152,8 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
       }
 
       const stage = extractStage(item.Title) ?? billData.Stage ?? 'Unknown'
-      const plenaryDate = new Date(item.PlenaryDate)
+      const dateStr = item.PlenaryDate.slice(0, 10)
+      const plenaryDate = new Date(`${dateStr}T12:00:00.000Z`)
 
       // 7. --force-titles: overwrite title fields when explicitly requested
       const titleSet = forceTitles ? {

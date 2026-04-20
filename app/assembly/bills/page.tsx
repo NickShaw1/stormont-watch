@@ -44,11 +44,10 @@ function hasFinalStageFailed(b: { final_stage_has_division: boolean | null; fina
 
 export default async function BillsPage() {
   const [allBills, thisWeekBills] = await Promise.all([getAllBills(), getThisWeekLegislation()])
-  const now = new Date()
-
-  const isCompleted = (b: typeof allBills[number]) =>
+  const today = new Date().toISOString().slice(0, 10)
+const isCompleted = (b: typeof allBills[number]) =>
     b.royal_assent_date != null ||
-    (b.current_stage.toLowerCase() === 'final stage' && new Date(b.latest_date) <= now) ||
+    (b.current_stage.toLowerCase() === 'final stage' && new Date(b.latest_date).toISOString().slice(0, 10) < today) ||
     hasFinalStagePassed(b) ||
     hasFinalStageFailed(b)
 
@@ -73,12 +72,12 @@ export default async function BillsPage() {
   }
 
   const scheduled = allBills
-    .filter(b => !isCompleted(b) && new Date(b.latest_date) > now)
+    .filter(b => !isCompleted(b) && new Date(b.latest_date).toISOString().slice(0, 10) >= today)
     .map(b => toItem(b, 'scheduled'))
     .sort((a, b) => new Date(a.latestDate).getTime() - new Date(b.latestDate).getTime())
 
   const inProgress = allBills
-    .filter(b => !isCompleted(b) && new Date(b.latest_date) <= now)
+    .filter(b => !isCompleted(b) && new Date(b.latest_date).toISOString().slice(0, 10) < today)
     .map(b => toItem(b, 'in-progress'))
     .sort((a, b) => new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime())
 

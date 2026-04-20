@@ -141,3 +141,19 @@ export const registeredInterests = pgTable('registered_interests', {
 
 export type RegisteredInterest = typeof registeredInterests.$inferSelect
 
+export const plenaryItems = pgTable('plenary_items', {
+  documentId: text('document_id').primaryKey(),
+  title: text('title').notNull(),
+  plenaryDate: date('plenary_date').notNull(),
+  plenaryType: text('plenary_type').notNull(),
+  plenaryTypeId: text('plenary_type_id').notNull(),
+  motionCategory: text('motion_category'),
+  motionCategoryId: text('motion_category_id'),
+  text: text('text'),
+  tabledDate: date('tabled_date'),
+  mandate: text('mandate').notNull().default('2022-2027'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }),
+})
+
+export type PlenaryItem = typeof plenaryItems.$inferSelect
+

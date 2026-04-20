@@ -982,6 +982,66 @@ export async function getThisWeekLegislation(): Promise<{ bill_id: string; short
   return result.rows as { bill_id: string; short_title: string; bill_type: string | null; stage: string; plenary_date: string; has_division: boolean; outcome: string | null }[]
 }
 
+export async function getThisWeekPlenaryItems(): Promise<{ document_id: string; title: string; plenary_date: string; plenary_type: string; plenary_type_id: string; motion_category: string | null; text: string | null }[]> {
+  const [piResult, bsResult] = await Promise.all([
+    db.execute(sql`
+      SELECT
+        document_id,
+        title,
+        plenary_date::text,
+        plenary_type,
+        plenary_type_id,
+        motion_category,
+        text
+      FROM plenary_items
+      WHERE plenary_date >= date_trunc('week', CURRENT_DATE)
+        AND plenary_date < date_trunc('week', CURRENT_DATE) + INTERVAL '7 days'
+        AND plenary_type_id != '2'
+    `),
+    db.execute(sql`
+      SELECT DISTINCT ON (bs.bill_id, bs.plenary_date::date)
+        bs.document_id,
+        bs.stage || ': ' || b.short_title || ' (' || b.bill_id || ')' AS title,
+        bs.plenary_date::date::text AS plenary_date,
+        'Motion' AS plenary_type,
+        '1' AS plenary_type_id,
+        NULL::text AS motion_category,
+        NULL::text AS text
+      FROM bill_stages bs
+      JOIN bills b ON bs.bill_id = b.bill_id
+      WHERE bs.plenary_date::date >= date_trunc('week', CURRENT_DATE)
+        AND bs.plenary_date::date < date_trunc('week', CURRENT_DATE) + INTERVAL '7 days'
+        AND (
+          bs.item_title IS NULL
+          OR NOT EXISTS (
+            SELECT 1 FROM bill_stages bs2
+            WHERE bs2.bill_id = bs.bill_id
+              AND bs2.stage = bs.stage
+              AND bs2.plenary_date::date = bs.plenary_date::date
+              AND bs2.item_title IS NULL
+          )
+        )
+      ORDER BY bs.bill_id, bs.plenary_date::date, bs.plenary_date DESC
+    `),
+  ])
+
+  type Row = { document_id: string; title: string; plenary_date: string; plenary_type: string; plenary_type_id: string; motion_category: string | null; text: string | null }
+
+  const piRows = piResult.rows as Row[]
+  const bsRows = bsResult.rows as Row[]
+
+  // Deduplicate by (title, plenary_date) — prefer plenary_items
+  const seen = new Set(piRows.map(r => `${r.plenary_date}||${r.title}`))
+  const merged = [
+    ...piRows,
+    ...bsRows.filter(r => !seen.has(`${r.plenary_date}||${r.title}`)),
+  ]
+
+  merged.sort((a, b) => a.plenary_date.localeCompare(b.plenary_date) || a.title.localeCompare(b.title))
+
+  return merged
+}
+
 export async function getInProgressBills(limit = 5) {
   return db
     .select({

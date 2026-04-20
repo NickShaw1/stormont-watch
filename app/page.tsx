@@ -11,6 +11,7 @@ import {
   getInProgressBillsCount,
   getDivisionsPerMonth,
   getBillsPassedPerMonth,
+  getThisWeekPlenaryItems,
 } from '@/lib/db/queries'
 import Sparkline from '@/components/Sparkline'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
@@ -44,7 +45,7 @@ export const revalidate = 86400
 export default async function HomePage() {
   const now = new Date()
   const [stats, avgAttendance, leastEngaged, mostEngaged, latestDivisions, inProgressBills,
-    inProgressBillsCount, divisionsPerMonth, billsPassedPerMonth] =
+    inProgressBillsCount, divisionsPerMonth, billsPassedPerMonth, thisWeekAgenda] =
     await Promise.all([
       getHomepageStats(),
       getAverageAttendance(),
@@ -55,6 +56,7 @@ export default async function HomePage() {
       getInProgressBillsCount(),
       getDivisionsPerMonth(),
       getBillsPassedPerMonth(),
+      getThisWeekPlenaryItems(),
     ])
 
   // Last 12 months of sparkline data
@@ -207,6 +209,27 @@ export default async function HomePage() {
         ) : <div className={`${styles.kfig} ${styles.kfigMlaCard}`} />}
       </div>
 
+      {/* Expenses promo */}
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <div>
+            <span className={styles.sectionEyebrow}>Public spending</span>
+            <h2 className={styles.sectionTitle}>Expenses League Table</h2>
+          </div>
+        </div>
+        <Link href="/assembly/expenses" className={styles.expensesCard}>
+          <span className={styles.expensesCardLeft}>
+            <svg className={styles.expensesCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
+              <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
+              <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
+            </svg>
+            <span className={styles.expensesCardText}>View full MLA expenses rankings</span>
+          </span>
+          <span className={styles.expensesCardArrow} aria-hidden="true">↗</span>
+        </Link>
+      </section>
+
       {/* Find your MLAs */}
       <section className={styles.section}>
         <div className={styles.sectionHead}>
@@ -244,27 +267,70 @@ export default async function HomePage() {
             <div className={`${styles.twVal} ${styles.twValSm}`}>{stats.lastSat ? formatDate(stats.lastSat) : '—'}</div>
           </div>
         </div>
-      </section>
 
-      {/* Expenses promo */}
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div>
-            <span className={styles.sectionEyebrow}>Public spending</span>
-            <h2 className={styles.sectionTitle}>Expenses League Table</h2>
-          </div>
-        </div>
-        <Link href="/assembly/expenses" className={styles.expensesCard}>
-          <span className={styles.expensesCardLeft}>
-            <svg className={styles.expensesCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
-              <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
-              <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
-            </svg>
-            <span className={styles.expensesCardText}>View full MLA expenses rankings</span>
-          </span>
-          <span className={styles.expensesCardArrow} aria-hidden="true">↗</span>
-        </Link>
+        {(() => {
+          const monday = new Date()
+          const day = monday.getDay()
+          monday.setDate(monday.getDate() + (day === 0 ? -6 : 1 - day))
+          const mondayLabel = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(monday)
+          const BILL_ID_RE = /\s*\(NIA Bill \d+\/\d{2}-\d{2,4}\)$/
+
+          if (thisWeekAgenda.length === 0) {
+            return (
+              <>
+                <div className={styles.agendaHeader}>
+                  <span>On the <em>floor</em></span>
+                  <span><span className={styles.agendaWc}>Week commencing </span><span className={styles.agendaWcShort}>w/c </span>{mondayLabel}</span>
+                </div>
+                <p className={styles.agendaEmpty}>No plenary business scheduled this week.</p>
+              </>
+            )
+          }
+
+          const byDate = thisWeekAgenda.reduce<Record<string, typeof thisWeekAgenda>>((acc, item) => {
+            const d = item.plenary_date.slice(0, 10)
+            ;(acc[d] ??= []).push(item)
+            return acc
+          }, {})
+
+          return (
+            <>
+              <div className={styles.agendaHeader}>
+                <span>On the <em>floor</em></span>
+                <span><span className={styles.agendaWc}>Week commencing </span><span className={styles.agendaWcShort}>w/c </span>{mondayLabel}</span>
+              </div>
+              {Object.entries(byDate).map(([date, items]) => {
+                const label = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00Z`))
+                return (
+                  <div key={date} className={styles.agendaDay}>
+                    <div className={styles.agendaDayLabel}>{label}</div>
+                    {items.map(item => {
+                      const colonIdx = item.title.indexOf(':')
+                      const typeLabel = colonIdx > -1
+                        ? item.title.slice(0, colonIdx).trim()
+                        : item.plenary_type_id === '5' ? 'Debate' : 'Motion'
+                      const rawTitle = colonIdx > -1 ? item.title.slice(colonIdx + 1).trim() : item.title
+                      const billIdMatch = rawTitle.match(/\(NIA Bill (\d+\/\d{2}-\d{2,4})\)$/)
+                      const billId = billIdMatch ? `NIA Bill ${billIdMatch[1]}` : null
+                      const displayTitle = rawTitle.replace(BILL_ID_RE, '').trim()
+                      const slug = billId ? billId.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-') : null
+                      return (
+                        <div key={item.document_id} className={styles.agendaItem}>
+                          {slug ? (
+                            <Link href={`/assembly/bills/${slug}`} className={styles.agendaTitle}>{displayTitle}</Link>
+                          ) : (
+                            <span className={styles.agendaTitle}>{displayTitle}</span>
+                          )}
+                          <span className={styles.agendaType}>{typeLabel}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })}
+            </>
+          )
+        })()}
       </section>
 
       {/* Latest votes + Bills in progress */}
@@ -280,7 +346,7 @@ export default async function HomePage() {
         <div className={`${styles.sectionHead} ${styles.sectionHeadBills}`}>
           <div>
             <span className={styles.sectionEyebrow}>Legislation</span>
-            <h2 className={styles.sectionTitle}>Bills in progress</h2>
+            <h2 className={styles.sectionTitle}>Active Legislation</h2>
           </div>
           <Link href="/assembly/bills" className={styles.viewAll}>All bills →</Link>
         </div>

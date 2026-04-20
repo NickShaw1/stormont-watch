@@ -428,6 +428,97 @@
   .twValSm { font-size: 17px; }
 }
 
+/* ── This week agenda ─────────────────────────────────────── */
+.agendaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: var(--s-10);
+  margin-bottom: var(--s-2);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: var(--s-3);
+}
+
+.agendaHeader > span:first-child {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.agendaHeader > span:last-child {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.agendaWcShort { display: none; }
+
+@media (max-width: 640px) {
+  .agendaWc { display: none; }
+  .agendaWcShort { display: inline; }
+}
+
+.agendaHeader em {
+  font-style: italic;
+  color: var(--teal);
+}
+
+.agendaEmpty {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin-top: var(--s-4);
+}
+
+.agendaDay {
+  margin-top: var(--s-6);
+}
+
+.agendaDayLabel {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-3);
+  margin-bottom: var(--s-2);
+}
+
+.agendaItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-4);
+  padding: var(--s-3) 0;
+  border-top: 1px solid var(--rule);
+  font-size: 14px;
+}
+
+.agendaTitle {
+  flex: 1;
+  color: var(--ink-1);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+a.agendaTitle:hover {
+  color: var(--teal);
+}
+
+.agendaType {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .agendaItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-1);
+  }
+}
+
 /* ── Fact bar ──────────────────────────────────────────────── */
 .factbar {
   display: flex;
