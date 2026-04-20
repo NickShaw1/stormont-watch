@@ -976,8 +976,7 @@ export async function getThisWeekLegislation(): Promise<{ bill_id: string; short
     LEFT JOIN divisions d ON bs.division_id = d.document_id
     WHERE bs.plenary_date >= date_trunc('week', NOW())
       AND bs.plenary_date <= NOW()
-      AND bs.item_title IS NULL
-    ORDER BY bs.bill_id, bs.plenary_date DESC
+    ORDER BY bs.bill_id, (bs.item_title IS NULL) DESC, bs.plenary_date DESC
   `)
   return result.rows as { bill_id: string; short_title: string; bill_type: string | null; stage: string; plenary_date: string; has_division: boolean; outcome: string | null }[]
 }
