@@ -421,7 +421,7 @@
 
 .divOutcomeLabel {
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--ink-3);
   min-width: 90px;
@@ -520,7 +520,7 @@
   }
 
   .divRow {
-    grid-template-columns: 56px 1fr auto;
+    grid-template-columns: 36px 1fr auto;
     grid-template-rows: auto auto;
     grid-template-areas:
       "date main pill"
@@ -540,7 +540,7 @@
   }
 
   .divGrouped {
-    grid-template-columns: 56px 1fr;
+    grid-template-columns: 36px 1fr;
     grid-template-rows: auto;
     grid-template-areas: none;
   }
@@ -551,6 +551,8 @@
   .divOutcomeBar {
     width: 90px;
   }
+
+  .divOutcomeLabel { font-size: 12px; }
 
   .divDay { font-size: 18px; }
 
