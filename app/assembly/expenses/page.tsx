@@ -23,6 +23,9 @@ export default async function ExpensesPage() {
     getMlasWithoutExpenses(),
   ])
 
+  const financialYear = rows[0]?.financialYear ?? null
+  const period = rows[0]?.period ?? null
+
   const mappedRows = rows.map(r => ({
     personId: r.personId,
     fullName: r.fullName,
@@ -58,6 +61,10 @@ export default async function ExpensesPage() {
           </div>
           <hr className="section-rule" />
         </div>
+      )}
+
+      {financialYear && period && (
+        <p className={styles.coverageNote}>Figures shown cover <strong>{period}</strong> ({financialYear})</p>
       )}
 
       <ExpensesListClient rows={mappedRows} totalMlaCount={mappedRows.length} />

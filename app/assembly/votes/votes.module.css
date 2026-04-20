@@ -61,6 +61,10 @@
   margin: 0 var(--s-1);
 }
 
+.yearFilters {
+  display: contents;
+}
+
 .filterBtn {
   display: inline-flex;
   align-items: center;
@@ -90,17 +94,33 @@
   border-color: var(--teal);
 }
 
-.filterBtnActive[data-filter='PASSED'] {
+.filterBtnActive:hover {
+  background: var(--teal);
+  color: #fff;
+}
+
+.filterBtnActive[data-filter="PASSED"] {
   background: var(--forest-wash);
   border-color: var(--forest);
   color: var(--forest);
 }
 
-.filterBtnActive[data-filter='FAILED'] {
+.filterBtnActive[data-filter="PASSED"]:hover {
+  background: var(--forest-wash);
+  color: var(--forest);
+}
+
+.filterBtnActive[data-filter="FAILED"] {
   background: var(--crimson-wash);
   border-color: var(--crimson);
   color: var(--crimson);
 }
+
+.filterBtnActive[data-filter="FAILED"]:hover {
+  background: var(--crimson-wash);
+  color: var(--crimson);
+}
+
 
 .resultGroup {
   display: flex;
@@ -274,6 +294,20 @@
   .flexBreak { display: block; }
 }
 
+.srPill {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--ochre-wash);
+  color: var(--ochre);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .xcPill {
   font-size: 10px;
   font-weight: 600;
@@ -347,6 +381,65 @@
 .divCountAye { color: var(--forest); }
 .divCountNo  { color: var(--crimson); }
 
+/* ── Grouped card ─────────────────────────────────────────────── */
+.divGrouped {
+  grid-template-columns: 80px 1fr;
+  align-items: start;
+}
+
+.divGrouped:hover {
+  background: transparent;
+}
+
+.divGrouped:hover .divTitle {
+  color: var(--ink);
+}
+
+.divOutcomeList {
+  margin-top: var(--s-3);
+  border-top: 1px solid var(--rule);
+}
+
+.divOutcomeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13px;
+  text-decoration: none !important;
+  color: inherit;
+}
+
+.divOutcomeRow:hover {
+  background: var(--paper-2);
+}
+
+.divOutcomeRow:hover .divOutcomeLabel {
+  color: var(--teal);
+}
+
+.divOutcomeLabel {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-3);
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.divOutcomeLabel::before {
+  content: '•';
+  color: var(--teal);
+  margin-right: 6px;
+}
+
+.divOutcomeBar {
+  width: 200px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 /* ── Load more ────────────────────────────────────────────────── */
 .loadMore {
   width: 100%;
@@ -394,6 +487,18 @@
     display: none;
   }
 
+  .filterBtnAll {
+    display: none;
+  }
+
+  .yearFilters {
+    display: none;
+  }
+
+  .yearDivider {
+    display: none;
+  }
+
   .filterBtn {
     flex: 1;
     justify-content: center;
@@ -432,6 +537,19 @@
   .divRow > :global(.pill.fail) {
     grid-area: pill;
     align-self: start;
+  }
+
+  .divGrouped {
+    grid-template-columns: 56px 1fr;
+    grid-template-rows: auto;
+    grid-template-areas: none;
+  }
+
+  .divGrouped .divDate { grid-area: unset; }
+  .divGrouped .divMain { grid-area: unset; }
+
+  .divOutcomeBar {
+    width: 90px;
   }
 
   .divDay { font-size: 18px; }

@@ -613,24 +613,46 @@
   border-color: var(--teal);
 }
 
+.filterBtnActive:hover {
+  background: var(--teal);
+  color: #fff;
+}
+
 .filterBtnActive[data-filter="AYE"] {
   background: var(--forest-wash);
-  color: var(--forest);
   border-color: var(--forest);
+  color: var(--forest);
+}
+
+.filterBtnActive[data-filter="AYE"]:hover {
+  background: var(--forest-wash);
+  color: var(--forest);
 }
 
 .filterBtnActive[data-filter="NO"] {
   background: var(--crimson-wash);
-  color: var(--crimson);
   border-color: var(--crimson);
+  color: var(--crimson);
+}
+
+.filterBtnActive[data-filter="NO"]:hover {
+  background: var(--crimson-wash);
+  color: var(--crimson);
 }
 
 .filterBtnActive[data-filter="NO_SHOW"],
 .filterBtnActive[data-filter="ABSTAINED"] {
   background: var(--paper-3);
-  color: var(--ink-2);
   border-color: var(--ink-3);
+  color: var(--ink-2);
 }
+
+.filterBtnActive[data-filter="NO_SHOW"]:hover,
+.filterBtnActive[data-filter="ABSTAINED"]:hover {
+  background: var(--paper-3);
+  color: var(--ink-2);
+}
+
 
 .filterCount {
   font-size: 0.875rem;

@@ -1,3 +1,15 @@
+.coverageNote {
+  font-size: 0.875rem;
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  margin-bottom: var(--s-5);
+}
+
+.coverageNote strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
 .pageHeader {
   padding-bottom: 0;
 }
