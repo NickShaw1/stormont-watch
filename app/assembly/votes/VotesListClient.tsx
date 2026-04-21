@@ -310,7 +310,7 @@ export default function VotesListClient({ allItems }: Props) {
       {hasMore && (
         <button
           className={styles.loadMore}
-          onClick={() => setVisibleCount(c => c + ITEMS_PER_PAGE)}
+          onClick={() => setVisibleCount(c => c + 50)}
         >
           Load more ({filteredItems.length - visibleCount} remaining)
         </button>

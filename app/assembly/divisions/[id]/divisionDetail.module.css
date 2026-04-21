@@ -92,12 +92,19 @@
 }
 
 .metaValue a {
-  color: var(--teal);
+  font-size: 13px;
+  color: var(--ink-3);
   text-decoration: none;
+  white-space: nowrap;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--rule);
+  transition: color 150ms, border-color 150ms;
 }
 
 .metaValue a:hover {
-  text-decoration: underline;
+  color: var(--ink);
+  border-color: var(--ink);
+  text-decoration: none;
 }
 
 /* ── Section headings ──────────────────────────────────────── */

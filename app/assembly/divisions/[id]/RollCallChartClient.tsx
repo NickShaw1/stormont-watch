@@ -22,7 +22,6 @@ export default function RollCallChartClient({ votes }: { votes: Vote[] }) {
       { key: 'ABSTAINED', label: 'Abstain' },
     ]
 
-    // Collect parties ordered by total vote count descending
     const partyCounts = new Map<string, number>()
     for (const v of votes) {
       const p = v.party ?? 'Independent'
@@ -32,7 +31,6 @@ export default function RollCallChartClient({ votes }: { votes: Vote[] }) {
       .sort((a, b) => b[1] - a[1])
       .map(([p]) => p)
 
-    // Only include vote categories that have at least one vote
     const activeVoteTypes = voteTypes.filter((vt) =>
       votes.some((v) => v.vote === vt.key)
     )

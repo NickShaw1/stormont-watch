@@ -27,7 +27,6 @@ interface Props {
   roleLookup: Record<string, string>
 }
 
-const MOBILE_PAGE_SIZE = 25
 
 function abbreviateRole(role: string): string {
   return role
@@ -39,7 +38,6 @@ export default function MlasListClient({ partyGroups, roleLookup }: Props) {
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
   const [groupMode, setGroupMode] = useState<'party' | 'constituency'>('party')
-  const [visibleCount, setVisibleCount] = useState(MOBILE_PAGE_SIZE)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
@@ -48,24 +46,20 @@ export default function MlasListClient({ partyGroups, roleLookup }: Props) {
     if (val && partyFilter !== 'ALL') setPartyFilter('ALL')
     if (timer.current) clearTimeout(timer.current)
     timer.current = setTimeout(() => setDebouncedQuery(val), 150)
-    setVisibleCount(MOBILE_PAGE_SIZE)
   }
 
   function handleModeChange(mode: 'party' | 'constituency') {
     setGroupMode(mode)
-    setVisibleCount(MOBILE_PAGE_SIZE)
   }
 
   function handlePartyFilter(party: string) {
     setPartyFilter(party)
-    setVisibleCount(MOBILE_PAGE_SIZE)
   }
 
   const q = debouncedQuery.toLowerCase().trim()
 
   const totalMlas = partyGroups.reduce((sum, g) => sum + g.mlas.length, 0)
 
-  // Party mode: existing logic
   const filteredByParty = (partyFilter === 'ALL' ? partyGroups : partyGroups.filter((g) => g.party === partyFilter))
     .map((group) => ({
       ...group,
@@ -79,7 +73,6 @@ export default function MlasListClient({ partyGroups, roleLookup }: Props) {
     }))
     .filter((group) => group.mlas.length > 0)
 
-  // Constituency mode: flatten, group, sort
   const filteredByConstituency = (() => {
     const allMlas = partyGroups.flatMap((g) => g.mlas)
     const filtered = q
@@ -103,21 +96,8 @@ export default function MlasListClient({ partyGroups, roleLookup }: Props) {
       }))
   })()
 
-  // Paginated party groups — slice flat MLA list then reconstruct groups
-  const allPartyMlas = filteredByParty.flatMap((g) => g.mlas.map((m) => ({ ...m, _party: g.party })))
-  const visiblePartyMlas = new Set(allPartyMlas.slice(0, visibleCount).map((m) => m.person_id))
-  const paginatedByParty = filteredByParty
-    .map((g) => ({ ...g, mlas: g.mlas.filter((m) => visiblePartyMlas.has(m.person_id)) }))
-    .filter((g) => g.mlas.length > 0)
-  const totalPartyMlas = allPartyMlas.length
-
-  // Paginated constituency groups
-  const allConstMlas = filteredByConstituency.flatMap((g) => g.mlas.map((m) => ({ ...m, _constituency: g.constituency })))
-  const visibleConstMlas = new Set(allConstMlas.slice(0, visibleCount).map((m) => m.person_id))
-  const paginatedByConstituency = filteredByConstituency
-    .map((g) => ({ ...g, mlas: g.mlas.filter((m) => visibleConstMlas.has(m.person_id)) }))
-    .filter((g) => g.mlas.length > 0)
-  const totalConstMlas = allConstMlas.length
+  const totalPartyMlas = filteredByParty.reduce((s, g) => s + g.mlas.length, 0)
+  const totalConstMlas = filteredByConstituency.reduce((s, g) => s + g.mlas.length, 0)
 
   return (
     <div className="container">
@@ -202,10 +182,10 @@ export default function MlasListClient({ partyGroups, roleLookup }: Props) {
 
       {groupMode === 'party' && (
         <>
-          {paginatedByParty.length === 0 && (
+          {filteredByParty.length === 0 && (
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--ink-3)', fontStyle: 'italic' }}>No MLAs match your search.</p>
           )}
-          {paginatedByParty.map((group) => (
+          {filteredByParty.map((group) => (
             <section
               key={group.party}
               aria-labelledby={`party-${group.party.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`}
@@ -254,22 +234,15 @@ export default function MlasListClient({ partyGroups, roleLookup }: Props) {
               </ul>
             </section>
           ))}
-          {visibleCount < totalPartyMlas && (
-            <div className={styles.loadMoreWrap}>
-              <button className={styles.loadMoreBtn} onClick={() => setVisibleCount(v => v + MOBILE_PAGE_SIZE)}>
-                Load more ({totalPartyMlas - visibleCount} remaining)
-              </button>
-            </div>
-          )}
         </>
       )}
 
       {groupMode === 'constituency' && (
         <>
-          {paginatedByConstituency.length === 0 && (
+          {filteredByConstituency.length === 0 && (
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: '13px', color: 'var(--ink-3)', fontStyle: 'italic' }}>No MLAs match your search.</p>
           )}
-          {paginatedByConstituency.map(({ constituency, mlas }) => {
+          {filteredByConstituency.map(({ constituency, mlas }) => {
             const slugId = `constituency-${constituency.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`
             return (
               <section key={constituency} aria-labelledby={slugId} className={styles.partySection}>
@@ -312,13 +285,6 @@ export default function MlasListClient({ partyGroups, roleLookup }: Props) {
               </section>
             )
           })}
-          {visibleCount < totalConstMlas && (
-            <div className={styles.loadMoreWrap}>
-              <button className={styles.loadMoreBtn} onClick={() => setVisibleCount(v => v + MOBILE_PAGE_SIZE)}>
-                Load more ({totalConstMlas - visibleCount} remaining)
-              </button>
-            </div>
-          )}
         </>
       )}
     </div>

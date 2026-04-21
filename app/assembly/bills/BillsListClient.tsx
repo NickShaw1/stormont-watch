@@ -60,7 +60,6 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
   const [isSearching, setIsSearching] = useState(false)
   const [yearFilter, setYearFilter] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
-  const [visibleCount, setVisibleCount] = useState(20)
 
   const years = ['ALL', ...Array.from(new Set(
     completed.map(b => new Date(b.latestDate).getFullYear().toString())
@@ -80,8 +79,7 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
     ? completed.filter(b => b.title.toLowerCase().includes(q))
     : completed.filter(b => yearFilter === 'ALL' || new Date(b.latestDate).getFullYear().toString() === yearFilter)
 
-  const visibleCompleted = filteredCompleted.slice(0, visibleCount)
-  const hasMore = visibleCount < filteredCompleted.length
+  const visibleCompleted = filteredCompleted
 
   const allEmpty = isSearching && filteredScheduled.length === 0 && filteredInProgress.length === 0 && filteredCompleted.length === 0
 
@@ -91,13 +89,11 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab)
-    setVisibleCount(20)
     if (!isSearching) setPreviousTab(tab)
   }
 
   const handleSearch = (value: string) => {
     setSearchQuery(value)
-    setVisibleCount(20)
     if (value.trim().length > 0) {
       setIsSearching(true)
     } else {
@@ -258,7 +254,7 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
             <button
               key={y}
               className={`${styles.yearBtn} ${yearFilter === y ? styles.yearBtnActive : ''}`}
-              onClick={() => { setYearFilter(y); setVisibleCount(20) }}
+              onClick={() => { setYearFilter(y) }}
               aria-pressed={yearFilter === y}
             >
               {y === 'ALL' ? 'All years' : y}
@@ -323,11 +319,6 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
               : visibleCompleted.map(bill => <BillRow key={bill.slug} bill={bill} />)
             }
           </div>
-          {hasMore && !isSearching && (
-            <button className={styles.loadMore} onClick={() => setVisibleCount(c => c + 20)}>
-              Load more ({filteredCompleted.length - visibleCount} remaining)
-            </button>
-          )}
         </section>
       )}
     </>

@@ -3,21 +3,10 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
   gap: var(--s-8);
-  align-items: stretch;
+  align-items: start;
 }
 
-@media (max-width: 900px) {
-  .picker { grid-template-columns: minmax(0, 1fr); padding-bottom: 0; }
-  .mapWrap { min-height: 0; aspect-ratio: unset; max-width: 100%; padding-top: 0; }
-}
-
-@media (max-width: 640px) {
-  .searchDesc { margin-bottom: 0 !important; }
-}
-
-
-
-/* Map container — on desktop, height is driven by the right panel */
+/* Map container — on desktop, fixed height matching expanded MLA card */
 .mapWrap {
   background: var(--paper-2);
   border-radius: var(--r-3);
@@ -29,6 +18,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 565px;
 }
 
 /* Search / selection panel */
@@ -250,4 +240,13 @@
   color: var(--ink);
   font-size: 15px;
   cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .picker { grid-template-columns: minmax(0, 1fr); padding-bottom: 0; }
+  .mapWrap { min-height: 0; height: auto; aspect-ratio: unset; max-width: 100%; padding-top: 0; }
+}
+
+@media (max-width: 640px) {
+  .searchDesc { margin-bottom: 0 !important; }
 }

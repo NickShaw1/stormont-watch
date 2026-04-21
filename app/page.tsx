@@ -59,11 +59,9 @@ export default async function HomePage() {
       getThisWeekPlenaryItems(),
     ])
 
-  // Last 12 months of sparkline data
   const divisionsSparkline = divisionsPerMonth.slice(-12).map((r) => Number(r.total_divisions))
   const billsPassedSparkline = billsPassedPerMonth.slice(-12).map((r) => Number(r.bills_passed))
 
-  // Current month stats
   const divisionsThisMonth = divisionsPerMonth.at(-1)?.total_divisions ?? 0
   const divisionsLastMonth = divisionsPerMonth.at(-2)?.total_divisions ?? 0
   const divisionsDelta = Number(divisionsThisMonth) - Number(divisionsLastMonth)

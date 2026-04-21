@@ -96,7 +96,7 @@ export default function FinancesTabsClient({ expenses: latestExpenses, interests
             </div>
             <div className={styles.expensesCard}>
               <span className={styles.expenseLabel}>Expenses ranking</span>
-              <span className={styles.expenseValue}>{latestExpenses.rank}/{latestExpenses.total_members}</span>
+              <span className={styles.expenseValue}>{latestExpenses.rank}<span className={styles.expenseFraction}>/{latestExpenses.total_members}</span></span>
             </div>
             <div className={styles.expensesCard}>
               <span className={styles.expenseLabel}>Total</span>

@@ -149,29 +149,10 @@ export default async function DivisionDetailPage({ params }: Props) {
     itemListElement: breadcrumbItems,
   }
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Event',
-    name: displayTitle,
-    startDate: new Date(division.divisionDate).toISOString(),
-    location: {
-      '@type': 'Place',
-      name: 'Northern Ireland Assembly',
-      address: 'Parliament Buildings, Stormont, Belfast',
-    },
-    organizer: {
-      '@type': 'GovernmentOrganization',
-      name: 'Northern Ireland Assembly',
-      url: 'https://www.niassembly.gov.uk',
-    },
-    url: `${siteUrl}/assembly/divisions/${params.id}`,
-    description: `Division result: ${division.outcome ?? 'unknown'}. Ayes: ${division.totalAyes ?? 0}, Noes: ${division.totalNoes ?? 0}.`,
-  }
 
   return (
     <div className="container">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
       <header className={styles.divisionHeader}>
         {/* Breadcrumb */}

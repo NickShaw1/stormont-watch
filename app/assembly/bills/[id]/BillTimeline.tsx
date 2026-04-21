@@ -67,14 +67,12 @@ export function groupAndSortStages(stages: BillStageItem[]): StageGroup[] {
     }
   }
 
-  // Natural sort within each group
   for (const group of groups) {
     group.items.sort((a, b) =>
       a.stage.localeCompare(b.stage, undefined, { numeric: true, sensitivity: 'base' })
     )
   }
 
-  // Sort by legislative stage priority descending, date as tiebreaker
   groups.sort((a, b) => {
     const priorityDiff = getStagePriority(b.label) - getStagePriority(a.label)
     if (priorityDiff !== 0) return priorityDiff

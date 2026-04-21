@@ -459,6 +459,7 @@
   transition: border-color 150ms, color 150ms;
 }
 
+
 .loadMore:hover {
   border-color: var(--teal);
   color: var(--teal);

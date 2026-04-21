@@ -489,7 +489,9 @@
   padding: var(--s-3) 0;
   border-top: 1px solid var(--rule);
   font-size: 14px;
+  transition: background 100ms;
 }
+
 
 .agendaTitle {
   flex: 1;
@@ -502,6 +504,10 @@
 
 a.agendaTitle:hover {
   color: var(--teal);
+}
+
+.agendaItem:has(a:hover) {
+  background: var(--paper-2);
 }
 
 .agendaType {
@@ -856,7 +862,7 @@ a.agendaTitle:hover {
 }
 
 .rowLast { border-bottom: 1px solid var(--rule); }
-.divCard:hover { text-decoration: none; }
+.divCard:hover { text-decoration: none; background: var(--paper-2); }
 .divCard:hover .divTitle { color: var(--teal); }
 
 .divDateBlock {
@@ -961,7 +967,7 @@ a.agendaTitle:hover {
   min-width: 0;
 }
 
-.billCard:hover { text-decoration: none; }
+.billCard:hover { text-decoration: none; background: var(--paper-2); }
 .billCard:hover .billTitle { color: var(--teal); }
 
 .billTop { display: contents; }

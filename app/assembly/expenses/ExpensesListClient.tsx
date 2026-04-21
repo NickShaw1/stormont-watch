@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
@@ -65,15 +65,18 @@ function partyLabel(party: string): string {
 export default function ExpensesListClient({ rows, totalMlaCount }: Props) {
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [isMobile, setIsMobile] = useState(false)
   const firstNewRef = useRef<HTMLTableRowElement | null>(null)
   const router = useRouter()
+
+  useEffect(() => { setIsMobile(window.matchMedia('(max-width: 640px)').matches) }, [])
 
   const filtered = partyFilter === 'ALL'
     ? rows
     : rows.filter(r => r.party === partyFilter)
 
-  const visible = filtered.slice(0, visibleCount)
-  const hasMore = visibleCount < filtered.length
+  const visible = isMobile ? filtered : filtered.slice(0, visibleCount)
+  const hasMore = !isMobile && visibleCount < filtered.length
   const maxTotal = rows[0] ? parseFloat(rows[0].total ?? '0') : 1
 
   function handlePartyFilter(party: string) {
@@ -82,7 +85,7 @@ export default function ExpensesListClient({ rows, totalMlaCount }: Props) {
   }
 
   const handleLoadMore = useCallback(() => {
-    setVisibleCount(c => c + PAGE_SIZE)
+    setVisibleCount(c => c + 50)
     requestAnimationFrame(() => {
       if (firstNewRef.current) firstNewRef.current.focus()
     })
