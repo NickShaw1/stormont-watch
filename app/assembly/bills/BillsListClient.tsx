@@ -120,16 +120,20 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
     const stageIdx = getStageIdx(bill.currentStage, bill.royalAssentDate)
     const progress = Math.round((stageIdx / (BILL_STAGES.length - 1)) * 100)
 
-    const becameLaw = bill.category === 'completed' && bill.passed === true && bill.royalAssentDate
-
     const pillClass =
       bill.category === 'completed'
-        ? bill.passed === true ? 'pass' : bill.passed === false ? 'fail' : 'neutral'
+        ? bill.passed === true && bill.royalAssentDate ? 'pass'
+        : bill.passed === true ? 'warn'
+        : bill.passed === false ? 'fail'
+        : 'neutral'
         : bill.category === 'scheduled' ? 'accent' : 'neutral'
 
     const pillLabel =
       bill.category === 'completed'
-        ? bill.passed === true ? 'Became law' : bill.passed === false ? 'Failed' : 'Completed'
+        ? bill.passed === true && bill.royalAssentDate ? 'Became law'
+        : bill.passed === true ? 'Awaiting Royal Assent'
+        : bill.passed === false ? 'Failed'
+        : 'Completed'
         : bill.category === 'scheduled' ? 'Scheduled' : 'Active'
 
     return (
@@ -165,7 +169,7 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
         </div>
         <div className={styles.billRight}>
           <span className={`pill ${pillClass}`}>{pillLabel}</span>
-          {becameLaw
+          {bill.category === 'completed' && bill.passed === true && bill.royalAssentDate
             ? <div className={styles.billPct}>{formatDate(bill.royalAssentDate!)}</div>
             : <div className={styles.billPct}>{progress}% complete</div>
           }

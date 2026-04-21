@@ -55,6 +55,7 @@ const isCompleted = (b: typeof allBills[number]) =>
     const passed = b.royal_assent_date != null ? true
       : hasFinalStagePassed(b) ? true
       : hasFinalStageFailed(b) ? false
+      : b.final_stage_nodiv_date && new Date(b.final_stage_nodiv_date) < new Date() ? true
       : null
     return {
       slug: billSlug(b.bill_id),

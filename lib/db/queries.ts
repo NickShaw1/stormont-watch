@@ -594,14 +594,19 @@ export async function getAllBills() {
       COUNT(bs.document_id) as stage_count,
       COUNT(bs.division_id) as division_count,
       fs.has_division as final_stage_has_division,
-      d.outcome as final_stage_outcome
+      d.outcome as final_stage_outcome,
+      fs_nodiv.plenary_date as final_stage_nodiv_date
     FROM bills b
     LEFT JOIN bill_stages bs ON b.bill_id = bs.bill_id
     LEFT JOIN bill_stages fs ON b.bill_id = fs.bill_id
       AND LOWER(fs.stage) = 'final stage'
       AND fs.has_division = true
     LEFT JOIN divisions d ON d.document_id = fs.division_id
-    GROUP BY b.bill_id, b.short_title, b.long_title, b.bill_type, b.is_accelerated, b.current_stage, b.latest_date, b.royal_assent_date, b.act_title, fs.has_division, d.outcome
+    LEFT JOIN bill_stages fs_nodiv ON b.bill_id = fs_nodiv.bill_id
+      AND LOWER(fs_nodiv.stage) = 'final stage'
+      AND fs_nodiv.has_division = false
+      AND fs_nodiv.division_id IS NULL
+    GROUP BY b.bill_id, b.short_title, b.long_title, b.bill_type, b.is_accelerated, b.current_stage, b.latest_date, b.royal_assent_date, b.act_title, fs.has_division, d.outcome, fs_nodiv.plenary_date
     ORDER BY b.latest_date DESC
   `)
   return result.rows as {
@@ -619,6 +624,7 @@ export async function getAllBills() {
     division_count: number
     final_stage_has_division: boolean | null
     final_stage_outcome: string | null
+    final_stage_nodiv_date: string | null
   }[]
 }
 
