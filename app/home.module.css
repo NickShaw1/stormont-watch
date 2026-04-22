@@ -910,7 +910,7 @@ a.agendaTitle:hover {
     grid-template-columns: 1fr auto;
   }
   .divCard .divTitle {
-    grid-column: 1 / -1;
+    grid-column: 1;
     grid-row: 1;
     white-space: normal;
     overflow: visible;

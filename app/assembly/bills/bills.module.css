@@ -297,7 +297,7 @@
   gap: 6px;
   padding: 10px 16px;
   min-height: 44px;
-  border: 2px solid var(--rule);
+  border: 1px solid var(--rule);
   border-radius: 999px;
   background: transparent;
   color: var(--ink-2);
@@ -587,9 +587,9 @@
     gap: 2px;
     padding: 8px 6px;
     min-height: 44px;
-    border: 2px solid var(--rule);
+    border: 1px solid var(--rule);
     border-radius: 999px;
-    border-bottom: 2px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
     margin-bottom: 0;
     font-size: 0.875rem;
     font-weight: 600;

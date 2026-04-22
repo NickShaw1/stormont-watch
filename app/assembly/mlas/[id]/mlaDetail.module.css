@@ -606,7 +606,7 @@
   padding: 10px 16px;
   min-height: 44px;
   border-radius: 999px;
-  border: 2px solid var(--rule);
+  border: 1px solid var(--rule);
   background: transparent;
   font-size: 0.875rem;
   font-weight: 600;
@@ -681,10 +681,9 @@
 
 /* Table */
 .voteCount {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
   color: var(--ink-3);
-  letter-spacing: 0.04em;
   margin-top: 0;
   margin-bottom: var(--s-5);
   display: flex;
@@ -1066,7 +1065,7 @@
   }
 
   .voteCount {
-    margin-top: var(--s-3);
+    display: none;
   }
 
   /* Table: fill container; switch to auto layout so hidden cols don't reserve space */

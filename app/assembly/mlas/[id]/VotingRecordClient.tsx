@@ -109,7 +109,7 @@ export default function VotingRecordClient({ votes, memberName, noExpensesTab }:
       </div>
 
       <p className={styles.voteCount} aria-live="polite" aria-atomic="true">
-        <span><strong style={{ color: 'var(--ink)', fontWeight: 600 }}>{filteredVotes.length}</strong> vote{filteredVotes.length !== 1 ? 's' : ''}</span>
+        <span><strong>{filteredVotes.length}</strong> vote{filteredVotes.length !== 1 ? 's' : ''}</span>
         {filter !== 'ALL' && (
           <span className={`${styles.filterPill} ${styles[`filterPill${filter}`]}`}>
             {filter === 'NO_SHOW' ? 'No show' : filter === 'ABSTAINED' ? 'Abstain' : filter.charAt(0) + filter.slice(1).toLowerCase()}
