@@ -432,6 +432,17 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
     const documentId = str(div?.DocumentID)
     const divisionDate = isoDate(div?.DivisionDate)
 
+    // Fix BST midnight: if API returns midnight BST (stored as 23:00 UTC),
+    // extract date portion directly and store as noon UTC
+    const divisionDateFixed = (() => {
+      const raw = str(div?.DivisionDate)
+      if (raw && divisionDate.endsWith('T23:00:00.000Z')) {
+        const dateStr = raw.slice(0, 10)
+        return new Date(`${dateStr}T12:00:00.000Z`)
+      }
+      return new Date(divisionDate)
+    })()
+
     if (!documentId || divisionDate < CUTOFF) continue
 
     const [resultData, votingData, plenaryData, tablersData] = await Promise.all([
@@ -461,13 +472,35 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
       console.warn(`[syncNewDivisions] Division ${documentId} has no motion text — writing division without it`)
     }
 
+    const documentType = str(plenaryData?.PlenaryList?.Plenary?.DocumentType)
+    const isMotionAmendment = documentType === 'Motion Amendment'
+    let parentMotionText: string | null = null
+
+    if (isMotionAmendment) {
+      const dateStr = divisionDateFixed.toISOString().slice(0, 10)
+      const dayItems = await apiFetch<any>(
+        `/plenary.asmx/GetPlenaryItemsPlenaryDate_JSON?startDate=${dateStr}&endDate=${dateStr}`
+      )
+      const items = dayItems?.PlenaryList?.Plenary ?? []
+      const itemList = Array.isArray(items) ? items : [items]
+      const parentTitle = (title ?? '').replace(/\s*-\s*Amendment\s+\d+\s*$/i, '').trim()
+      const parent = itemList.find((i: any) =>
+        str(i?.PlenaryTypeID) === '1' &&
+        str(i?.Title).trim().toLowerCase() === parentTitle.toLowerCase()
+      )
+      parentMotionText = parent?.Text ?? null
+      if (!parentMotionText) {
+        console.warn(`[syncNewDivisions] Could not find parent motion for amendment division ${documentId} — title: "${title}"`)
+      }
+    }
+
     await db
       .insert(schema.divisions)
       .values({
         documentId,
         eventId: str(div?.EventID) || null,
         subject: str(div?.DivisionSubject),
-        divisionDate: new Date(divisionDate),
+        divisionDate: divisionDateFixed,
         divisionType: str(div?.DivisonType) || null,
         outcome: str(result?.Outcome) || null,
         totalAyes: parseInt(str(result?.TotalAyes)) || 0,
@@ -482,6 +515,8 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
         motionText: motionText || null,
         title,
         tabledBy,
+        isMotionAmendment,
+        parentMotionText,
         mandate: CURRENT_MANDATE,
       })
       // Update result fields on conflict. divisionType is included defensively —
@@ -497,6 +532,8 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
           motionText: motionText || null,
           title,
           tabledBy,
+          isMotionAmendment,
+          parentMotionText,
           updatedAt: new Date(),
         },
       })
@@ -529,7 +566,7 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
     }
 
     // No shows for all members who were serving at the time of this division
-    const divisionDateStr = new Date(divisionDate).toISOString().slice(0, 10)
+    const divisionDateStr = divisionDateFixed.toISOString().slice(0, 10)
 
     for (const member of allMembersForNoShow) {
       if (votedIds.has(member.personId)) continue
@@ -906,6 +943,11 @@ async function main() {
   if (isBackfill2022) {
     console.log('[main] --backfill-2022 flag detected — syncing suspension-era divisions (2022-05-01 to 2024-02-01)')
     await runSync('syncNewDivisions:backfill-2022', () => syncNewDivisions(db, knownMemberIds, currentMemberIds, '2022-05-01', '2024-02-01'))
+  }
+  const fromFlag = process.argv.find(a => a.startsWith('--from='))?.split('=')[1]
+  const toFlag = process.argv.find(a => a.startsWith('--to='))?.split('=')[1]
+  if (fromFlag) {
+    await runSync('syncNewDivisions:range', () => syncNewDivisions(db, knownMemberIds, currentMemberIds, fromFlag, toFlag))
   }
   await runSync('syncBills', () => syncBills(db, false, isBackfill2022 ? '2022-05-01' : undefined))
 

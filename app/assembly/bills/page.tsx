@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getAllBills, getThisWeekLegislation } from '@/lib/db/queries'
+import { getAllBills, getBillsProgressedThisWeek } from '@/lib/db/queries'
+import { groupProgressedBills } from '@/lib/bills/progressedThisWeekProgress'
 import BillsListClient from './BillsListClient'
 import styles from './bills.module.css'
 
@@ -24,6 +25,7 @@ export interface BillItem {
   isAccelerated: boolean
   latestDate: string
   currentStage: string
+  stageHistory: { stage: string; plenaryDate: string }[]
   passed: boolean | null
   royalAssentDate: string | null
   actTitle: string | null
@@ -39,15 +41,16 @@ function hasFinalStagePassed(b: { final_stage_has_division: boolean | null; fina
 }
 
 function hasFinalStageFailed(b: { final_stage_has_division: boolean | null; final_stage_outcome: string | null }): boolean {
-  return b.final_stage_has_division === true && !/carried/i.test(b.final_stage_outcome ?? '')
+  return b.final_stage_has_division === true && /negatived|fell/i.test(b.final_stage_outcome ?? '')
 }
 
 export default async function BillsPage() {
-  const [allBills, thisWeekBills] = await Promise.all([getAllBills(), getThisWeekLegislation()])
+  const [allBills, progressedData] = await Promise.all([getAllBills(), getBillsProgressedThisWeek()])
+  const progressedThisWeek = groupProgressedBills(progressedData)
   const today = new Date().toISOString().slice(0, 10)
 const isCompleted = (b: typeof allBills[number]) =>
     b.royal_assent_date != null ||
-    (b.current_stage.toLowerCase() === 'final stage' && new Date(b.latest_date).toISOString().slice(0, 10) < today) ||
+    (b.display_stage.toLowerCase() === 'final stage' && new Date(b.latest_date).toISOString().slice(0, 10) < today) ||
     hasFinalStagePassed(b) ||
     hasFinalStageFailed(b)
 
@@ -65,6 +68,7 @@ const isCompleted = (b: typeof allBills[number]) =>
       isAccelerated: b.is_accelerated,
       latestDate: b.latest_date,
       currentStage: b.display_stage,
+      stageHistory: b.stage_history,
       passed,
       royalAssentDate: b.royal_assent_date,
       actTitle: b.act_title,
@@ -101,6 +105,10 @@ const isCompleted = (b: typeof allBills[number]) =>
             <span className={styles.metaBarVal}>{total}</span>
           </div>
           <div className={styles.metaBarItem}>
+            <span className={styles.metaBarKey}>Scheduled</span>
+            <span className={styles.metaBarVal}>{scheduled.length}</span>
+          </div>
+          <div className={styles.metaBarItem}>
             <span className={styles.metaBarKey}>In progress</span>
             <span className={styles.metaBarVal}>{inProgress.length}</span>
           </div>
@@ -111,7 +119,12 @@ const isCompleted = (b: typeof allBills[number]) =>
         </div>
       </header>
 
-      <BillsListClient scheduled={scheduled} inProgress={inProgress} completed={completed} thisWeekBills={thisWeekBills} />
+      <BillsListClient
+        scheduled={scheduled}
+        inProgress={inProgress}
+        completed={completed}
+        progressedThisWeek={progressedThisWeek}
+      />
 
       <hr className="section-rule" />
 

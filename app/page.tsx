@@ -359,16 +359,35 @@ export default async function HomePage() {
           const divEl = div ? (() => {
             const { title: rawTitle, subtitle } = formatDivisionSubject(div.title ?? div.subject)
             const displayTitle = rawTitle.trim()
-            const passed = /carried/i.test(div.outcome ?? '') || /passed/i.test(div.outcome ?? '')
+            const passed = /carried/i.test(div.outcome ?? '')
+              || /passed/i.test(div.outcome ?? '')
+              || /agreed/i.test(div.outcome ?? '')
             const d = div.divisionDate ? new Date(div.divisionDate) : null
+            const t = div.title ?? ''
+            const s = div.subject ?? ''
+            const isStatutory = /^The draft /i.test(t) || /^Prayer of Annulment:/i.test(t) || /^Applicability Motion/i.test(t)
+            const isBill = !isStatutory && (/NIA Bill/i.test(s) || /(?:First|Second|Committee|Consideration|Further Consideration|Final) Stage:/i.test(s))
+            const billAmendMatch = isBill ? t.match(/^Amendment (\d+) -/i) : null
+            const motionAmendMatch = !isBill && !isStatutory ? (div.title ?? '').match(/ - Amendment (\d+)$/i) : null
+            const typeLabel = isStatutory
+              ? 'Regulations'
+              : isBill && billAmendMatch
+                ? `Bill · Amendment ${billAmendMatch[1]}`
+                : isBill
+                  ? (subtitle ?? 'Bill')
+                  : motionAmendMatch
+                    ? `Amendment ${motionAmendMatch[1]}`
+                    : 'Motion'
             return (
               <Link key={`div-${div.documentId}`} href={`/assembly/divisions/${div.documentId}`}
                 className={`${styles.divCard}${isLast ? ` ${styles.rowLast}` : ''}`}>
                 <div className={styles.divTitle}>{displayTitle}</div>
-                <span className={styles.divDate}>{d ? `${d.getDate()} ${d.toLocaleString('en',{month:'short'})} ${d.getFullYear()}` : ''}</span>
                 <span className={passed ? styles.pillPass : styles.pillFail}>{passed ? 'Passed' : 'Failed'}</span>
                 <div className={styles.divMeta}>
-                  {subtitle && <span className={styles.divSub}>{subtitle}</span>}
+                  <span className={styles.divSub}>
+                    {d ? `${d.getDate()} ${d.toLocaleString('en',{month:'short'})} ${d.getFullYear()} · ${typeLabel}` : typeLabel}
+                    {subtitle && isBill && billAmendMatch ? ` · ${subtitle}` : ''}
+                  </span>
                 </div>
               </Link>
             )
@@ -382,10 +401,11 @@ export default async function HomePage() {
                 <div>
                   <div className={styles.billTitle}>{bill.shortTitle}</div>
                   <div className={styles.billPills}>
-                    {bill.billType && <span className={styles.pillType}>{bill.billType}</span>}
+                    <span className={styles.pillType}>
+                      {[bill.latestDate ? formatDate(String(bill.latestDate)) : null, bill.billType].filter(Boolean).join(' · ')}
+                    </span>
                   </div>
                 </div>
-                <span className={styles.billDate}>{bill.latestDate ? formatDate(String(bill.latestDate)) : ''}</span>
                 <BillStagePill
                   category={bill.latestDate && new Date(bill.latestDate) > now ? 'scheduled' : 'in-progress'}
                   currentStage={bill.currentStage}

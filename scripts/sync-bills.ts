@@ -160,7 +160,6 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
         shortTitle: billData.ShortTitle?.trim() ?? billId,
         longTitle: billData.LongTitle?.trim() ?? null,
         billType: billData.BillType?.trim() ?? null,
-        isAccelerated: billData.IsAcceleratedPassage === 'true',
         currentStage: stage,
         latestDate: plenaryDate,
         updatedAt: new Date(),

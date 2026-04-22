@@ -439,7 +439,8 @@
   }
 
   .filterBtn {
-    font-size: 0.8125rem;
-    padding: 10px 12px;
+    font-size: 0.8rem;
+    padding: 8px 10px;
+    min-height: 40px;
   }
 }

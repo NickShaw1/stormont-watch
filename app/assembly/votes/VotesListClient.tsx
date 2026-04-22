@@ -280,6 +280,7 @@ export default function VotesListClient({ allItems }: Props) {
                           return (
                             <Link key={item.key} href={item.href} className={styles.divOutcomeRow}>
                               <span className={styles.divOutcomeLabel}>{label}</span>
+
                               {total > 0 && (
                                 <div className={styles.divOutcomeBar}>
                                   <div className={styles.divBarTrack}>

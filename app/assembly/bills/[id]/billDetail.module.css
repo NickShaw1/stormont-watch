@@ -25,6 +25,10 @@
   margin-bottom: var(--s-4);
 }
 
+.tags :global(.pill) {
+  font-weight: 400;
+}
+
 .title {
   font-family: var(--font-sans);
   font-weight: 400;
@@ -233,8 +237,8 @@
 
 .stageDate {
   font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-3);
+  font-size: 12px;
+  color: var(--ink-2);
   letter-spacing: 0.04em;
 }
 

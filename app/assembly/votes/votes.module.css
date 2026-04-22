@@ -396,7 +396,7 @@
 }
 
 .divOutcomeList {
-  margin-top: var(--s-3);
+  margin-top: var(--s-2);
   border: 1px solid var(--rule);
   border-radius: var(--r-2);
   overflow: hidden;
@@ -426,8 +426,8 @@
 
 .divOutcomeLabel {
   font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 400;
   color: var(--ink-3);
   min-width: 90px;
   flex-shrink: 0;
@@ -437,6 +437,12 @@
   content: '•';
   color: var(--teal);
   margin-right: 6px;
+}
+
+.divOutcomeDate {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
 }
 
 .divOutcomeBar {

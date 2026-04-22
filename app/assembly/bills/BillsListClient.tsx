@@ -3,50 +3,21 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/format'
-import { isPassed } from '@/lib/bills'
+import { computeBillProgress, BILL_STAGES } from '@/lib/bills/billProgress'
 import type { BillItem } from './page'
+import type { BillProgressedThisWeek } from '@/lib/bills/progressedThisWeekProgress'
+import BillProgressedRow from '@/components/bills/BillProgressedRow'
 import styles from './bills.module.css'
-
-interface ThisWeekBill {
-  bill_id: string
-  short_title: string
-  bill_type: string | null
-  stage: string
-  plenary_date: string
-  has_division: boolean
-  outcome: string | null
-}
 
 interface Props {
   scheduled: BillItem[]
   inProgress: BillItem[]
   completed: BillItem[]
-  thisWeekBills: ThisWeekBill[]
+  progressedThisWeek: BillProgressedThisWeek[]
 }
 
 const tabs = ['scheduled', 'in-progress', 'completed'] as const
 type Tab = typeof tabs[number]
-
-const BILL_STAGES = [
-  'Introduction',
-  'First Stage',
-  'Second Stage',
-  'Committee Stage',
-  'Consideration Stage',
-  'Further Consideration Stage',
-  'Final Stage',
-  'Royal Assent',
-]
-
-function getStageIdx(currentStage: string, royalAssentDate: string | null): number {
-  if (royalAssentDate) return BILL_STAGES.length - 1
-  const lower = currentStage.toLowerCase()
-  let best = 0
-  for (let i = 0; i < BILL_STAGES.length; i++) {
-    if (lower.includes(BILL_STAGES[i].toLowerCase())) best = i
-  }
-  return best
-}
 
 function formatBillNum(billId: string): { main: string; session: string } {
   const idx = billId.lastIndexOf('/')
@@ -54,7 +25,7 @@ function formatBillNum(billId: string): { main: string; session: string } {
   return { main: billId.slice(0, idx), session: billId.slice(idx + 1) }
 }
 
-export default function BillsListClient({ scheduled, inProgress, completed, thisWeekBills }: Props) {
+export default function BillsListClient({ scheduled, inProgress, completed, progressedThisWeek }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('scheduled')
   const [previousTab, setPreviousTab] = useState<Tab>('scheduled')
   const [isSearching, setIsSearching] = useState(false)
@@ -113,24 +84,22 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
 
   const BillRow = ({ bill }: { bill: BillItem }) => {
     const { main, session } = formatBillNum(bill.billId)
-    const stageIdx = getStageIdx(bill.currentStage, bill.royalAssentDate)
-    const progress = Math.round((stageIdx / (BILL_STAGES.length - 1)) * 100)
+    const billPassed = bill.passed === true
+    const { stageIdx, scheduledIdx, percent: progress } = computeBillProgress(bill.stageHistory, bill.royalAssentDate, billPassed)
 
     const pillClass =
-      bill.category === 'completed'
-        ? bill.passed === true && bill.royalAssentDate ? 'pass'
-        : bill.passed === true ? 'warn'
+      bill.category !== 'completed'
+        ? bill.category === 'scheduled' ? 'accent' : 'neutral'
+        : bill.royalAssentDate ? 'pass'
         : bill.passed === false ? 'fail'
-        : 'neutral'
-        : bill.category === 'scheduled' ? 'accent' : 'neutral'
+        : 'warn'
 
     const pillLabel =
-      bill.category === 'completed'
-        ? bill.passed === true && bill.royalAssentDate ? 'Became law'
-        : bill.passed === true ? 'Awaiting Royal Assent'
+      bill.category !== 'completed'
+        ? bill.category === 'scheduled' ? 'Scheduled' : 'Active'
+        : bill.royalAssentDate ? 'Became law'
         : bill.passed === false ? 'Failed'
-        : 'Completed'
-        : bill.category === 'scheduled' ? 'Scheduled' : 'Active'
+        : 'Awaiting Royal Assent'
 
     return (
       <Link href={`/assembly/bills/${bill.slug}`} className={styles.billRow}>
@@ -142,21 +111,32 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
         <div className={styles.billCenter}>
           <div className={styles.billTitle}>{bill.title}</div>
           <div className={styles.billStageLine}>
-            {bill.category === 'scheduled' ? 'SCHEDULED STAGE' : 'CURRENT STAGE'} · {bill.currentStage.toUpperCase()} · {formatDate(bill.latestDate)}
+            {bill.category === 'scheduled'
+              ? `Scheduled stage · ${bill.currentStage} · ${formatDate(bill.latestDate)}`
+              : bill.category === 'in-progress'
+              ? `Current stage · ${bill.currentStage} · ${formatDate(bill.latestDate)}`
+              : bill.royalAssentDate
+              ? `Became law · ${formatDate(bill.royalAssentDate)}`
+              : bill.passed === false
+              ? 'Failed'
+              : 'Awaiting Royal Assent'}
           </div>
           <div className={styles.billProgress}>
-            {BILL_STAGES.map((s, i) => (
-              <div
-                key={s}
-                className={styles.billProgressSeg}
-                style={{
-                  background:
-                    i < stageIdx ? 'var(--forest)' :
-                    i === stageIdx ? 'var(--teal)' :
-                    'transparent',
-                }}
-              />
-            ))}
+            {BILL_STAGES.map((s, i) => {
+              const completedUpTo = scheduledIdx !== null ? scheduledIdx - 1 : stageIdx
+              return (
+                <div
+                  key={s}
+                  className={styles.billProgressSeg}
+                  style={{
+                    background:
+                      i <= completedUpTo ? 'var(--forest)' :
+                      i === scheduledIdx ? 'var(--teal)' :
+                      'transparent',
+                  }}
+                />
+              )
+            })}
           </div>
           <div className={styles.billProgressLabels}>
             <span>INTRO</span>
@@ -164,9 +144,14 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
           </div>
         </div>
         <div className={styles.billRight}>
-          <span className={`pill ${pillClass}`}>{pillLabel}</span>
+          <div className={styles.billPills}>
+            {bill.isAccelerated && (
+              <span className="pill accent">Accelerated</span>
+            )}
+            <span className={`pill ${pillClass}`}>{pillLabel}</span>
+          </div>
           {bill.category === 'completed' && bill.passed === true && bill.royalAssentDate
-            ? <div className={styles.billPct}>{formatDate(bill.royalAssentDate!)}</div>
+            ? null
             : <div className={styles.billPct}>{progress}% complete</div>
           }
         </div>
@@ -177,8 +162,20 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
   return (
     <>
       {/* This week section */}
-      {thisWeekBills.length > 0 && (
+      {/* Progress key — always visible */}
+      <div className={styles.progressKey}>
+        <h3 className={styles.progressKeyHeading}>Reading the <em>stage bar</em></h3>
+        <p className={styles.progressKeyDesc}>Each bill card shows a progress bar across the eight stages from Introduction to Royal Assent. The bar reflects where a bill currently stands in its parliamentary journey.</p>
+        <div className={styles.progressKeyLegend}>
+          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--forest)' }} />Stage passed</span>
+          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--teal)' }} />Stage scheduled</span>
+          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--paper-3)', border: '1px solid var(--rule)' }} />Not yet reached</span>
+        </div>
+      </div>
+
+      {progressedThisWeek.length > 0 && (
         <>
+        <hr className="section-rule" />
         <div className={styles.weekSection}>
           <div className="section-head">
             <h2>Progressed this week</h2>
@@ -186,43 +183,17 @@ export default function BillsListClient({ scheduled, inProgress, completed, this
           <p className={styles.weekSubtitle}>
             Legislative stages heard in the Assembly in the week commencing <strong>{mondayLabel}</strong>.
           </p>
-          <div className={styles.thisWeekList}>
-            {thisWeekBills.map(bill => {
-              const slug = bill.bill_id.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
-              const passed = bill.has_division && isPassed(bill.outcome) === true
-              return (
-                <Link key={bill.bill_id} href={`/assembly/bills/${slug}`} className={styles.thisWeekRow}>
-                  <div className={styles.thisWeekRowLeft}>
-                    <span className={styles.thisWeekBillName}>{bill.short_title}</span>
-                    <div className={styles.thisWeekPills}>
-                      <span className="pill neutral">{bill.stage}</span>
-                      {passed && <span className="pill pass">Passed</span>}
-                    </div>
-                  </div>
-                  <span className={styles.thisWeekDate}>{formatDate(bill.plenary_date)}</span>
-                </Link>
-              )
-            })}
+          <div className={styles.billList}>
+            {progressedThisWeek.map(bill => <BillProgressedRow key={bill.billId} bill={bill} />)}
           </div>
         </div>
-        <hr className="section-rule" />
         </>
       )}
 
       {/* Section title */}
+      <hr className="section-rule" />
       <div className="section-head">
         <h2>Bills before the Assembly</h2>
-      </div>
-
-      {/* Progress key */}
-      <div className={styles.progressKey}>
-        <h3 className={styles.progressKeyHeading}>Reading the <em>stage bar</em></h3>
-        <p className={styles.progressKeyDesc}>Each bill card shows a progress bar across the eight stages from Introduction to Royal Assent. The bar reflects where a bill currently stands in its parliamentary journey.</p>
-        <div className={styles.progressKeyLegend}>
-          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--forest)' }} />Stage passed</span>
-          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--teal)' }} />Current stage</span>
-          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--paper-3)', border: '1px solid var(--rule)' }} />Not yet reached</span>
-        </div>
       </div>
 
       {/* Tab bar */}

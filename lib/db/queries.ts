@@ -593,20 +593,36 @@ export async function getAllBills() {
       b.latest_date,
       COUNT(bs.document_id) as stage_count,
       COUNT(bs.division_id) as division_count,
-      fs.has_division as final_stage_has_division,
+      fs_plain.has_division as final_stage_has_division,
       d.outcome as final_stage_outcome,
-      fs_nodiv.plenary_date as final_stage_nodiv_date
+      CASE WHEN fs_plain.has_division = false THEN fs_plain.plenary_date ELSE NULL END as final_stage_nodiv_date,
+      (
+        SELECT COALESCE(jsonb_agg(
+          jsonb_build_object('stage', h.stage, 'plenaryDate', h.plenary_date::text)
+          ORDER BY h.plenary_date ASC
+        ), '[]'::jsonb)
+        FROM (
+          SELECT DISTINCT ON (bs2.stage, bs2.plenary_date::date)
+            bs2.stage, bs2.plenary_date
+          FROM bill_stages bs2
+          WHERE bs2.bill_id = b.bill_id
+          ORDER BY bs2.stage, bs2.plenary_date::date,
+                   (bs2.item_title IS NULL) DESC, bs2.document_id ASC
+        ) h
+      ) as stage_history
     FROM bills b
     LEFT JOIN bill_stages bs ON b.bill_id = bs.bill_id
-    LEFT JOIN bill_stages fs ON b.bill_id = fs.bill_id
-      AND LOWER(fs.stage) = 'final stage'
-      AND fs.has_division = true
-    LEFT JOIN divisions d ON d.document_id = fs.division_id
-    LEFT JOIN bill_stages fs_nodiv ON b.bill_id = fs_nodiv.bill_id
-      AND LOWER(fs_nodiv.stage) = 'final stage'
-      AND fs_nodiv.has_division = false
-      AND fs_nodiv.division_id IS NULL
-    GROUP BY b.bill_id, b.short_title, b.long_title, b.bill_type, b.is_accelerated, b.current_stage, b.latest_date, b.royal_assent_date, b.act_title, fs.has_division, d.outcome, fs_nodiv.plenary_date
+    LEFT JOIN LATERAL (
+      SELECT bs.document_id, bs.plenary_date, bs.has_division, bs.division_id
+      FROM bill_stages bs
+      WHERE bs.bill_id = b.bill_id
+        AND LOWER(bs.stage) = 'final stage'
+        AND bs.item_title IS NULL
+      ORDER BY bs.plenary_date DESC
+      LIMIT 1
+    ) fs_plain ON true
+    LEFT JOIN divisions d ON d.document_id = fs_plain.division_id
+    GROUP BY b.bill_id, b.short_title, b.long_title, b.bill_type, b.is_accelerated, b.current_stage, b.latest_date, b.royal_assent_date, b.act_title, fs_plain.has_division, d.outcome, fs_plain.plenary_date
     ORDER BY b.latest_date DESC
   `)
   return result.rows as {
@@ -625,6 +641,7 @@ export async function getAllBills() {
     final_stage_has_division: boolean | null
     final_stage_outcome: string | null
     final_stage_nodiv_date: string | null
+    stage_history: { stage: string; plenaryDate: string }[]
   }[]
 }
 
@@ -967,24 +984,84 @@ export async function getLatestDivisions(limit = 5) {
     .limit(limit)
 }
 
-export async function getThisWeekLegislation(): Promise<{ bill_id: string; short_title: string; bill_type: string | null; stage: string; plenary_date: string; has_division: boolean; outcome: string | null }[]> {
-  const result = await db.execute(sql`
-    SELECT DISTINCT ON (bs.bill_id)
+export async function getBillsProgressedThisWeek(): Promise<{
+  weekEvents: {
+    bill_id: string
+    short_title: string
+    bill_type: string | null
+    is_accelerated: boolean
+    royal_assent_date: string | null
+    mandate: string
+    stage: string
+    plenary_date: string
+    has_division: boolean
+    outcome: string | null
+    event_type: 'voted' | 'passed'
+  }[]
+  fullHistory: {
+    bill_id: string
+    stage: string
+    plenary_date: string
+    has_division: boolean
+  }[]
+}> {
+  // Past-only window: Monday 00:00 UTC to now.
+  // DISTINCT ON (bill_id, stage, plenary_date) collapses clause/amendment rows into one
+  // representative row per stage event, preferring plain rows (item_title IS NULL) then lowest doc_id.
+  const weekResult = await db.execute(sql`
+    SELECT DISTINCT ON (bs.bill_id, bs.stage, bs.plenary_date)
       b.bill_id,
       b.short_title,
       b.bill_type,
+      b.is_accelerated,
+      b.royal_assent_date::text as royal_assent_date,
+      b.mandate,
       bs.stage,
-      bs.plenary_date,
+      bs.plenary_date::text as plenary_date,
       bs.has_division,
-      d.outcome
+      d.outcome,
+      CASE
+        WHEN bs.has_division = true THEN 'voted'
+        ELSE 'passed'
+      END as event_type
     FROM bill_stages bs
     JOIN bills b ON bs.bill_id = b.bill_id
     LEFT JOIN divisions d ON bs.division_id = d.document_id
-    WHERE bs.plenary_date >= date_trunc('week', NOW())
+    WHERE bs.plenary_date >= date_trunc('week', NOW() AT TIME ZONE 'UTC')
       AND bs.plenary_date <= NOW()
-    ORDER BY bs.bill_id, (bs.item_title IS NULL) DESC, bs.plenary_date DESC
+    ORDER BY bs.bill_id, bs.stage, bs.plenary_date,
+             (bs.item_title IS NULL) DESC,
+             bs.document_id ASC
   `)
-  return result.rows as { bill_id: string; short_title: string; bill_type: string | null; stage: string; plenary_date: string; has_division: boolean; outcome: string | null }[]
+
+  const weekEvents = weekResult.rows as {
+    bill_id: string; short_title: string; bill_type: string | null; is_accelerated: boolean
+    royal_assent_date: string | null; mandate: string; stage: string; plenary_date: string
+    has_division: boolean; outcome: string | null; event_type: 'voted' | 'passed'
+  }[]
+
+  if (weekEvents.length === 0) return { weekEvents: [], fullHistory: [] }
+
+  // fullHistory has NO date filter — future rows drive the striped "scheduled" segment on the progress bar.
+  // Same DISTINCT ON pattern to deduplicate clause/amendment rows.
+  const histResult = await db.execute(sql`
+    SELECT DISTINCT ON (bs.bill_id, bs.stage, bs.plenary_date)
+      bs.bill_id, bs.stage, bs.plenary_date::text as plenary_date, bs.has_division
+    FROM bill_stages bs
+    WHERE bs.bill_id IN (
+      SELECT DISTINCT bill_id FROM bill_stages
+      WHERE plenary_date >= date_trunc('week', NOW() AT TIME ZONE 'UTC')
+        AND plenary_date <= NOW()
+    )
+    ORDER BY bs.bill_id, bs.stage, bs.plenary_date,
+             (bs.item_title IS NULL) DESC,
+             bs.document_id ASC
+  `)
+
+  return {
+    weekEvents,
+    fullHistory: histResult.rows as { bill_id: string; stage: string; plenary_date: string; has_division: boolean }[],
+  }
 }
 
 export async function getThisWeekPlenaryItems(): Promise<{ document_id: string; title: string; plenary_date: string; plenary_type: string; plenary_type_id: string; motion_category: string | null; text: string | null }[]> {
@@ -1060,7 +1137,6 @@ export async function getInProgressBills(limit = 5) {
     .from(bills)
     .where(and(
       isNull(bills.royalAssentDate),
-      sql`${bills.currentStage} NOT ILIKE '%final stage%'`,
       lte(bills.latestDate, sql`NOW()`)
     ))
     .orderBy(desc(bills.latestDate))

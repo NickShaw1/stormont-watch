@@ -36,6 +36,8 @@ export const divisions = pgTable('divisions', {
   motionText: text('motion_text'),
   title: text('title'),
   tabledBy: text('tabled_by'),
+  isMotionAmendment: boolean('is_motion_amendment').default(false),
+  parentMotionText: text('parent_motion_text'),
   mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })

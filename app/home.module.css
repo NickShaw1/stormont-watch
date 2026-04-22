@@ -397,7 +397,7 @@
 }
 
 .twVal {
-  font-size: 32px;
+  font-size: 22px;
   font-weight: 300;
   letter-spacing: -0.035em;
   color: var(--ink);
@@ -424,7 +424,7 @@
   .twCell { border-right: 0; border-bottom: 1px solid var(--rule); }
   .twCell:nth-child(odd) { border-right: 1px solid var(--rule); }
   .twCell:nth-last-child(-n+2) { border-bottom: 0; }
-  .twVal { font-size: 24px; }
+  .twVal { font-size: 17px; }
   .twValSm { font-size: 17px; }
 }
 
@@ -497,7 +497,7 @@
   flex: 1;
   color: var(--ink-1);
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.35;
   text-decoration: none;
 }
@@ -780,10 +780,12 @@ a.agendaTitle:hover {
 .pillPass {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   padding: 2px 8px;
+  min-width: 62px;
   border-radius: var(--r-pill);
   text-transform: uppercase;
   background: var(--forest-wash);
@@ -793,10 +795,12 @@ a.agendaTitle:hover {
 .pillFail {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   padding: 2px 8px;
+  min-width: 62px;
   border-radius: var(--r-pill);
   text-transform: uppercase;
   background: var(--crimson-wash);
@@ -804,16 +808,12 @@ a.agendaTitle:hover {
 }
 
 .pillType {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 2px 8px;
-  border-radius: var(--r-pill);
-  text-transform: uppercase;
-  background: var(--paper-3);
+  font-size: 12px;
   color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .twoColRule { display: none; }
@@ -851,10 +851,10 @@ a.agendaTitle:hover {
 /* ── Division rows — matches handoff .div-row ───────────────── */
 .divCard {
   display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: var(--s-4);
+  grid-template-columns: 1fr auto;
+  gap: var(--s-2);
   align-items: center;
-  padding: var(--s-4) 0;
+  padding: var(--s-3) 0;
   border-top: 1px solid var(--rule);
   text-decoration: none;
   transition: background 100ms;
@@ -888,7 +888,7 @@ a.agendaTitle:hover {
 
 .divCard .divTitle {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--ink);
   line-height: 1.35;
   transition: color 120ms;
@@ -902,12 +902,12 @@ a.agendaTitle:hover {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  gap: var(--s-4);
+  gap: var(--s-2);
 }
 
 @media (max-width: 640px) {
   .divCard {
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr auto;
   }
   .divCard .divTitle {
     grid-column: 1 / -1;
@@ -916,18 +916,15 @@ a.agendaTitle:hover {
     overflow: visible;
     text-overflow: unset;
   }
-  .divCard .divDate {
-    grid-row: 2;
-    grid-column: 2;
-  }
   .divCard .pillPass,
   .divCard .pillFail {
-    grid-row: 2;
-    grid-column: 3;
+    grid-row: 1;
+    grid-column: 2;
+    align-self: start;
   }
   .divMeta {
     grid-row: 2;
-    grid-column: 1;
+    grid-column: 1 / -1;
   }
   .sectionHeadBills { margin-top: var(--s-16); }
 }
@@ -957,10 +954,10 @@ a.agendaTitle:hover {
 /* ── Bill rows — matches handoff .bill-row ──────────────────── */
 .billCard {
   display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: var(--s-4);
+  grid-template-columns: 1fr auto;
+  gap: var(--s-2);
   align-items: center;
-  padding: var(--s-4) 0;
+  padding: var(--s-3) 0;
   border-top: 1px solid var(--rule);
   text-decoration: none;
   transition: background 100ms;
@@ -972,17 +969,27 @@ a.agendaTitle:hover {
 
 .billTop { display: contents; }
 
-.billCard > div:first-child { min-width: 0; }
+.billCard > div:first-child { display: contents; }
 
 .billCard .billTitle {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--ink);
   line-height: 1.35;
   transition: color 120ms;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.billCard .billPills {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .billDate {
@@ -990,19 +997,27 @@ a.agendaTitle:hover {
   color: var(--ink-3);
   white-space: nowrap;
   font-family: var(--font-mono);
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.billCard > :last-child {
+  grid-column: 3;
+  grid-row: 1;
 }
 
 @media (max-width: 640px) {
-  .billCard { grid-template-columns: 1fr; gap: 6px; }
+  .billCard { grid-template-columns: 1fr auto; gap: var(--s-2); }
+  .billCard .billTitle { grid-column: 1 / -1; grid-row: 1; white-space: normal; overflow: visible; text-overflow: unset; }
+  .billCard .billPills { grid-column: 1; grid-row: 2; }
   .billDate { display: none; }
-  .billCard > :last-child { justify-self: start; }
+  .billCard > :last-child { grid-column: 2; grid-row: 2; }
 }
 
 .billPills {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-2);
-  margin-top: 3px;
 }
 
 .pillStage {

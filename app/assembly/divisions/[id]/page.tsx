@@ -175,9 +175,9 @@ export default async function DivisionDetailPage({ params }: Props) {
 
         {/* Tags */}
         <div className={styles.tags}>
-          <span className="tag" style={{ fontFamily: 'var(--font-mono)' }}>DIVISION {documentId.toUpperCase()}</span>
           {passed === true && <span className="pill pass">Passed</span>}
           {passed === false && <span className="pill fail">Failed</span>}
+          <span className="tag">Division {documentId}</span>
           {division.divisionType === 'Cross-Community' && (
             <span className="tag" style={{ color: 'var(--ochre)', borderColor: 'var(--ochre)' }}>Cross-community</span>
           )}
@@ -213,15 +213,30 @@ export default async function DivisionDetailPage({ params }: Props) {
 
       {/* Motion text */}
       {division.motionText && (() => {
-        const isAmendment = /^leave out|^at end insert|^after .+ insert/i.test(division.motionText?.trim() ?? '')
+        const isMotionAmendment = division.isMotionAmendment === true
         return (
           <>
             <section className={styles.motionSection}>
               <h2 className={styles.sectionHeading}>Motion text</h2>
-              {isAmendment && (
-                <p className={styles.amendmentNote}>This amendment proposes changes to the original motion text.</p>
+              {isMotionAmendment && division.parentMotionText ? (
+                <div className={styles.motionColumns}>
+                  <div className={`${styles.motionColumn} ${styles.motionColumnOriginal}`}>
+                    <h3 className={styles.motionSubheading}>Original motion</h3>
+                    <p className={styles.motionText}>{division.parentMotionText}</p>
+                  </div>
+                  <div className={`${styles.motionColumn} ${styles.motionColumnAmended}`}>
+                    <h3 className={styles.motionSubheading}>Amendment text</h3>
+                    <p className={styles.motionText}>{division.motionText}</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {isMotionAmendment && (
+                    <p className={styles.amendmentNote}>This amendment proposes changes to the original motion text.</p>
+                  )}
+                  <p className={styles.motionText}>{division.motionText}</p>
+                </>
               )}
-              <p className={styles.motionText}>{division.motionText}</p>
             </section>
             <hr className="section-rule" />
           </>

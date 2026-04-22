@@ -2,32 +2,12 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getAllBills, getBillStages } from '@/lib/db/queries'
+import { computeBillProgress, BILL_STAGES } from '@/lib/bills/billProgress'
 
 export const revalidate = 86400
 import { getBillSummary } from '@/lib/summaries'
 import BillTimeline from './BillTimeline'
 import styles from './billDetail.module.css'
-
-const BILL_STAGES = [
-  'Introduction',
-  'First Stage',
-  'Second Stage',
-  'Committee Stage',
-  'Consideration Stage',
-  'Further Consideration Stage',
-  'Final Stage',
-  'Royal Assent',
-]
-
-function getStageIdx(currentStage: string, royalAssentDate: string | null): number {
-  if (royalAssentDate) return BILL_STAGES.length - 1
-  const lower = currentStage.toLowerCase()
-  let best = 0
-  for (let i = 0; i < BILL_STAGES.length; i++) {
-    if (lower.includes(BILL_STAGES[i].toLowerCase())) best = i
-  }
-  return best
-}
 
 function billSlug(billId: string): string {
   return billId.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
@@ -125,9 +105,19 @@ export default async function BillDetailPage({ params }: Props) {
     ],
   }
 
-  const stageIdx = getStageIdx(bill.current_stage, bill.royal_assent_date)
-  const billPassed = bill.royal_assent_date != null
-  const billFailed = !billPassed && bill.current_stage.toLowerCase().includes('final stage') && new Date(bill.latest_date) <= new Date()
+  const { stageIdx } = computeBillProgress(
+    stages.map(s => ({ stage: s.stage, plenaryDate: s.plenary_date })),
+    bill.royal_assent_date,
+  )
+  const billPassed =
+    bill.royal_assent_date != null ||
+    (bill.final_stage_has_division === true && /carried/i.test(bill.final_stage_outcome ?? '')) ||
+    (bill.final_stage_nodiv_date != null && new Date(bill.final_stage_nodiv_date) <= new Date())
+
+  const billFailed =
+    !billPassed &&
+    bill.final_stage_has_division === true &&
+    /negatived|fell/i.test(bill.final_stage_outcome ?? '')
 
   return (
     <div className="container" style={{ paddingBottom: 'var(--s-20)' }}>
@@ -147,9 +137,10 @@ export default async function BillDetailPage({ params }: Props) {
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.tags}>
-          <span className="tag" style={{ fontFamily: 'var(--font-mono)' }}>BILL {bill.bill_id}</span>
+          <span className="tag">Bill {bill.bill_id}</span>
           {bill.bill_type && <span className="tag">{bill.bill_type}</span>}
-          {billPassed && <span className="pill pass">Became law</span>}
+          {bill.royal_assent_date != null && <span className="pill pass">Became law</span>}
+          {billPassed && !bill.royal_assent_date && <span className="pill warn">Awaiting Royal Assent</span>}
           {billFailed && <span className="pill fail">Failed</span>}
         </div>
         <h1 className={styles.title}>{bill.short_title}</h1>

@@ -574,6 +574,17 @@ async function syncDivisionsAndVotes(db: Db) {
     const documentId = str(div?.DocumentID)
     const divisionDate = isoDate(div?.DivisionDate)
 
+    // Fix BST midnight: if API returns midnight BST (stored as 23:00 UTC),
+    // extract date portion directly and store as noon UTC
+    const divisionDateFixed = (() => {
+      const raw = str(div?.DivisionDate)
+      if (raw && divisionDate.endsWith('T23:00:00.000Z')) {
+        const dateStr = raw.slice(0, 10)
+        return new Date(`${dateStr}T12:00:00.000Z`)
+      }
+      return new Date(divisionDate)
+    })()
+
     if (!documentId || divisionDate < CUTOFF) return
 
     const [resultData, votingData, plenaryData, tablersData] = await Promise.all([
@@ -607,7 +618,7 @@ async function syncDivisionsAndVotes(db: Db) {
         documentId,
         eventId: str(div?.EventID) || null,
         subject: str(div?.DivisionSubject),
-        divisionDate: new Date(divisionDate),
+        divisionDate: divisionDateFixed,
         divisionType: str(div?.DivisonType) || null,
         outcome: str(result?.Outcome) || null,
         totalAyes: parseInt(str(result?.TotalAyes)) || 0,
@@ -669,7 +680,7 @@ async function syncDivisionsAndVotes(db: Db) {
     }
 
     // No shows for all members who were serving at the time of this division
-    const divisionDateStr = new Date(divisionDate).toISOString().slice(0, 10)
+    const divisionDateStr = divisionDateFixed.toISOString().slice(0, 10)
 
     for (const member of allMembersForNoShow) {
       if (votedIds.has(member.personId)) continue
