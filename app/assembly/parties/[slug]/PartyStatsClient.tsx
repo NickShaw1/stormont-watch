@@ -70,7 +70,7 @@ function DonutChart({ stats }: { stats: PartyVoteStats; partyColor: string }) {
   useEffect(() => {
     const centreTextPlugin = {
       id: 'centreText',
-      beforeDraw(chart: any) {
+      beforeDraw(chart: import('chart.js').Chart<'doughnut'>) {
         const { ctx, chartArea: { top, bottom, left, right } } = chart
         const cx = (left + right) / 2
         const cy = (top + bottom) / 2
