@@ -15,31 +15,6 @@ interface PartyStatsProps {
 }
 
 
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-function formatMonthLabel(date: Date): string {
-  return `${MONTHS[date.getMonth()]} ${date.getFullYear()}`
-}
-
-function expandTrend(trend: { month: string; attendancePct: number }[]): { label: string; value: number | null }[] {
-  if (trend.length === 0) return []
-  const parse = (m: string) => new Date(m + ' 1')
-  const result: { label: string; value: number | null }[] = []
-  const byLabel = new Map(trend.map((t) => [t.month, t.attendancePct]))
-  const start = parse(trend[0].month)
-  const end = parse(trend[trend.length - 1].month)
-  const cur = new Date(start)
-  while (cur <= end) {
-    const label = formatMonthLabel(cur)
-    result.push({ label, value: byLabel.get(label) ?? null })
-    cur.setMonth(cur.getMonth() + 1)
-  }
-  return result
-}
-
-function hasGap(trend: { month: string; attendancePct: number }[]): boolean {
-  const expanded = expandTrend(trend)
-  return expanded.some((p) => p.value === null)
-}
 
 function MlaStatRow({ mla }: { mla: MlaAttendanceStat }) {
   return (
@@ -171,20 +146,18 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
         if (cancelled) return
         if (!canvasRef.current) return
         if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
-        const expanded = expandTrend(trend)
         chartRef.current = new Chart(canvasRef.current, {
           type: 'line',
           data: {
-            labels: expanded.map((p) => p.label),
+            labels: trend.map((p) => p.month),
             datasets: [{
-              data: expanded.map((p) => p.value),
+              data: trend.map((p) => p.attendancePct),
               borderColor: partyColor,
               backgroundColor: partyColor + '22',
               fill: true,
               pointRadius: 3,
               pointHoverRadius: 5,
               tension: 0.3,
-              spanGaps: false,
             }],
           },
           options: {
@@ -214,10 +187,9 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
                   font: { size: 11 },
                   maxRotation: 0,
                   autoSkip: false,
-                  callback: function(val, index, ticks) {
-                    if (index === 0) return (this as { getLabelForValue(v: number): string }).getLabelForValue(val as number)
-                    if (index === ticks.length - 1) return 'Present'
-                    return ''
+                  callback: function(val, _index) {
+                    const label = (this as { getLabelForValue(v: number): string }).getLabelForValue(val as number)
+                    return label.startsWith('Jan') ? label : ''
                   },
                 },
               },
@@ -292,11 +264,9 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
       <div style={{ position: 'relative', width: '100%', height: '200px' }}>
         <TrendChart trend={stats.trend} partyColor={partyColor} />
       </div>
-      {hasGap(stats.trend) && (
-        <p style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 'var(--s-2)' }}>
-          * Gaps reflect the Assembly suspension period and scheduled recesses.
-        </p>
-      )}
+      <p style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 'var(--s-2)' }}>
+        * Only months with recorded divisions are shown. Months with no Assembly activity are not plotted.
+      </p>
 
       <hr className="section-rule" />
       {/* Recent divisions */}

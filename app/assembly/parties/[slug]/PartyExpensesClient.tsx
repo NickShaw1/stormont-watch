@@ -28,17 +28,23 @@ function ordinal(n: number): string {
   return n + (s[(v - 20) % 10] || s[v] || s[0])
 }
 
-function MlaHighLowRow({ mla, direction }: { mla: PartyExpenseStats['highestMla']; direction: 'up' | 'down' }) {
-  const color = direction === 'up' ? 'var(--forest)' : 'var(--crimson)'
-  const arrow = direction === 'up' ? '↑' : '↓'
+function MlaExpenseRow({ mla, rankSub }: { mla: PartyExpenseStats['highestMla']; rankSub?: string }) {
   return (
-    <div className={styles.expHlRow}>
-      <span className={styles.expHlArrow} style={{ color }}>{arrow}</span>
-      <Link href={`/assembly/mlas/${mla.personId}`} className={styles.expHlName}>
-        {formatMemberName(mla.fullName)}
-      </Link>
-      <span className={styles.expHlValue}>{gbp(mla.total)}</span>
-    </div>
+    <Link href={`/assembly/mlas/${mla.personId}`} className={styles.expMlaRow}>
+      <div className={styles.statMlaPhoto}>
+        <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={40} decorative square />
+      </div>
+      <div className={styles.expMlaInfo}>
+        <span className={styles.expMlaName}>{formatMemberName(mla.fullName)}</span>
+        {mla.constituency && (
+          <span className={styles.expMlaSub}>{formatConstituency(mla.constituency)}</span>
+        )}
+      </div>
+      <div className={styles.expMlaRight}>
+        <span className={styles.expMlaAmount}>{gbp(mla.total)}</span>
+        {rankSub && <span className={styles.expMlaSub}>{rankSub}</span>}
+      </div>
+    </Link>
   )
 }
 
@@ -55,46 +61,49 @@ export default function PartyExpensesClient({ expenses, partyColor }: PartyExpen
       </p>
 
       {/* Metric cards */}
-      <div className={styles.expMetricGrid}>
-        {/* Total */}
-        <div className={styles.expMetricCard}>
+      <div className={styles.expCardGrid}>
+        {/* Left card — Total + Highest/Lowest */}
+        <div className={styles.expCard}>
           <span className={styles.expMetricLabel}>Total expenses</span>
           <span className={styles.expMetricValue}>{gbp(expenses.partyTotal)}</span>
-          <span className={`${styles.expMetricSub} ${styles.expHideMobile}`}>{expenses.financialYear}</span>
           <span className={styles.rankBadge} style={{ color: rankColor(expenses.rankTotal, expenses.partyCount) }}>{ordinal(expenses.rankTotal)} of {expenses.partyCount} parties</span>
-        </div>
-
-        {/* Average */}
-        <div className={styles.expMetricCard}>
-          <span className={styles.expMetricLabel}>Average per MLA</span>
-          <span className={styles.expMetricValue}>{gbp(expenses.avgPerMla)}</span>
-          <span className={`${styles.expMetricSub} ${styles.expHideMobile}`}>Per current MLA</span>
-          <span className={styles.rankBadge} style={{ color: rankColor(expenses.rankAvg, expenses.partyCount) }}>{ordinal(expenses.rankAvg)} of {expenses.partyCount} parties</span>
-        </div>
-
-        {/* Highest / Lowest */}
-        <div className={styles.expMetricCard}>
-          <span className={styles.expMetricLabel}>Highest / Lowest</span>
+          <hr className={styles.expDivider} />
           {singleMla ? (
-            <span className={styles.expMetricValue}>{gbp(expenses.highestMla.total)}</span>
+            <MlaExpenseRow mla={expenses.highestMla} />
           ) : (
-            <div className={styles.expHlStack}>
-              <MlaHighLowRow mla={expenses.highestMla} direction="up" />
-              <MlaHighLowRow mla={expenses.lowestMla} direction="down" />
-            </div>
+            <>
+              <span className={styles.expSectionLabelHigh}>↑ Highest</span>
+              <MlaExpenseRow mla={expenses.highestMla} />
+              <div className={styles.statMlaSep} />
+              <span className={styles.expSectionLabelLow}>↓ Lowest</span>
+              <MlaExpenseRow mla={expenses.lowestMla} />
+            </>
           )}
         </div>
 
-        {/* Registered visits */}
-        <div className={styles.expMetricCard}>
-          <span className={styles.expMetricLabel}>Registered visits</span>
-          <span className={styles.expMetricValue}>{expenses.visitCount}</span>
-          <span className={styles.expMetricSub}>
-            {expenses.visitCount === 0 ? 'None declared' : 'Declared in register of interests'}
-          </span>
-          <span className={styles.rankBadge} style={{ color: rankColor(expenses.rankVisits, expenses.partyCount) }}>{ordinal(expenses.rankVisits)} of {expenses.partyCount} parties</span>
+        {/* Right card — Average + Visits */}
+        <div className={styles.expCardRight}>
+          <div className={styles.expMiniCard}>
+            <span className={styles.expMetricLabel}>Average per MLA</span>
+            <span className={styles.expMetricValue}>{gbp(expenses.avgPerMla)}</span>
+            <span className={styles.expMetricSub}>Per current MLA</span>
+            <span className={styles.rankBadge} style={{ color: rankColor(expenses.rankAvg, expenses.partyCount) }}>{ordinal(expenses.rankAvg)} of {expenses.partyCount} parties</span>
+          </div>
+          <div className={styles.expMiniCard}>
+            <span className={styles.expMetricLabel}>Registered visits</span>
+            <span className={styles.expMetricValue}>{expenses.visitCount}</span>
+            <span className={styles.expMetricSub}>
+              {expenses.visitCount === 0 ? 'None declared' : 'Declared in register of interests'}
+            </span>
+            {expenses.rankVisits && (
+              <span className={styles.rankBadge} style={{ color: rankColor(expenses.rankVisits, expenses.partyCount) }}>{ordinal(expenses.rankVisits)} of {expenses.partyCount} parties</span>
+            )}
+          </div>
         </div>
       </div>
+
+      <hr className="section-rule" />
+      <h3 className={styles.statsHeading}>MLA Breakdown</h3>
 
       {/* MLA table */}
       <div className={styles.expTableWrap}>

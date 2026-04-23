@@ -940,33 +940,47 @@
 }
 
 /* ── Metric cards grid ──────────────────────────────────────── */
-.expMetricGrid {
+.expCardGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--s-3);
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
   margin-bottom: var(--s-6);
 }
 
-@media (max-width: 959px) {
-  .expMetricGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 640px) {
-  .expMetricGrid {
+  .expCardGrid {
     grid-template-columns: 1fr;
   }
 }
 
-.expMetricCard {
+.expCard {
   background: var(--paper-2);
   border: 1px solid var(--rule);
   border-radius: var(--r-3);
-  padding: var(--s-4);
+  padding: var(--s-5);
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
+}
+
+.expCardRight {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.expMiniCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-3);
+  padding: var(--s-5);
+  flex: 1;
 }
 
 .expMetricLabel {
@@ -977,60 +991,69 @@
   color: var(--ink-3);
 }
 
-@media (max-width: 767px) {
-  .expMetricLabel {
-    font-size: 0.8125rem;
-  }
-}
-
 .expMetricValue {
-  font-size: 24px;
+  font-size: clamp(26px, 4vw, 32px);
   font-weight: 500;
   color: var(--ink);
   line-height: 1.1;
-}
-
-@media (max-width: 640px) {
-  .expMetricValue {
-    font-size: 20px;
-  }
-}
-
-.expMetricSub {
-  font-size: 11px;
-  color: var(--ink-3);
-  margin-top: 2px;
-}
-
-.rankBadge {
-  font-size: 11px;
-  color: var(--ink-3);
-  margin-top: 2px;
-  display: block;
-}
-
-/* ── Highest / Lowest rows ──────────────────────────────────── */
-.expHlStack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
   margin-top: var(--s-1);
 }
 
-.expHlRow {
+.expMetricSub {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.rankBadge {
+  font-size: 12px;
+  color: var(--ink-3);
+  display: block;
+}
+
+.expDivider {
+  height: 1px;
+  background: var(--rule);
+  margin: var(--s-3) 0;
+  border: none;
+}
+
+.expSectionLabelHigh {
+  font-size: 11px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--forest);
+}
+
+.expSectionLabelLow {
+  font-size: 11px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--crimson);
+}
+
+/* ── MLA expense rows ───────────────────────────────────────── */
+.expMlaRow {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s-3);
+  padding: var(--s-2) 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.expMlaRow:hover .expMlaName {
+  color: var(--teal);
+}
+
+.expMlaInfo {
+  flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
-.expHlArrow {
-  font-size: 12px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.expHlName {
+.expMlaName {
   font-size: 13px;
   font-weight: 500;
   color: var(--ink);
@@ -1038,22 +1061,37 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
-  min-width: 0;
+  transition: color 120ms;
 }
 
-.expHlName:hover {
-  color: var(--teal);
-  text-decoration: underline;
-}
-
-.expHlValue {
+.expMlaSub {
   font-size: 12px;
-  font-weight: 600;
   color: var(--ink-3);
-  font-family: var(--font-mono);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expMlaRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
   flex-shrink: 0;
+}
+
+.expMlaAmount {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* ── Second metric block within a card ─────────────────────── */
+.expSubMetric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
 }
 
 /* ── MLA expenses table ─────────────────────────────────────── */
@@ -1146,7 +1184,7 @@
 }
 
 .expMlaName {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--ink);
   text-decoration: none;
