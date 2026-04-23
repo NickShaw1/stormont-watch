@@ -68,6 +68,25 @@ function DonutChart({ stats }: { stats: PartyVoteStats; partyColor: string }) {
   const total = stats.aye + stats.no + stats.abstained + stats.noShow
 
   useEffect(() => {
+    const centreTextPlugin = {
+      id: 'centreText',
+      beforeDraw(chart: any) {
+        const { ctx, chartArea: { top, bottom, left, right } } = chart
+        const cx = (left + right) / 2
+        const cy = (top + bottom) / 2
+        ctx.save()
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#222'
+        ctx.font = '500 18px sans-serif'
+        ctx.fillText(total.toLocaleString(), cx, cy - 8)
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--ink-3').trim() || '#888'
+        ctx.font = '400 11px sans-serif'
+        ctx.fillText('votes', cx, cy + 10)
+        ctx.restore()
+      }
+    }
+
     import('chart.js/auto').then(({ Chart }) => {
       if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
       if (!canvasRef.current) return
@@ -94,10 +113,11 @@ function DonutChart({ stats }: { stats: PartyVoteStats; partyColor: string }) {
             },
           },
         },
+        plugins: [centreTextPlugin],
       })
     })
     return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null } }
-  }, [stats])
+  }, [stats, total])
 
   const legendItems = [
     { label: 'Aye', count: stats.aye, color: '#2E6B40' },
@@ -115,17 +135,6 @@ function DonutChart({ stats }: { stats: PartyVoteStats; partyColor: string }) {
           aria-label={`Voting breakdown: Aye ${stats.aye.toLocaleString()}, No ${stats.no.toLocaleString()}, Abstain ${stats.abstained.toLocaleString()}, No show ${stats.noShow.toLocaleString()}`}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
         />
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          pointerEvents: 'none',
-        }}>
-          <span style={{ fontSize: 18, fontWeight: 500, color: 'var(--ink)' }}>
-            {total.toLocaleString()}
-          </span>
-          <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>votes</span>
-        </div>
       </div>
       <div className={styles.donutLegend}>
         {legendItems.map((item) => (
@@ -147,7 +156,9 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
 
   useEffect(() => {
     const expanded = expandTrend(trend)
+    let cancelled = false
     import('chart.js/auto').then(({ Chart }) => {
+      if (cancelled) return
       if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
       if (!canvasRef.current) return
       chartRef.current = new Chart(canvasRef.current, {
@@ -203,10 +214,13 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
         },
       })
     })
-    return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null } }
+    return () => {
+      cancelled = true
+      if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
+    }
   }, [trend, partyColor])
 
-  return <canvas ref={canvasRef} role="img" aria-label="Party attendance over time (line chart)" />
+  return <canvas ref={canvasRef} role="img" aria-label="Party attendance over time (line chart)" style={{ position: 'absolute', inset: 0 }} />
 }
 
 export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyStatsProps) {
