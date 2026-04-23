@@ -103,44 +103,6 @@
   gap: var(--s-3);
 }
 
-/* Search button */
-.searchBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 14px;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-pill);
-  font-size: 13px;
-  color: var(--ink-3);
-  background: transparent;
-  cursor: pointer;
-  min-width: 220px;
-  transition: border-color 150ms, background 150ms;
-  white-space: nowrap;
-}
-
-.searchBtn:hover {
-  background: var(--paper-2);
-  color: var(--ink);
-}
-
-.searchBtnKbd {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  background: var(--paper-2);
-  padding: 1px 6px;
-  border-radius: 4px;
-  border: 1px solid var(--rule);
-  color: var(--ink-4);
-}
-
-@media (max-width: 767px) {
-  .searchBtn { display: none; }
-}
-
 /* Hamburger — mobile/tablet only */
 .hamburger {
   display: none;
