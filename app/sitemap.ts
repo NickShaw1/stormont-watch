@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { getAllDivisionsFromDb, getAllMembers, getAllBills } from '@/lib/db/queries'
+import { getAllDivisionsFromDb, getAllMembers, getAllBills, getAllPartiesWithStats } from '@/lib/db/queries'
 
 export const runtime = 'edge'
 
@@ -13,6 +13,7 @@ const STATIC_URLS: MetadataRoute.Sitemap = [
   { url: `${BASE}/assembly/votes`, changeFrequency: 'daily', priority: 0.9 },
   { url: `${BASE}/assembly/mlas`, changeFrequency: 'weekly', priority: 0.8 },
   { url: `${BASE}/assembly/bills`, changeFrequency: 'daily', priority: 0.8 },
+  { url: `${BASE}/assembly/parties`, changeFrequency: 'weekly', priority: 0.8 },
   { url: `${BASE}/assembly/structure`, changeFrequency: 'weekly', priority: 0.7 },
   { url: `${BASE}/assembly/stats`, changeFrequency: 'daily', priority: 0.7 },
   { url: `${BASE}/assembly/expenses`, changeFrequency: 'monthly', priority: 0.7 },
@@ -25,10 +26,11 @@ const STATIC_URLS: MetadataRoute.Sitemap = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
-    const [rows, members, bills] = await Promise.all([
+    const [rows, members, bills, parties] = await Promise.all([
       getAllDivisionsFromDb(),
       getAllMembers(),
       getAllBills(),
+      getAllPartiesWithStats(),
     ])
 
     const voteUrls: MetadataRoute.Sitemap = bills.map((bill) => ({
@@ -52,7 +54,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }))
 
-    return [...STATIC_URLS, ...voteUrls, ...divisionUrls, ...mlaUrls]
+    const partyUrls: MetadataRoute.Sitemap = parties.map((p) => ({
+      url: `${BASE}/assembly/parties/${p.slug}`,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    }))
+
+    return [...STATIC_URLS, ...voteUrls, ...divisionUrls, ...mlaUrls, ...partyUrls]
   } catch {
     return STATIC_URLS
   }

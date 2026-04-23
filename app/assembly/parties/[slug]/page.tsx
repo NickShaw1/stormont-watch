@@ -54,12 +54,29 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const party = await getPartyBySlug(params.slug)
   if (!party) return { title: 'Party not found' }
+  const prose = PARTY_DESCRIPTIONS[party.party]
+  const firstSentence = prose ? prose.split('. ')[0] + '.' : null
+  const description = firstSentence
+    ? `${firstSentence} Track their voting record, attendance, expenses and more on Stormont Watch.`
+    : `${party.party} has ${party.mlaCount} ${party.mlaCount === 1 ? 'MLA' : 'MLAs'} in the Northern Ireland Assembly. Track their voting record, attendance, expenses and more.`
   return {
     title: party.party,
-    description: `${party.mlaCount} MLAs from ${party.party} in the Northern Ireland Assembly.`,
+    description,
     openGraph: {
       title: `${party.party} — Stormont Watch`,
-      description: `${party.mlaCount} MLAs from ${party.party} in the Northern Ireland Assembly.`,
+      description,
+      images: [
+        {
+          url: `/assembly/parties/${params.slug}/opengraph-image`,
+          width: 1200,
+          height: 630,
+          alt: `${party.party} — Stormont Watch`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      images: [`/assembly/parties/${params.slug}/opengraph-image`],
     },
     alternates: { canonical: `https://www.stormontwatch.com/assembly/parties/${params.slug}` },
   }
@@ -78,8 +95,20 @@ export default async function PartyDetailPage({ params }: Props) {
   const wikiUrl = PARTY_WIKIPEDIA[party.party]
   const description = PARTY_DESCRIPTIONS[party.party]
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'PoliticalParty',
+    name: party.party,
+    url: `https://www.stormontwatch.com/assembly/parties/${params.slug}`,
+    ...(PARTY_URLS[party.party] ? { sameAs: [PARTY_URLS[party.party], PARTY_WIKIPEDIA[party.party]].filter(Boolean) } : {}),
+  }
+
   return (
     <div className="container">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className={styles.partyHeader}>
         <nav aria-label="Breadcrumb" className="breadcrumb">
           <ol>

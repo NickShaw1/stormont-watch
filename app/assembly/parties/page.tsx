@@ -8,10 +8,10 @@ export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: 'Parties',
-  description: 'Political parties represented in the Northern Ireland Assembly.',
+  description: 'Every political party in the Northern Ireland Assembly — voting records, attendance, party cohesion, expenses and MLA profiles for the 2022–2027 mandate.',
   openGraph: {
     title: 'Parties — Stormont Watch',
-    description: 'Political parties represented in the Northern Ireland Assembly.',
+    description: 'Every political party in the Northern Ireland Assembly — voting records, attendance, party cohesion, expenses and MLA profiles for the 2022–2027 mandate.',
   },
   alternates: { canonical: 'https://www.stormontwatch.com/assembly/parties' },
 }

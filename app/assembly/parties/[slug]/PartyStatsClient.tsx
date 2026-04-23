@@ -133,7 +133,7 @@ function DonutChart({ stats }: { stats: PartyVoteStats; partyColor: string }) {
           ref={canvasRef}
           role="img"
           aria-label={`Voting breakdown: Aye ${stats.aye.toLocaleString()}, No ${stats.no.toLocaleString()}, Abstain ${stats.abstained.toLocaleString()}, No show ${stats.noShow.toLocaleString()}`}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }}
         />
       </div>
       <div className={styles.donutLegend}>
@@ -155,6 +155,7 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
   const chartRef = useRef<{ destroy: () => void } | null>(null)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
     const expanded = expandTrend(trend)
     let cancelled = false
     import('chart.js/auto').then(({ Chart }) => {
@@ -220,7 +221,7 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
     }
   }, [trend, partyColor])
 
-  return <canvas ref={canvasRef} role="img" aria-label="Party attendance over time (line chart)" style={{ position: 'absolute', inset: 0 }} />
+  return <canvas ref={canvasRef} role="img" aria-label="Party attendance over time (line chart)" />
 }
 
 export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyStatsProps) {
@@ -262,7 +263,7 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
       {/* Trend chart */}
       <hr className="section-rule" />
       <h3 className={styles.statsHeading}>Party attendance over time</h3>
-      <div style={{ position: 'relative', height: 200 }}>
+      <div style={{ position: 'relative', width: '100%', height: '200px' }}>
         <TrendChart trend={stats.trend} partyColor={partyColor} />
       </div>
       {hasGap(stats.trend) && (
