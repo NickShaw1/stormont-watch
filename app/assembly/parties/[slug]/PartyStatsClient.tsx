@@ -156,67 +156,93 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const expanded = expandTrend(trend)
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+
     let cancelled = false
-    import('chart.js/auto').then(({ Chart }) => {
+
+    function initChart() {
       if (cancelled) return
-      if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
       if (!canvasRef.current) return
-      chartRef.current = new Chart(canvasRef.current, {
-        type: 'line',
-        data: {
-          labels: expanded.map((p) => p.label),
-          datasets: [{
-            data: expanded.map((p) => p.value),
-            borderColor: partyColor,
-            backgroundColor: partyColor + '22',
-            fill: true,
-            pointRadius: 3,
-            pointHoverRadius: 5,
-            tension: 0.3,
-            spanGaps: false,
-          }],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: (item) => `${item.raw}%`,
-              },
-            },
+      if (canvasRef.current.offsetWidth === 0) return
+
+      import('chart.js/auto').then(({ Chart }) => {
+        if (cancelled) return
+        if (!canvasRef.current) return
+        if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
+        const expanded = expandTrend(trend)
+        chartRef.current = new Chart(canvasRef.current, {
+          type: 'line',
+          data: {
+            labels: expanded.map((p) => p.label),
+            datasets: [{
+              data: expanded.map((p) => p.value),
+              borderColor: partyColor,
+              backgroundColor: partyColor + '22',
+              fill: true,
+              pointRadius: 3,
+              pointHoverRadius: 5,
+              tension: 0.3,
+              spanGaps: false,
+            }],
           },
-          scales: {
-            y: {
-              min: 0,
-              max: 100,
-              grid: { color: 'rgba(0,0,0,0.06)' },
-              ticks: {
-                font: { size: 11 },
-                callback: (v) => `${v}%`,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (item) => `${item.raw}%`,
+                },
               },
             },
-            x: {
-              grid: { display: false },
-              ticks: {
-                font: { size: 11 },
-                maxRotation: 0,
-                autoSkip: false,
-                callback: function(val, index, ticks) {
-                  if (index === 0) return (this as { getLabelForValue(v: number): string }).getLabelForValue(val as number)
-                  if (index === ticks.length - 1) return 'Present'
-                  return ''
+            scales: {
+              y: {
+                min: 0,
+                max: 100,
+                grid: { color: 'rgba(0,0,0,0.06)' },
+                ticks: {
+                  font: { size: 11 },
+                  callback: (v) => `${v}%`,
+                },
+              },
+              x: {
+                grid: { display: false },
+                ticks: {
+                  font: { size: 11 },
+                  maxRotation: 0,
+                  autoSkip: false,
+                  callback: function(val, index, ticks) {
+                    if (index === 0) return (this as { getLabelForValue(v: number): string }).getLabelForValue(val as number)
+                    if (index === ticks.length - 1) return 'Present'
+                    return ''
+                  },
                 },
               },
             },
           },
-        },
+        })
       })
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0) {
+          initChart()
+          observer.disconnect()
+          break
+        }
+      }
     })
+
+    observer.observe(canvas)
+    initChart()
+
     return () => {
       cancelled = true
+      observer.disconnect()
       if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
     }
   }, [trend, partyColor])
