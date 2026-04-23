@@ -187,7 +187,7 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
                   font: { size: 11 },
                   maxRotation: 0,
                   autoSkip: false,
-                  callback: function(val, _index) {
+                  callback: function(val) {
                     const label = (this as { getLabelForValue(v: number): string }).getLabelForValue(val as number)
                     return label.startsWith('Jan') ? label : ''
                   },
