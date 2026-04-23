@@ -130,7 +130,7 @@ export default function ExpensesListClient({ rows, totalMlaCount }: Props) {
 
       {/* Result count */}
       <p className={styles.resultCount} aria-live="polite" aria-atomic="true">
-        <strong style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{displayCount}</strong>{' '}
+        <strong>{displayCount}</strong>{' '}
         <span className={styles.resultCountDesktop}>{partyFilter === 'ALL' ? 'current' : partyLabel(partyFilter)} MLA{displayCount !== 1 ? 's' : ''} with published expenses for this period</span>
         <span className={styles.resultCountMobile}>Current MLA{displayCount !== 1 ? 's' : ''}</span>
       </p>

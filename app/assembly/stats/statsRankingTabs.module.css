@@ -218,6 +218,10 @@
 }
 
 @media (max-width: 767px) {
+  .cardTitle {
+    font-size: 0.8125rem;
+  }
+
   .card {
     padding: 12px;
     overflow: hidden;

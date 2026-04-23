@@ -1,0 +1,165 @@
+/* ── Page header ────────────────────────────────────────────── */
+.pageHeader {
+  padding-block: var(--s-12) var(--s-8);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: var(--s-10);
+  display: flex;
+  align-items: center;
+  gap: var(--s-8);
+}
+
+.headerLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.headerChart {
+  flex: 0 0 320px;
+  width: 320px;
+}
+
+.mobileRule {
+  display: none;
+}
+
+.pageHeader h1 {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: clamp(48px, 6vw, 96px);
+  letter-spacing: -0.045em;
+  line-height: 0.96;
+  margin-top: var(--s-2);
+}
+
+.lede {
+  font-size: 15px;
+  color: var(--ink-2);
+  max-width: 60ch;
+  margin-top: var(--s-4);
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .pageHeader {
+    flex-direction: column;
+    align-items: stretch;
+    padding-block: var(--s-8) var(--s-6);
+  }
+  .mobileRule {
+    display: block;
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 0;
+  }
+  .headerChart {
+    flex: unset;
+    width: 100%;
+    max-width: 320px;
+    align-self: center;
+  }
+  .pageHeader h1 { font-size: 44px; letter-spacing: -0.045em; }
+}
+
+/* ── Cards grid ─────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-3);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.grid > li {
+  display: contents;
+}
+
+/* ── Party card ─────────────────────────────────────────────── */
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-3);
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+
+.card:hover {
+  border-color: var(--teal);
+  background: var(--paper-2);
+  text-decoration: none;
+}
+
+/* ── Card body ──────────────────────────────────────────────── */
+.cardBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-5);
+  min-width: 0;
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.partyNameWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.partySwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.partyName {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.mlaCount {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.description {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.5;
+  flex: 1;
+}
+
+/* ── View link ──────────────────────────────────────────────── */
+.viewLink {
+  font-size: 13px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 120ms;
+}
+
+.card:hover .viewLink {
+  color: var(--teal);
+}
+
+.partyNameShort { display: none; }
+
+/* ── Mobile ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .partyName { font-size: 17px; }
+  .partyNameFull { display: none; }
+  .partyNameShort { display: inline; }
+}

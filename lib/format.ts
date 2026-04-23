@@ -231,3 +231,12 @@ export function formatConstituency(constituency: string | null | undefined): str
   if (!constituency) return ''
   return CONSTITUENCY_ABBREVIATIONS[constituency] ?? constituency
 }
+
+export function partySlug(party: string): string {
+  return party
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+}

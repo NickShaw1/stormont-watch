@@ -100,9 +100,10 @@
 
 /* Result count */
 .resultCount {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-bottom: var(--spacing-md);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  color: var(--ink-3);
+  margin-bottom: var(--s-5);
 }
 
 /* Table wrapper */

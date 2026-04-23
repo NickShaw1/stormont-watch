@@ -496,6 +496,121 @@ export async function getMlasWithoutExpenses() {
     .map(row => ({ ...row, img_url: mlaImg(row.person_id) }))
 }
 
+export interface PartyMlaExpense {
+  personId: string
+  fullName: string
+  imgUrl: string | null
+  constituency: string | null
+  total: number
+  financialYear: string
+  period: string
+}
+
+export interface PartyExpenseStats {
+  financialYear: string
+  period: string
+  partyTotal: number
+  avgPerMla: number
+  highestMla: PartyMlaExpense
+  lowestMla: PartyMlaExpense
+  visitCount: number
+  rankTotal: number
+  rankAvg: number
+  rankVisits: number
+  partyCount: number
+  mlas: PartyMlaExpense[]
+}
+
+export async function getPartyExpenses(party: string): Promise<PartyExpenseStats | null> {
+  const [mlaRows, visitRows, rankRows] = await Promise.all([
+    db
+      .select({
+        personId: expenses.personId,
+        fullName: members.fullName,
+        imgUrl: members.imgUrl,
+        constituency: members.constituency,
+        total: expenses.total,
+        financialYear: expenses.financialYear,
+        period: expenses.period,
+      })
+      .from(expenses)
+      .innerJoin(members, eq(expenses.personId, members.personId))
+      .where(and(
+        eq(expenses.financialYear, '2025-2026'),
+        eq(members.mandate, CURRENT_MANDATE),
+        eq(members.isCurrent, true),
+        eq(members.party, party),
+      ))
+      .orderBy(desc(expenses.total)),
+    db
+      .select({ count: count() })
+      .from(registeredInterests)
+      .innerJoin(members, eq(registeredInterests.personId, members.personId))
+      .where(and(
+        eq(registeredInterests.registerCategory, 'Visits'),
+        eq(members.mandate, CURRENT_MANDATE),
+        eq(members.party, party),
+      )),
+    db.execute(sql`
+      SELECT
+        m.party,
+        RANK() OVER (ORDER BY SUM(e.total) DESC) AS rank_total,
+        RANK() OVER (ORDER BY AVG(e.total) DESC) AS rank_avg,
+        RANK() OVER (ORDER BY COUNT(DISTINCT ri.id) DESC) AS rank_visits,
+        COUNT(*) AS party_count
+      FROM expenses e
+      JOIN members m ON m.person_id = e.person_id
+      LEFT JOIN registered_interests ri
+        ON ri.person_id = m.person_id
+        AND ri.register_category = 'Visits'
+        AND m.mandate = '2022-2027'
+      WHERE e.financial_year = '2025-2026'
+        AND m.mandate = '2022-2027'
+        AND m.is_current = true
+      GROUP BY m.party
+    `),
+  ])
+
+  if (mlaRows.length === 0) return null
+
+  const mlas: PartyMlaExpense[] = mlaRows.map(r => ({
+    personId: r.personId,
+    fullName: r.fullName,
+    imgUrl: mlaImg(r.personId),
+    constituency: r.constituency,
+    total: parseFloat(r.total as unknown as string),
+    financialYear: r.financialYear,
+    period: r.period ?? '',
+  }))
+
+  const partyTotal = mlas.reduce((sum, m) => sum + m.total, 0)
+  const avgPerMla = partyTotal / mlas.length
+  const visitCount = Number(visitRows[0]?.count ?? 0)
+
+  type RankRow = { party: string; rank_total: string; rank_avg: string; rank_visits: string; party_count: string }
+  const rankData = rankRows.rows as RankRow[]
+  const partyCount = rankData.length
+  const myRank = rankData.find(r => r.party === party)
+  const rankTotal = myRank ? Number(myRank.rank_total) : 0
+  const rankAvg = myRank ? Number(myRank.rank_avg) : 0
+  const rankVisits = myRank ? Number(myRank.rank_visits) : 0
+
+  return {
+    financialYear: mlas[0].financialYear,
+    period: mlas[0].period,
+    partyTotal,
+    avgPerMla,
+    highestMla: mlas[0],
+    lowestMla: mlas[mlas.length - 1],
+    visitCount,
+    rankTotal,
+    rankAvg,
+    rankVisits,
+    partyCount,
+    mlas,
+  }
+}
+
 export async function getMemberExpenses(personId: string) {
   return db
     .select()
@@ -1143,6 +1258,133 @@ export async function getInProgressBills(limit = 5) {
     .limit(limit)
 }
 
+export interface PartyStats {
+  party: string
+  slug: string
+  mlaCount: number
+  ministers: { fullName: string; personId: string; imgUrl: string | null; roleTitle: string | null; department: string | null }[] | null
+  committeeChairs: { fullName: string; personId: string; imgUrl: string | null; committeeName: string }[] | null
+  mlas: { personId: string; fullName: string; imgUrl: string | null; constituency: string | null } [] | null
+}
+
+export interface PartyDetail extends PartyStats {
+  mlas: { personId: string; fullName: string; imgUrl: string | null; constituency: string | null; assemblyRole: string | null; assemblyRoleEnd: string | null }[]
+}
+
+function makePartySlug(party: string): string {
+  return party
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+}
+
+export async function getAllPartiesWithStats(): Promise<PartyStats[]> {
+  const result = await db.execute(sql`
+    SELECT
+      m.party,
+      COUNT(DISTINCT m.person_id) AS mla_count,
+      json_agg(
+        json_build_object(
+          'fullName', mi_m.full_name,
+          'personId', mi_m.person_id,
+          'imgUrl', mi_m.img_url,
+          'roleTitle', mi.role_title,
+          'department', mi.department
+        ) ORDER BY mi_m.full_name
+      ) FILTER (WHERE mi.person_id IS NOT NULL) AS ministers,
+      json_agg(
+        json_build_object(
+          'fullName', cc_m.full_name,
+          'personId', cc_m.person_id,
+          'imgUrl', cc_m.img_url,
+          'committeeName', cc.committee_name
+        ) ORDER BY cc_m.full_name
+      ) FILTER (WHERE cc.person_id IS NOT NULL) AS committee_chairs,
+      json_agg(
+        json_build_object(
+          'fullName', m.full_name,
+          'personId', m.person_id,
+          'constituency', m.constituency
+        ) ORDER BY m.full_name
+      ) AS mlas
+    FROM members m
+    LEFT JOIN ministers mi ON mi.person_id = m.person_id
+    LEFT JOIN members mi_m ON mi_m.person_id = mi.person_id
+    LEFT JOIN committee_chairs cc ON cc.person_id = m.person_id
+    LEFT JOIN members cc_m ON cc_m.person_id = cc.person_id
+    WHERE m.is_current = true
+    AND m.mandate = '2022-2027'
+    GROUP BY m.party
+    ORDER BY
+      CASE WHEN m.party = 'Independent' THEN 1 ELSE 0 END ASC,
+      COUNT(DISTINCT m.person_id) DESC
+  `)
+
+  type RawRow = {
+    party: string
+    mla_count: string | number
+    ministers: unknown
+    committee_chairs: unknown
+    mlas: unknown
+  }
+
+  return (result.rows as RawRow[]).map((row) => {
+    const parseJson = (val: unknown): unknown[] | null => {
+      if (!val) return null
+      if (Array.isArray(val)) return val
+      if (typeof val === 'string') {
+        try { return JSON.parse(val) } catch { return null }
+      }
+      return null
+    }
+
+    const rawMins = parseJson(row.ministers) as { fullName: string; personId: string; imgUrl: string | null; roleTitle: string | null; department: string | null }[] | null
+    const rawChairs = parseJson(row.committee_chairs) as { fullName: string; personId: string; imgUrl: string | null; committeeName: string }[] | null
+    const rawMlas = parseJson(row.mlas) as { fullName: string; personId: string; constituency: string | null }[] | null
+
+    return {
+      party: row.party,
+      slug: makePartySlug(row.party),
+      mlaCount: Number(row.mla_count),
+      ministers: rawMins ? rawMins.map(m => ({ ...m, imgUrl: mlaImg(m.personId) })) : null,
+      committeeChairs: rawChairs ? rawChairs.map(c => ({ ...c, imgUrl: mlaImg(c.personId) })) : null,
+      mlas: rawMlas ? rawMlas.map(m => ({ ...m, imgUrl: mlaImg(m.personId) })) : null,
+    }
+  })
+}
+
+export async function getPartyBySlug(slug: string): Promise<PartyDetail | null> {
+  const all = await getAllPartiesWithStats()
+  const match = all.find((p) => p.slug === slug)
+  if (!match) return null
+
+  const mlasResult = await db.execute(sql`
+    SELECT
+      person_id, full_name, img_url, constituency,
+      assembly_role, assembly_role_end
+    FROM members
+    WHERE is_current = true
+    AND mandate = '2022-2027'
+    AND party = ${match.party}
+    ORDER BY SPLIT_PART(REGEXP_REPLACE(full_name, '^(Mr|Mrs|Miss|Ms|Dr|Lord|Lady|Sir)\s+', '', 'i'), ' ', -1) ASC
+  `)
+
+  type MlaRow = { person_id: string; full_name: string; img_url: string | null; constituency: string | null; assembly_role: string | null; assembly_role_end: string | null }
+
+  const mlas = (mlasResult.rows as MlaRow[]).map((r) => ({
+    personId: r.person_id,
+    fullName: r.full_name,
+    imgUrl: mlaImg(r.person_id),
+    constituency: r.constituency,
+    assemblyRole: r.assembly_role,
+    assemblyRoleEnd: r.assembly_role_end,
+  }))
+
+  return { ...match, mlas }
+}
+
 export async function getInProgressBillsCount(): Promise<number> {
   const result = await db
     .select({ count: count() })
@@ -1177,4 +1419,186 @@ export async function getBillsRoyalAssentByMonth() {
     ORDER BY gs.month ASC
   `)
   return result.rows as { month: string; assent_count: number }[]
+}
+
+export interface MlaAttendanceStat {
+  personId: string
+  fullName: string
+  attendancePct: number
+  present: number
+  total: number
+  imgUrl: string | null
+  constituency: string | null
+}
+
+export interface PartyVoteStats {
+  aye: number
+  no: number
+  abstained: number
+  noShow: number
+  attendancePct: number
+  present: number
+  total: number
+  highestMla: MlaAttendanceStat
+  lowestMla: MlaAttendanceStat
+  trend: { month: string; attendancePct: number }[]
+  recentDivisions: {
+    documentId: string
+    subject: string
+    title: string | null
+    divisionDate: string
+    outcome: string | null
+    partyVote: string | null
+  }[]
+}
+
+export async function getPartyAssemblyStats(party: string): Promise<PartyVoteStats> {
+  const [votesResult, mlaResult, trendResult, divisionsResult] = await Promise.all([
+    db.execute(sql`
+      SELECT
+        COUNT(CASE WHEN v.vote = 'AYE' THEN 1 END) as aye,
+        COUNT(CASE WHEN v.vote = 'NO' THEN 1 END) as no,
+        COUNT(CASE WHEN v.vote = 'ABSTAINED' THEN 1 END) as abstained,
+        COUNT(CASE WHEN v.vote = 'NO_SHOW' THEN 1 END) as no_show,
+        COUNT(DISTINCT CASE WHEN v.vote != 'NO_SHOW' THEN v.document_id END) as present,
+        COUNT(DISTINCT v.document_id) as total,
+        ROUND(
+          COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) * 100.0 /
+          NULLIF(COUNT(*), 0), 1
+        ) as attendance_pct
+      FROM votes v
+      JOIN members m ON m.person_id = v.person_id
+      WHERE m.mandate = '2022-2027'
+      AND m.party = ${party}
+    `),
+    db.execute(sql`
+      SELECT person_id, full_name, attendance_pct, present, total, constituency
+      FROM (
+        SELECT
+          m.person_id, m.full_name, m.constituency,
+          COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) as present,
+          COUNT(*) as total,
+          ROUND(
+            COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) * 100.0 /
+            NULLIF(COUNT(*), 0), 1
+          ) as attendance_pct,
+          ROW_NUMBER() OVER (
+            ORDER BY COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) * 100.0 /
+            NULLIF(COUNT(*), 0) DESC
+          ) as rnk_high,
+          ROW_NUMBER() OVER (
+            ORDER BY COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) * 100.0 /
+            NULLIF(COUNT(*), 0) ASC
+          ) as rnk_low
+        FROM votes v
+        JOIN members m ON m.person_id = v.person_id
+        WHERE m.mandate = '2022-2027'
+        AND m.party = ${party}
+        AND m.is_current = true
+        AND (m.assembly_role IS NULL OR m.assembly_role NOT ILIKE '%speaker%')
+        AND NOT EXISTS (
+          SELECT 1 FROM ministers mi
+          WHERE mi.person_id = m.person_id
+          AND (mi.role_title ILIKE '%First Minister%' OR mi.role_title ILIKE '%deputy First Minister%')
+        )
+        GROUP BY m.person_id, m.full_name, m.constituency
+      ) sub
+      WHERE rnk_high = 1 OR rnk_low = 1
+    `),
+    db.execute(sql`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', d.division_date), 'Mon YYYY') as month,
+        DATE_TRUNC('month', d.division_date) as month_date,
+        ROUND(
+          COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) * 100.0 /
+          NULLIF(COUNT(*), 0), 1
+        ) as attendance_pct
+      FROM votes v
+      JOIN members m ON m.person_id = v.person_id
+      JOIN divisions d ON d.document_id = v.document_id
+      WHERE m.mandate = '2022-2027'
+      AND m.party = ${party}
+      GROUP BY DATE_TRUNC('month', d.division_date)
+      ORDER BY month_date ASC
+    `),
+    db.execute(sql`
+      SELECT document_id, subject, title, division_date, outcome, party_vote
+      FROM (
+        SELECT DISTINCT
+          d.document_id,
+          d.subject,
+          d.title,
+          d.division_date::text as division_date,
+          d.outcome,
+          d.division_date as sort_date,
+          (
+            SELECT v2.vote
+            FROM votes v2
+            JOIN members m2 ON m2.person_id = v2.person_id
+            WHERE v2.document_id = d.document_id
+            AND m2.party = ${party}
+            AND m2.mandate = '2022-2027'
+            GROUP BY v2.vote
+            ORDER BY COUNT(*) DESC
+            LIMIT 1
+          ) as party_vote
+        FROM divisions d
+        JOIN votes v ON v.document_id = d.document_id
+        JOIN members m ON m.person_id = v.person_id
+        WHERE m.party = ${party}
+        AND m.mandate = '2022-2027'
+      ) sub
+      ORDER BY sort_date DESC
+      LIMIT 5
+    `),
+  ])
+
+  type VoteRow = { aye: string; no: string; abstained: string; no_show: string; attendance_pct: string }
+  type MlaRow = { person_id: string; full_name: string; attendance_pct: string; present: string; total: string; constituency: string | null }
+  type TrendRow = { month: string; attendance_pct: string }
+  type DivRow = { document_id: string; subject: string; title: string | null; division_date: string; outcome: string | null; party_vote: string | null }
+
+  type VoteRowFull = VoteRow & { present: string; total: string }
+  const vr = votesResult.rows[0] as VoteRowFull
+  const mlaRows = mlaResult.rows as MlaRow[]
+  const trendRows = trendResult.rows as TrendRow[]
+  const divRows = divisionsResult.rows as DivRow[]
+
+  const sorted = [...mlaRows].sort((a, b) => parseFloat(b.attendance_pct) - parseFloat(a.attendance_pct))
+  const toStat = (r: MlaRow): MlaAttendanceStat => ({
+    personId: r.person_id,
+    fullName: r.full_name,
+    attendancePct: parseFloat(r.attendance_pct),
+    present: parseInt(r.present),
+    total: parseInt(r.total),
+    imgUrl: mlaImg(r.person_id),
+    constituency: r.constituency,
+  })
+  const highestMla: MlaAttendanceStat = sorted[0]
+    ? toStat(sorted[0])
+    : { personId: '', fullName: '', attendancePct: 0, present: 0, total: 0, imgUrl: null, constituency: null }
+  const lowestMla: MlaAttendanceStat = sorted[sorted.length - 1]
+    ? toStat(sorted[sorted.length - 1])
+    : highestMla
+
+  return {
+    aye: parseInt(vr?.aye ?? '0'),
+    no: parseInt(vr?.no ?? '0'),
+    abstained: parseInt(vr?.abstained ?? '0'),
+    noShow: parseInt(vr?.no_show ?? '0'),
+    attendancePct: parseFloat(vr?.attendance_pct ?? '0'),
+    present: parseInt(vr?.present ?? '0'),
+    total: parseInt(vr?.total ?? '0'),
+    highestMla,
+    lowestMla,
+    trend: trendRows.map((r) => ({ month: r.month, attendancePct: parseFloat(r.attendance_pct) })),
+    recentDivisions: divRows.map((r) => ({
+      documentId: r.document_id,
+      subject: r.subject,
+      title: r.title,
+      divisionDate: r.division_date,
+      outcome: r.outcome,
+      partyVote: r.party_vote,
+    })),
+  }
 }

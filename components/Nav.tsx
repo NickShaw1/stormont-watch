@@ -29,6 +29,7 @@ function EyeLogo() {
 const navLinks = [
   { href: '/assembly/structure', label: 'Assembly' },
   { href: '/assembly/mlas', label: 'MLAs' },
+  { href: '/assembly/parties', label: 'Parties' },
   { href: '/assembly/bills', label: 'Legislation' },
   { href: '/assembly/votes', label: 'Votes' },
   { href: '/assembly/stats', label: 'Stats' },

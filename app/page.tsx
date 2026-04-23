@@ -340,14 +340,14 @@ export default async function HomePage() {
             <span className={styles.sectionEyebrow}>Assembly floor</span>
             <h2 className={styles.sectionTitle}>Recent divisions</h2>
           </div>
-          <Link href="/assembly/votes" className={styles.viewAll}>All divisions →</Link>
+          <Link href="/assembly/votes" className={styles.viewAll}>All divisions ↗</Link>
         </div>
         <div className={`${styles.sectionHead} ${styles.sectionHeadBills}`}>
           <div>
             <span className={styles.sectionEyebrow}>Legislation</span>
             <h2 className={styles.sectionTitle}>Active Legislation</h2>
           </div>
-          <Link href="/assembly/bills" className={styles.viewAll}>All bills →</Link>
+          <Link href="/assembly/bills" className={styles.viewAll}>All bills ↗</Link>
         </div>
 
         {/* Paired rows — div + bill share the same grid row so border lines align */}
