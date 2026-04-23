@@ -43,24 +43,9 @@ const allLinks = [
 export default function Nav() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
-  const hamburgerRef = useRef<HTMLButtonElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
-  const didOpen = useRef(false)
 
   const handleNavClick = () => setOpen(false)
-
-  // Focus into drawer on open; return focus to hamburger on close
-  useEffect(() => {
-    if (open) {
-      didOpen.current = true
-      requestAnimationFrame(() => {
-        const first = drawerRef.current?.querySelector<HTMLElement>('a[href], button:not([disabled])')
-        first?.focus()
-      })
-    } else if (didOpen.current) {
-      hamburgerRef.current?.focus()
-    }
-  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -135,7 +120,6 @@ export default function Nav() {
 
         <div className={styles.navRight}>
           <button
-            ref={hamburgerRef}
             className={styles.hamburger}
             aria-expanded={open}
             aria-controls="mobile-menu"
