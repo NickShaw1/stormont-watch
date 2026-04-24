@@ -216,8 +216,11 @@ export function formatRoleTitle(title: string): string {
 /**
  * Derive initials from a full name (up to 2 characters).
  */
+const TITLES = new Set(['mr', 'mrs', 'ms', 'miss', 'dr', 'prof', 'rev'])
+
 export function initials(name: string): string {
-  const parts = name.trim().split(/\s+/)
+  const parts = name.trim().split(/\s+/).filter(p => !TITLES.has(p.toLowerCase().replace(/\.$/, '')))
+  if (parts.length === 0) return ''
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
