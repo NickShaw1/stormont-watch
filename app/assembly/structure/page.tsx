@@ -1,5 +1,3 @@
-export const runtime = 'edge'
-
 import type { Metadata } from 'next'
 import { getAllMinisters, getAllCommitteeChairs } from '@/lib/db/queries'
 

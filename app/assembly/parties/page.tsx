@@ -1,5 +1,3 @@
-export const runtime = 'edge'
-
 import type { Metadata } from 'next'
 import { getAllPartiesWithStats } from '@/lib/db/queries'
 import PartiesClient from './PartiesClient'
