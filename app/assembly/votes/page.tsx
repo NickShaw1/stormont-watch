@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { getAllDivisionsForList } from '@/lib/db/queries'
 
-export const revalidate = 86400
 import { isPassed } from '@/lib/bills'
 import VotesListClient from './VotesListClient'
 import type { VoteItem } from './VotesListClient'

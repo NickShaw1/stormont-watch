@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { getQuestionsRankingTable } from '@/lib/db/queries'
 import QuestionsRankingClient from './QuestionsRankingClient'
 
-export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: 'Questions Rankings',

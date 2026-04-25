@@ -4,7 +4,6 @@ import { isPassed } from '@/lib/bills'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 
 export const dynamic = 'force-static'
-export const revalidate = 86400
 
 function billSlug(billId: string): string {
   return billId.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')

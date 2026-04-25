@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { getAllMinisters, getAllCommitteeChairs } from '@/lib/db/queries'
 
-export const revalidate = 86400
 import StructureClient from './StructureClient'
 import styles from './structure.module.css'
 

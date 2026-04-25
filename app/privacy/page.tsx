@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import styles from '../about/about.module.css'
 
-export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',

@@ -5,7 +5,6 @@ import ExpensesListClient from './ExpensesListClient'
 import MissingMlasTable from './MissingMlasTable'
 import styles from './expenses.module.css'
 
-export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: 'MLA Expenses',

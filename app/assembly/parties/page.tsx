@@ -4,7 +4,6 @@ import PartiesClient from './PartiesClient'
 import AssemblyHemicycle from '@/components/AssemblyHemicycle'
 import styles from './parties.module.css'
 
-export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: 'Parties',

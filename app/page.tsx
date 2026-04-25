@@ -40,8 +40,6 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://www.stormontwatch.com' },
 }
 
-export const revalidate = 86400
-
 export default async function HomePage() {
   const now = new Date()
   const [stats, avgAttendance, leastEngaged, mostEngaged, latestDivisions, inProgressBills,

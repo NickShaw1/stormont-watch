@@ -5,7 +5,6 @@ import { formatDate, formatMemberName, formatConstituency, partyBorderColor, abb
 import MlaPhoto from '@/components/MlaPhoto'
 import styles from '../mlas/mlas.module.css'
 
-export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: 'Former MLAs',

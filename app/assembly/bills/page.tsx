@@ -5,7 +5,6 @@ import { groupProgressedBills } from '@/lib/bills/progressedThisWeekProgress'
 import BillsListClient from './BillsListClient'
 import styles from './bills.module.css'
 
-export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: 'Legislation',

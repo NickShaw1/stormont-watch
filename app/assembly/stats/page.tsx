@@ -23,7 +23,6 @@ import {
 import StatsRankingTabs from './StatsRankingTabs'
 import StatsQuestionsSection from './StatsQuestionsSection'
 
-export const revalidate = 86400
 import CrossCommunityTrendsClient from './CrossCommunityTrendsClient'
 import AssemblyProductivityClient from './AssemblyProductivityClient'
 import MlaPhoto from '@/components/MlaPhoto'

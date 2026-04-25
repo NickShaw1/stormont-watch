@@ -10,8 +10,6 @@ import PartyStatsClient from './PartyStatsClient'
 import PartyExpensesClient from './PartyExpensesClient'
 import PartyQuestionsClient from './PartyQuestionsClient'
 
-export const revalidate = 86400
-
 const PARTY_URLS: Record<string, string> = {
   'Sinn Féin': 'https://sinnfein.ie/',
   'Democratic Unionist Party': 'https://mydup.com/',
