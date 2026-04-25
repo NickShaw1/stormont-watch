@@ -45,7 +45,6 @@ export default async function ExpensesPage() {
             <li aria-current="page">MLA expenses</li>
           </ol>
         </nav>
-        <span className="eyebrow">Public accounts</span>
         <h1>MLA expenses</h1>
         <p className="lede">Expenses claimed by every MLA: office costs, travel, constituency support and staff salaries. Published by the Assembly Commission and made searchable here.</p>
       </header>

@@ -35,7 +35,6 @@ export default async function QuestionsRankingPage() {
             <li aria-current="page">Questions</li>
           </ol>
         </nav>
-        <span className="eyebrow">Northern Ireland Assembly</span>
         <h1>Questions Rankings</h1>
         <p className="lede">
           All current MLAs ranked by total questions asked since the start of the 2022–27 mandate. Excludes current ministers and speakers.
