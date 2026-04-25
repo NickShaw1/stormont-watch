@@ -1,3 +1,5 @@
+export const runtime = 'edge'
+
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db/client'
 import { members } from '@/lib/db/schema'

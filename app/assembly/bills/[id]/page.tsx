@@ -39,18 +39,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `${bill.short_title} — Stormont Watch`,
       description,
-      images: [
-        {
-          url: `/assembly/bills/${id}/opengraph-image`,
-          width: 1200,
-          height: 630,
-          alt: `${bill.short_title} — Stormont Watch`,
-        },
-      ],
     },
     twitter: {
       card: 'summary_large_image',
-      images: [`/assembly/bills/${id}/opengraph-image`],
     },
     alternates: { canonical: `https://www.stormontwatch.com/assembly/bills/${id}` },
   }
