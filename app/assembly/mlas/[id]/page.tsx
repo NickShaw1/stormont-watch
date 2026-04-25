@@ -6,19 +6,19 @@ import { db } from '@/lib/db/client'
 import * as schema from '@/lib/db/schema'
 import { sql, eq, and, or, isNull, desc } from 'drizzle-orm'
 
-export const revalidate = 0
-
 export async function generateStaticParams() {
   const members = await getAllMembersIncludingFormer()
   return members.map(m => ({ id: m.personId }))
 }
 import { formatDate, formatMemberName, formatRoleTitle, partyBorderColor, abbreviateParty } from '@/lib/format'
+import dynamic from 'next/dynamic'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
-import VotingRecordClient from './VotingRecordClient'
-import ActivityTabsClient from './ActivityTabsClient'
-import QuestionsTabClient from './QuestionsTabClient'
 import styles from './mlaDetail.module.css'
+
+const VotingRecordClient = dynamic(() => import('./VotingRecordClient'), { loading: () => <div /> })
+const ActivityTabsClient = dynamic(() => import('./ActivityTabsClient'), { loading: () => <div /> })
+const QuestionsTabClient = dynamic(() => import('./QuestionsTabClient'), { loading: () => <div>Loading questions...</div> })
 
 interface Props {
   params: Promise<{ id: string }>
