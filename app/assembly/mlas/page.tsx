@@ -1,3 +1,5 @@
+export const runtime = 'edge'
+
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getMembersGroupedByParty, getAllMinisters, getAllCommitteeChairs } from '@/lib/db/queries'

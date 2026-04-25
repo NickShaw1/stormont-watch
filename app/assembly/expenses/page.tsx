@@ -1,3 +1,5 @@
+export const runtime = 'edge'
+
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getExpensesLeagueTable, getMlasWithoutExpenses } from '@/lib/db/queries'
