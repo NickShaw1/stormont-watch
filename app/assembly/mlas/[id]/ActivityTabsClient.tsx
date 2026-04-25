@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import styles from './mlaDetail.module.css'
 
 type Expenses = {
@@ -25,12 +25,23 @@ type Interest = {
   updatedAt: string | null
 }
 
+type QuestionStat = {
+  year: number
+  month: number
+  writtenCount: number
+  oralCount: number
+}
+
 interface Props {
   expenses: Expenses
   interests: Interest[]
-  questionsContent: React.ReactNode
   totalQuestions: number
-  unansweredQuestions: number
+  writtenCount: number
+  oralCount: number
+  questionStats: QuestionStat[]
+  hideQuestionsTab: boolean
+  partyColor: string
+  questionRank: { rank: number; totalEligible: number } | null
 }
 
 const gbp = (val: string | null | undefined) =>
@@ -47,7 +58,74 @@ function toSentenceCase(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
 
-export default function ActivityTabsClient({ expenses: latestExpenses, interests, questionsContent }: Props) {
+function pct(n: number, total: number) {
+  return total > 0 ? Math.round((n / total) * 100) : 0
+}
+
+function QuestionsChart({ questionStats, partyColor }: { questionStats: QuestionStat[]; partyColor: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    if (!canvasRef.current) return
+
+    const now = new Date()
+    const months: { year: number; month: number; label: string }[] = []
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      months.push({
+        year: d.getFullYear(),
+        month: d.getMonth() + 1,
+        label: d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }),
+      })
+    }
+
+    const statMap = new Map(questionStats.map(r => [`${r.year}-${r.month}`, r.writtenCount + r.oralCount]))
+    const data = months.map(m => statMap.get(`${m.year}-${m.month}`) ?? 0)
+    const labels = months.map(m => m.label)
+
+    let chart: import('chart.js').Chart | null = null
+
+    import('chart.js/auto').then(({ default: Chart }) => {
+      if (!canvasRef.current) return
+      const existing = Chart.getChart(canvasRef.current)
+      if (existing) existing.destroy()
+      chart = new Chart(canvasRef.current, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            data,
+            borderColor: partyColor,
+            backgroundColor: partyColor + '18',
+            borderWidth: 2,
+            pointRadius: 3,
+            fill: true,
+            tension: 0.3,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { mode: 'index' } },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            y: { beginAtZero: true, ticks: { precision: 0, font: { size: 11 } } },
+          },
+        },
+      })
+    })
+
+    return () => { chart?.destroy() }
+  }, [questionStats, partyColor])
+
+  return (
+    <div style={{ height: 180, marginTop: '1rem' }}>
+      <canvas ref={canvasRef} />
+    </div>
+  )
+}
+
+export default function ActivityTabsClient({ expenses: latestExpenses, interests, totalQuestions, writtenCount, oralCount, questionStats, hideQuestionsTab, partyColor, questionRank }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('expenses')
 
   const grouped = interests.reduce<Record<string, Interest[]>>((acc, item) => {
@@ -76,15 +154,49 @@ export default function ActivityTabsClient({ expenses: latestExpenses, interests
           <span className={styles.tabLabelDesktop}>Register of Interests</span>
           <span className={styles.tabLabelMobile}>Interests</span>
         </button>
-        <button
-          role="tab"
-          aria-selected={activeTab === 'questions'}
-          className={`${styles.financesTab} ${activeTab === 'questions' ? styles.financesTabActive : ''}`}
-          onClick={() => setActiveTab('questions')}
-        >
-          Questions
-        </button>
+        {!hideQuestionsTab && totalQuestions > 0 && (
+          <button
+            role="tab"
+            aria-selected={activeTab === 'questions'}
+            className={`${styles.financesTab} ${activeTab === 'questions' ? styles.financesTabActive : ''}`}
+            onClick={() => setActiveTab('questions')}
+          >
+            Questions
+          </button>
+        )}
       </div>
+
+      {activeTab === 'questions' && !hideQuestionsTab && (
+        <div className={styles.questionsPanel}>
+          <div className={styles.questionsCard}>
+            <div className={styles.questionsSummary}>
+              <div className={styles.questionsSummaryCell}>
+                <span className={styles.questionsSummaryLabel}>Total questions</span>
+                <span className={styles.questionsSummaryValue}>{totalQuestions.toLocaleString()}</span>
+                {questionRank && (() => {
+                  const { rank, totalEligible } = questionRank
+                  const pctile = totalEligible > 1 ? (rank - 1) / (totalEligible - 1) : 0
+                  const color = pctile <= 0.33 ? 'var(--forest)' : pctile <= 0.66 ? '#92400E' : 'var(--crimson)'
+                  return <span className={styles.questionsSummaryMeta} style={{ color }}>Ranked {rank}/{totalEligible}</span>
+                })()}
+              </div>
+              <div className={styles.questionsSummaryCell}>
+                <span className={styles.questionsSummaryLabel}>Written</span>
+                <span className={styles.questionsSummaryValue}>{writtenCount.toLocaleString()}</span>
+                <span className={styles.questionsSummaryMeta}>{pct(writtenCount, totalQuestions)}% of total</span>
+              </div>
+              <div className={styles.questionsSummaryCell}>
+                <span className={styles.questionsSummaryLabel}>Oral</span>
+                <span className={styles.questionsSummaryValue}>{oralCount.toLocaleString()}</span>
+                <span className={styles.questionsSummaryMeta}>{pct(oralCount, totalQuestions)}% of total</span>
+              </div>
+            </div>
+            <div className={styles.questionsChartArea}>
+              <QuestionsChart questionStats={questionStats} partyColor={partyColor} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {activeTab === 'expenses' && latestExpenses && (
         <div className={styles.expensesPanel}>
@@ -172,11 +284,6 @@ export default function ActivityTabsClient({ expenses: latestExpenses, interests
         </div>
       )}
 
-      {activeTab === 'questions' && (
-        <div className={styles.questionsTabPanel}>
-          {questionsContent}
-        </div>
-      )}
     </div>
   )
 }

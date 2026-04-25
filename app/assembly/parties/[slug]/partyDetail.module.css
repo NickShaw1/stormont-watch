@@ -87,25 +87,6 @@
   /* max-width: 72ch; */
 }
 
-.wikiPara {
-  margin-top: var(--s-3);
-}
-
-.wikiLink {
-  font-size: 13px;
-  color: var(--ink-3);
-  text-decoration: none;
-  white-space: nowrap;
-  padding-bottom: 2px;
-  border-bottom: 1px solid var(--rule);
-  transition: color 150ms, border-color 150ms;
-}
-
-.wikiLink:hover {
-  color: var(--ink);
-  border-color: var(--ink);
-  text-decoration: none;
-}
 
 /* ── Description block ──────────────────────────────────────── */
 .descriptionBlock {
@@ -120,6 +101,90 @@
 
 .tabContent {
   padding: 0;
+}
+
+/* Questions tab */
+.questionsPanel {
+  padding-top: var(--s-2);
+}
+
+.questionsCard {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: var(--s-4);
+}
+
+.questionsSummary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+
+.questionsSummaryCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-4) var(--s-3);
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+
+.questionsSummaryCell:last-child {
+  border-right: none;
+}
+
+.questionsSummaryLabel {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  margin-bottom: var(--s-1);
+}
+
+.questionsSummaryValue {
+  font-family: var(--font-sans);
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.questionsSummaryMeta {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  margin-top: var(--s-1);
+}
+
+.questionsChartArea {
+  padding: var(--s-4) var(--s-5);
+}
+
+@media (max-width: 640px) {
+  .questionsCard {
+    margin-bottom: 0;
+  }
+
+  .questionsSummary {
+    grid-template-columns: 1fr;
+  }
+
+  .questionsSummaryCell {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .questionsSummaryCell:last-child {
+    border-bottom: none;
+  }
+
+  .questionsChartArea {
+    padding-bottom: 0;
+  }
 }
 
 .billTabs {
@@ -522,21 +587,6 @@
   line-height: 1.3;
 }
 
-/* ── Role badge ─────────────────────────────────────────────── */
-.roleBadge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 10px;
-  padding: 2px 6px;
-  background: var(--teal);
-  color: var(--paper);
-  border-radius: var(--r-1);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  z-index: 1;
-  white-space: nowrap;
-}
 
 /* ── Assembly Stats tab ─────────────────────────────────────── */
 .statsSection {
@@ -1078,12 +1128,6 @@
   white-space: nowrap;
 }
 
-/* ── Second metric block within a card ─────────────────────── */
-.expSubMetric {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-}
 
 /* ── MLA expenses table ─────────────────────────────────────── */
 .expTableWrap {
@@ -1144,13 +1188,6 @@
   color: var(--teal);
 }
 
-.expRowGold {
-  background: #FEFCE8 !important;
-}
-
-.expRowGold.expTableRow:hover {
-  background: var(--paper-2) !important;
-}
 
 .expTable tbody td {
   padding: 10px 12px;
@@ -1269,941 +1306,3 @@
   }
 }
 
-/* ── Party Questions Section ─────────────────────────────── */
-
-.pqSection {
-  padding-top: var(--s-2);
-}
-
-.pqSummaryGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: var(--s-4);
-  margin-bottom: var(--s-5);
-}
-
-.pqSummaryStatCard {
-  background: var(--paper-2);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  padding: var(--s-5);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: var(--s-1);
-}
-
-.pqSummaryCardMobile {
-  display: none;
-}
-
-@media (max-width: 640px) {
-  .pqSummaryGrid {
-    display: none;
-  }
-
-  .pqSummaryCardMobile {
-    display: flex;
-    flex-direction: column;
-    gap: var(--s-2);
-    border: 1px solid var(--rule);
-    border-radius: var(--r-3);
-    background: var(--paper-2);
-    padding: var(--s-5);
-    margin-bottom: var(--s-5);
-  }
-}
-
-.pqTotalDisplay {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding-bottom: var(--s-3);
-  border-bottom: 1px solid var(--rule);
-}
-
-.pqBreakdownRow {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  flex-wrap: wrap;
-  margin-bottom: 0;
-}
-
-.pqBreakdownList {
-  list-style: none;
-  padding: 0;
-  margin: var(--s-2) 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-}
-
-.pqBreakdownItem {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-}
-
-.pqTotalNumber {
-  font-size: clamp(1.75rem, 3vw, 2.25rem);
-  font-weight: 700;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.pqTotalLabel {
-  font-size: 12px;
-  color: var(--ink-3);
-}
-
-.pqUnanswered {
-  font-size: 0.8rem;
-  color: var(--ink-3);
-  margin-left: var(--s-2);
-}
-
-.pqBreakdownCount {
-  font-size: 12px;
-  color: var(--ink-3);
-  font-weight: 500;
-  font-family: var(--font-sans);
-}
-
-.pqBreakdownPct {
-  font-size: 12px;
-  color: var(--ink-3);
-  font-weight: 400;
-}
-
-.pqBreakdownSep {
-  color: var(--ink-3);
-  font-size: 0.875rem;
-}
-
-.pqSummaryLine {
-  font-size: 0.9375rem;
-  color: var(--ink);
-  margin-bottom: var(--spacing-md);
-  line-height: 1.5;
-}
-
-.pqSummaryLink {
-  color: var(--teal);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.pqSummaryLink:hover {
-  text-decoration: underline;
-}
-
-/* Stat cards grid */
-.pqStatGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-}
-
-@media (min-width: 641px) {
-  .pqStatGrid > :nth-child(1) { order: 1; }
-  .pqStatGrid > :nth-child(2) { order: 3; }
-  .pqStatGrid > :nth-child(3) { order: 2; }
-  .pqStatGrid > :nth-child(4) { order: 4; }
-}
-
-.pqStatCard {
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  padding: var(--spacing-md);
-  background: var(--paper-2);
-}
-
-.pqStatCardLabel {
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  margin-bottom: var(--s-3);
-}
-
-.pqStatCardBody {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.pqStatCardInfo {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.pqStatCardName {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink);
-  text-decoration: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pqStatCardName:hover {
-  color: var(--teal);
-  text-decoration: none;
-}
-
-.pqStatCardConstituency {
-  font-size: 0.75rem;
-  color: var(--ink-3);
-}
-
-.pqStatCardCount {
-  font-size: 1.125rem;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  color: var(--ink);
-  flex-shrink: 0;
-}
-
-.pqStatCardNote {
-  font-size: 0.75rem;
-  color: var(--ink-3);
-  margin-top: var(--s-2);
-}
-
-/* Chart */
-.pqChartWrap {
-  margin-bottom: var(--spacing-lg);
-}
-
-.pqChartHeading {
-  font-size: clamp(22px, 3vw, 32px);
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  color: var(--ink);
-  margin-top: var(--s-6);
-  margin-bottom: var(--s-4);
-}
-
-.pqChartCanvas {
-  height: 200px;
-  max-height: 250px;
-  position: relative;
-}
-
-.pqChartCanvas canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* Search area */
-.pqSearchArea {
-  margin-bottom: var(--spacing-md);
-}
-
-.pqSearchSubtext {
-  font-size: 15px;
-  color: var(--ink-2);
-  margin: 0 0 var(--s-4);
-}
-
-.pqSearchRow {
-  display: flex;
-  gap: var(--s-3);
-}
-
-.pqSearchInput {
-  width: 100%;
-  max-width: 480px;
-  padding: 10px 14px;
-  font-size: 16px;
-  font-family: var(--font-sans);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  background: var(--paper);
-  color: var(--ink);
-  outline: none;
-  transition: border-color 120ms ease;
-  min-height: 44px;
-}
-
-.pqSearchInput:focus {
-  border-color: var(--teal);
-}
-
-.pqSearchInput::placeholder {
-  color: var(--ink-4);
-}
-
-@media (max-width: 640px) {
-  .pqSearchInput {
-    max-width: 100%;
-  }
-}
-
-.pqResultCount {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  color: var(--ink-3);
-  margin: var(--s-3) 0 0;
-}
-
-/* Desktop list (MLA-profile style) */
-.pqDesktopList {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin-bottom: var(--spacing-md);
-}
-
-@media (max-width: 640px) {
-  .pqDesktopList { display: none; }
-}
-
-.pqDesktopRow {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: var(--s-2);
-}
-
-.pqDesktopRowOpen {
-  border-color: var(--ink-3);
-}
-
-.pqDesktopItem {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  padding: 16px;
-  cursor: pointer;
-}
-
-.pqDesktopItemAnswered:hover,
-.pqDesktopItemUnanswered:hover {
-  background: var(--surface);
-}
-
-.pqDesktopItemAnswered:hover .pqSubjectText,
-.pqDesktopItemUnanswered:hover .pqSubjectText {
-  color: var(--teal);
-}
-
-.pqDesktopItemAnswered:focus,
-.pqDesktopItemUnanswered:focus { outline: none; }
-
-.pqDesktopItemAnswered:focus-visible,
-.pqDesktopItemUnanswered:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
-.pqDesktopRow0 {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-}
-
-.pqPartyDot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.pqMlaNameLink {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.pqMlaNameLink:hover {
-  color: var(--teal);
-  text-decoration: underline;
-}
-
-.pqMlaConstituencyInline {
-  font-size: 0.8125rem;
-  color: var(--ink-3);
-}
-
-.pqDesktopRow1 {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  width: 100%;
-}
-
-.pqSubjectText {
-  font-size: 0.9375rem;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-  line-height: 1.4;
-  flex: 1;
-  min-width: 0;
-  max-width: 75%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  transition: color 120ms;
-}
-
-.pqDesktopChevron {
-  font-size: 0.6875rem;
-  color: var(--ink-3);
-  flex-shrink: 0;
-  margin-left: auto;
-}
-
-.pqDesktopRow2 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-3);
-}
-
-.pqMetaLeft {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  flex-wrap: wrap;
-}
-
-.pqMetaRight {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  flex-shrink: 0;
-}
-
-.pqMeta {
-  font-size: 0.6875rem;
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
-}
-
-.pqMetaSep {
-  font-size: 0.6875rem;
-  color: var(--ink-4);
-}
-
-.pqMobileCardMeta {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  font-size: 12px;
-  color: var(--ink-3);
-}
-
-.pqAnsweredIcon {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
-  background: #dcfce7;
-  color: #166534;
-}
-
-.pqUnansweredIcon {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.pqDesktopExpanded {
-  border-top: 1px solid var(--border);
-  background: var(--paper-2);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Desktop table (legacy — kept for reference) */
-.pqTableWrap {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border: 1px solid var(--rule);
-  border-radius: 3px;
-  margin-bottom: var(--spacing-md);
-}
-
-.pqTable {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.pqColMla        { width: 140px; }
-.pqColQuestion   { width: auto; }
-.pqColDept       { width: 160px; }
-.pqColDate       { width: 110px; }
-.pqColType       { width: 80px; }
-.pqColAnswered   { width: 90px; }
-.pqColChevron    { width: 32px; text-align: center; }
-
-.pqTable thead th {
-  background: var(--paper-2);
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  padding: 10px 12px;
-  text-align: left;
-  border-bottom: 2px solid var(--rule);
-  white-space: nowrap;
-}
-
-.pqTable tbody tr {
-  border-bottom: 1px solid var(--rule);
-  background: var(--paper);
-}
-
-.pqTable tbody tr:last-child {
-  border-bottom: none;
-}
-
-.pqTable tbody td {
-  padding: 14px 12px;
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  vertical-align: top;
-}
-
-.pqRow {
-  transition: background 100ms ease;
-}
-
-.pqRow:hover {
-  background: var(--surface);
-}
-
-.pqRowOpen {
-  background: rgba(21,158,155,0.06);
-}
-
-.pqDetailRow td {
-  background: var(--paper-2);
-  padding: 0;
-}
-
-.pqDetailCell {
-  padding: 0 !important;
-}
-
-.pqDetailInner {
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.pqExpandedQuestion {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-
-.pqExpandedAnswer {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-  box-sizing: border-box;
-  background: #fffbf0;
-  border-left: 3px solid #f5a623;
-  padding: 12px 16px;
-  border-radius: 0 var(--r-2) var(--r-2) 0;
-}
-
-.pqExpandedLabel {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
-.pqExpandedText {
-  font-size: 0.9rem;
-  color: var(--ink);
-  line-height: 1.5;
-  white-space: normal;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  margin: 0;
-  max-width: none;
-}
-
-.pqDetailMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 12px;
-  font-size: 0.8125rem;
-  color: var(--ink-3);
-  align-items: center;
-}
-
-.pqMlaCell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.pqMlaName {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink);
-  text-decoration: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pqMlaName:hover {
-  color: var(--teal);
-  text-decoration: underline;
-}
-
-.pqMlaConstituency {
-  font-size: 0.75rem;
-  color: var(--ink-3);
-}
-
-.pqSubjectInner {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.pqFullText {
-  font-size: 0.875rem;
-  color: var(--ink);
-  line-height: 1.4;
-}
-
-.pqRef {
-  font-size: 0.75rem;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-}
-
-.pqDeptCell {
-  font-size: 0.8125rem;
-  color: var(--ink-3);
-}
-
-.pqDateCell {
-  font-size: 0.8125rem;
-  color: var(--ink-3);
-  white-space: nowrap;
-}
-
-.pqEmptyCell {
-  text-align: center;
-  color: var(--ink-3);
-  padding: 2rem !important;
-  font-size: 0.875rem;
-}
-
-.pqAnswerText {
-  font-size: 0.875rem;
-  color: var(--ink);
-  line-height: 1.6;
-  white-space: normal;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  margin: 0;
-  max-width: none;
-}
-
-.pqTruncatedNote {
-  font-size: 0.75rem;
-  color: var(--ink-3);
-  font-style: italic;
-  margin: 0;
-  max-width: none;
-}
-
-.pqNoAnswer {
-  font-size: 0.875rem;
-  color: var(--ink-3);
-  font-style: italic;
-}
-
-.hansardLink {
-  font-size: 0.875rem;
-  color: var(--teal);
-  text-decoration: none;
-}
-
-.hansardLink:hover {
-  text-decoration: underline;
-}
-
-/* Type + answered pills */
-.qPillWritten {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
-.qPillOral {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
-  background: #fde6f5;
-  color: #a3006e;
-}
-
-.qAnsweredBadge {
-  color: var(--forest);
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-.qUnansweredBadge {
-  color: var(--crimson);
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-/* Mobile cards */
-.pqMobileCards {
-  display: none;
-}
-
-.pqCard {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-bottom: var(--s-2);
-  background: var(--paper);
-  overflow: hidden;
-}
-
-.pqCardInner {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  padding: 16px;
-}
-
-.pqCardAnswered {
-  cursor: pointer;
-}
-
-.pqCardAnswered:active {
-  background: var(--surface);
-}
-
-.pqCardUnanswered {
-  cursor: pointer;
-}
-
-.pqMobileRow0 {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-}
-
-.pqMlaNameInline {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.pqCardBody {
-  font-family: var(--font-sans);
-  font-size: 17px;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.4;
-  color: var(--text-primary);
-  margin: 0;
-  max-width: none;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.pqMobileRow2 {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--s-1);
-}
-
-.pqMobileMetaDept {
-  font-size: 0.6875rem;
-  color: var(--ink-3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.pqMobileMetaDate {
-  font-size: 0.6875rem;
-  color: var(--ink-3);
-}
-
-.pqMobileMetaRef {
-  font-size: 0.6875rem;
-  color: var(--ink-3);
-  font-family: var(--font-mono, monospace);
-}
-
-.pqMobileRow3 {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-}
-
-.pqMobileChevron {
-  margin-left: auto;
-  font-size: 0.6875rem;
-  color: var(--ink-3);
-}
-
-.pqCardExpanded {
-  border-top: 1px solid var(--border);
-  background: var(--paper-2);
-}
-
-.pqCardMeta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.pqCardDept {
-  font-size: 0.75rem;
-  color: var(--ink-3);
-}
-
-.pqEmptyMobile {
-  font-size: 0.875rem;
-  color: var(--ink-3);
-  padding: 1rem 0;
-}
-
-/* Load more */
-.pqLoadMore {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--rule);
-  border-radius: 3px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  cursor: pointer;
-  margin-top: var(--spacing-md);
-  transition: border-color 150ms ease, color 150ms ease;
-}
-
-.pqLoadMore:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* Responsive */
-@media (max-width: 640px) {
-  .pqTableWrap {
-    display: none;
-  }
-
-  .pqMobileCards {
-    display: block;
-  }
-
-  .pqStatGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 900px) {
-  .pqColMla {
-    display: none;
-  }
-}
-
-.qPillLate {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
-  background: #FEF3C7;
-  color: #92400E;
-}
-
-.qDueDate {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--color-text-tertiary);
-}
-
-.qPillDue {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 999px;
-  white-space: nowrap;
-  background: var(--paper-3);
-  color: var(--ink-2);
-}

@@ -14,6 +14,7 @@ import {
   getDivisionsPerMonth,
   getBillsPassedPerMonth,
   getThisWeekPlenaryItems,
+  getAllMlasByConstituency,
 } from '@/lib/db/queries'
 import Sparkline from '@/components/Sparkline'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const now = new Date()
   const [stats, avgAttendance, leastEngaged, mostEngaged, latestDivisions, inProgressBills,
-    inProgressBillsCount, divisionsPerMonth, billsPassedPerMonth, thisWeekAgenda] =
+    inProgressBillsCount, divisionsPerMonth, billsPassedPerMonth, thisWeekAgenda, mlasByConstituency] =
     await Promise.all([
       getHomepageStats(),
       getAverageAttendance(),
@@ -57,6 +58,7 @@ export default async function HomePage() {
       getDivisionsPerMonth(),
       getBillsPassedPerMonth(),
       getThisWeekPlenaryItems(),
+      getAllMlasByConstituency(),
     ])
 
   const divisionsSparkline = divisionsPerMonth.slice(-12).map((r) => Number(r.total_divisions))
@@ -177,7 +179,7 @@ export default async function HomePage() {
           <Link href={`/assembly/mlas/${mostEngaged.personId}`} className={`${styles.kfig} ${styles.kfigMlaCard}`}>
             <div className={styles.kfigLabel}>Top Voter</div>
             <div className={styles.kfigMlaPhoto}>
-              {mostEngaged.imgUrl && <Image src={mostEngaged.imgUrl} alt="" fill sizes="96px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
+              {mostEngaged.imgUrl && <Image src={mostEngaged.imgUrl} alt={mostEngaged.fullName} fill sizes="96px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
             </div>
             <div className={styles.kfigMlaBody}>
               <span className={styles.kfigMlaName}>{mostEngaged.fullName}</span>
@@ -193,7 +195,7 @@ export default async function HomePage() {
           <Link href={`/assembly/mlas/${leastEngaged.personId}`} className={`${styles.kfig} ${styles.kfigMlaCard}`}>
             <div className={styles.kfigLabel}>Lowest Voter</div>
             <div className={styles.kfigMlaPhoto}>
-              {leastEngaged.imgUrl && <Image src={leastEngaged.imgUrl} alt="" fill sizes="96px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
+              {leastEngaged.imgUrl && <Image src={leastEngaged.imgUrl} alt={leastEngaged.fullName} fill sizes="96px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
             </div>
             <div className={styles.kfigMlaBody}>
               <span className={styles.kfigMlaName}>{leastEngaged.fullName}</span>
@@ -236,7 +238,7 @@ export default async function HomePage() {
             <h2 className={styles.sectionTitle}>Find your MLAs</h2>
           </div>
         </div>
-        <ConstituencySelector />
+        <ConstituencySelector mlasByConstituency={mlasByConstituency} />
       </section>
 
       {/* This week strip */}

@@ -1,6 +1,6 @@
-import { eq, desc, sql, and, count, countDistinct, isNotNull, isNull, gte, lte, asc, notInArray, inArray } from 'drizzle-orm'
+import { eq, desc, sql, and, count, countDistinct, isNotNull, isNull, gte, lte, asc } from 'drizzle-orm'
 import { db } from './client'
-import { members, divisions, votes, hansardReports, ministers, committeeChairs, expenses, registeredInterests, bills, billStages, questions } from './schema'
+import { members, divisions, votes, hansardReports, ministers, committeeChairs, expenses, registeredInterests, bills, billStages, questionStats } from './schema'
 import { stripHonorifics } from '@/lib/utils/formatNames'
 import { getSurname } from '@/lib/format'
 
@@ -8,6 +8,27 @@ const mlaImg = (personId: string | null | undefined): string | null =>
   personId ? `/mla-images/${personId}.jpg` : null
 
 const CURRENT_MANDATE = '2022-2027'
+
+export async function getAllMlasByConstituency(): Promise<Record<string, { personId: string; fullName: string; party: string; imgUrl: string | null }[]>> {
+  const rows = await db
+    .select({
+      personId: members.personId,
+      fullName: members.fullName,
+      party: members.party,
+      imgUrl: members.imgUrl,
+      constituency: members.constituency,
+    })
+    .from(members)
+    .where(and(eq(members.isCurrent, true), isNotNull(members.constituency)))
+    .orderBy(asc(members.fullName))
+  const map: Record<string, { personId: string; fullName: string; party: string; imgUrl: string | null }[]> = {}
+  for (const r of rows) {
+    const c = r.constituency!
+    if (!map[c]) map[c] = []
+    map[c].push({ personId: r.personId, fullName: r.fullName, party: r.party ?? '', imgUrl: mlaImg(r.personId) })
+  }
+  return map
+}
 
 export async function getMembersByConstituency(constituency: string) {
   const rows = await db
@@ -1603,367 +1624,82 @@ export async function getPartyAssemblyStats(party: string): Promise<PartyVoteSta
   }
 }
 
-export async function getQuestionsLeaderboard() {
-  const excluded = await db
-    .select({ personId: ministers.personId })
-    .from(ministers)
-
-  const speakerRows = await db
-    .select({ personId: members.personId })
-    .from(members)
-    .where(isNotNull(members.assemblyRole))
-
-  const excludedIds = [
-    ...excluded.map(e => e.personId),
-    ...speakerRows.map(s => s.personId),
-  ]
-
-  const whereClause = excludedIds.length > 0
-    ? and(eq(members.isCurrent, true), notInArray(members.personId, excludedIds))
-    : eq(members.isCurrent, true)
-
-  const mostOverall = await db
+export async function getQuestionStatsByMember(personId: string) {
+  const rows = await db
     .select({
-      personId: members.personId,
-      fullName: members.fullName,
-      party: members.party,
-      constituency: members.constituency,
-      imgUrl: members.imgUrl,
-      count: sql<number>`count(${questions.questionId})`,
+      year: questionStats.year,
+      month: questionStats.month,
+      writtenCount: questionStats.writtenCount,
+      oralCount: questionStats.oralCount,
     })
-    .from(members)
-    .leftJoin(questions, eq(questions.personId, members.personId))
-    .where(whereClause)
-    .groupBy(members.personId, members.fullName, members.party, members.constituency, members.imgUrl)
-    .orderBy(desc(sql`count(${questions.questionId})`))
-    .limit(5)
-
-  const leastOverall = await db
-    .select({
-      personId: members.personId,
-      fullName: members.fullName,
-      party: members.party,
-      constituency: members.constituency,
-      imgUrl: members.imgUrl,
-      count: sql<number>`count(${questions.questionId})`,
-    })
-    .from(members)
-    .leftJoin(questions, eq(questions.personId, members.personId))
-    .where(whereClause)
-    .groupBy(members.personId, members.fullName, members.party, members.constituency, members.imgUrl)
-    .orderBy(asc(sql`count(${questions.questionId})`))
-    .limit(5)
-
-  const sixMonthsAgo = new Date()
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
-  const sixMonthsAgoStr = sixMonthsAgo.toISOString().slice(0, 10)
-
-  const mostSixMonths = await db
-    .select({
-      personId: members.personId,
-      fullName: members.fullName,
-      party: members.party,
-      constituency: members.constituency,
-      imgUrl: members.imgUrl,
-      count: sql<number>`count(${questions.questionId})`,
-    })
-    .from(members)
-    .leftJoin(
-      questions,
-      and(eq(questions.personId, members.personId), gte(questions.tabledDate, sixMonthsAgoStr))
-    )
-    .where(whereClause)
-    .groupBy(members.personId, members.fullName, members.party, members.constituency, members.imgUrl)
-    .orderBy(desc(sql`count(${questions.questionId})`))
-    .limit(5)
-
-  const leastSixMonths = await db
-    .select({
-      personId: members.personId,
-      fullName: members.fullName,
-      party: members.party,
-      constituency: members.constituency,
-      imgUrl: members.imgUrl,
-      count: sql<number>`count(${questions.questionId})`,
-    })
-    .from(members)
-    .leftJoin(
-      questions,
-      and(eq(questions.personId, members.personId), gte(questions.tabledDate, sixMonthsAgoStr))
-    )
-    .where(whereClause)
-    .groupBy(members.personId, members.fullName, members.party, members.constituency, members.imgUrl)
-    .orderBy(asc(sql`count(${questions.questionId})`))
-    .limit(5)
-
-  const byParty = await db
-    .select({
-      party: members.party,
-      count: sql<number>`count(${questions.questionId})`,
-      memberCount: sql<number>`count(distinct ${members.personId})`,
-    })
-    .from(members)
-    .leftJoin(questions, eq(questions.personId, members.personId))
-    .where(eq(members.isCurrent, true))
-    .groupBy(members.party)
-    .orderBy(desc(sql`count(${questions.questionId})`))
-
-  const unansweredByDept = await db
-    .select({
-      department: questions.department,
-      unanswered: sql<number>`count(case when (${questions.isOral} = false and ${questions.answerText} is null) or (${questions.isOral} = true and ${questions.hansardLink} is null) then 1 end)`,
-      total: sql<number>`count(${questions.questionId})`,
-    })
-    .from(questions)
-    .groupBy(questions.department)
-    .orderBy(desc(sql`count(case when (${questions.isOral} = false and ${questions.answerText} is null) or (${questions.isOral} = true and ${questions.hansardLink} is null) then 1 end)`))
-
-  return { mostOverall, leastOverall, mostSixMonths, leastSixMonths, byParty, unansweredByDept }
+    .from(questionStats)
+    .where(eq(questionStats.personId, personId))
+    .orderBy(questionStats.year, questionStats.month)
+  return rows
 }
 
-export async function getQuestionsRankingTable() {
-  const excluded = await db
-    .select({ personId: ministers.personId })
-    .from(ministers)
-
-  const speakerRows = await db
-    .select({ personId: members.personId })
-    .from(members)
-    .where(isNotNull(members.assemblyRole))
-
-  const excludedIds = [
-    ...excluded.map(e => e.personId),
-    ...speakerRows.map(s => s.personId),
-  ]
-
-  const whereClause = excludedIds.length > 0
-    ? and(eq(members.isCurrent, true), notInArray(members.personId, excludedIds))
-    : eq(members.isCurrent, true)
-
-  return db
+export async function getQuestionTotalsAllMembers() {
+  const rows = await db
     .select({
-      personId: members.personId,
-      fullName: members.fullName,
-      party: members.party,
-      constituency: members.constituency,
-      imgUrl: members.imgUrl,
-      count: sql<number>`cast(count(${questions.questionId}) as int)`,
+      personId: questionStats.personId,
+      total: sql<number>`sum(${questionStats.writtenCount} + ${questionStats.oralCount})`,
+      written: sql<number>`sum(${questionStats.writtenCount})`,
+      oral: sql<number>`sum(${questionStats.oralCount})`,
     })
-    .from(members)
-    .leftJoin(questions, eq(questions.personId, members.personId))
-    .where(whereClause)
-    .groupBy(
-      members.personId,
-      members.fullName,
-      members.party,
-      members.constituency,
-      members.imgUrl
-    )
-    .orderBy(desc(sql`count(${questions.questionId})`))
+    .from(questionStats)
+    .groupBy(questionStats.personId)
+  return rows
 }
 
-export async function getQuestionsTotals() {
-  const [total, unanswered] = await Promise.all([
-    db.select({ count: sql<number>`count(*)` }).from(questions)
-      .then(r => Number(r[0]?.count ?? 0)),
-    db.select({ count: sql<number>`count(*)` }).from(questions)
-      .where(
-        and(isNull(questions.answerText), isNull(questions.hansardLink))
-      )
-      .then(r => Number(r[0]?.count ?? 0)),
+export async function getQuestionRankForMember(personId: string): Promise<{ rank: number; totalEligible: number } | null> {
+  // Subquery: total questions per eligible MLA (current, no assembly role, not a minister)
+  const eligible = db
+    .select({
+      personId: questionStats.personId,
+      total: sql<number>`sum(${questionStats.writtenCount} + ${questionStats.oralCount})`.as('total'),
+    })
+    .from(questionStats)
+    .innerJoin(members, eq(questionStats.personId, members.personId))
+    .leftJoin(ministers, eq(questionStats.personId, ministers.personId))
+    .where(and(
+      eq(members.isCurrent, true),
+      sql`${members.assemblyRole} is null`,
+      sql`${ministers.personId} is null`,
+    ))
+    .groupBy(questionStats.personId)
+    .as('eligible')
+
+  const myTotalRows = await db
+    .select({ total: eligible.total })
+    .from(eligible)
+    .where(eq(eligible.personId, personId))
+
+  const myTotal = Number(myTotalRows[0]?.total ?? 0)
+  if (myTotal === 0) return null
+
+  const [rankRow, countRow] = await Promise.all([
+    db.select({ rank: sql<number>`count(*) + 1` }).from(eligible).where(sql`${eligible.total} > ${myTotal}`),
+    db.select({ count: sql<number>`count(*)` }).from(eligible),
   ])
-  return { total, unanswered }
-}
-
-export async function getUnansweredByDeptSinceRestoration() {
-  const RESTORATION_DATE = '2024-02-03'
-
-  const [total, byDept] = await Promise.all([
-    db
-      .select({ count: sql<number>`cast(count(*) as int)` })
-      .from(questions)
-      .where(
-        and(
-          isNull(questions.answerText),
-          isNull(questions.hansardLink),
-          gte(questions.tabledDate, RESTORATION_DATE)
-        )
-      )
-      .then(r => Number(r[0]?.count ?? 0)),
-    db
-      .select({
-        department: questions.department,
-        unanswered: sql<number>`cast(count(case when ${questions.answerText} is null and ${questions.hansardLink} is null then 1 end) as int)`,
-        total: sql<number>`cast(count(*) as int)`,
-      })
-      .from(questions)
-      .where(gte(questions.tabledDate, RESTORATION_DATE))
-      .groupBy(questions.department)
-      .orderBy(desc(sql`count(case when ${questions.answerText} is null and ${questions.hansardLink} is null then 1 end)`))
-      .limit(10),
-  ])
-
-  return { total, byDept }
-}
-
-export async function getPartyQuestionStats(party: string) {
-  const sixMonthsAgo = new Date()
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
-  const sixMonthsAgoStr = sixMonthsAgo.toISOString().slice(0, 10)
-
-  const partyMembers = await db
-    .select({ personId: members.personId })
-    .from(members)
-    .where(and(eq(members.party, party), eq(members.isCurrent, true)))
-
-  const partyMemberIds = partyMembers.map(m => m.personId)
-  if (partyMemberIds.length === 0) return null
-
-  const ministerRows = await db
-    .select({ personId: ministers.personId })
-    .from(ministers)
-
-  const speakerRows = await db
-    .select({ personId: members.personId })
-    .from(members)
-    .where(
-      and(
-        inArray(members.personId, partyMemberIds),
-        isNotNull(members.assemblyRole)
-      )
-    )
-
-  const excludedIds = new Set([
-    ...ministerRows.map(m => m.personId),
-    ...speakerRows.map(m => m.personId),
-  ])
-
-  const rankableIds = partyMemberIds.filter(id => !excludedIds.has(id))
-
-  if (rankableIds.length === 0) return null
-
-  const totals = await db
-    .select({
-      total: sql<number>`cast(count(*) as int)`,
-      oral: sql<number>`cast(count(case when ${questions.isOral} = true then 1 end) as int)`,
-      unanswered: sql<number>`cast(count(case when ${questions.answerText} is null and ${questions.isOral} = false then 1 end) as int)`,
-    })
-    .from(questions)
-    .where(inArray(questions.personId, partyMemberIds))
-    .then(r => r[0])
-
-  const byYear = await db
-    .select({
-      year: questions.calendarYear,
-      count: sql<number>`cast(count(*) as int)`,
-    })
-    .from(questions)
-    .where(inArray(questions.personId, partyMemberIds))
-    .groupBy(questions.calendarYear)
-    .orderBy(asc(questions.calendarYear))
-
-  const mostOverall = await db
-    .select({
-      personId: members.personId,
-      fullName: members.fullName,
-      constituency: members.constituency,
-      imgUrl: members.imgUrl,
-      count: sql<number>`cast(count(${questions.questionId}) as int)`,
-    })
-    .from(members)
-    .leftJoin(questions, eq(questions.personId, members.personId))
-    .where(inArray(members.personId, rankableIds))
-    .groupBy(members.personId, members.fullName, members.constituency, members.imgUrl)
-    .orderBy(desc(sql`count(${questions.questionId})`))
-    .limit(1)
-    .then(r => r[0] ?? null)
-
-  const leastOverall = await db
-    .select({
-      personId: members.personId,
-      fullName: members.fullName,
-      constituency: members.constituency,
-      imgUrl: members.imgUrl,
-      count: sql<number>`cast(count(${questions.questionId}) as int)`,
-    })
-    .from(members)
-    .leftJoin(questions, eq(questions.personId, members.personId))
-    .where(inArray(members.personId, rankableIds))
-    .groupBy(members.personId, members.fullName, members.constituency, members.imgUrl)
-    .orderBy(asc(sql`count(${questions.questionId})`))
-    .limit(1)
-    .then(r => r[0] ?? null)
-
-  const mostSixMonths = await db
-    .select({
-      personId: members.personId,
-      fullName: members.fullName,
-      constituency: members.constituency,
-      imgUrl: members.imgUrl,
-      count: sql<number>`cast(count(${questions.questionId}) as int)`,
-    })
-    .from(members)
-    .leftJoin(
-      questions,
-      and(eq(questions.personId, members.personId), gte(questions.tabledDate, sixMonthsAgoStr))
-    )
-    .where(inArray(members.personId, rankableIds))
-    .groupBy(members.personId, members.fullName, members.constituency, members.imgUrl)
-    .orderBy(desc(sql`count(${questions.questionId})`))
-    .limit(1)
-    .then(r => r[0] ?? null)
-
-  const leastSixMonths = await db
-    .select({
-      personId: members.personId,
-      fullName: members.fullName,
-      constituency: members.constituency,
-      imgUrl: members.imgUrl,
-      count: sql<number>`cast(count(${questions.questionId}) as int)`,
-    })
-    .from(members)
-    .leftJoin(
-      questions,
-      and(eq(questions.personId, members.personId), gte(questions.tabledDate, sixMonthsAgoStr))
-    )
-    .where(inArray(members.personId, rankableIds))
-    .groupBy(members.personId, members.fullName, members.constituency, members.imgUrl)
-    .orderBy(asc(sql`count(${questions.questionId})`))
-    .limit(1)
-    .then(r => r[0] ?? null)
-
-  const recentQuestions = await db
-    .select({
-      questionId: questions.questionId,
-      reference: questions.reference,
-      tabledDate: questions.tabledDate,
-      answerByDate: questions.answerByDate,
-      answeredOnDate: questions.answeredOnDate,
-      questionText: questions.questionText,
-      answerText: questions.answerText,
-      hansardLink: questions.hansardLink,
-      department: questions.department,
-      isOral: questions.isOral,
-      calendarYear: questions.calendarYear,
-      answerTruncated: questions.answerTruncated,
-      personId: members.personId,
-      fullName: members.fullName,
-      constituency: members.constituency,
-    })
-    .from(questions)
-    .innerJoin(members, eq(members.personId, questions.personId))
-    .where(inArray(questions.personId, partyMemberIds))
-    .orderBy(desc(questions.tabledDate))
-    .limit(10)
 
   return {
-    totals,
-    byYear,
-    mostOverall,
-    leastOverall,
-    mostSixMonths,
-    leastSixMonths,
-    recentQuestions,
-    memberCount: partyMemberIds.length,
+    rank: Number(rankRow[0]?.rank ?? 1),
+    totalEligible: Number(countRow[0]?.count ?? 0),
   }
+}
+
+export async function getQuestionStatsByParty(party: string) {
+  const rows = await db
+    .select({
+      personId: questionStats.personId,
+      year: questionStats.year,
+      month: questionStats.month,
+      writtenCount: questionStats.writtenCount,
+      oralCount: questionStats.oralCount,
+    })
+    .from(questionStats)
+    .innerJoin(members, eq(questionStats.personId, members.personId))
+    .where(eq(members.party, party))
+    .orderBy(questionStats.year, questionStats.month)
+  return rows
 }

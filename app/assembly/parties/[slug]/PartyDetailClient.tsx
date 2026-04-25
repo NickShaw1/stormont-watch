@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import { partyBorderColor, abbreviateParty, formatMemberName, formatConstituency } from '@/lib/format'
@@ -44,6 +44,8 @@ interface Props {
   borderColor: string
 }
 
+type QuestionStatRow = { personId: string; year: number; month: number; writtenCount: number; oralCount: number }
+
 const tabs = ['stats', 'expenses', 'questions'] as const
 type Tab = typeof tabs[number]
 
@@ -53,10 +55,61 @@ interface FullProps extends Props {
   partyUrl?: string
   statsContent?: React.ReactNode
   expensesContent?: React.ReactNode
-  questionsContent?: React.ReactNode
+  totalQuestions?: number
+  writtenCount?: number
+  oralCount?: number
+  questionStats?: QuestionStatRow[]
 }
 
-export default function PartyDetailClient({ party, mlas, ministers, chairs, borderColor, description, statsContent, expensesContent, questionsContent }: FullProps) {
+function pct(n: number, total: number) {
+  return total > 0 ? Math.round((n / total) * 100) : 0
+}
+
+function QuestionsYearChart({ questionStats, partyColor }: { questionStats: QuestionStatRow[]; partyColor: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    if (!canvasRef.current) return
+    const yearTotals = new Map<number, number>()
+    for (const r of questionStats) {
+      yearTotals.set(r.year, (yearTotals.get(r.year) ?? 0) + r.writtenCount + r.oralCount)
+    }
+    const years = [...yearTotals.keys()].sort()
+    const data = years.map(y => yearTotals.get(y) ?? 0)
+
+    let chart: import('chart.js').Chart | null = null
+    import('chart.js/auto').then(({ default: Chart }) => {
+      if (!canvasRef.current) return
+      const existing = Chart.getChart(canvasRef.current)
+      if (existing) existing.destroy()
+      chart = new Chart(canvasRef.current, {
+        type: 'bar',
+        data: {
+          labels: years.map(String),
+          datasets: [{ data, backgroundColor: partyColor + '99', borderColor: partyColor, borderWidth: 1, borderRadius: 3 }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { mode: 'index' } },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            y: { beginAtZero: true, ticks: { precision: 0, font: { size: 11 } } },
+          },
+        },
+      })
+    })
+    return () => { chart?.destroy() }
+  }, [questionStats, partyColor])
+
+  return (
+    <div style={{ height: 180, marginTop: '1rem' }}>
+      <canvas ref={canvasRef} />
+    </div>
+  )
+}
+
+export default function PartyDetailClient({ party, mlas, ministers, chairs, borderColor, description, statsContent, expensesContent, totalQuestions = 0, writtenCount = 0, oralCount = 0, questionStats = [] }: FullProps) {
   const [activeTab, setActiveTab] = useState<Tab>('stats')
 
   const execMinisters = ministers.filter((m) => m.department === 'The Executive Office')
@@ -79,7 +132,7 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
       {/* Tab bar */}
       <div className={styles.tabSection}>
         <div className={styles.billTabs} role="tablist" aria-label="Party sections">
-          {tabs.map((tab) => {
+          {tabs.filter(tab => tab !== 'questions' || totalQuestions > 0).map((tab) => {
             const label = tab === 'stats' ? 'Attendance' : tab === 'expenses' ? 'Expenses' : 'Questions'
             return (
               <button
@@ -119,17 +172,39 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
             <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>No expenses data available.</p>
           )}
         </div>
-        <div
-          id="tabpanel-questions"
-          role="tabpanel"
-          aria-labelledby="tab-questions"
-          hidden={activeTab !== 'questions'}
-          className={styles.tabContent}
-        >
-          {questionsContent ?? (
-            <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>No questions data available.</p>
-          )}
-        </div>
+        {totalQuestions > 0 && (
+          <div
+            id="tabpanel-questions"
+            role="tabpanel"
+            aria-labelledby="tab-questions"
+            hidden={activeTab !== 'questions'}
+            className={styles.tabContent}
+          >
+            <div className={styles.questionsPanel}>
+              <div className={styles.questionsCard}>
+              <div className={styles.questionsSummary}>
+                <div className={styles.questionsSummaryCell}>
+                  <span className={styles.questionsSummaryLabel}>Total questions</span>
+                  <span className={styles.questionsSummaryValue}>{totalQuestions.toLocaleString()}</span>
+                </div>
+                <div className={styles.questionsSummaryCell}>
+                  <span className={styles.questionsSummaryLabel}>Written</span>
+                  <span className={styles.questionsSummaryValue}>{writtenCount.toLocaleString()}</span>
+                  <span className={styles.questionsSummaryMeta}>{pct(writtenCount, totalQuestions)}% of total</span>
+                </div>
+                <div className={styles.questionsSummaryCell}>
+                  <span className={styles.questionsSummaryLabel}>Oral</span>
+                  <span className={styles.questionsSummaryValue}>{oralCount.toLocaleString()}</span>
+                  <span className={styles.questionsSummaryMeta}>{pct(oralCount, totalQuestions)}% of total</span>
+                </div>
+              </div>
+              <div className={styles.questionsChartArea}>
+                <QuestionsYearChart questionStats={questionStats} partyColor={borderColor} />
+              </div>
+            </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <hr className="section-rule" />

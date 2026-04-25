@@ -1,14 +1,13 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getAllPartiesWithStats, getPartyBySlug, getPartyAssemblyStats, getPartyExpenses, getPartyQuestionStats } from '@/lib/db/queries'
+import { getAllPartiesWithStats, getPartyBySlug, getPartyAssemblyStats, getPartyExpenses, getQuestionStatsByParty } from '@/lib/db/queries'
 import type { CSSProperties } from 'react'
 import { partyBorderColor, abbreviateParty } from '@/lib/format'
 import styles from './partyDetail.module.css'
 import PartyDetailClient from './PartyDetailClient'
 import PartyStatsClient from './PartyStatsClient'
 import PartyExpensesClient from './PartyExpensesClient'
-import PartyQuestionsClient from './PartyQuestionsClient'
 
 const PARTY_URLS: Record<string, string> = {
   'Sinn Féin': 'https://sinnfein.ie/',
@@ -78,22 +77,17 @@ export default async function PartyDetailPage({ params }: Props) {
   const party = await getPartyBySlug(slug)
   if (!party) notFound()
 
-  const [stats, expenses, borderColor, partyQuestionStatsRaw] = await Promise.all([
+  const [stats, expenses, borderColor, questionStatsRows] = await Promise.all([
     getPartyAssemblyStats(party.party),
     getPartyExpenses(party.party),
     Promise.resolve(partyBorderColor(party.party)),
-    getPartyQuestionStats(party.party),
+    getQuestionStatsByParty(party.party),
   ])
 
-  const partyQuestionStats = partyQuestionStatsRaw
-    ? {
-        ...partyQuestionStatsRaw,
-        recentQuestions: partyQuestionStatsRaw.recentQuestions.map(q => ({
-          ...q,
-          answeredOnDate: q.answeredOnDate ?? null,
-        })),
-      }
-    : null
+  const totalQuestions = questionStatsRows.reduce((s, r) => s + r.writtenCount + r.oralCount, 0)
+  const writtenCount = questionStatsRows.reduce((s, r) => s + r.writtenCount, 0)
+  const oralCount = questionStatsRows.reduce((s, r) => s + r.oralCount, 0)
+
   const partyUrl = PARTY_URLS[party.party]
   const wikiUrl = PARTY_WIKIPEDIA[party.party]
   const description = PARTY_DESCRIPTIONS[party.party]
@@ -150,6 +144,10 @@ export default async function PartyDetailPage({ params }: Props) {
         borderColor={borderColor}
         description={description}
         wikiUrl={wikiUrl}
+        totalQuestions={totalQuestions}
+        writtenCount={writtenCount}
+        oralCount={oralCount}
+        questionStats={questionStatsRows}
         statsContent={
           <PartyStatsClient
             stats={stats}
@@ -162,17 +160,6 @@ export default async function PartyDetailPage({ params }: Props) {
             <PartyExpensesClient expenses={expenses} partyColor={borderColor} />
           ) : (
             <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>No expenses data available.</p>
-          )
-        }
-        questionsContent={
-          partyQuestionStats ? (
-            <PartyQuestionsClient
-              party={party.party}
-              partySlug={slug}
-              stats={partyQuestionStats}
-            />
-          ) : (
-            <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>No questions data available.</p>
           )
         }
       />

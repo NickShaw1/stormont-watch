@@ -26,11 +26,9 @@ const CONSTITUENCIES = [
   'Upper Bann', 'West Belfast', 'West Tyrone',
 ]
 
-export default function ConstituencySelector() {
+export default function ConstituencySelector({ mlasByConstituency }: { mlasByConstituency: Record<string, MLA[]> }) {
   const [selected, setSelected] = useState<string | null>(null)
-  const [mlas, setMlas] = useState<MLA[]>([])
-  const [loadingMlas, setLoadingMlas] = useState(false)
-  const [fetchError, setFetchError] = useState(false)
+  const [fetchError] = useState(false)
   const [mapError, setMapError] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -57,24 +55,9 @@ export default function ConstituencySelector() {
     return () => document.removeEventListener('mousedown', onOutside)
   }, [dropdownOpen])
 
-  async function fetchMlas(constituency: string) {
-    setLoadingMlas(true)
-    setFetchError(false)
-    try {
-      const res = await fetch(`/api/constituency/${encodeURIComponent(constituency)}`)
-      if (!res.ok) throw new Error('Failed to fetch')
-      setMlas(await res.json())
-    } catch {
-      setMlas([])
-      setFetchError(true)
-    }
-    setLoadingMlas(false)
-  }
-
   function handleSelect(constituency: string) {
     setSelected(constituency)
     setDropdownOpen(false)
-    fetchMlas(constituency)
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLLIElement>, constituency: string) {
@@ -100,13 +83,14 @@ export default function ConstituencySelector() {
       <div className={styles.fallback}>
         <select
           className={styles.fallbackSelect}
+          aria-label="Select a constituency"
           value={selected ?? ''}
           onChange={e => e.target.value && handleSelect(e.target.value)}
         >
           <option value="">Select a constituency...</option>
           {CONSTITUENCIES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
-        {selected && <MlaResults mlas={mlas} loading={loadingMlas} error={fetchError} />}
+        {selected && <MlaResults mlas={mlasByConstituency[selected] ?? []} error={fetchError} />}
       </div>
     )
   }
@@ -166,9 +150,9 @@ export default function ConstituencySelector() {
           <>
             <div className={styles.selectedBar}>
               <span className={styles.selectedName}>{selected}</span>
-              <button className={styles.clearBtn} onClick={() => { setSelected(null); setMlas([]) }}>Clear</button>
+              <button className={styles.clearBtn} onClick={() => setSelected(null)}>Clear</button>
             </div>
-            <MlaResults mlas={mlas} loading={loadingMlas} error={fetchError} />
+            <MlaResults mlas={mlasByConstituency[selected] ?? []} error={fetchError} />
           </>
         )}
       </div>
@@ -176,8 +160,7 @@ export default function ConstituencySelector() {
   )
 }
 
-function MlaResults({ mlas, loading, error }: { mlas: MLA[]; loading: boolean; error: boolean }) {
-  if (loading) return <p className={styles.loading}>Loading...</p>
+function MlaResults({ mlas, error }: { mlas: MLA[]; error: boolean }) {
   if (error) return <p className={styles.loading}>Failed to load MLAs. Please try again.</p>
   return (
     <div className={styles.mlaList}>

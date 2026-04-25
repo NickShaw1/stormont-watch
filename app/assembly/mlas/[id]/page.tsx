@@ -1,10 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getMemberExpensesWithRank, getRegisteredInterestsByMember, getAllMembersIncludingFormer, getQuestionsRankingTable } from '@/lib/db/queries'
-import { db } from '@/lib/db/client'
-import * as schema from '@/lib/db/schema'
-import { sql, eq, and, isNull, desc } from 'drizzle-orm'
+import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getMemberExpensesWithRank, getRegisteredInterestsByMember, getAllMembersIncludingFormer, getQuestionStatsByMember, getQuestionRankForMember } from '@/lib/db/queries'
 
 export async function generateStaticParams() {
   const members = await getAllMembersIncludingFormer()
@@ -18,8 +15,6 @@ import styles from './mlaDetail.module.css'
 
 const VotingRecordClient = dynamic(() => import('./VotingRecordClient'), { loading: () => <div /> })
 const ActivityTabsClient = dynamic(() => import('./ActivityTabsClient'), { loading: () => <div /> })
-const QuestionsTabClient = dynamic(() => import('./QuestionsTabClient'), { loading: () => <div>Loading questions...</div> })
-
 interface Props {
   params: Promise<{ id: string }>
 }
@@ -45,75 +40,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MlaDetailPage({ params }: Props) {
   const { id } = await params
-  const [member, history, structureRole, expensesData, interests] = await Promise.all([
+  const [member, history, structureRole, expensesData, interests, questionStatsRows, questionRank] = await Promise.all([
     getMemberById(id),
     getMemberVotingHistory(id),
     getMemberStructureRole(id),
     getMemberExpensesWithRank(id),
     getRegisteredInterestsByMember(id),
+    getQuestionStatsByMember(id),
+    getQuestionRankForMember(id),
   ])
 
   if (!member) notFound()
 
-  const [totalQuestions, unansweredQuestions, totalWritten, totalOral, recentQuestionsRaw, questionsRankingTable] = await Promise.all([
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(schema.questions)
-      .where(eq(schema.questions.personId, member.personId))
-      .then(r => Number(r[0]?.count ?? 0)),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(schema.questions)
-      .where(
-        and(
-          eq(schema.questions.personId, member.personId),
-          isNull(schema.questions.answerText),
-          isNull(schema.questions.hansardLink)
-        )
-      )
-      .then(r => Number(r[0]?.count ?? 0)),
-    db
-      .select({ count: sql<number>`cast(count(*) as int)` })
-      .from(schema.questions)
-      .where(and(eq(schema.questions.personId, member.personId), eq(schema.questions.isOral, false)))
-      .then(r => Number(r[0]?.count ?? 0)),
-    db
-      .select({ count: sql<number>`cast(count(*) as int)` })
-      .from(schema.questions)
-      .where(and(eq(schema.questions.personId, member.personId), eq(schema.questions.isOral, true)))
-      .then(r => Number(r[0]?.count ?? 0)),
-    db
-      .select()
-      .from(schema.questions)
-      .where(eq(schema.questions.personId, member.personId))
-      .orderBy(desc(schema.questions.tabledDate))
-      .limit(10),
-    getQuestionsRankingTable(),
-  ])
-
-  const recentQuestions = recentQuestionsRaw.map(q => ({
-    ...q,
-    updatedAt: q.updatedAt?.toISOString() ?? null,
-  }))
-
-  const questionsRankIndex = questionsRankingTable.findIndex(r => r.personId === member.personId)
-  const questionsRankPos = questionsRankIndex + 1
-  const questionsRankTotal = questionsRankingTable.length
-  const questionsRankPct = questionsRankTotal > 0 ? (questionsRankPos / questionsRankTotal) * 100 : null
-  const questionsRankLabel = questionsRankPos > 0 && questionsRankTotal > 0
-    ? `Ranked ${questionsRankPos} of ${questionsRankTotal}`
-    : null
-  const questionsRankColor = questionsRankPct === null || questionsRankPos === 0 ? undefined
-    : questionsRankPct <= 25 ? 'var(--forest)'
-    : questionsRankPct <= 50 ? '#92400E'
-    : 'var(--crimson)'
-
-  const partyRankingTable = member.party
-    ? questionsRankingTable.filter(r => r.party === member.party)
-    : []
-  const partyRankIndex = partyRankingTable.findIndex(r => r.personId === member.personId)
-  const questionsPartyRankPos = partyRankIndex + 1
-  const questionsPartyRankTotal = partyRankingTable.length
+  const totalQuestions = questionStatsRows.reduce((s, r) => s + r.writtenCount + r.oralCount, 0)
+  const writtenCount = questionStatsRows.reduce((s, r) => s + r.writtenCount, 0)
+  const oralCount = questionStatsRows.reduce((s, r) => s + r.oralCount, 0)
 
   const mandateStart = member.mandateStart
     ? new Date(member.mandateStart)
@@ -136,6 +77,7 @@ export default async function MlaDetailPage({ params }: Props) {
     : 0
 
   const isPresidingOfficer = !!member.assemblyRole && !roleEnd
+  const hideQuestionsTab = isPresidingOfficer || structureRole?.type === 'minister'
 
   const latestExpenses = expensesData as {
     person_id: string
@@ -299,10 +241,17 @@ export default async function MlaDetailPage({ params }: Props) {
           {totalQuestions > 0 && (
             <div className={styles.statCell}>
               <div className={styles.statLbl}>Questions asked</div>
-              <div className={styles.statVal}>{totalQuestions}</div>
-              {questionsRankLabel && (
-                <div className={styles.statSub} style={{ color: questionsRankColor }}>{questionsRankLabel}</div>
-              )}
+              <div className={styles.statVal}>{totalQuestions.toLocaleString()}</div>
+              {questionRank && (() => {
+                const { rank, totalEligible } = questionRank
+                const pctile = totalEligible > 1 ? (rank - 1) / (totalEligible - 1) : 0
+                const color = pctile <= 0.33 ? 'var(--forest)' : pctile <= 0.66 ? '#92400E' : 'var(--crimson)'
+                return (
+                  <div className={styles.statSub} style={{ color }}>
+                    Ranked {rank}/{totalEligible}
+                  </div>
+                )
+              })()}
             </div>
           )}
           {member.isCurrent && (
@@ -327,24 +276,12 @@ export default async function MlaDetailPage({ params }: Props) {
             expenses={latestExpenses}
             interests={serialisedInterests}
             totalQuestions={totalQuestions}
-            unansweredQuestions={unansweredQuestions}
-            questionsContent={
-              <QuestionsTabClient
-                personId={id}
-                mandateStart={member.mandateStart ? new Date(member.mandateStart).toISOString().slice(0, 10) : null}
-                recentQuestions={recentQuestions}
-                totalQuestions={totalQuestions}
-                totalWritten={totalWritten}
-                totalOral={totalOral}
-                questionsRankPos={questionsRankPos}
-                questionsRankTotal={questionsRankTotal}
-                questionsRankColor={questionsRankColor}
-                questionsPartyRankPos={questionsPartyRankPos}
-                questionsPartyRankTotal={questionsPartyRankTotal}
-                partyName={member.party ?? undefined}
-                hideStatistics={isPresidingOfficer || structureRole?.type === 'minister'}
-              />
-            }
+            writtenCount={writtenCount}
+            oralCount={oralCount}
+            questionStats={questionStatsRows}
+            hideQuestionsTab={hideQuestionsTab}
+            partyColor={partyBorderColor(member.party)}
+            questionRank={questionRank}
           />
         </section>
       )}

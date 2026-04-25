@@ -1,3 +1,58 @@
+.mobileRankingsTitle {
+  display: none;
+}
+
+/* Filter pills */
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-md);
+}
+
+.filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  min-height: 44px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.filterBtn:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.filterBtnActive {
+  border: 2px solid transparent;
+}
+
+.filterBtnActiveAll {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.filterBtnActiveAll:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.filterRowDesktop {}
+
+.resultCountDesktop {}
+.resultCountMobile { display: none; }
+
 /* Result count */
 .resultCount {
   font-size: 13px;
@@ -27,9 +82,7 @@
 .colMla          { width: auto; }
 .colParty        { width: 110px; }
 .colConstituency { width: 160px; }
-.colQuestions    { width: 110px; }
-.colQuestionsDesktop { display: inline; }
-.colQuestionsMobile  { display: none; }
+.colQuestions    { width: 200px; }
 
 /* Header */
 .table thead tr {
@@ -146,11 +199,39 @@
 /* Questions cell */
 .tdQuestions {
   text-align: right;
+}
+
+.questionsInner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.barTrack {
+  flex: 1;
+  max-width: 90px;
+  height: 5px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 99px;
+  opacity: 0.75;
+}
+
+.questionsValue {
   font-size: 14px;
   font-weight: 600;
   color: var(--ink);
-  font-family: var(--font-mono);
   white-space: nowrap;
+  min-width: 48px;
+  text-align: right;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
 }
 
 /* Load more */
@@ -174,10 +255,7 @@
   color: var(--accent);
 }
 
-.photoDesktop { display: contents; }
-.photoMobile  { display: none; }
-
-/* Responsive — tablet: hide Constituency */
+/* Responsive — tablet: hide constituency */
 @media (max-width: 900px) {
   .colConstituency,
   .hideTablet {
@@ -185,11 +263,14 @@
   }
 
   .colQuestions {
-    width: 90px;
+    width: 160px;
   }
 }
 
-/* Responsive — mobile: rank · photo+name+pill · count */
+.photoDesktop { display: contents; }
+.photoMobile  { display: none; }
+
+/* Responsive — mobile */
 @media (max-width: 640px) {
   .photoDesktop { display: none; }
   .photoMobile  { display: contents; }
@@ -200,17 +281,21 @@
     display: none;
   }
 
-  .colQuestionsDesktop { display: none; }
-  .colQuestionsMobile  { display: inline; }
-
-  .colQuestions { width: 40px; }
-
   .colMla {
     width: auto;
   }
 
   .colQuestions {
-    width: 72px;
+    width: 80px;
+  }
+
+  .barTrack {
+    display: none;
+  }
+
+  .questionsValue {
+    min-width: 0;
+    font-size: 0.875rem;
   }
 
   .table thead th {
@@ -225,6 +310,35 @@
     display: inline-flex !important;
   }
 
+  .mobileRankingsTitle {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+  }
+
+  .mobileRankingsTitle::after {
+    content: '';
+    display: block;
+    height: 2px;
+    width: 40px;
+    background: var(--accent);
+    border-radius: 1px;
+    margin-top: 0.4rem;
+  }
+
+  .filterRowDesktop {
+    display: none;
+  }
+
+  .resultCountDesktop {
+    display: none;
+  }
+
+  .resultCountMobile {
+    display: inline;
+  }
 }
 
 @media (min-width: 641px) {
@@ -233,3 +347,10 @@
   }
 }
 
+@media (max-width: 767px) {
+  .filterBtn {
+    font-size: 0.8rem;
+    padding: 8px 10px;
+    min-height: 40px;
+  }
+}

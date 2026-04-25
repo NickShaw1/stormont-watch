@@ -72,22 +72,6 @@ export function monthKey(dateStr: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
-/**
- * Clean a DivisionSubject for display as a standalone motion title.
- * Strips leading "-#1", "#2" type prefixes and trailing bracketed member names.
- * e.g. "-#1 Motion to Adjourn (Mr Smith)" → "Motion to Adjourn"
- */
-export function cleanDivisionSubject(subject: string | null | undefined): string {
-  if (!subject) return ''
-  let s = subject.trim()
-  // Strip leading -#N or #N vote-numbering prefixes
-  s = s.replace(/^-?#\d+\s*/i, '')
-  // Strip trailing bracketed or parenthesised member names
-  s = s.replace(/\s*[\[(][^\])]*(MLA|Mr|Mrs|Ms|Dr|Sir)[^\])\]]*[\])]\s*$/i, '')
-  s = s.replace(/\s*\([^)]*\)\s*$/, '')
-  return s.trim() || subject.trim()
-}
-
 const PARTY_ABBREVIATIONS: Record<string, string> = {
   'Social Democratic and Labour Party': 'SDLP',
   'Democratic Unionist Party': 'DUP',
@@ -230,15 +214,6 @@ const CONSTITUENCY_ABBREVIATIONS: Record<string, string> = {
 export function formatConstituency(constituency: string | null | undefined): string {
   if (!constituency) return ''
   return CONSTITUENCY_ABBREVIATIONS[constituency] ?? constituency
-}
-
-export function partySlug(party: string): string {
-  return party
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
 }
 
 export function stripPreamble(text: string): string {

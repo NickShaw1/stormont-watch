@@ -18,9 +18,8 @@ import {
   getAllMembers,
   getLatestExpensesYear,
   getSittingDays,
-  getQuestionsLeaderboard,
-  getQuestionsTotals,
-  getUnansweredByDeptSinceRestoration,
+  getQuestionTotalsAllMembers,
+  getAllMinisters,
 } from '@/lib/db/queries'
 import StatsRankingTabs from './StatsRankingTabs'
 import StatsQuestionsSection from './StatsQuestionsSection'
@@ -43,7 +42,7 @@ export const metadata: Metadata = {
 }
 
 export default async function StatsPage() {
-  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, expensesLeague, expensesByParty, crossCommunityTrends, divisionsPerMonth, passRateByYear, overallAgreementRate, allCurrentMembers, latestExpensesYear, sittingDays, questionsLeaderboard, questionsTotals, unansweredSinceRestoration] = await Promise.all([
+  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, expensesLeague, expensesByParty, crossCommunityTrends, divisionsPerMonth, passRateByYear, overallAgreementRate, allCurrentMembers, latestExpensesYear, sittingDays, questionTotalsRaw, ministerRows] = await Promise.all([
     getMlaLeaderboard(),
     getAssemblyStats(),
     getAverageAttendance(),
@@ -59,10 +58,53 @@ export default async function StatsPage() {
     getAllMembers(),
     getLatestExpensesYear(),
     getSittingDays(),
-    getQuestionsLeaderboard(),
-    getQuestionsTotals(),
-    getUnansweredByDeptSinceRestoration(),
+    getQuestionTotalsAllMembers(),
+    getAllMinisters(),
   ])
+
+  // Build question rankings — exclude ministers and speakers (use leaderboard as allowlist, then remove ministers)
+  const eligibleIds = new Set(leaderboard.map(r => r.personId))
+  ministerRows.forEach(m => eligibleIds.delete(m.personId))
+  const memberMap = new Map(allCurrentMembers.map(m => [m.personId, m]))
+  const questionRanking = questionTotalsRaw
+    .map(r => ({
+      personId: r.personId,
+      total: Number(r.total),
+      written: Number(r.written),
+      oral: Number(r.oral),
+      member: memberMap.get(r.personId),
+    }))
+    .filter(r => r.member && eligibleIds.has(r.personId))
+    .sort((a, b) => b.total - a.total)
+
+  const questionTop5 = questionRanking.slice(0, 5).map(r => ({
+    personId: r.personId,
+    fullName: r.member!.fullName,
+    party: r.member!.party,
+    imgUrl: r.member!.imgUrl,
+    total: r.total,
+  }))
+  const questionBottom5 = [...questionRanking].reverse().slice(0, 5).map(r => ({
+    personId: r.personId,
+    fullName: r.member!.fullName,
+    party: r.member!.party,
+    imgUrl: r.member!.imgUrl,
+    total: r.total,
+  }))
+
+  const partyTotals: Record<string, number> = {}
+  const partyMemberCounts: Record<string, number> = {}
+  for (const m of allCurrentMembers) {
+    if (m.party) partyMemberCounts[m.party] = (partyMemberCounts[m.party] ?? 0) + 1
+  }
+  for (const r of questionTotalsRaw) {
+    const m = memberMap.get(r.personId)
+    if (!m?.party) continue
+    partyTotals[m.party] = (partyTotals[m.party] ?? 0) + Number(r.total)
+  }
+  const questionByParty = Object.entries(partyTotals)
+    .sort((a, b) => b[1] - a[1])
+    .map(([party, total]) => ({ party, total, memberCount: partyMemberCounts[party] ?? 1 }))
 
   const { totalDivisions, crossCommunityCount } = assemblyStats
 
@@ -101,8 +143,6 @@ export default async function StatsPage() {
           <strong>{overallPassRate}%</strong> of divisions passed.
           Unionist and nationalist MLAs voted Aye together on{' '}
           <strong>{overallAgreementRate}%</strong> of divisions.{' '}
-          <strong>{questionsTotals.total.toLocaleString()}</strong> questions have been asked, with{' '}
-          <strong>{questionsTotals.unanswered.toLocaleString()}</strong> remaining unanswered.
         </p>
 
         <div className={styles.glanceBar}>
@@ -328,26 +368,17 @@ export default async function StatsPage() {
       <hr className="section-rule" />
 
       {/* 4. Questions */}
-      <section aria-label="Questions statistics" className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <p className="eyebrow">Parliamentary activity</p>
-          <h2 className={styles.sectionTitle}>Questions</h2>
-          <div className={styles.sectionRule}></div>
-          <p className={styles.sectionDesc}>Who asks the most questions, which departments leave written questions unanswered, and how parties compare.</p>
-        </div>
-        <Link href="/assembly/questions" className={styles.expensesRankingsCard} style={{ marginTop: 0 }}>
-          <span className={styles.expensesRankingsCardLeft}>
-            <svg className={styles.expensesRankingsCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
-              <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
-              <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
-            </svg>
-            <span className={styles.expensesRankingsCardText}>View full questions rankings</span>
-          </span>
-          <span className={styles.expensesRankingsCardArrow}>↗</span>
-        </Link>
-        <StatsQuestionsSection data={questionsLeaderboard} unansweredSinceRestoration={unansweredSinceRestoration} />
-      </section>
+      {questionTop5.length > 0 && (
+        <section aria-labelledby="questions-heading" className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <p className="eyebrow">Parliamentary activity</p>
+            <h2 id="questions-heading" className={styles.sectionTitle}>Questions</h2>
+            <div className={styles.sectionRule}></div>
+            <p className={styles.sectionDesc}>Who asks the most questions. Excludes current ministers and speakers.</p>
+          </div>
+          <StatsQuestionsSection top5={questionTop5} bottom5={questionBottom5} byParty={questionByParty} />
+        </section>
+      )}
 
       <hr className="section-rule" />
 

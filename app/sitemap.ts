@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next'
-import { getAllDivisionsFromDb, getAllMembers, getAllBills, getAllPartiesWithStats } from '@/lib/db/queries'
+import { eq } from 'drizzle-orm'
+import { db } from '@/lib/db/client'
+import { divisions, members, bills } from '@/lib/db/schema'
 
 const BASE = 'https://www.stormontwatch.com'
 
@@ -25,36 +27,39 @@ const STATIC_URLS: MetadataRoute.Sitemap = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
-    const [rows, members, bills, parties] = await Promise.all([
-      getAllDivisionsFromDb(),
-      getAllMembers(),
-      getAllBills(),
-      getAllPartiesWithStats(),
+    const [divisionRows, memberRows, billRows, partyRows] = await Promise.all([
+      db.select({ documentId: divisions.documentId, divisionDate: divisions.divisionDate }).from(divisions),
+      db.select({ personId: members.personId, updatedAt: members.updatedAt }).from(members).where(eq(members.isCurrent, true)),
+      db.select({ billId: bills.billId, latestDate: bills.latestDate }).from(bills),
+      db.selectDistinct({ party: members.party }).from(members).where(eq(members.isCurrent, true)),
     ])
 
-    const voteUrls: MetadataRoute.Sitemap = bills.map((bill) => ({
-      url: `${BASE}/assembly/bills/${billSlug(bill.bill_id)}`,
-      lastModified: new Date(bill.latest_date),
+    const partySlug = (party: string) =>
+      party.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+
+    const voteUrls: MetadataRoute.Sitemap = billRows.map((bill) => ({
+      url: `${BASE}/assembly/bills/${billSlug(bill.billId)}`,
+      lastModified: bill.latestDate ?? undefined,
       changeFrequency: 'monthly',
       priority: 0.7,
     }))
 
-    const divisionUrls: MetadataRoute.Sitemap = rows.map((d) => ({
+    const divisionUrls: MetadataRoute.Sitemap = divisionRows.map((d) => ({
       url: `${BASE}/assembly/divisions/${d.documentId}`,
-      lastModified: d.divisionDate,
+      lastModified: d.divisionDate ?? undefined,
       changeFrequency: 'never',
       priority: 0.5,
     }))
 
-    const mlaUrls: MetadataRoute.Sitemap = members.map((m) => ({
+    const mlaUrls: MetadataRoute.Sitemap = memberRows.map((m) => ({
       url: `${BASE}/assembly/mlas/${m.personId}`,
       lastModified: m.updatedAt ?? new Date(),
       changeFrequency: 'weekly',
       priority: 0.6,
     }))
 
-    const partyUrls: MetadataRoute.Sitemap = parties.map((p) => ({
-      url: `${BASE}/assembly/parties/${p.slug}`,
+    const partyUrls: MetadataRoute.Sitemap = partyRows.map((p) => ({
+      url: `${BASE}/assembly/parties/${partySlug(p.party ?? '')}`,
       changeFrequency: 'weekly',
       priority: 0.7,
     }))

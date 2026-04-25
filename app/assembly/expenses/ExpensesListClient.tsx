@@ -173,7 +173,7 @@ export default function ExpensesListClient({ rows, totalMlaCount }: Props) {
                   onClick={() => router.push(`/assembly/mlas/${row.personId}`)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <td className={styles.tdRank} aria-label={`Rank ${globalRank}`}>{globalRank}</td>
+                  <th scope="row" className={styles.tdRank} aria-label={`Rank ${globalRank}`}>{globalRank}</th>
 
                   <td>
                     <div className={styles.mlaCell}>
