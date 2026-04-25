@@ -3,7 +3,6 @@ import { ImageResponse } from 'next/og'
 import { getMemberById } from '@/lib/db/queries'
 import { abbreviateParty } from '@/lib/format'
 
-export const runtime = 'edge'
 export const alt = 'MLA profile'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
@@ -48,8 +47,9 @@ function Logo() {
   )
 }
 
-export default async function Image({ params }: { params: { id: string } }) {
-  const member = await getMemberById(params.id)
+export default async function Image({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const member = await getMemberById(id)
 
   const name = member?.fullName ?? 'MLA'
   const party = member ? abbreviateParty(member.party) : ''

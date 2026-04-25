@@ -3,13 +3,12 @@ import { db } from '@/lib/db/client'
 import { members } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 
-export const runtime = 'edge'
-
 export async function GET(
   request: Request,
-  { params }: { params: { constituency: string } }
+  { params }: { params: Promise<{ constituency: string }> }
 ) {
-  const constituency = decodeURIComponent(params.constituency)
+  const { constituency: rawConstituency } = await params
+  const constituency = decodeURIComponent(rawConstituency)
   const mlas = await db
     .select({
       personId: members.personId,

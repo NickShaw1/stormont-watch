@@ -27,11 +27,12 @@ import PartyBreakdownClient from './PartyBreakdownClient'
 import styles from './divisionDetail.module.css'
 
 interface Props {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const data = await getDivisionWithVotes(params.id)
+  const { id } = await params
+  const data = await getDivisionWithVotes(id)
   if (!data) return { title: 'Division not found' }
   const stage = parseStageName(data.division.subject)
   const billSlugStr = parseBillSlug(data.division.subject)
@@ -50,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       images: [
         {
-          url: `/assembly/divisions/${params.id}/opengraph-image`,
+          url: `/assembly/divisions/${id}/opengraph-image`,
           width: 1200,
           height: 630,
           alt: `${pageTitle} — Stormont Watch`,
@@ -59,18 +60,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      images: [`/assembly/divisions/${params.id}/opengraph-image`],
+      images: [`/assembly/divisions/${id}/opengraph-image`],
     },
-    alternates: { canonical: `https://www.stormontwatch.com/assembly/divisions/${params.id}` },
+    alternates: { canonical: `https://www.stormontwatch.com/assembly/divisions/${id}` },
   }
 }
 
 export default async function DivisionDetailPage({ params }: Props) {
-  const data = await getDivisionWithVotes(params.id)
+  const { id } = await params
+  const data = await getDivisionWithVotes(id)
   if (!data) notFound()
 
   const { division, votes } = data
-  const documentId = params.id
+  const documentId = id
 
   const billStage = await db
     .select({ billId: schema.billStages.billId })
@@ -136,11 +138,11 @@ export default async function DivisionDetailPage({ params }: Props) {
     ? [
         { '@type': 'ListItem', position: 1, name: 'Legislation', item: `${siteUrl}/assembly/bills` },
         { '@type': 'ListItem', position: 2, name: parentBill[0].shortTitle, item: `${siteUrl}/assembly/bills/${billStage[0]?.billId ?? ''}` },
-        { '@type': 'ListItem', position: 3, name: displayTitle, item: `${siteUrl}/assembly/divisions/${params.id}` },
+        { '@type': 'ListItem', position: 3, name: displayTitle, item: `${siteUrl}/assembly/divisions/${id}` },
       ]
     : [
         { '@type': 'ListItem', position: 1, name: 'Votes', item: `${siteUrl}/assembly/votes` },
-        { '@type': 'ListItem', position: 2, name: displayTitle, item: `${siteUrl}/assembly/divisions/${params.id}` },
+        { '@type': 'ListItem', position: 2, name: displayTitle, item: `${siteUrl}/assembly/divisions/${id}` },
       ]
 
   const breadcrumbJsonLd = {

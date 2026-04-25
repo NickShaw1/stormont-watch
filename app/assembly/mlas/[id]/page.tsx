@@ -1,5 +1,3 @@
-export const runtime = 'edge'
-
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -23,11 +21,12 @@ import QuestionsTabClient from './QuestionsTabClient'
 import styles from './mlaDetail.module.css'
 
 interface Props {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const member = await getMemberById(params.id)
+  const { id } = await params
+  const member = await getMemberById(id)
   if (!member) return { title: 'MLA not found' }
   const description = `Voting record, expenses and registered interests for ${member.fullName}${member.party ? `, ${member.party}` : ''}${member.constituency ? `, ${member.constituency}` : ''}.`
   return {
@@ -38,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       images: [
         {
-          url: `/assembly/mlas/${params.id}/opengraph-image`,
+          url: `/assembly/mlas/${id}/opengraph-image`,
           width: 1200,
           height: 630,
           alt: `${member.fullName} — Stormont Watch`,
@@ -47,19 +46,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      images: [`/assembly/mlas/${params.id}/opengraph-image`],
+      images: [`/assembly/mlas/${id}/opengraph-image`],
     },
-    alternates: { canonical: `https://www.stormontwatch.com/assembly/mlas/${params.id}` },
+    alternates: { canonical: `https://www.stormontwatch.com/assembly/mlas/${id}` },
   }
 }
 
 export default async function MlaDetailPage({ params }: Props) {
+  const { id } = await params
   const [member, history, structureRole, expensesData, interests] = await Promise.all([
-    getMemberById(params.id),
-    getMemberVotingHistory(params.id),
-    getMemberStructureRole(params.id),
-    getMemberExpensesWithRank(params.id),
-    getRegisteredInterestsByMember(params.id),
+    getMemberById(id),
+    getMemberVotingHistory(id),
+    getMemberStructureRole(id),
+    getMemberExpensesWithRank(id),
+    getRegisteredInterestsByMember(id),
   ])
 
   if (!member) notFound()
@@ -177,7 +177,7 @@ export default async function MlaDetailPage({ params }: Props) {
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: member.fullName,
-    url: `${siteUrl}/assembly/mlas/${params.id}`,
+    url: `${siteUrl}/assembly/mlas/${id}`,
     jobTitle: 'Member of the Legislative Assembly',
     affiliation: member.party ? {
       '@type': 'Organization',
@@ -341,7 +341,7 @@ export default async function MlaDetailPage({ params }: Props) {
             unansweredQuestions={unansweredQuestions}
             questionsContent={
               <QuestionsTabClient
-                personId={params.id}
+                personId={id}
                 mandateStart={member.mandateStart ? new Date(member.mandateStart).toISOString().slice(0, 10) : null}
                 recentQuestions={recentQuestions}
                 totalQuestions={totalQuestions}

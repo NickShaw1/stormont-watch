@@ -49,11 +49,12 @@ export async function generateStaticParams() {
 }
 
 interface Props {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const party = await getPartyBySlug(params.slug)
+  const { slug } = await params
+  const party = await getPartyBySlug(slug)
   if (!party) return { title: 'Party not found' }
   const prose = PARTY_DESCRIPTIONS[party.party]
   const firstSentence = prose ? prose.split('. ')[0] + '.' : null
@@ -68,7 +69,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       images: [
         {
-          url: `/assembly/parties/${params.slug}/opengraph-image`,
+          url: `/assembly/parties/${slug}/opengraph-image`,
           width: 1200,
           height: 630,
           alt: `${party.party} — Stormont Watch`,
@@ -77,14 +78,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      images: [`/assembly/parties/${params.slug}/opengraph-image`],
+      images: [`/assembly/parties/${slug}/opengraph-image`],
     },
-    alternates: { canonical: `https://www.stormontwatch.com/assembly/parties/${params.slug}` },
+    alternates: { canonical: `https://www.stormontwatch.com/assembly/parties/${slug}` },
   }
 }
 
 export default async function PartyDetailPage({ params }: Props) {
-  const party = await getPartyBySlug(params.slug)
+  const { slug } = await params
+  const party = await getPartyBySlug(slug)
   if (!party) notFound()
 
   const [stats, expenses, borderColor, partyQuestionStatsRaw] = await Promise.all([
@@ -111,7 +113,7 @@ export default async function PartyDetailPage({ params }: Props) {
     '@context': 'https://schema.org',
     '@type': 'PoliticalParty',
     name: party.party,
-    url: `https://www.stormontwatch.com/assembly/parties/${params.slug}`,
+    url: `https://www.stormontwatch.com/assembly/parties/${slug}`,
     ...(PARTY_URLS[party.party] ? { sameAs: [PARTY_URLS[party.party], PARTY_WIKIPEDIA[party.party]].filter(Boolean) } : {}),
   }
 
@@ -177,7 +179,7 @@ export default async function PartyDetailPage({ params }: Props) {
           partyQuestionStats ? (
             <PartyQuestionsClient
               party={party.party}
-              partySlug={params.slug}
+              partySlug={slug}
               stats={partyQuestionStats}
             />
           ) : (

@@ -14,6 +14,7 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+.dev.vars
 
 # TypeScript
 tsconfig.tsbuildinfo
@@ -48,3 +49,6 @@ drizzle/meta/
 
 # Misc
 *.pem
+
+# OpenNext
+.open-next

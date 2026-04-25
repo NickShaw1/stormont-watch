@@ -4,7 +4,6 @@ import { getDivisionWithVotes } from '@/lib/db/queries'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import { formatDate } from '@/lib/format'
 
-export const runtime = 'edge'
 export const alt = 'Division result'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
@@ -37,8 +36,9 @@ function Logo() {
   )
 }
 
-export default async function Image({ params }: { params: { id: string } }) {
-  const data = await getDivisionWithVotes(params.id)
+export default async function Image({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const data = await getDivisionWithVotes(id)
 
   const raw = data?.division.title ?? data?.division.subject ?? 'Assembly Division'
   const truncated = raw.length > 80 ? `${raw.slice(0, 80)}…` : raw

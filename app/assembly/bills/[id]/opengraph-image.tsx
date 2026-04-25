@@ -2,7 +2,6 @@
 import { ImageResponse } from 'next/og'
 import { getAllBills } from '@/lib/db/queries'
 
-export const runtime = 'edge'
 export const alt = 'Bill detail'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
@@ -48,9 +47,10 @@ function Logo() {
   )
 }
 
-export default async function Image({ params }: { params: { id: string } }) {
+export default async function Image({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const allBills = await getAllBills()
-  const bill = allBills.find(b => billSlug(b.bill_id) === params.id)
+  const bill = allBills.find(b => billSlug(b.bill_id) === id)
 
   const title = bill?.short_title ?? 'Bill'
   const stage = bill?.display_stage ?? bill?.current_stage ?? ''

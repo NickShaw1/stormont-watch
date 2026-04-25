@@ -1,8 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getAllDivisionsFromDb, getAllMembers, getAllBills, getAllPartiesWithStats } from '@/lib/db/queries'
 
-export const runtime = 'edge'
-
 const BASE = 'https://www.stormontwatch.com'
 
 const billSlug = (billId: string) =>

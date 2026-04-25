@@ -2,7 +2,6 @@ import { ImageResponse } from 'next/og'
 import { getPartyBySlug } from '@/lib/db/queries'
 import { partyBorderColor, abbreviateParty } from '@/lib/format'
 
-export const runtime = 'edge'
 export const alt = 'Party profile'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
@@ -33,8 +32,9 @@ function Logo() {
   )
 }
 
-export default async function Image({ params }: { params: { slug: string } }) {
-  const party = await getPartyBySlug(params.slug)
+export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const party = await getPartyBySlug(slug)
 
   const partyName = party?.party ?? 'Party'
   const abbr = party ? abbreviateParty(party.party) : ''

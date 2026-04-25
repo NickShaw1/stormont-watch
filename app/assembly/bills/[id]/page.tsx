@@ -20,7 +20,7 @@ export async function generateStaticParams() {
 }
 
 interface Props {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 async function getBillBySlug(id: string) {
@@ -29,7 +29,8 @@ async function getBillBySlug(id: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const bill = await getBillBySlug(params.id)
+  const { id } = await params
+  const bill = await getBillBySlug(id)
   if (!bill) return { title: 'Bill not found' }
   const description = bill.long_title
     ? `${bill.long_title}`
@@ -42,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       images: [
         {
-          url: `/assembly/bills/${params.id}/opengraph-image`,
+          url: `/assembly/bills/${id}/opengraph-image`,
           width: 1200,
           height: 630,
           alt: `${bill.short_title} — Stormont Watch`,
@@ -51,9 +52,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      images: [`/assembly/bills/${params.id}/opengraph-image`],
+      images: [`/assembly/bills/${id}/opengraph-image`],
     },
-    alternates: { canonical: `https://www.stormontwatch.com/assembly/bills/${params.id}` },
+    alternates: { canonical: `https://www.stormontwatch.com/assembly/bills/${id}` },
   }
 }
 
@@ -87,7 +88,7 @@ function ImpactDots({ level }: { level: ImpactLevel }) {
 
 
 export default async function BillDetailPage({ params }: Props) {
-  const { id } = params
+  const { id } = await params
   const bill = await getBillBySlug(id)
   if (!bill) notFound()
 
