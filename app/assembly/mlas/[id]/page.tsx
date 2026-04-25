@@ -6,7 +6,7 @@ import { db } from '@/lib/db/client'
 import * as schema from '@/lib/db/schema'
 import { sql, eq, and, or, isNull, desc } from 'drizzle-orm'
 
-export const runtime = 'edge'
+export const revalidate = 0
 
 export async function generateStaticParams() {
   const members = await getAllMembersIncludingFormer()
