@@ -28,6 +28,8 @@
 .colParty        { width: 110px; }
 .colConstituency { width: 160px; }
 .colQuestions    { width: 110px; }
+.colQuestionsDesktop { display: inline; }
+.colQuestionsMobile  { display: none; }
 
 /* Header */
 .table thead tr {
@@ -197,6 +199,11 @@
   .hideMobile {
     display: none;
   }
+
+  .colQuestionsDesktop { display: none; }
+  .colQuestionsMobile  { display: inline; }
+
+  .colQuestions { width: 40px; }
 
   .colMla {
     width: auto;

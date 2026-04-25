@@ -60,7 +60,7 @@ export default function QuestionsRankingClient({ rows }: Props) {
               <th scope="col">MLA</th>
               <th scope="col" className={styles.hideMobile}>Party</th>
               <th scope="col" className={`${styles.hideMobile} ${styles.hideTablet}`}>Constituency</th>
-              <th scope="col">Questions</th>
+              <th scope="col"><span className={styles.colQuestionsDesktop}>Questions</span><span className={styles.colQuestionsMobile}>Qs</span></th>
             </tr>
           </thead>
           <tbody>
