@@ -1,9 +1,12 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getMemberExpensesWithRank, getRegisteredInterestsByMember, getAllMembersIncludingFormer } from '@/lib/db/queries'
+import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getMemberExpensesWithRank, getRegisteredInterestsByMember, getAllMembersIncludingFormer, getQuestionsRankingTable } from '@/lib/db/queries'
+import { db } from '@/lib/db/client'
+import * as schema from '@/lib/db/schema'
+import { sql, eq, and, or, isNull, desc } from 'drizzle-orm'
 
-export const revalidate = 86400
+export const revalidate = 0
 
 export async function generateStaticParams() {
   const members = await getAllMembersIncludingFormer()
@@ -13,7 +16,8 @@ import { formatDate, formatMemberName, formatRoleTitle, partyBorderColor, abbrev
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
 import VotingRecordClient from './VotingRecordClient'
-import FinancesTabsClient from './FinancesTabsClient'
+import ActivityTabsClient from './ActivityTabsClient'
+import QuestionsTabClient from './QuestionsTabClient'
 import styles from './mlaDetail.module.css'
 
 interface Props {
@@ -57,6 +61,68 @@ export default async function MlaDetailPage({ params }: Props) {
   ])
 
   if (!member) notFound()
+
+  const [totalQuestions, unansweredQuestions, totalWritten, totalOral, recentQuestionsRaw, questionsRankingTable] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.questions)
+      .where(eq(schema.questions.personId, member.personId))
+      .then(r => Number(r[0]?.count ?? 0)),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.questions)
+      .where(
+        and(
+          eq(schema.questions.personId, member.personId),
+          or(
+            and(eq(schema.questions.isOral, false), isNull(schema.questions.answerText)),
+            and(eq(schema.questions.isOral, true), isNull(schema.questions.hansardLink))
+          )
+        )
+      )
+      .then(r => Number(r[0]?.count ?? 0)),
+    db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(schema.questions)
+      .where(and(eq(schema.questions.personId, member.personId), eq(schema.questions.isOral, false)))
+      .then(r => Number(r[0]?.count ?? 0)),
+    db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(schema.questions)
+      .where(and(eq(schema.questions.personId, member.personId), eq(schema.questions.isOral, true)))
+      .then(r => Number(r[0]?.count ?? 0)),
+    db
+      .select()
+      .from(schema.questions)
+      .where(eq(schema.questions.personId, member.personId))
+      .orderBy(desc(schema.questions.tabledDate))
+      .limit(10),
+    getQuestionsRankingTable(),
+  ])
+
+  const recentQuestions = recentQuestionsRaw.map(q => ({
+    ...q,
+    updatedAt: q.updatedAt?.toISOString() ?? null,
+  }))
+
+  const questionsRankIndex = questionsRankingTable.findIndex(r => r.personId === member.personId)
+  const questionsRankPos = questionsRankIndex + 1
+  const questionsRankTotal = questionsRankingTable.length
+  const questionsRankPct = questionsRankTotal > 0 ? (questionsRankPos / questionsRankTotal) * 100 : null
+  const questionsRankLabel = questionsRankPos > 0 && questionsRankTotal > 0
+    ? `Ranked ${questionsRankPos} of ${questionsRankTotal}`
+    : null
+  const questionsRankColor = questionsRankPct === null || questionsRankPos === 0 ? undefined
+    : questionsRankPct <= 25 ? 'var(--forest)'
+    : questionsRankPct <= 50 ? '#92400E'
+    : 'var(--crimson)'
+
+  const partyRankingTable = member.party
+    ? questionsRankingTable.filter(r => r.party === member.party)
+    : []
+  const partyRankIndex = partyRankingTable.findIndex(r => r.personId === member.personId)
+  const questionsPartyRankPos = partyRankIndex + 1
+  const questionsPartyRankTotal = partyRankingTable.length
 
   const mandateStart = member.mandateStart
     ? new Date(member.mandateStart)
@@ -239,6 +305,15 @@ export default async function MlaDetailPage({ params }: Props) {
               </>
             )}
           </div>
+          {totalQuestions > 0 && (
+            <div className={styles.statCell}>
+              <div className={styles.statLbl}>Questions asked</div>
+              <div className={styles.statVal}>{totalQuestions}</div>
+              {questionsRankLabel && (
+                <div className={styles.statSub} style={{ color: questionsRankColor }}>{questionsRankLabel}</div>
+              )}
+            </div>
+          )}
           {member.isCurrent && (
             <div className={styles.statCell}>
               <div className={styles.statLbl}>Family employed</div>
@@ -253,11 +328,33 @@ export default async function MlaDetailPage({ params }: Props) {
         </div>
       </header>
 
-      {(latestExpenses || interests.length > 0) && <hr className="section-rule" />}
-      {(latestExpenses || interests.length > 0) && (
-        <section className={styles.expensesSection} aria-labelledby="finances-heading">
-          <h2 id="finances-heading" className={styles.sectionHeading}>Finances &amp; Interests</h2>
-          <FinancesTabsClient expenses={latestExpenses} interests={serialisedInterests} />
+      {(latestExpenses || interests.length > 0 || totalQuestions > 0) && <hr className="section-rule" />}
+      {(latestExpenses || interests.length > 0 || totalQuestions > 0) && (
+        <section className={styles.expensesSection} aria-labelledby="activity-heading">
+          <h2 id="activity-heading" className={styles.sectionHeading}>Activity &amp; Finances</h2>
+          <ActivityTabsClient
+            expenses={latestExpenses}
+            interests={serialisedInterests}
+            totalQuestions={totalQuestions}
+            unansweredQuestions={unansweredQuestions}
+            questionsContent={
+              <QuestionsTabClient
+                personId={params.id}
+                mandateStart={member.mandateStart ? new Date(member.mandateStart).toISOString().slice(0, 10) : null}
+                recentQuestions={recentQuestions}
+                totalQuestions={totalQuestions}
+                totalWritten={totalWritten}
+                totalOral={totalOral}
+                questionsRankPos={questionsRankPos}
+                questionsRankTotal={questionsRankTotal}
+                questionsRankColor={questionsRankColor}
+                questionsPartyRankPos={questionsPartyRankPos}
+                questionsPartyRankTotal={questionsPartyRankTotal}
+                partyName={member.party ?? undefined}
+                hideStatistics={isPresidingOfficer || structureRole?.type === 'minister'}
+              />
+            }
+          />
         </section>
       )}
 
@@ -277,7 +374,7 @@ export default async function MlaDetailPage({ params }: Props) {
               * As {member.assemblyRole}, {formatMemberName(member.fullName)} no longer participates in Assembly divisions. The voting record below reflects divisions held prior to taking up this role.
             </p>
           )}
-          <VotingRecordClient votes={relevantVotes} memberName={formatMemberName(member.fullName)} noExpensesTab={!latestExpenses && interests.length === 0} />
+          <VotingRecordClient votes={relevantVotes} memberName={formatMemberName(member.fullName)} noExpensesTab={!latestExpenses && interests.length === 0 && totalQuestions === 0} />
         </>
       )}
     </div>

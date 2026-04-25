@@ -96,7 +96,7 @@
 
 /* ── Search ─────────────────────────────────────────────────── */
 .searchWrap {
-  margin-bottom: 40px;
+  margin-bottom: var(--s-10);
 }
 
 .search {

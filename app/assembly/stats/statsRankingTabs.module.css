@@ -21,95 +21,23 @@
   /* all panels visible on desktop */
 }
 
-/* ── Mobile: tabs visible, one panel at a time ───────────── */
-@media (max-width: 767px) {
-  .wrapper {
-    gap: 0;
-  }
-
+/* ── Mobile: no tabs, all panels stacked one per row ─────── */
+@media (max-width: 640px) {
   .tabList {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-    width: 100%;
-    margin-bottom: 4px;
-  }
-
-  .tab {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 14px;
-    border-radius: 999px;
-    border: 1px solid var(--rule);
-    background: transparent;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--ink-3);
-    cursor: pointer;
-    font-family: var(--font-body), system-ui, sans-serif;
-    white-space: nowrap;
-  }
-
-  .tab:hover {
-    background: var(--surface);
-    color: var(--ink);
-    border-color: var(--accent);
-  }
-
-  .tab[aria-selected='true'],
-  .tabActive {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-  }
-
-  .wrapper {
-    gap: 16px;
+    display: none;
   }
 
   .grid {
     grid-template-columns: 1fr;
   }
 
-
-  /* Hidden panel: taken out of flow, invisible */
-  .panel {
-    display: none;
-  }
-
-  /* Active panel: in flow, no animation */
-  .panelActive {
+  .panel,
+  .panelActive,
+  .panelFadingOut {
     display: block;
   }
-
-  /* Outgoing panel: hidden immediately */
-  .panelFadingOut {
-    display: none;
-  }
 }
 
-@keyframes panelFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes panelFadeOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-}
 
 /* ── Card ────────────────────────────────────────────────── */
 .card {
@@ -186,7 +114,7 @@
 
 .name:hover {
   color: var(--teal);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .valueCol {
@@ -241,4 +169,26 @@
     font-size: 0.875rem;
     font-weight: 700;
   }
+}
+
+.bigStat {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--ink);
+  line-height: 1;
+  margin: var(--s-4) 0 var(--s-3);
+}
+
+.bigStatLabel {
+  font-size: 0.875rem;
+  color: var(--ink-3);
+  margin: 0 0 var(--s-3);
+}
+
+.footnote {
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  margin: var(--s-3) 0 0;
+  line-height: 1.4;
 }

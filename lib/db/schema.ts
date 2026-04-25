@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, date, serial, unique, boolean, numeric, primaryKey } from 'drizzle-orm/pg-core'
+import { pgTable, text, integer, timestamp, date, serial, unique, boolean, numeric, primaryKey, varchar, smallint } from 'drizzle-orm/pg-core'
 
 export const members = pgTable('members', {
   personId: text('person_id').primaryKey(),
@@ -158,4 +158,25 @@ export const plenaryItems = pgTable('plenary_items', {
 })
 
 export type PlenaryItem = typeof plenaryItems.$inferSelect
+
+export const questions = pgTable('questions', {
+  id: serial('id').primaryKey(),
+  questionId: text('question_id').notNull().unique(),
+  personId: text('person_id').notNull().references(() => members.personId),
+  reference: text('reference'),
+  tabledDate: date('tabled_date').notNull(),
+  answeredOnDate: date('answered_on_date'),
+  questionText: varchar('question_text', { length: 600 }).notNull(),
+  answerText: varchar('answer_text', { length: 3000 }),
+  hansardLink: text('hansard_link'),
+  departmentId: text('department_id'),
+  department: text('department'),
+  isOral: boolean('is_oral').notNull().default(false),
+  answerTruncated: boolean('answer_truncated').notNull().default(false),
+  calendarYear: smallint('calendar_year').notNull(),
+  mandate: text('mandate').notNull().default('2022-2027'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+})
+
+export type Question = typeof questions.$inferSelect
 

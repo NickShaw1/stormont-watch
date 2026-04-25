@@ -96,11 +96,17 @@
   background: var(--paper-3);
 }
 
-/* Nav right group */
+/* Nav right group — desktop: hidden (no children visible); mobile: hamburger */
 .navRight {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .navRight {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+  }
 }
 
 /* Hamburger — mobile/tablet only */

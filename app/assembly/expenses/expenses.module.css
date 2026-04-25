@@ -224,7 +224,8 @@
   display: block;
 }
 
-.mlaName:hover {
+.mlaName:hover,
+.tableRow:hover .mlaName {
   color: var(--teal);
 }
 

@@ -250,7 +250,7 @@ export default function BillsListClient({ scheduled, inProgress, completed, prog
       {/* Result count when searching */}
       {isSearching && (
         <p className={styles.resultCount}>
-          {filteredScheduled.length + filteredInProgress.length + filteredCompleted.length} bill{filteredScheduled.length + filteredInProgress.length + filteredCompleted.length !== 1 ? 's' : ''} found
+          <strong>{filteredScheduled.length + filteredInProgress.length + filteredCompleted.length}</strong> bill{filteredScheduled.length + filteredInProgress.length + filteredCompleted.length !== 1 ? 's' : ''} found
         </p>
       )}
 

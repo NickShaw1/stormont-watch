@@ -175,12 +175,9 @@ export default function VotingRecordClient({ votes, memberName, noExpensesTab }:
                         aria-label={`View division: ${title}`}
                       >
                         <span className={styles.subjectTitle}>{title}</span>
-                        <span
-                          className={styles.subjectSubtitle}
-                          style={{ visibility: subtitle ? 'visible' : 'hidden' }}
-                        >
-                          {subtitle ?? 'placeholder'}
-                        </span>
+                        {subtitle && (
+                          <span className={styles.subjectSubtitle}>{subtitle}</span>
+                        )}
                       </Link>
                     </td>
                     <td className={styles.voteCell}>
@@ -231,12 +228,9 @@ export default function VotingRecordClient({ votes, memberName, noExpensesTab }:
                 className={styles.mobileCard}
               >
                 <div className={styles.mobileTitle}>{title}</div>
-                <div
-                  className={styles.mobileSub}
-                  style={{ visibility: subtitle ? 'visible' : 'hidden' }}
-                >
-                  {subtitle ?? 'placeholder'}
-                </div>
+                {subtitle && (
+                  <div className={styles.mobileSub}>{subtitle}</div>
+                )}
                 <div className={styles.mobileMeta}>
                   <div className={styles.mobilePills}>
                     {voteLabel && (

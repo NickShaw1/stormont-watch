@@ -1,6 +1,7 @@
 import './load-env'
 import { syncBills } from './sync-bills'
 import { syncContactDetails } from './sync-contact-details'
+import { syncQuestions } from './sync-questions'
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
 import { and, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm'
@@ -916,6 +917,7 @@ async function main() {
     await runSync('syncCurrentMemberRoles', () => syncCurrentMemberRoles(db))
     await runSync('syncContactDetails', () => syncContactDetails(db))
     await runSync('syncRegisteredInterests', () => syncRegisteredInterests(db))
+    await runSync('syncQuestions', () => syncQuestions(db))
     await runSync('syncPlenaryItems', () => syncPlenaryItems(db))
   } else {
     // On non-Monday days, load member IDs from DB directly for syncNewDivisions

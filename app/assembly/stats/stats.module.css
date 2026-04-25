@@ -1371,3 +1371,18 @@
   }
 }
 
+.rankingLink {
+  margin-top: var(--spacing-md);
+  font-size: 0.875rem;
+}
+
+.rankingLink a {
+  color: var(--teal);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.rankingLink a:hover {
+  text-decoration: underline;
+}
+

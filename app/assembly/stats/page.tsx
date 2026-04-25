@@ -16,8 +16,12 @@ import {
   getAllMembers,
   getLatestExpensesYear,
   getSittingDays,
+  getQuestionsLeaderboard,
+  getQuestionsTotals,
+  getUnansweredByDeptSinceRestoration,
 } from '@/lib/db/queries'
 import StatsRankingTabs from './StatsRankingTabs'
+import StatsQuestionsSection from './StatsQuestionsSection'
 
 export const revalidate = 86400
 import CrossCommunityTrendsClient from './CrossCommunityTrendsClient'
@@ -38,7 +42,7 @@ export const metadata: Metadata = {
 }
 
 export default async function StatsPage() {
-  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, expensesLeague, expensesByParty, crossCommunityTrends, divisionsPerMonth, passRateByYear, overallAgreementRate, allCurrentMembers, latestExpensesYear, sittingDays] = await Promise.all([
+  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, expensesLeague, expensesByParty, crossCommunityTrends, divisionsPerMonth, passRateByYear, overallAgreementRate, allCurrentMembers, latestExpensesYear, sittingDays, questionsLeaderboard, questionsTotals, unansweredSinceRestoration] = await Promise.all([
     getMlaLeaderboard(),
     getAssemblyStats(),
     getAverageAttendance(),
@@ -54,6 +58,9 @@ export default async function StatsPage() {
     getAllMembers(),
     getLatestExpensesYear(),
     getSittingDays(),
+    getQuestionsLeaderboard(),
+    getQuestionsTotals(),
+    getUnansweredByDeptSinceRestoration(),
   ])
 
   const { totalDivisions, crossCommunityCount } = assemblyStats
@@ -92,7 +99,9 @@ export default async function StatsPage() {
           <strong>{totalDivisions}</strong> votes.{' '}
           <strong>{overallPassRate}%</strong> of divisions passed.
           Unionist and nationalist MLAs voted Aye together on{' '}
-          <strong>{overallAgreementRate}%</strong> of divisions.
+          <strong>{overallAgreementRate}%</strong> of divisions.{' '}
+          <strong>{questionsTotals.total.toLocaleString()}</strong> questions have been asked, with{' '}
+          <strong>{questionsTotals.unanswered.toLocaleString()}</strong> remaining unanswered.
         </p>
 
         <div className={styles.glanceBar}>
@@ -187,8 +196,7 @@ export default async function StatsPage() {
               </div>
               <h2 id="expenses-heading" className={styles.sectionTitle}>Member expenses</h2>
               <div className={styles.sectionRule}></div>
-            </div>
-            <p className={styles.expensesMeta}>
+              <p className={styles.expensesMeta}>
               <strong className={styles.expensesPeriod}>{periodLabel}</strong>
               <span className={styles.expensesMetaSep} aria-hidden="true">|</span>
               <span className={styles.expensesStat}>
@@ -201,7 +209,8 @@ export default async function StatsPage() {
                 <span className={styles.expensesStatLabel}>avg per MLA</span>
               </span>
             </p>
-            <Link href="/assembly/expenses" className={styles.expensesRankingsCard}>
+            </div>
+            <Link href="/assembly/expenses" className={styles.expensesRankingsCard} style={{ marginTop: 0 }}>
               <span className={styles.expensesRankingsCardLeft}>
                 <svg className={styles.expensesRankingsCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
@@ -317,7 +326,31 @@ export default async function StatsPage() {
 
       <hr className="section-rule" />
 
-      {/* 4. Party behaviour */}
+      {/* 4. Questions */}
+      <section aria-label="Questions statistics" className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <p className="eyebrow">Parliamentary activity</p>
+          <h2 className={styles.sectionTitle}>Questions</h2>
+          <div className={styles.sectionRule}></div>
+          <p className={styles.sectionDesc}>Who asks the most questions, which departments leave written questions unanswered, and how parties compare.</p>
+        </div>
+        <Link href="/assembly/questions" className={styles.expensesRankingsCard} style={{ marginTop: 0 }}>
+          <span className={styles.expensesRankingsCardLeft}>
+            <svg className={styles.expensesRankingsCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
+              <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
+              <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
+            </svg>
+            <span className={styles.expensesRankingsCardText}>View full questions rankings</span>
+          </span>
+          <span className={styles.expensesRankingsCardArrow}>↗</span>
+        </Link>
+        <StatsQuestionsSection data={questionsLeaderboard} unansweredSinceRestoration={unansweredSinceRestoration} />
+      </section>
+
+      <hr className="section-rule" />
+
+      {/* 5. Party behaviour */}
       <section aria-labelledby="patterns-heading" className={styles.section}>
         <div className={styles.sectionHeader}>
           <p className="eyebrow">Party behaviour</p>

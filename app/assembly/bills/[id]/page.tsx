@@ -105,7 +105,7 @@ export default async function BillDetailPage({ params }: Props) {
     ],
   }
 
-  const { stageIdx } = computeBillProgress(
+  const { stageIdx, scheduledIdx } = computeBillProgress(
     stages.map(s => ({ stage: s.stage, plenaryDate: s.plenary_date })),
     bill.royal_assent_date,
   )
@@ -151,22 +151,24 @@ export default async function BillDetailPage({ params }: Props) {
       <section className={styles.stagesSection}>
         <h2 className={styles.stagesSectionHead}>Progress</h2>
         <div className={styles.stages}>
-          {BILL_STAGES.map((s, i) => (
-            <div
-              key={s}
-              className={`${styles.stage} ${i < stageIdx ? styles.stageDone : i === stageIdx ? styles.stageCurrent : ''}`}
-            >
-              {s}
-            </div>
-          ))}
+          {BILL_STAGES.map((s, i) => {
+            const completedUpTo = scheduledIdx !== null ? scheduledIdx - 1 : stageIdx
+            const cls = i <= completedUpTo ? styles.stageDone : i === scheduledIdx ? styles.stageCurrent : ''
+            return (
+              <div key={s} className={`${styles.stage} ${cls}`}>
+                {s}
+              </div>
+            )
+          })}
         </div>
         <div className={styles.stagesMobileBar}>
-          {BILL_STAGES.map((s, i) => (
-            <div
-              key={s}
-              className={`${styles.stagesMobileSeg} ${i < stageIdx ? styles.stageDone : i === stageIdx ? styles.stageCurrent : ''}`}
-            />
-          ))}
+          {BILL_STAGES.map((s, i) => {
+            const completedUpTo = scheduledIdx !== null ? scheduledIdx - 1 : stageIdx
+            const cls = i <= completedUpTo ? styles.stageDone : i === scheduledIdx ? styles.stageCurrent : ''
+            return (
+              <div key={s} className={`${styles.stagesMobileSeg} ${cls}`} />
+            )
+          })}
         </div>
         <p className={styles.stagesMobileLabel}>
           <span className={styles.stagesMobileCount}>{stageIdx + 1} of {BILL_STAGES.length}</span>

@@ -44,7 +44,7 @@ interface Props {
   borderColor: string
 }
 
-const tabs = ['stats', 'expenses'] as const
+const tabs = ['stats', 'expenses', 'questions'] as const
 type Tab = typeof tabs[number]
 
 interface FullProps extends Props {
@@ -53,9 +53,10 @@ interface FullProps extends Props {
   partyUrl?: string
   statsContent?: React.ReactNode
   expensesContent?: React.ReactNode
+  questionsContent?: React.ReactNode
 }
 
-export default function PartyDetailClient({ party, mlas, ministers, chairs, borderColor, description, statsContent, expensesContent }: FullProps) {
+export default function PartyDetailClient({ party, mlas, ministers, chairs, borderColor, description, statsContent, expensesContent, questionsContent }: FullProps) {
   const [activeTab, setActiveTab] = useState<Tab>('stats')
 
   const execMinisters = ministers.filter((m) => m.department === 'The Executive Office')
@@ -79,7 +80,7 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
       <div className={styles.tabSection}>
         <div className={styles.billTabs} role="tablist" aria-label="Party sections">
           {tabs.map((tab) => {
-            const label = tab === 'stats' ? 'Assembly Stats' : 'Expenses'
+            const label = tab === 'stats' ? 'Attendance' : tab === 'expenses' ? 'Expenses' : 'Questions'
             return (
               <button
                 key={tab}
@@ -116,6 +117,17 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
         >
           {expensesContent ?? (
             <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>No expenses data available.</p>
+          )}
+        </div>
+        <div
+          id="tabpanel-questions"
+          role="tabpanel"
+          aria-labelledby="tab-questions"
+          hidden={activeTab !== 'questions'}
+          className={styles.tabContent}
+        >
+          {questionsContent ?? (
+            <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>No questions data available.</p>
           )}
         </div>
       </div>

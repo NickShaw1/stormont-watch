@@ -3,13 +3,10 @@
  */
 export function formatDate(raw: string | null | undefined): string {
   if (!raw) return ''
-  const d = new Date(raw)
-  if (isNaN(d.getTime())) return ''
-  return d.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  const [year, month, day] = raw.slice(0, 10).split('-')
+  if (!year || !month || !day) return ''
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`
 }
 
 /**
@@ -242,4 +239,12 @@ export function partySlug(party: string): string {
     .replace(/[̀-ͯ]/g, '')
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '')
+}
+
+export function stripPreamble(text: string): string {
+  const stripped = text.replace(
+    /^To ask the (?:First Minister and deputy First Minister|First Minister|deputy First Minister|Minister (?:of|for)(?: the)? [A-Za-z,& ]+?)\s+/i,
+    ''
+  ).trim()
+  return stripped.charAt(0).toUpperCase() + stripped.slice(1)
 }
