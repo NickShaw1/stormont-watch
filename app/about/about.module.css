@@ -6,7 +6,7 @@
 
 .section h2 {
   margin-bottom: 0;
-  max-width: 65ch;
+  /* max-width: 65ch; */
   font-style: normal;
   font-family: var(--font-sans);
 }

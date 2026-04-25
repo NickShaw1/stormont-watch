@@ -31,6 +31,7 @@ function str(val: unknown): string {
 }
 
 interface QuestionDetail {
+  answerByDate: string | null
   answeredOnDate: string | null
   answerText: string | null
   answerTruncated: boolean
@@ -45,6 +46,9 @@ async function fetchQuestionDetail(documentId: string): Promise<QuestionDetail |
       return null
     }
     const xml = await res.text()
+
+    const answerByDateRaw = xml.match(/<AnswerByDate>(.*?)<\/AnswerByDate>/)?.[1] ?? null
+    const answerByDate = answerByDateRaw ? answerByDateRaw.slice(0, 10) : null
 
     const answeredOnDateRaw = xml.match(/<AnsweredOnDate>(.*?)<\/AnsweredOnDate>/)?.[1] ?? null
     const answeredOnDate = answeredOnDateRaw ? answeredOnDateRaw.slice(0, 10) : null
@@ -63,7 +67,7 @@ async function fetchQuestionDetail(documentId: string): Promise<QuestionDetail |
 
     const hansardLink = xml.match(/<AnswerHansardLink>(.*?)<\/AnswerHansardLink>/)?.[1]?.trim() ?? null
 
-    return { answeredOnDate, answerText, answerTruncated, hansardLink }
+    return { answerByDate, answeredOnDate, answerText, answerTruncated, hansardLink }
   } catch (err) {
     console.error(`[syncQuestionsFull] Fetch error for question detail ${documentId}:`, err)
     return null
@@ -167,6 +171,7 @@ async function syncQuestionsFull(db: Db, formerOnly: boolean) {
               personId,
               reference: str(q?.Reference) || null,
               tabledDate,
+              answerByDate: detail.answerByDate,
               answeredOnDate: detail.answeredOnDate,
               questionText,
               answerText: detail.answerText,

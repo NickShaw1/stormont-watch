@@ -59,6 +59,7 @@ export default function Footer() {
             <p className={styles.colHeading}>Data</p>
             <ul className={styles.colLinks} role="list">
               <li><Link href="/assembly/expenses">Expenses</Link></li>
+              <li><Link href="/assembly/questions">Questions</Link></li>
               <li>
                 <a
                   href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"

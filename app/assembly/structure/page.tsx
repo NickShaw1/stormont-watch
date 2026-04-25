@@ -64,7 +64,8 @@ export default async function StructurePage() {
   return (
     <div className="container">
       <header className={styles.pageHeader}>
-        <h1>Assembly Structure</h1>
+        <span className="eyebrow">The Assembly</span>
+        <h1>Who&apos;s in Charge</h1>
         <p className={styles.lede}>The power-sharing Executive, ministerial departments and committee chairs of the Northern Ireland Assembly.</p>
       </header>
       <StructureClient

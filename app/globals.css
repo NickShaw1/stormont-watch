@@ -225,7 +225,7 @@ h4 { font-size: 1.125rem; }
   flex-shrink: 0;
 }
 
-p { max-width: 65ch; }
+/* p { max-width: 65ch; } */
 
 a {
   color: var(--link);
@@ -496,7 +496,7 @@ a:hover {
   font-size: 15px;
   line-height: 1.5;
   font-family: var(--font-sans);
-  max-width: 60ch;
+  /* max-width: 60ch; */
 }
 
 @media (max-width: 767px) {
@@ -552,7 +552,7 @@ a:hover {
   padding: 0.5rem 0.75rem;
   margin-top: var(--spacing-md);
   margin-bottom: var(--spacing-md);
-  max-width: 65ch;
+  /* max-width: 65ch; */
 }
 
 .note-card-icon {
@@ -567,7 +567,7 @@ a:hover {
   font-size: 0.875rem;
   color: var(--text-secondary);
   margin: 0;
-  max-width: 65ch;
+  /* max-width: 65ch; */
   line-height: 1.5;
   font-style: normal;
 }

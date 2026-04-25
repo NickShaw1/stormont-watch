@@ -901,7 +901,7 @@
   font-family: var(--font-sans);
   color: var(--ink-2);
   margin-bottom: var(--s-5);
-  max-width: 65ch;
+  /* max-width: 65ch; */
 }
 
 .sectionCaveat {
@@ -909,7 +909,7 @@
   color: var(--ink-3);
   margin-top: 0;
   margin-bottom: 16px;
-  max-width: 65ch;
+  /* max-width: 65ch; */
 }
 
 .chartTitle {
@@ -986,7 +986,7 @@
   font-size: 1rem;
   color: var(--ink-3);
   margin-top: var(--spacing-sm);
-  max-width: 65ch;
+  /* max-width: 65ch; */
 }
 
 /* Heatmap responsive layout */
@@ -1236,7 +1236,7 @@
   font-family: var(--font-sans);
   font-weight: 400;
   margin-bottom: var(--s-8);
-  max-width: 75ch;
+  /* max-width: 75ch; */
 }
 
 .assemblyStatement strong {

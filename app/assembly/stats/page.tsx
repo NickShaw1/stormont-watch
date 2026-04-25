@@ -89,7 +89,7 @@ export default async function StatsPage() {
       <section aria-labelledby="assembly-stats-heading" className={styles.section}>
         <header className="page-header">
           <span className="eyebrow">Statistics</span>
-          <h1 id="assembly-stats-heading">The Assembly at a glance</h1>
+          <h1 id="assembly-stats-heading">At a glance</h1>
           <p className="lede">Assembly voting patterns and attendance since May 2022, with expenses from the most recently published period.</p>
         </header>
 

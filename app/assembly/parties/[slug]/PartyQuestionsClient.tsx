@@ -19,6 +19,7 @@ interface QuestionJson {
   question_id: string
   reference: string | null
   tabled_date: string
+  answer_by_date: string | null
   answered_on_date: string | null
   question_text: string
   answer_text: string | null
@@ -36,6 +37,7 @@ type FlatQuestion = {
   questionId: string
   reference: string | null
   tabledDate: string
+  answerByDate: string | null
   answeredOnDate: string | null
   questionText: string
   answerText: string | null
@@ -54,6 +56,7 @@ function fromJson(j: QuestionJson): FlatQuestion {
     questionId: j.question_id,
     reference: j.reference,
     tabledDate: j.tabled_date,
+    answerByDate: j.answer_by_date,
     answeredOnDate: j.answered_on_date,
     questionText: j.question_text,
     answerText: j.answer_text,
@@ -166,6 +169,7 @@ export default function PartyQuestionsClient({ party, partySlug, stats }: Props)
     questionId: q.questionId,
     reference: q.reference,
     tabledDate: q.tabledDate,
+    answerByDate: q.answerByDate ?? null,
     answeredOnDate: q.answeredOnDate,
     questionText: q.questionText,
     answerText: q.answerText,
@@ -347,7 +351,7 @@ export default function PartyQuestionsClient({ party, partySlug, stats }: Props)
           <p className={styles.pqEmptyMobile}>No questions found for this party.</p>
         ) : displayList.map(q => {
           const isOpen = expandedIds.has(q.questionId)
-          const answered = q.isOral ? !!q.hansardLink : !!q.answerText
+          const answered = !!q.answerText || !!q.hansardLink
           const strippedText = stripPreamble(q.questionText)
           const truncatedText = strippedText.length > 150 ? strippedText.slice(0, 150) + '…' : strippedText
           return (
@@ -385,7 +389,22 @@ export default function PartyQuestionsClient({ party, partySlug, stats }: Props)
                   <div className={styles.pqMetaRight}>
                     {answered
                       ? <span className={styles.pqAnsweredIcon}>Answered</span>
-                      : <span className={styles.pqUnansweredIcon}>Not answered</span>
+                      : (() => {
+                          const today = new Date().toISOString().slice(0, 10)
+                          const due = q.answerByDate
+                          const isLate = due && today > due
+                          return (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                              {isLate
+                                ? <span className={styles.qPillLate}>Late · Due {formatDate(due)}</span>
+                                : due
+                                  ? <span className={styles.qPillDue}>Due {formatDate(due)}</span>
+                                  : null
+                              }
+                              <span className={styles.pqUnansweredIcon}>No answer</span>
+                            </span>
+                          )
+                        })()
                     }
                   </div>
                 </div>
@@ -426,7 +445,7 @@ export default function PartyQuestionsClient({ party, partySlug, stats }: Props)
           <p className={styles.pqEmptyMobile}>No questions found for this party.</p>
         ) : displayList.map(q => {
           const isOpen = expandedIds.has(q.questionId)
-          const answered = q.isOral ? !!q.hansardLink : !!q.answerText
+          const answered = !!q.answerText || !!q.hansardLink
           const strippedText = stripPreamble(q.questionText)
           const cardText = strippedText.length > 150 ? strippedText.slice(0, 150) + '…' : strippedText
           return (
@@ -446,10 +465,12 @@ export default function PartyQuestionsClient({ party, partySlug, stats }: Props)
                     <><span className={styles.pqMetaSep}>·</span><span className={styles.pqMlaConstituencyInline}>{formatConstituency(q.constituency)}</span></>
                   )}
                 </div>
+                <div className={styles.pqMobileCardMeta}>
+                  {q.department && <span className={styles.pqMobileMetaDept}>{q.department}</span>}
+                </div>
                 <p className={styles.pqCardBody}>{cardText}</p>
                 <div className={styles.pqMobileRow2}>
                   <span className={q.isOral ? styles.qPillOral : styles.qPillWritten}>{q.isOral ? 'Oral' : 'Written'}</span>
-                  {q.department && (<><span className={styles.pqMetaSep}>·</span><span className={styles.pqMobileMetaDept}>{q.department}</span></>)}
                 </div>
                 <div className={styles.pqMobileRow2}>
                   <span className={styles.pqMobileMetaDate}>{formatDate(q.tabledDate)}</span>
@@ -458,7 +479,23 @@ export default function PartyQuestionsClient({ party, partySlug, stats }: Props)
                 <div className={styles.pqMobileRow3}>
                   {answered
                     ? <span className={styles.pqAnsweredIcon}>Answered</span>
-                    : <span className={styles.pqUnansweredIcon}>Not answered</span>}
+                    : (() => {
+                        const today = new Date().toISOString().slice(0, 10)
+                        const due = q.answerByDate
+                        const isLate = due && today > due
+                        return (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            {isLate
+                              ? <span className={styles.qPillLate}>Late · Due {formatDate(due)}</span>
+                              : due
+                                ? <span className={styles.qPillDue}>Due {formatDate(due)}</span>
+                                : null
+                            }
+                            <span className={styles.pqUnansweredIcon}>No answer</span>
+                          </span>
+                        )
+                      })()
+                  }
                   <span className={styles.pqMobileChevron}>{isOpen ? '▲' : '▼'}</span>
                 </div>
               </div>

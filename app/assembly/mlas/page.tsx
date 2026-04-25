@@ -45,7 +45,7 @@ export default async function MlasPage() {
         <header className={styles.pageHeader}>
           <span className="eyebrow">The Assembly</span>
           <h1>All 90 MLAs</h1>
-          <p className={styles.lede}>Every Member of the Legislative Assembly elected to the 2022–2027 mandate. Filter by party, search by name or constituency, or compare attendance and voting records.</p>
+          <p className={styles.lede}>Every Member of the Legislative Assembly elected to the 2022–2027 mandate.</p>
           <p className={styles.formerMlasLink}>
             <Link href="/assembly/former-mlas">Former MLAs from this mandate ↗</Link>
           </p>

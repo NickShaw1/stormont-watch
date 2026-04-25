@@ -30,6 +30,7 @@ function str(val: unknown): string {
 }
 
 interface QuestionDetail {
+  answerByDate: string | null
   answeredOnDate: string | null
   answerText: string | null
   answerTruncated: boolean
@@ -44,6 +45,9 @@ async function fetchQuestionDetail(documentId: string): Promise<QuestionDetail |
       return null
     }
     const xml = await res.text()
+
+    const answerByDateRaw = xml.match(/<AnswerByDate>(.*?)<\/AnswerByDate>/)?.[1] ?? null
+    const answerByDate = answerByDateRaw ? answerByDateRaw.slice(0, 10) : null
 
     const answeredOnDateRaw = xml.match(/<AnsweredOnDate>(.*?)<\/AnsweredOnDate>/)?.[1] ?? null
     const answeredOnDate = answeredOnDateRaw ? answeredOnDateRaw.slice(0, 10) : null
@@ -62,7 +66,7 @@ async function fetchQuestionDetail(documentId: string): Promise<QuestionDetail |
 
     const hansardLink = xml.match(/<AnswerHansardLink>(.*?)<\/AnswerHansardLink>/)?.[1]?.trim() ?? null
 
-    return { answeredOnDate, answerText, answerTruncated, hansardLink }
+    return { answerByDate, answeredOnDate, answerText, answerTruncated, hansardLink }
   } catch (err) {
     console.error(`[syncQuestions] Fetch error for question detail ${documentId}:`, err)
     return null
@@ -162,6 +166,7 @@ export async function syncQuestions(db: Db): Promise<void> {
               personId,
               reference: str(q?.Reference) || null,
               tabledDate,
+              answerByDate: detail.answerByDate,
               answeredOnDate: detail.answeredOnDate,
               questionText,
               answerText: detail.answerText,
@@ -207,80 +212,53 @@ export async function syncQuestions(db: Db): Promise<void> {
 
   console.log('[syncQuestions] Phase 2 — checking unanswered questions...')
 
-  const unansweredWritten = await db
+  const unanswered = await db
     .select({ questionId: schema.questions.questionId })
     .from(schema.questions)
     .where(
       and(
-        eq(schema.questions.isOral, false),
-        isNull(schema.questions.answerText)
-      )
-    )
-
-  const unansweredOral = await db
-    .select({ questionId: schema.questions.questionId })
-    .from(schema.questions)
-    .where(
-      and(
-        eq(schema.questions.isOral, true),
+        isNull(schema.questions.answerText),
         isNull(schema.questions.hansardLink)
       )
     )
 
-  console.log(`[syncQuestions] Found ${unansweredWritten.length} unanswered written, ${unansweredOral.length} unanswered oral`)
+  console.log(`[syncQuestions] Found ${unanswered.length} unanswered questions`)
 
   let totalAnswersPopulated = 0
   let totalStillUnanswered = 0
   let unansweredProcessed = 0
-  const totalUnanswered = unansweredWritten.length + unansweredOral.length
+  const totalUnanswered = unanswered.length
 
-  for (const { questionId } of unansweredWritten) {
+  for (const { questionId } of unanswered) {
     try {
       const detail = await fetchQuestionDetail(questionId)
-      if (detail?.answerText) {
+      if (detail?.answerText || detail?.hansardLink) {
         await db
           .update(schema.questions)
           .set({
+            answerByDate: detail.answerByDate,
             answerText: detail.answerText,
+            hansardLink: detail.hansardLink,
             answeredOnDate: detail.answeredOnDate,
             answerTruncated: detail.answerTruncated,
             updatedAt: new Date(),
           })
           .where(eq(schema.questions.questionId, questionId))
         totalAnswersPopulated++
+      } else if (detail?.answerByDate) {
+        await db
+          .update(schema.questions)
+          .set({
+            answerByDate: detail.answerByDate,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.questions.questionId, questionId))
+        totalStillUnanswered++
       } else {
         totalStillUnanswered++
       }
     } catch (err) {
       console.error(`[syncQuestions] Failed to update answer for ${questionId}:`, err)
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 100))
-    unansweredProcessed++
-
-    if (unansweredProcessed % 100 === 0) {
-      console.log(`[syncQuestions] Phase 2 progress: ${unansweredProcessed}/${totalUnanswered} processed, ${totalAnswersPopulated} answers found`)
-    }
-  }
-
-  for (const { questionId } of unansweredOral) {
-    try {
-      const detail = await fetchQuestionDetail(questionId)
-      if (detail?.hansardLink) {
-        await db
-          .update(schema.questions)
-          .set({
-            hansardLink: detail.hansardLink,
-            answeredOnDate: detail.answeredOnDate,
-            updatedAt: new Date(),
-          })
-          .where(eq(schema.questions.questionId, questionId))
-        totalAnswersPopulated++
-      } else {
-        totalStillUnanswered++
-      }
-    } catch (err) {
-      console.error(`[syncQuestions] Failed to update hansard link for ${questionId}:`, err)
     }
 
     await new Promise(resolve => setTimeout(resolve, 100))

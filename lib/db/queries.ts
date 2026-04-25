@@ -1,4 +1,4 @@
-import { eq, desc, sql, and, or, count, countDistinct, isNotNull, isNull, gte, lte, asc, notInArray, inArray } from 'drizzle-orm'
+import { eq, desc, sql, and, count, countDistinct, isNotNull, isNull, gte, lte, asc, notInArray, inArray } from 'drizzle-orm'
 import { db } from './client'
 import { members, divisions, votes, hansardReports, ministers, committeeChairs, expenses, registeredInterests, bills, billStages, questions } from './schema'
 import { stripHonorifics } from '@/lib/utils/formatNames'
@@ -1768,10 +1768,7 @@ export async function getQuestionsTotals() {
       .then(r => Number(r[0]?.count ?? 0)),
     db.select({ count: sql<number>`count(*)` }).from(questions)
       .where(
-        or(
-          and(eq(questions.isOral, false), isNull(questions.answerText)),
-          and(eq(questions.isOral, true), isNull(questions.hansardLink))
-        )
+        and(isNull(questions.answerText), isNull(questions.hansardLink))
       )
       .then(r => Number(r[0]?.count ?? 0)),
   ])
@@ -1787,10 +1784,8 @@ export async function getUnansweredByDeptSinceRestoration() {
       .from(questions)
       .where(
         and(
-          or(
-            and(eq(questions.isOral, false), isNull(questions.answerText)),
-            and(eq(questions.isOral, true), isNull(questions.hansardLink))
-          ),
+          isNull(questions.answerText),
+          isNull(questions.hansardLink),
           gte(questions.tabledDate, RESTORATION_DATE)
         )
       )
@@ -1798,13 +1793,13 @@ export async function getUnansweredByDeptSinceRestoration() {
     db
       .select({
         department: questions.department,
-        unanswered: sql<number>`cast(count(case when (${questions.isOral} = false and ${questions.answerText} is null) or (${questions.isOral} = true and ${questions.hansardLink} is null) then 1 end) as int)`,
+        unanswered: sql<number>`cast(count(case when ${questions.answerText} is null and ${questions.hansardLink} is null then 1 end) as int)`,
         total: sql<number>`cast(count(*) as int)`,
       })
       .from(questions)
       .where(gte(questions.tabledDate, RESTORATION_DATE))
       .groupBy(questions.department)
-      .orderBy(desc(sql`count(case when (${questions.isOral} = false and ${questions.answerText} is null) or (${questions.isOral} = true and ${questions.hansardLink} is null) then 1 end)`))
+      .orderBy(desc(sql`count(case when ${questions.answerText} is null and ${questions.hansardLink} is null then 1 end)`))
       .limit(10),
   ])
 
@@ -1942,6 +1937,7 @@ export async function getPartyQuestionStats(party: string) {
       questionId: questions.questionId,
       reference: questions.reference,
       tabledDate: questions.tabledDate,
+      answerByDate: questions.answerByDate,
       answeredOnDate: questions.answeredOnDate,
       questionText: questions.questionText,
       answerText: questions.answerText,

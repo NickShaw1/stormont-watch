@@ -39,7 +39,7 @@ export default async function VotesPage() {
       <header className={`${styles.pageHeader} page-header`}>
         <span className="eyebrow">The vote record</span>
         <h1>Divisions</h1>
-        <p className={styles.lede}>Every recorded division in the Assembly since May 2022 including cross-community votes, opposition motions and bill stages. Click any division to see the full roll-call.</p>
+        <p className={styles.lede}>Every recorded division in the Assembly since May 2022 including cross-community votes, opposition motions and bill stages.</p>
       </header>
       <p className={styles.notice}>The Assembly did not sit between May 2022 and February 2024. No divisions were recorded during this period aside from procedural Speaker nomination votes.</p>
       <VotesListClient allItems={allItems} />

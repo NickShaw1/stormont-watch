@@ -24,7 +24,7 @@
 .pageHeader .lede {
   font-size: 15px;
   color: var(--ink-2);
-  max-width: 60ch;
+  /* max-width: 60ch; */
   margin-top: var(--s-4);
   line-height: 1.5;
   font-family: var(--font-sans);

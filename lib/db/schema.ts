@@ -165,6 +165,7 @@ export const questions = pgTable('questions', {
   personId: text('person_id').notNull().references(() => members.personId),
   reference: text('reference'),
   tabledDate: date('tabled_date').notNull(),
+  answerByDate: date('answer_by_date'),
   answeredOnDate: date('answered_on_date'),
   questionText: varchar('question_text', { length: 600 }).notNull(),
   answerText: varchar('answer_text', { length: 3000 }),

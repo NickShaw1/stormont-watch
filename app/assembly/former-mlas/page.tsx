@@ -23,12 +23,14 @@ export default async function FormerMlasPage() {
     <div>
       <div className="container">
         <header className={styles.pageHeader} style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: 'var(--s-8)' }}>
-          <span className="eyebrow">The Assembly</span>
+          <nav aria-label="Breadcrumb" className="breadcrumb">
+            <ol>
+              <li><Link href="/assembly/mlas">MLAs</Link></li>
+              <li aria-current="page"><span>Former MLAs</span></li>
+            </ol>
+          </nav>
           <h1>Former MLAs</h1>
           <p className={styles.lede}>Members who left the Assembly during the current 2022–2027 mandate.</p>
-          <p className={styles.formerMlasLink}>
-            <Link href="/assembly/mlas">← Back to all MLAs</Link>
-          </p>
         </header>
       </div>
 

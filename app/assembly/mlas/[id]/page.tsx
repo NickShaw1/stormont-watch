@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getMemberExpensesWithRank, getRegisteredInterestsByMember, getAllMembersIncludingFormer, getQuestionsRankingTable } from '@/lib/db/queries'
 import { db } from '@/lib/db/client'
 import * as schema from '@/lib/db/schema'
-import { sql, eq, and, or, isNull, desc } from 'drizzle-orm'
+import { sql, eq, and, isNull, desc } from 'drizzle-orm'
 
 export async function generateStaticParams() {
   const members = await getAllMembersIncludingFormer()
@@ -76,10 +76,8 @@ export default async function MlaDetailPage({ params }: Props) {
       .where(
         and(
           eq(schema.questions.personId, member.personId),
-          or(
-            and(eq(schema.questions.isOral, false), isNull(schema.questions.answerText)),
-            and(eq(schema.questions.isOral, true), isNull(schema.questions.hansardLink))
-          )
+          isNull(schema.questions.answerText),
+          isNull(schema.questions.hansardLink)
         )
       )
       .then(r => Number(r[0]?.count ?? 0)),

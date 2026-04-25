@@ -10,6 +10,7 @@ interface QuestionRow {
   question_id: string
   reference: string | null
   tabled_date: string
+  answer_by_date: string | null
   answered_on_date: string | null
   question_text: string
   answer_text: string | null
@@ -28,6 +29,7 @@ interface QuestionFile {
   question_id: string
   reference: string | null
   tabled_date: string
+  answer_by_date: string | null
   answered_on_date: string | null
   question_text: string
   answer_text: string | null
@@ -57,7 +59,7 @@ async function generateQuestionsJson() {
   console.log('[generateQuestionsJson] Querying questions...')
   const rows = await sql`
     SELECT
-      q.question_id, q.reference, q.tabled_date, q.answered_on_date,
+      q.question_id, q.reference, q.tabled_date, q.answer_by_date, q.answered_on_date,
       q.question_text, q.answer_text, q.hansard_link, q.department,
       q.is_oral, q.calendar_year, q.answer_truncated, q.person_id,
       m.full_name, m.constituency, m.party
@@ -92,6 +94,7 @@ async function generateQuestionsJson() {
     const q: QuestionFile = {
       question_id: row.question_id,
       reference: row.reference,
+      answer_by_date: row.answer_by_date ? (typeof row.answer_by_date === 'string' ? row.answer_by_date.slice(0, 10) : null) : null,
       tabled_date: (() => {
         const d = row.tabled_date
         if (typeof d === 'string') return d.slice(0, 10)

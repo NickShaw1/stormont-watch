@@ -84,7 +84,7 @@
   font-size: 15px;
   line-height: 1.7;
   color: var(--ink-2);
-  max-width: 72ch;
+  /* max-width: 72ch; */
 }
 
 .wikiPara {
@@ -1700,16 +1700,40 @@
   color: var(--ink-4);
 }
 
+.pqMobileCardMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
 .pqAnsweredIcon {
-  font-size: 0.6875rem;
-  color: var(--forest);
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: #dcfce7;
+  color: #166534;
 }
 
 .pqUnansweredIcon {
-  font-size: 0.6875rem;
-  color: #c0392b;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .pqDesktopExpanded {
@@ -1957,7 +1981,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   padding: 2px 8px;
-  border-radius: var(--r-pill);
+  border-radius: 999px;
   white-space: nowrap;
   background: #dbeafe;
   color: #1d4ed8;
@@ -1971,7 +1995,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   padding: 2px 8px;
-  border-radius: var(--r-pill);
+  border-radius: 999px;
   white-space: nowrap;
   background: #fde6f5;
   color: #a3006e;
@@ -2147,4 +2171,39 @@
   .pqColMla {
     display: none;
   }
+}
+
+.qPillLate {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.qDueDate {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+}
+
+.qPillDue {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: var(--paper-3);
+  color: var(--ink-2);
 }

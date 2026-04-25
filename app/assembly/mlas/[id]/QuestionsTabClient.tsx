@@ -12,6 +12,7 @@ interface QuestionJson {
   question_id: string
   reference: string | null
   tabled_date: string
+  answer_by_date: string | null
   answered_on_date: string | null
   question_text: string
   answer_text: string | null
@@ -29,6 +30,7 @@ function fromJson(j: QuestionJson, personId: string): SerializedQuestion {
     personId,
     reference: j.reference,
     tabledDate: j.tabled_date,
+    answerByDate: j.answer_by_date,
     answeredOnDate: j.answered_on_date,
     questionText: j.question_text,
     answerText: j.answer_text,
@@ -444,7 +446,7 @@ export default function QuestionsTabClient({ personId, mandateStart, recentQuest
           </p>
         ) : visibleItems.map((q) => {
           const isExpanded = expandedIds.has(q.questionId)
-          const answered = q.isOral ? !!q.hansardLink : !!q.answerText
+          const answered = !!q.answerText || !!q.hansardLink
           const strippedText = stripPreamble(q.questionText)
           const truncatedText = strippedText.length > 150 ? strippedText.slice(0, 150) + '…' : strippedText
           return (
@@ -487,7 +489,22 @@ export default function QuestionsTabClient({ personId, mandateStart, recentQuest
                   <div className={styles.qMetaRight}>
                     {answered
                       ? <span className={styles.qAnsweredIcon}>Answered</span>
-                      : <span className={styles.qUnansweredIcon}>Not answered</span>
+                      : (() => {
+                          const today = new Date().toISOString().slice(0, 10)
+                          const due = q.answerByDate
+                          const isLate = due && today > due
+                          return (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                              {isLate
+                                ? <span className={styles.qPillLate}>Late · Due {formatDate(due)}</span>
+                                : due
+                                  ? <span className={styles.qPillDue}>Due {formatDate(due)}</span>
+                                  : null
+                              }
+                              <span className={styles.qUnansweredIcon}>No answer</span>
+                            </span>
+                          )
+                        })()
                     }
                   </div>
                 </div>
@@ -510,7 +527,7 @@ export default function QuestionsTabClient({ personId, mandateStart, recentQuest
           </p>
         ) : visibleItems.map(q => {
           const isExpanded = expandedIds.has(q.questionId)
-          const answered = q.isOral ? !!q.hansardLink : !!q.answerText
+          const answered = !!q.answerText || !!q.hansardLink
           const strippedText = stripPreamble(q.questionText)
           const truncatedText = strippedText.length > 150 ? strippedText.slice(0, 150) + '…' : strippedText
           return (
@@ -552,7 +569,23 @@ export default function QuestionsTabClient({ personId, mandateStart, recentQuest
                 <div className={styles.qMobileRow3}>
                   {answered
                     ? <span className={styles.qAnsweredIcon}>Answered</span>
-                    : <span className={styles.qUnansweredIcon}>Not answered</span>}
+                    : (() => {
+                        const today = new Date().toISOString().slice(0, 10)
+                        const due = q.answerByDate
+                        const isLate = due && today > due
+                        return (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <span className={styles.qUnansweredIcon}>No answer</span>
+                            {isLate
+                              ? <span className={styles.qPillLate}>Late · Due {formatDate(due)}</span>
+                              : due
+                                ? <span className={styles.qPillDue}>Due {formatDate(due)}</span>
+                                : null
+                            }
+                          </span>
+                        )
+                      })()
+                  }
                   <span className={styles.qMobileChevron}>{isExpanded ? '▲' : '▼'}</span>
                 </div>
               </div>
