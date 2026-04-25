@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { getAllBills, getBillStages } from '@/lib/db/queries'
 import { computeBillProgress, BILL_STAGES } from '@/lib/bills/billProgress'
 
+export const revalidate = 86400
+
 import { getBillSummary } from '@/lib/summaries'
 import BillTimeline from './BillTimeline'
 import styles from './billDetail.module.css'

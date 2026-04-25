@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { eq } from 'drizzle-orm'
 import { getDivisionWithVotes, getHansardReportId, getAllDivisionsFromDb } from '@/lib/db/queries'
 
+export const revalidate = 86400
+
 export async function generateStaticParams() {
   const divisions = await getAllDivisionsFromDb()
   return divisions.map(d => ({ id: d.documentId }))
