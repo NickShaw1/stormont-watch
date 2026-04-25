@@ -248,7 +248,7 @@
 
 .patternName:hover {
   color: var(--accent);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .patternMeta {
@@ -642,7 +642,7 @@
 
 .name:hover {
   color: var(--teal);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .meta {
