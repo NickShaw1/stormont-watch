@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Build and deploy to Cloudflare Pages
+    name: Build and deploy to Cloudflare
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
