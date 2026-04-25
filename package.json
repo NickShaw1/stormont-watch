@@ -8,7 +8,7 @@
     "dev:fresh": "npx tsx scripts/generate-questions-json.ts && next dev",
     "prebuild": "npx tsx scripts/generate-questions-json.ts",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint app lib components --ext .ts,.tsx",
     "pages:build": "vercel build && npx @cloudflare/next-on-pages",
     "pages:preview": "npm run pages:build && wrangler pages dev .vercel/output/static",
     "sync": "tsx scripts/sync.ts",
