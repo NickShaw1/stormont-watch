@@ -300,9 +300,10 @@ async function syncCommitteeChairs(db: Db) {
     console.log(`[syncCommitteeChairs] Found ${rawMatches.length} committee chair records in API response`)
 
     const knownMembers = await db
-      .select({ personId: schema.members.personId })
+      .select({ personId: schema.members.personId, fullName: schema.members.fullName })
       .from(schema.members)
     const knownMemberIds = new Set(knownMembers.map((m) => m.personId))
+    const memberNames = new Map(knownMembers.map((m) => [m.personId, m.fullName]))
 
     let count = 0
     let skipped = 0
@@ -322,7 +323,7 @@ async function syncCommitteeChairs(db: Db) {
         continue
       }
       if (!knownMemberIds.has(personId)) {
-        console.warn(`[syncCommitteeChairs] Skipping non-MLA committee chair ${personId}`)
+        console.warn(`[syncCommitteeChairs] Skipping non-MLA committee chair ${personId} (${memberNames.get(personId) ?? 'unknown'})`)
         skipped++
         continue
       }
@@ -397,7 +398,7 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
   const endDate = endDateOverride ?? new Date().toISOString().slice(0, 10)
 
   if (startDate > endDate) {
-    console.log('[syncNewDivisions] Database is up to date. No new divisions to sync.')
+    console.log(`[syncNewDivisions] Database is up to date. No new divisions to sync. [${startDate} → ${endDate}]`)
     return
   }
 
@@ -409,11 +410,11 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
   const newDivisions: any[] = Array.isArray(raw) ? raw : [raw]
 
   if (newDivisions.length === 0) {
-    console.log('[syncNewDivisions] No new divisions found.')
+    console.log(`[syncNewDivisions] No new divisions found. [${startDate} → ${endDate}]`)
     return
   }
 
-  console.log(`[syncNewDivisions] Found ${newDivisions.length} new divisions`)
+  console.log(`[syncNewDivisions] Found ${newDivisions.length} new divisions [${startDate} → ${endDate}]`)
 
   console.log(`[syncNewDivisions] Known members: ${knownMemberIds.size}, current members: ${currentMemberIds.length}`)
 
@@ -875,10 +876,10 @@ async function main() {
 
   const syncResults: { script: string; status: 'success' | 'skipped' | 'error'; note?: string }[] = []
 
-  async function runSync(name: string, fn: () => Promise<void>) {
+  async function runSync(name: string, fn: () => Promise<string | void>) {
     try {
-      await fn()
-      syncResults.push({ script: name, status: 'success' })
+      const summary = await fn()
+      syncResults.push({ script: name, status: 'success', note: summary ?? undefined })
     } catch (err) {
       console.error(`[${name}] Failed:`, err)
       syncResults.push({ script: name, status: 'error', note: String(err) })

@@ -21,19 +21,31 @@ export async function syncQuestionStats(db: Db) {
   console.log(`[syncQuestionStats] Processing ${members.length} members...`)
 
   let processed = 0
-  let skipped = 0
+  let skippedApiError = 0
+  let skippedError = 0
+
+  const cutoffPreview = (() => {
+    const d = new Date()
+    d.setMonth(d.getMonth() - 6)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+  })()
+  console.log(`[syncQuestionStats] Filtering questions from ${cutoffPreview} onwards`)
 
   for (const { personId } of members) {
     try {
       const res = await fetch(`${BASE}/questions.asmx/GetQuestionsByMember_JSON?PersonId=${personId}`)
       if (!res.ok) {
         console.warn(`[syncQuestionStats] API error ${res.status} for member ${personId}`)
-        skipped++
+        skippedApiError++
         continue
       }
       const data = await res.json()
       const raw = data?.QuestionsList?.Question ?? []
       const questions = Array.isArray(raw) ? raw : [raw]
+
+      if (questions.length === 0) {
+        console.warn(`[syncQuestionStats] Member ${personId} — API returned no questions`)
+      }
 
       // Filter to last 6 months only — older months are already correct
       const sixMonthsAgo = new Date()
@@ -60,6 +72,12 @@ export async function syncQuestionStats(db: Db) {
         } else {
           counts[key].written++
         }
+      }
+
+      if (mandateQuestions.length > 0) {
+        const totalWritten = Object.values(counts).reduce((s, c) => s + c.written, 0)
+        const totalOral = Object.values(counts).reduce((s, c) => s + c.oral, 0)
+        console.log(`[syncQuestionStats] Member ${personId} — ${mandateQuestions.length} questions in window (${totalWritten} written, ${totalOral} oral)`)
       }
 
       // Upsert into question_stats
@@ -91,11 +109,11 @@ export async function syncQuestionStats(db: Db) {
       await new Promise(resolve => setTimeout(resolve, 100))
     } catch (err) {
       console.error(`[syncQuestionStats] Failed for member ${personId}:`, err)
-      skipped++
+      skippedError++
     }
   }
 
-  console.log(`[syncQuestionStats] Complete — ${processed} members processed, ${skipped} skipped`)
+  console.log(`[syncQuestionStats] Complete — ${processed} processed, ${skippedApiError} API errors, ${skippedError} exceptions`)
 }
 
 if (require.main === module) {

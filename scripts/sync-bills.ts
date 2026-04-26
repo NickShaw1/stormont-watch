@@ -24,7 +24,7 @@ async function fetchPlenaryItems(startDate: string, endDate: string) {
   const data = await res.json()
   const items = data?.PlenaryList?.Plenary ?? []
   if (!Array.isArray(items)) {
-    console.warn(`[syncBills] Unexpected plenary response shape for ${startDate}–${endDate}`)
+    console.warn(`[syncBills] Unexpected plenary response shape for ${startDate}–${endDate}: expected Array, got ${typeof items === 'object' ? JSON.stringify(Object.keys(items as object)) : typeof items}`)
     return []
   }
   return items
@@ -123,12 +123,18 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
   let processed = 0
   let skipped = 0
   let errors = 0
+  const skipReasons: Record<string, number> = {}
+
+  function countSkip(reason: string) {
+    skipReasons[reason] = (skipReasons[reason] ?? 0) + 1
+    skipped++
+  }
 
   for (const item of billItems) {
     try {
       const billId = extractBillId(item.Title)
       if (!billId) {
-        skipped++
+        countSkip('no bill id')
         continue
       }
 
@@ -138,7 +144,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
         .limit(1)
 
       if (existing.length > 0) {
-        skipped++
+        countSkip('already exists')
         continue
       }
 
@@ -147,7 +153,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
 
       if (!billData) {
         console.warn(`[syncBills] No bill data for documentId ${item.DocumentID}`)
-        skipped++
+        countSkip('no bill data')
         continue
       }
 
@@ -229,7 +235,13 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
       plenary_date DESC
   `)
 
+  const existingStages = await db.select({ billId: bills.billId, currentStage: bills.currentStage }).from(bills)
+  const existingStageMap = new Map(existingStages.map(b => [b.billId, b.currentStage]))
+
   for (const row of stageUpdates.rows as { bill_id: string; stage: string; plenary_date: string }[]) {
+    if (existingStageMap.get(row.bill_id) !== row.stage) {
+      console.log(`[syncBills] Stage updated: ${row.bill_id} → ${row.stage}`)
+    }
     await db.update(bills)
       .set({
         currentStage: row.stage,
@@ -239,7 +251,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
       .where(eq(bills.billId, row.bill_id))
   }
 
-  await db.execute(sql`
+  const backfillResult = await db.execute(sql`
     UPDATE bill_stages
     SET has_division = true,
         division_id = document_id,
@@ -249,10 +261,11 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
         SELECT document_id FROM divisions
       )
   `)
-  console.log('[syncBills] Backfill complete — any unlinked stages with arrived divisions have been corrected')
+  console.log(`[syncBills] Backfill complete — ${backfillResult.rowCount ?? 0} bill stage(s) linked to divisions`)
 
   // 6. Improved summary logging
-  console.log(`[syncBills] Done. New stages: ${processed}, Skipped: ${skipped}, Errors: ${errors}, Bills updated: ${stageUpdates.rows.length}`)
+  const skipBreakdown = Object.entries(skipReasons).map(([r, n]) => `${r}: ${n}`).join(', ')
+  console.log(`[syncBills] Done. New stages: ${processed}, Skipped: ${skipped}${skipBreakdown ? ` (${skipBreakdown})` : ''}, Errors: ${errors}, Bills stage-resolved: ${stageUpdates.rows.length}`)
 }
 
 // Standalone entrypoint

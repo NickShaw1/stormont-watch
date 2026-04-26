@@ -118,7 +118,9 @@ async function syncMandateAndRoles(db: Db) {
   console.log(`[syncMandateAndRoles] Fetching roles for ${allMembers.length} members (current and former)...`)
 
   let updated = 0
-  let skipped = 0
+  let skippedNoRoles = 0
+  let skippedError = 0
+  let noMandateRole = 0
   let processed = 0
 
   for (const { personId } of allMembers) {
@@ -128,7 +130,7 @@ async function syncMandateAndRoles(db: Db) {
       )
       if (!res.ok) {
         console.warn(`[syncMandateAndRoles] API error ${res.status} for member ${personId} — skipping`)
-        skipped++
+        skippedNoRoles++
         continue
       }
       const data = await res.json()
@@ -136,7 +138,7 @@ async function syncMandateAndRoles(db: Db) {
 
       if (roles.length === 0) {
         console.warn(`[syncMandateAndRoles] No roles returned for member ${personId} — skipping`)
-        skipped++
+        skippedNoRoles++
         await new Promise((resolve) => setTimeout(resolve, 100))
         continue
       }
@@ -157,6 +159,14 @@ async function syncMandateAndRoles(db: Db) {
           r.Role !== 'MLA' &&
           !r.AffiliationEnd
       )
+
+      if (!currentMandateMlaRole) {
+        noMandateRole++
+      }
+
+      if (specialRole) {
+        console.log(`[syncMandateAndRoles] Special assembly role detected — ${personId}: ${specialRole.Role}`)
+      }
 
       const mandateStart = currentMandateMlaRole?.AffiliationStart?.slice(0, 10) ?? null
       const mandateEnd = currentMandateMlaRole?.AffiliationEnd?.slice(0, 10) ?? null
@@ -187,11 +197,11 @@ async function syncMandateAndRoles(db: Db) {
       await new Promise((resolve) => setTimeout(resolve, 100))
     } catch (err) {
       console.error(`[syncMandateAndRoles] Failed to fetch roles for member ${personId}:`, err)
-      skipped++
+      skippedError++
     }
   }
 
-  console.log(`[syncMandateAndRoles] Complete — ${updated} updated, ${skipped} skipped`)
+  console.log(`[syncMandateAndRoles] Complete — ${updated} updated, ${skippedNoRoles} skipped (no roles), ${skippedError} skipped (error), ${noMandateRole} had no current mandate MLA role`)
 }
 
 async function main() {
