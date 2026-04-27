@@ -85,6 +85,8 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
   syncFrom.setDate(1)
 
   const end = new Date()
+  end.setMonth(end.getMonth() + 2)
+  end.setDate(0) // last day of next month
   console.log(`[syncBills] Syncing from ${syncFrom.toISOString().slice(0, 10)}${forceStartDate ? ' (forced)' : ''}`)
 
   const allItems: any[] = []
