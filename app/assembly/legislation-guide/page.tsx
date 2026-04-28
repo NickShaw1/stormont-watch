@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'How a Bill becomes law — Stormont Watch',
     description: 'A plain English guide to the legislative stages a bill passes through in the Northern Ireland Assembly.',
+    images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },
   alternates: { canonical: 'https://www.stormontwatch.com/assembly/legislation-guide' },
 }

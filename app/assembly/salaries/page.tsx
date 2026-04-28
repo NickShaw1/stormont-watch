@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'MLA Salaries — Stormont Watch',
     description: 'All current MLAs ranked by salary and mandate earnings.',
+    images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },
   alternates: { canonical: 'https://www.stormontwatch.com/assembly/salaries' },
 }

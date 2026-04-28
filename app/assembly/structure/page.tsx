@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Assembly Structure — Stormont Watch',
     description: 'The Executive, departments and committee chairs of the Northern Ireland Assembly.',
+    images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },
   alternates: { canonical: 'https://www.stormontwatch.com/assembly/structure' },
 }

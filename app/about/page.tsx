@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'About — Stormont Watch',
     description: 'About Stormont Watch — tracking every vote in the Northern Ireland Assembly since May 2022.',
+    images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },
   alternates: { canonical: 'https://www.stormontwatch.com/about' },
 }

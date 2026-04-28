@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Former MLAs — Stormont Watch',
     description: 'Members of the Legislative Assembly who left during the current mandate.',
+    images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },
   alternates: { canonical: 'https://www.stormontwatch.com/assembly/former-mlas' },
 }
