@@ -10,11 +10,15 @@ import {
   getMostEngagedMLA,
   getLatestDivisions,
   getInProgressBills,
-  getInProgressBillsCount,
+  getActiveBillsCount,
   getDivisionsPerMonth,
   getBillsPassedPerMonth,
   getThisWeekPlenaryItems,
   getAllMlasByConstituency,
+  getSittingDays,
+  getOverallAgreementRate,
+  getTotalExpensesPerMember,
+  getQuestionTotalsAllMembers,
 } from '@/lib/db/queries'
 import Sparkline from '@/components/Sparkline'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
@@ -46,7 +50,8 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const now = new Date()
   const [stats, avgAttendance, leastEngaged, mostEngaged, latestDivisions, inProgressBills,
-    inProgressBillsCount, divisionsPerMonth, billsPassedPerMonth, thisWeekAgenda, mlasByConstituency] =
+    inProgressBillsCount, divisionsPerMonth, billsPassedPerMonth, thisWeekAgenda, mlasByConstituency,
+    sittingDays, overallAgreementRate, totalExpensesData, questionTotalsRaw] =
     await Promise.all([
       getHomepageStats(),
       getAverageAttendance(),
@@ -54,12 +59,19 @@ export default async function HomePage() {
       getMostEngagedMLA(),
       getLatestDivisions(5),
       getInProgressBills(5),
-      getInProgressBillsCount(),
+      getActiveBillsCount(),
       getDivisionsPerMonth(),
       getBillsPassedPerMonth(),
       getThisWeekPlenaryItems(),
       getAllMlasByConstituency(),
+      getSittingDays(),
+      getOverallAgreementRate(),
+      getTotalExpensesPerMember(),
+      getQuestionTotalsAllMembers(),
     ])
+
+  const totalExpensesClaimed = totalExpensesData.reduce((s, r) => s + parseFloat(r.totalExpenses), 0)
+  const totalQuestionCount = questionTotalsRaw.reduce((s, r) => s + Number(r.total), 0)
 
   const divisionsSparkline = divisionsPerMonth.slice(-12).map((r) => Number(r.total_divisions))
   const billsPassedSparkline = billsPassedPerMonth.slice(-12).map((r) => Number(r.bills_passed))
@@ -421,6 +433,27 @@ export default async function HomePage() {
         })}
       </div>
 
+      {/* Overall cost promo */}
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <div>
+            <span className={styles.sectionEyebrow}>Public spending</span>
+            <h2 className={styles.sectionTitle}>Overall Cost</h2>
+          </div>
+        </div>
+        <Link href="/assembly/overall-cost" className={styles.expensesCard}>
+          <span className={styles.expensesCardLeft}>
+            <svg className={styles.expensesCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
+              <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
+              <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
+            </svg>
+            <span className={styles.expensesCardText}>View overall cost rankings (salary + expenses)</span>
+          </span>
+          <span className={styles.expensesCardArrow} aria-hidden="true">↗</span>
+        </Link>
+      </section>
+
       {/* Did you know */}
       <section className={styles.section}>
         <div className={styles.sectionHead}>
@@ -434,6 +467,10 @@ export default async function HomePage() {
           fundedVisits={stats.fundedVisits}
           outsideEmployment={stats.outsideEmployment}
           giftsHospitality={stats.giftsHospitality}
+          sittingDays={sittingDays}
+          overallAgreementRate={overallAgreementRate}
+          totalExpensesClaimed={totalExpensesClaimed}
+          totalQuestions={totalQuestionCount}
         />
       </section>
 

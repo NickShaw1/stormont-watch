@@ -29,7 +29,7 @@ export default async function QuestionsPage() {
     .map(r => {
       const m = memberMap.get(r.personId)
       if (!m) return null
-      if (m.assemblyRole || ministerIds.has(r.personId)) return null
+      if (m.assemblyRole === 'Speaker' || ministerIds.has(r.personId)) return null
       return {
         personId: r.personId,
         fullName: m.fullName,

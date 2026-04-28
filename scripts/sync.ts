@@ -6,6 +6,7 @@ import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
 import { and, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
+import { apiRoleToSalaryRole } from '../lib/salaries'
 
 const BASE = 'http://data.niassembly.gov.uk'
 const CUTOFF = '2022-05-01'
@@ -774,6 +775,58 @@ async function syncCurrentMemberRoles(db: Db) {
         .where(eq(schema.members.personId, personId))
       updated++
 
+      const MANDATE_START = '2022-05-05'
+      const AD_HOC_RE = /concurrent|ad hoc/i
+
+      for (const r of roles) {
+        const affiliationId = String(r?.AffiliationId ?? '')
+        const roleType = String(r?.RoleType ?? '')
+        const role = String(r?.Role ?? '')
+        const organisation = String(r?.Organisation ?? '')
+        const organisationId = String(r?.OrganisationId ?? '')
+        const startRaw = String(r?.AffiliationStart ?? '')
+        const endRaw = r?.AffiliationEnd ? String(r.AffiliationEnd) : null
+
+        if (!affiliationId || !startRaw) continue
+        const startDate = startRaw.slice(0, 10)
+        const endDate = endRaw ? endRaw.slice(0, 10) : null
+
+        if (startDate < MANDATE_START) {
+          // Include roles that started before mandate but were still active at mandate start
+          const stillActiveAtMandateStart = !endDate || endDate >= MANDATE_START
+          if (!stillActiveAtMandateStart) continue
+          // Role will use MANDATE_START as effective start date
+        }
+
+        const effectiveStartDate = startDate < MANDATE_START ? MANDATE_START : startDate
+
+        if (roleType === 'Committee Role (incl Assembly Commission)' && AD_HOC_RE.test(organisation)) continue
+
+        const salaryRole = apiRoleToSalaryRole(roleType, role, organisation)
+        if (!salaryRole) continue
+
+        await db
+          .insert(schema.memberRoleHistory)
+          .values({
+            personId,
+            affiliationId,
+            roleType,
+            role,
+            organisation: organisation || null,
+            organisationId: organisationId || null,
+            startDate: effectiveStartDate,
+            endDate,
+            mandate: CURRENT_MANDATE,
+          })
+          .onConflictDoUpdate({
+            target: schema.memberRoleHistory.affiliationId,
+            set: {
+              endDate,
+              updatedAt: new Date(),
+            },
+          })
+      }
+
       processed++
       if (processed % 10 === 0) {
         console.log(`[syncCurrentMemberRoles] Progress: ${processed}/${membersToSync.length}`)
@@ -886,7 +939,7 @@ async function main() {
     }
   }
 
-  const isMonday = new Date().getDay() === 1
+  const isMonday = new Date().getDay() === 1 || process.argv.includes('--force-monday')
   const isBackfill2022 = process.argv.includes('--backfill-2022')
 
   // Weekly scripts — Mondays only

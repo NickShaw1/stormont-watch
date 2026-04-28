@@ -1,3 +1,76 @@
+.yearDropdownWrap {
+  position: relative;
+  width: 130px;
+  margin-bottom: var(--s-4);
+}
+
+@media (max-width: 640px) {
+  .yearDropdownWrap {
+    width: 100%;
+  }
+}
+
+.yearDropdownTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2, 6px);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 150ms;
+}
+
+.yearDropdownTrigger:hover {
+  border-color: var(--ink-3);
+}
+
+.yearDropdownChevron {
+  flex-shrink: 0;
+  transition: transform 150ms;
+}
+
+.yearDropdownChevronOpen {
+  transform: rotate(180deg);
+}
+
+.yearDropdownList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2, 6px);
+  overflow: hidden;
+  box-shadow: 0 4px 16px oklch(16% 0.015 250 / 0.08);
+}
+
+.yearDropdownItem {
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+  transition: background 100ms, color 100ms;
+  user-select: none;
+}
+
+.yearDropdownItem:last-child { border-bottom: none; }
+.yearDropdownItem:hover { background: var(--paper-2); color: var(--ink); }
+.yearDropdownItemSelected { background: var(--paper-3); color: var(--ink); font-weight: 500; }
+
 .coverageNote {
   font-size: 0.875rem;
   color: var(--ink-3);

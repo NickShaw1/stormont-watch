@@ -983,8 +983,8 @@
 }
 
 .trendNote {
-  font-size: 1rem;
-  color: var(--ink-3);
+  font-size: 15px;
+  color: var(--ink-2);
   margin-top: var(--spacing-sm);
   /* max-width: 65ch; */
 }
@@ -1074,6 +1074,14 @@
   font-weight: 500;
   color: var(--paper);
   font-family: var(--font-sans);
+}
+
+.rankingsCardTextDesktop { display: inline; }
+.rankingsCardTextMobile  { display: none; }
+
+@media (max-width: 640px) {
+  .rankingsCardTextDesktop { display: none; }
+  .rankingsCardTextMobile  { display: inline; }
 }
 
 .expensesRankingsCardArrow {

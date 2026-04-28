@@ -171,9 +171,14 @@ export function partyBorderColor(party: string | null | undefined): string {
  * e.g. "Mr John Smith OBE" → "John Smith OBE"
  */
 export function formatMemberName(fullName: string): string {
-  return fullName
+  const stripped = fullName
     .replace(/^(Mr|Mrs|Miss|Ms|Dr|Lord|Lady|Sir)\s+/i, '')
     .trim()
+
+  // "Lord Elliott" strips to just "Elliott" — restore first name
+  if (stripped === 'Elliott') return 'Tom Elliott'
+
+  return stripped
 }
 
 export function getSurname(fullName: string | null | undefined): string {

@@ -106,8 +106,8 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
   console.log(`[syncBills] Total plenary items fetched: ${allItems.length}`)
 
   // 2. Minimum record guard
-  if (allItems.length < 10) {
-    console.warn(`[syncBills] Suspiciously few plenary items (${allItems.length}) — aborting to avoid data loss`)
+  if (allItems.length === 0) {
+    console.warn(`[syncBills] API returned zero plenary items — aborting to avoid data loss`)
     return
   }
 

@@ -13,9 +13,10 @@ interface Props {
   noOutline?: boolean
   decorative?: boolean
   square?: boolean
+  priority?: boolean
 }
 
-export default function MlaPhoto({ name, imgUrl, size, borderColor, noOutline, decorative, square }: Props) {
+export default function MlaPhoto({ name, imgUrl, size, borderColor, noOutline, decorative, square, priority }: Props) {
   const [error, setError] = useState(false)
   const showFallback = !imgUrl || error
 
@@ -46,6 +47,7 @@ export default function MlaPhoto({ name, imgUrl, size, borderColor, noOutline, d
           height={size}
           style={{ width: size, height: size }}
           className={styles.img}
+          priority={priority}
           onError={() => setError(true)}
         />
       )}

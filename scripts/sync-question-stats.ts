@@ -113,6 +113,10 @@ export async function syncQuestionStats(db: Db) {
     }
   }
 
+  if (processed === 0 && (skippedApiError > 0 || skippedError > 0)) {
+    throw new Error(`[syncQuestionStats] Zero members processed — possible API outage (${skippedApiError} API errors, ${skippedError} exceptions)`)
+  }
+
   console.log(`[syncQuestionStats] Complete — ${processed} processed, ${skippedApiError} API errors, ${skippedError} exceptions`)
 }
 

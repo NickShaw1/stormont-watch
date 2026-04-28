@@ -13,6 +13,16 @@ interface RotatingFactProps {
   fundedVisits: number
   outsideEmployment: number
   giftsHospitality: number
+  sittingDays: number
+  overallAgreementRate: number
+  totalExpensesClaimed: number
+  totalQuestions: number
+}
+
+function gbpShort(v: number): string {
+  if (v >= 1_000_000) return `£${(v / 1_000_000).toFixed(1)}m`
+  if (v >= 1_000) return `£${Math.round(v / 1_000)}k`
+  return `£${Math.round(v).toLocaleString('en-GB')}`
 }
 
 export default function RotatingFact({
@@ -20,6 +30,10 @@ export default function RotatingFact({
   fundedVisits,
   outsideEmployment,
   giftsHospitality,
+  sittingDays,
+  overallAgreementRate,
+  totalExpensesClaimed,
+  totalQuestions,
 }: RotatingFactProps) {
   const facts: Fact[] = [
     {
@@ -37,6 +51,22 @@ export default function RotatingFact({
     {
       number: giftsHospitality,
       text: 'gifts and hospitality declarations have been made by MLAs in the Register of Interests since 2022.',
+    },
+    {
+      number: sittingDays,
+      text: 'days the Assembly has sat since May 2022.',
+    },
+    {
+      number: gbpShort(totalExpensesClaimed),
+      text: 'claimed in MLA expenses since the start of the 2022–2027 mandate.',
+    },
+    {
+      number: overallAgreementRate + '%',
+      text: 'of votes in the Assembly since 2022 passed with cross-community support from both unionist and nationalist MLAs.',
+    },
+    {
+      number: totalQuestions.toLocaleString('en-GB'),
+      text: 'questions have been asked in the Assembly since May 2022.',
     },
   ]
 

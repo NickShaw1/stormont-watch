@@ -45,7 +45,7 @@ export function getPillInfo(bill: BillProgressedThisWeek): { label: string; cls:
     if (/negatived|fell/i.test(e.outcome ?? '')) return { label: 'Failed by vote', cls: 'fail' }
     return { label: 'Voted', cls: 'neutral' }
   }
-  return { label: 'Passed', cls: 'pass' }
+  return { label: 'Heard', cls: 'neutral' }
 }
 
 export function formatEventLine(event: BillEvent): string {
@@ -56,7 +56,7 @@ export function formatEventLine(event: BillEvent): string {
   })
   let action: string
   if (event.eventType === 'passed') {
-    action = 'passed'
+    action = 'heard'
   } else if (/carried|agreed/i.test(event.outcome ?? '')) {
     action = 'passed by vote'
   } else if (/negatived|fell/i.test(event.outcome ?? '')) {

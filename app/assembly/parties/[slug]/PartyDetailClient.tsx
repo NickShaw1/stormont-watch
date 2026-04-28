@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import { partyBorderColor, abbreviateParty, formatMemberName, formatConstituency } from '@/lib/format'
@@ -111,6 +112,7 @@ function QuestionsYearChart({ questionStats, partyColor }: { questionStats: Ques
 
 export default function PartyDetailClient({ party, mlas, ministers, chairs, borderColor, description, statsContent, expensesContent, totalQuestions = 0, writtenCount = 0, oralCount = 0, questionStats = [] }: FullProps) {
   const [activeTab, setActiveTab] = useState<Tab>('stats')
+  const router = useRouter()
 
   const execMinisters = ministers.filter((m) => m.department === 'The Executive Office')
   const deptMinisters = ministers.filter((m) => m.department !== 'The Executive Office')
@@ -119,6 +121,20 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
   )
 
   const abbr = abbreviateParty(party)
+
+  const ministerIds = new Set(ministers.map(m => m.personId))
+  const qTotals = new Map<string, number>()
+  for (const r of questionStats) {
+    qTotals.set(r.personId, (qTotals.get(r.personId) ?? 0) + r.writtenCount + r.oralCount)
+  }
+  const rankedMlaQuestions = mlas.length > 1
+    ? mlas
+        .filter(m => m.assemblyRole !== 'Speaker' && !ministerIds.has(m.personId))
+        .map(m => ({ ...m, total: qTotals.get(m.personId) ?? 0 }))
+        .filter(m => m.total > 0)
+        .sort((a, b) => b.total - a.total)
+    : []
+  const qMaxTotal = rankedMlaQuestions[0]?.total ?? 1
 
   return (
     <>
@@ -203,6 +219,65 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
               </div>
             </div>
             </div>
+
+            {rankedMlaQuestions.length > 0 && (
+              <div className={styles.qRankWrap}>
+                <table className={styles.qRankTable} aria-label="MLA questions ranking">
+                  <colgroup>
+                    <col className={styles.qColRank} />
+                    <col className={styles.qColMla} />
+                    <col className={`${styles.qColConstituency} ${styles.qHideMobile}`} />
+                    <col className={styles.qColQuestions} />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">MLA</th>
+                      <th scope="col" className={styles.qHideMobile}>Constituency</th>
+                      <th scope="col" className={styles.qThQuestions}>Questions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rankedMlaQuestions.map((mla, i) => {
+                      const barPct = qMaxTotal > 0 ? Math.round(mla.total / qMaxTotal * 100) : 0
+                      return (
+                        <tr
+                          key={mla.personId}
+                          onClick={() => router.push(`/assembly/mlas/${mla.personId}`)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <td className={styles.qTdRank}>{i + 1}</td>
+                          <td>
+                            <div className={styles.qMlaCell}>
+                              <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={36} decorative square />
+                              <div className={styles.qMlaInfo}>
+                                <Link href={`/assembly/mlas/${mla.personId}`} className={styles.qMlaName}>
+                                  {formatMemberName(mla.fullName)}
+                                </Link>
+                              </div>
+                            </div>
+                          </td>
+                          <td className={`${styles.qTdConstituency} ${styles.qHideMobile}`}>
+                            {mla.constituency ? formatConstituency(mla.constituency) : '—'}
+                          </td>
+                          <td className={styles.qTdQuestions}>
+                            <div className={styles.qQuestionsInner}>
+                              <div className={styles.qBarTrack} aria-hidden="true">
+                                <div
+                                  className={styles.qBarFill}
+                                  style={{ width: `${barPct}%`, background: borderColor }}
+                                />
+                              </div>
+                              <span className={styles.qQuestionsValue}>{mla.total.toLocaleString()}</span>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>

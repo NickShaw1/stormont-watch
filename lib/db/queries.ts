@@ -1,6 +1,6 @@
 import { eq, desc, sql, and, count, countDistinct, isNotNull, isNull, gte, lte, asc } from 'drizzle-orm'
 import { db } from './client'
-import { members, divisions, votes, hansardReports, ministers, committeeChairs, expenses, registeredInterests, bills, billStages, questionStats } from './schema'
+import { members, divisions, votes, hansardReports, ministers, committeeChairs, expenses, registeredInterests, bills, billStages, questionStats, memberRoleHistory } from './schema'
 import { stripHonorifics } from '@/lib/utils/formatNames'
 import { getSurname } from '@/lib/format'
 
@@ -480,28 +480,64 @@ export async function getAllCommitteeChairs() {
   return rows.map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
 }
 
+export async function getTotalExpensesPerMember() {
+  const result = await db.execute(sql`
+    SELECT person_id as "personId", SUM(total) as "totalExpenses"
+    FROM expenses
+    WHERE total IS NOT NULL
+    GROUP BY person_id
+  `)
+  return result.rows as { personId: string; totalExpenses: string }[]
+}
+
+export async function getAllExpensesLeagueTable() {
+  const result = await db.execute(sql`
+    SELECT
+      e.person_id as "personId",
+      m.full_name as "fullName",
+      m.party,
+      m.constituency,
+      m.img_url as "imgUrl",
+      m.mandate_start as "mandateStart",
+      e.total,
+      e.financial_year as "financialYear",
+      e.period
+    FROM expenses e
+    INNER JOIN members m ON m.person_id = e.person_id
+    WHERE m.is_current = true
+    ORDER BY e.financial_year DESC, e.total DESC NULLS LAST
+  `)
+  type LeagueRow = { personId: string; fullName: string; party: string | null; constituency: string | null; imgUrl: string | null; mandateStart: string | null; total: string | null; financialYear: string; period: string | null }
+  return (result.rows as LeagueRow[]).map(r => ({ ...r, imgUrl: `/mla-images/${r.personId}.jpg` }))
+}
+
 export async function getExpensesLeagueTable() {
-  const rows = await db
-    .select({
-      personId: expenses.personId,
-      fullName: members.fullName,
-      party: members.party,
-      constituency: members.constituency,
-      imgUrl: members.imgUrl,
-      mandateStart: members.mandateStart,
-      total: expenses.total,
-      staffCosts: expenses.staffCosts,
-      constituencyOffice: expenses.constituencyOffice,
-      allowances: expenses.allowances,
-      otherExpenses: expenses.otherExpenses,
-      financialYear: expenses.financialYear,
-      period: expenses.period,
-    })
-    .from(expenses)
-    .innerJoin(members, eq(expenses.personId, members.personId))
-    .where(eq(members.isCurrent, true))
-    .orderBy(desc(expenses.total))
-  return rows.map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
+  const result = await db.execute(sql`
+    WITH latest_year AS (
+      SELECT financial_year FROM expenses ORDER BY financial_year DESC LIMIT 1
+    )
+    SELECT
+      e.person_id as "personId",
+      m.full_name as "fullName",
+      m.party,
+      m.constituency,
+      m.img_url as "imgUrl",
+      m.mandate_start as "mandateStart",
+      e.total,
+      e.staff_costs as "staffCosts",
+      e.constituency_office as "constituencyOffice",
+      e.allowances,
+      e.other_expenses as "otherExpenses",
+      e.financial_year as "financialYear",
+      e.period
+    FROM expenses e
+    INNER JOIN members m ON m.person_id = e.person_id
+    WHERE m.is_current = true
+      AND e.financial_year = (SELECT financial_year FROM latest_year)
+    ORDER BY e.total DESC
+  `)
+  type LeagueLatestRow = { personId: string; fullName: string; party: string | null; constituency: string | null; imgUrl: string | null; mandateStart: string | null; total: string | null; staffCosts: string | null; constituencyOffice: string | null; allowances: string | null; otherExpenses: string | null; financialYear: string; period: string | null }
+  return (result.rows as LeagueLatestRow[]).map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
 }
 
 export async function getMlasWithoutExpenses() {
@@ -661,6 +697,54 @@ export async function getMemberExpensesWithRank(personId: string) {
     )
     SELECT * FROM ranked
     WHERE person_id = ${personId}
+  `)
+  return result.rows[0] ?? null
+}
+
+export async function getAllMemberExpenses(personId: string) {
+  const rows = await db.execute(sql`
+    WITH year_ranks AS (
+      SELECT
+        person_id,
+        financial_year,
+        total,
+        RANK() OVER (PARTITION BY financial_year ORDER BY total DESC) as rank,
+        COUNT(*) OVER (PARTITION BY financial_year) as total_members
+      FROM expenses
+    )
+    SELECT
+      e.financial_year,
+      e.period,
+      e.constituency_office,
+      e.other_expenses,
+      e.allowances,
+      e.staff_costs,
+      e.total,
+      yr.rank,
+      yr.total_members
+    FROM expenses e
+    JOIN year_ranks yr ON yr.person_id = e.person_id AND yr.financial_year = e.financial_year
+    WHERE e.person_id = ${personId}
+    ORDER BY e.financial_year DESC
+  `)
+  return rows.rows
+}
+
+export async function getMandateExpensesRank(personId: string) {
+  const result = await db.execute(sql`
+    WITH totals AS (
+      SELECT person_id, SUM(total) as mandate_total
+      FROM expenses
+      GROUP BY person_id
+    ),
+    ranked AS (
+      SELECT
+        person_id,
+        RANK() OVER (ORDER BY mandate_total DESC) as rank,
+        COUNT(*) OVER () as total_members
+      FROM totals
+    )
+    SELECT rank, total_members FROM ranked WHERE person_id = ${personId}
   `)
   return result.rows[0] ?? null
 }
@@ -1418,6 +1502,14 @@ export async function getInProgressBillsCount(): Promise<number> {
   return result[0]?.count ?? 0
 }
 
+export async function getActiveBillsCount(): Promise<number> {
+  const result = await db
+    .select({ count: count() })
+    .from(bills)
+    .where(isNull(bills.royalAssentDate))
+  return result[0]?.count ?? 0
+}
+
 export async function getBillsRoyalAssentByMonth() {
   const result = await db.execute(sql`
     SELECT
@@ -1663,7 +1755,7 @@ export async function getQuestionRankForMember(personId: string): Promise<{ rank
     .leftJoin(ministers, eq(questionStats.personId, ministers.personId))
     .where(and(
       eq(members.isCurrent, true),
-      sql`${members.assemblyRole} is null`,
+      sql`(${members.assemblyRole} is null OR ${members.assemblyRole} != 'Speaker')`,
       sql`${ministers.personId} is null`,
     ))
     .groupBy(questionStats.personId)
@@ -1701,5 +1793,35 @@ export async function getQuestionStatsByParty(party: string) {
     .innerJoin(members, eq(questionStats.personId, members.personId))
     .where(eq(members.party, party))
     .orderBy(questionStats.year, questionStats.month)
+  return rows
+}
+
+export async function getMemberRoleHistory(personId: string) {
+  const rows = await db
+    .select({
+      role: memberRoleHistory.role,
+      roleType: memberRoleHistory.roleType,
+      organisation: memberRoleHistory.organisation,
+      startDate: memberRoleHistory.startDate,
+      endDate: memberRoleHistory.endDate,
+    })
+    .from(memberRoleHistory)
+    .where(eq(memberRoleHistory.personId, personId))
+    .orderBy(memberRoleHistory.startDate)
+  return rows
+}
+
+export async function getAllMemberRoleHistories() {
+  const rows = await db
+    .select({
+      personId: memberRoleHistory.personId,
+      role: memberRoleHistory.role,
+      roleType: memberRoleHistory.roleType,
+      organisation: memberRoleHistory.organisation,
+      startDate: memberRoleHistory.startDate,
+      endDate: memberRoleHistory.endDate,
+    })
+    .from(memberRoleHistory)
+    .orderBy(memberRoleHistory.personId, memberRoleHistory.startDate)
   return rows
 }

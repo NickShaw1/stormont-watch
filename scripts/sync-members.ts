@@ -3,6 +3,7 @@ import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
 import { eq } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
+import { apiRoleToSalaryRole } from '../lib/salaries'
 
 const BASE = 'http://data.niassembly.gov.uk'
 const CURRENT_MANDATE = '2022-2027'
@@ -189,6 +190,58 @@ async function syncMandateAndRoles(db: Db) {
         updated++
       }
 
+      const MANDATE_START = '2022-05-05'
+      const AD_HOC_RE = /concurrent|ad hoc/i
+
+      for (const r of roles) {
+        const affiliationId = String(r?.AffiliationId ?? '')
+        const roleType = String(r?.RoleType ?? '')
+        const role = String(r?.Role ?? '')
+        const organisation = String(r?.Organisation ?? '')
+        const organisationId = String(r?.OrganisationId ?? '')
+        const startRaw = String(r?.AffiliationStart ?? '')
+        const endRaw = r?.AffiliationEnd ? String(r.AffiliationEnd) : null
+
+        if (!affiliationId || !startRaw) continue
+        const startDate = startRaw.slice(0, 10)
+        const endDate = endRaw ? endRaw.slice(0, 10) : null
+
+        if (startDate < MANDATE_START) {
+          // Include roles that started before mandate but were still active at mandate start
+          const stillActiveAtMandateStart = !endDate || endDate >= MANDATE_START
+          if (!stillActiveAtMandateStart) continue
+          // Role will use MANDATE_START as effective start date
+        }
+
+        const effectiveStartDate = startDate < MANDATE_START ? MANDATE_START : startDate
+
+        if (roleType === 'Committee Role (incl Assembly Commission)' && AD_HOC_RE.test(organisation)) continue
+
+        const salaryRole = apiRoleToSalaryRole(roleType, role, organisation)
+        if (!salaryRole) continue
+
+        await db
+          .insert(schema.memberRoleHistory)
+          .values({
+            personId,
+            affiliationId,
+            roleType,
+            role,
+            organisation: organisation || null,
+            organisationId: organisationId || null,
+            startDate: effectiveStartDate,
+            endDate,
+            mandate: CURRENT_MANDATE,
+          })
+          .onConflictDoUpdate({
+            target: schema.memberRoleHistory.affiliationId,
+            set: {
+              endDate,
+              updatedAt: new Date(),
+            },
+          })
+      }
+
       processed++
       if (processed % 10 === 0) {
         console.log(`[syncMandateAndRoles] Progress: ${processed}/${allMembers.length} members processed`)
@@ -213,7 +266,14 @@ async function main() {
   const db = drizzle(sql, { schema })
   console.log('Connected.')
 
-  await syncMembers(db)
+  const rolesOnly = process.argv.includes('--roles-only')
+
+  if (!rolesOnly) {
+    await syncMembers(db)
+  } else {
+    console.log('--roles-only flag detected — skipping syncMembers')
+  }
+
   await syncMandateAndRoles(db)
 
   console.log('All done.')

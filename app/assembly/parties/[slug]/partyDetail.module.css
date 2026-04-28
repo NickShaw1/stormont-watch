@@ -963,6 +963,149 @@
   }
 }
 
+/* ── MLA questions ranking table ────────────────────────────── */
+.qRankWrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-3);
+  margin-top: var(--s-5);
+}
+
+.qRankTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.qColRank       { width: 40px; }
+.qColMla        { width: auto; }
+.qColConstituency { width: 160px; }
+.qColQuestions  { width: 180px; }
+
+.qRankTable thead th {
+  background: var(--paper-2);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 2px solid var(--rule);
+  white-space: nowrap;
+}
+
+.qRankTable thead th:first-child { text-align: center; }
+.qRankTable thead th:last-child  { text-align: right; }
+
+.qRankTable tbody tr {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+  transition: background 100ms ease;
+}
+
+.qRankTable tbody tr:last-child { border-bottom: none; }
+
+.qRankTable tbody tr:hover { background: var(--paper-2); }
+
+.qRankTable tbody tr:hover .qMlaName { color: var(--teal); }
+
+.qRankTable tbody td {
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  color: var(--ink);
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+.qTdRank {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+
+.qMlaCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.qMlaInfo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.qMlaName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+  display: block;
+  transition: color 120ms;
+}
+
+.qTdConstituency {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qTdQuestions { text-align: right; }
+
+.qQuestionsInner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.qBarTrack {
+  flex: 1;
+  max-width: 90px;
+  height: 5px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.qBarFill {
+  height: 100%;
+  border-radius: 99px;
+  opacity: 0.75;
+}
+
+.qQuestionsValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  min-width: 50px;
+  text-align: right;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.qHideMobile {}
+
+.qThQuestions { text-align: right; }
+
+@media (max-width: 640px) {
+  .qHideMobile        { display: none; }
+  .qBarTrack          { display: none; }
+  .qColQuestions      { width: 100px; }
+  .qQuestionsValue    { min-width: 0; font-size: 0.875rem; }
+  .qRankTable thead th { padding: 8px 10px; }
+  .qRankTable tbody td { padding: 8px 10px; }
+}
+
 /* ── Party Expenses tab ─────────────────────────────────────── */
 .expSection {
   padding-top: var(--s-2);

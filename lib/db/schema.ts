@@ -173,3 +173,18 @@ export const questionStats = pgTable('question_stats', {
 
 export type QuestionStat = typeof questionStats.$inferSelect
 
+export const memberRoleHistory = pgTable('member_role_history', {
+  id: serial('id').primaryKey(),
+  personId: text('person_id').notNull().references(() => members.personId),
+  affiliationId: text('affiliation_id').notNull().unique(),
+  roleType: text('role_type').notNull(),
+  role: text('role').notNull(),
+  organisation: text('organisation'),
+  organisationId: text('organisation_id'),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date'),
+  mandate: text('mandate').notNull().default('2022-2027'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+})
+
+export type MemberRoleHistory = typeof memberRoleHistory.$inferSelect

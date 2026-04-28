@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import styles from './mlaDetail.module.css'
+import type { RoleInterval } from '@/lib/salaries'
 
-type Expenses = {
+type ExpenseRow = {
   financial_year: string
   period: string
   constituency_office: string | null
@@ -13,7 +14,9 @@ type Expenses = {
   total: string | null
   rank: number
   total_members: number
-} | null
+}
+
+type Expenses = ExpenseRow | null
 
 type Interest = {
   id: number
@@ -34,6 +37,7 @@ type QuestionStat = {
 
 interface Props {
   expenses: Expenses
+  allExpenses: ExpenseRow[]
   interests: Interest[]
   totalQuestions: number
   writtenCount: number
@@ -42,6 +46,11 @@ interface Props {
   hideQuestionsTab: boolean
   partyColor: string
   questionRank: { rank: number; totalEligible: number } | null
+  currentSalary: number
+  mandateEarnings: number
+  roleIntervals: RoleInterval[]
+  mandateExpensesRank: number | null
+  mandateExpensesTotalMembers: number | null
 }
 
 const gbp = (val: string | null | undefined) =>
@@ -52,7 +61,12 @@ function formatInterestDate(date: string | null): string {
   return new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-type Tab = 'expenses' | 'interests' | 'questions'
+type Tab = 'questions' | 'finances' | 'interests'
+
+
+function gbpSalary(val: number): string {
+  return `£${val.toLocaleString('en-GB')}`
+}
 
 function toSentenceCase(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
@@ -125,8 +139,29 @@ function QuestionsChart({ questionStats, partyColor }: { questionStats: Question
   )
 }
 
-export default function ActivityTabsClient({ expenses: latestExpenses, interests, totalQuestions, writtenCount, oralCount, questionStats, hideQuestionsTab, partyColor, questionRank }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>('expenses')
+export default function ActivityTabsClient(props: Props) {
+  const { allExpenses, interests, totalQuestions, writtenCount, oralCount, questionStats, hideQuestionsTab, partyColor, questionRank, currentSalary, mandateEarnings, mandateExpensesRank, mandateExpensesTotalMembers } = props
+  const [activeTab, setActiveTab] = useState<Tab>('finances')
+  const [selectedYear, setSelectedYear] = useState<string>(allExpenses[0]?.financial_year ?? '')
+  const [yearDropdownOpen, setYearDropdownOpen] = useState(false)
+  const yearDropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!yearDropdownOpen) return
+    function onOutside(e: MouseEvent) {
+      if (yearDropdownRef.current && !yearDropdownRef.current.contains(e.target as Node)) {
+        setYearDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [yearDropdownOpen])
+
+  const selectedExpenses = allExpenses.find(e => e.financial_year === selectedYear) ?? null
+
+  const mandateTotalExpenses = allExpenses.reduce((sum, e) => {
+    return sum + (parseFloat(e.total ?? '0') || 0)
+  }, 0)
 
   const grouped = interests.reduce<Record<string, Interest[]>>((acc, item) => {
     if (!acc[item.registerCategory]) acc[item.registerCategory] = []
@@ -136,28 +171,34 @@ export default function ActivityTabsClient({ expenses: latestExpenses, interests
 
   return (
     <div className={styles.financesCard}>
-      <div className={styles.financesTabs} role="tablist">
+      <div className={styles.financesTabs} role="tablist" aria-label="Activity sections">
         <button
           role="tab"
-          aria-selected={activeTab === 'expenses'}
-          className={`${styles.financesTab} ${activeTab === 'expenses' ? styles.financesTabActive : ''}`}
-          onClick={() => setActiveTab('expenses')}
+          id="tab-finances"
+          aria-selected={activeTab === 'finances'}
+          aria-controls="panel-finances"
+          className={`${styles.financesTab} ${activeTab === 'finances' ? styles.financesTabActive : ''}`}
+          onClick={() => setActiveTab('finances')}
         >
-          Expenses
+          Finances
         </button>
         <button
           role="tab"
+          id="tab-interests"
           aria-selected={activeTab === 'interests'}
+          aria-controls="panel-interests"
           className={`${styles.financesTab} ${activeTab === 'interests' ? styles.financesTabActive : ''}`}
           onClick={() => setActiveTab('interests')}
         >
           <span className={styles.tabLabelDesktop}>Register of Interests</span>
-          <span className={styles.tabLabelMobile}>Interests</span>
+          <span className={styles.tabLabelMobile} aria-hidden="true">Interests</span>
         </button>
         {!hideQuestionsTab && totalQuestions > 0 && (
           <button
             role="tab"
+            id="tab-questions"
             aria-selected={activeTab === 'questions'}
+            aria-controls="panel-questions"
             className={`${styles.financesTab} ${activeTab === 'questions' ? styles.financesTabActive : ''}`}
             onClick={() => setActiveTab('questions')}
           >
@@ -167,7 +208,7 @@ export default function ActivityTabsClient({ expenses: latestExpenses, interests
       </div>
 
       {activeTab === 'questions' && !hideQuestionsTab && (
-        <div className={styles.questionsPanel}>
+        <div id="panel-questions" role="tabpanel" aria-labelledby="tab-questions" className={styles.questionsPanel}>
           <div className={styles.questionsCard}>
             <div className={styles.questionsSummary}>
               <div className={styles.questionsSummaryCell}>
@@ -198,52 +239,130 @@ export default function ActivityTabsClient({ expenses: latestExpenses, interests
         </div>
       )}
 
-      {activeTab === 'expenses' && latestExpenses && (
-        <div className={styles.expensesPanel}>
-          <div className={styles.expensesGrid}>
-            <div className={styles.expensesCardHeader}>
-              <p className={styles.sectionMeta}>
-                {(() => {
-                  const sep = latestExpenses.period.includes(' – ') ? ' – ' : ' - '
-                  const [first, ...rest] = latestExpenses.period.split(sep)
-                  return rest.length ? <>{first} –{' '}<em>{rest.join(sep)}</em></> : latestExpenses.period
-                })()}
-              </p>
-            </div>
-            <div className={styles.expensesCard}>
-              <span className={styles.expenseLabel}>Staff costs</span>
-              <span className={styles.expenseValue}>{gbp(latestExpenses.staff_costs)}</span>
-            </div>
-            <div className={styles.expensesCard}>
-              <span className={styles.expenseLabel}>Constituency office</span>
-              <span className={styles.expenseValue}>{gbp(latestExpenses.constituency_office)}</span>
-            </div>
-            <div className={styles.expensesCard}>
-              <span className={styles.expenseLabel}>Allowances</span>
-              <span className={styles.expenseValue}>{gbp(latestExpenses.allowances)}</span>
-            </div>
-            <div className={styles.expensesCard}>
-              <span className={styles.expenseLabel}>Other expenses</span>
-              <span className={styles.expenseValue}>{gbp(latestExpenses.other_expenses)}</span>
-            </div>
-            <div className={styles.expensesCard}>
-              <span className={styles.expenseLabel}>Expenses ranking</span>
-              <span className={styles.expenseValue}>{latestExpenses.rank}<span className={styles.expenseFraction}>/{latestExpenses.total_members}</span></span>
-            </div>
-            <div className={styles.expensesCard}>
-              <span className={styles.expenseLabel}>Total</span>
-              <span className={styles.expenseValue}>{gbp(latestExpenses.total)}</span>
+      {activeTab === 'finances' && (
+        <div id="panel-finances" role="tabpanel" aria-labelledby="tab-finances" className={styles.financesPanel}>
+          <div className={styles.salaryPanel}>
+            <h3 className={styles.financesSectionHeading}>Salary &amp; <em>earnings</em></h3>
+            <p className={styles.salaryFootnote}>
+              * Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.
+            </p>
+            <div className={styles.salaryCards}>
+              <div className={styles.salaryCard}>
+                <span className={styles.questionsSummaryLabel}>Current annual salary</span>
+                <span className={styles.questionsSummaryValue}>{gbpSalary(currentSalary)}</span>
+              </div>
+              <div className={styles.salaryCard}>
+                <span className={styles.questionsSummaryLabel}>Estimated mandate earnings</span>
+                <span className={styles.questionsSummaryValue}>{gbpSalary(mandateEarnings)}</span>
+              </div>
+              <div className={styles.salaryCard}>
+                <span className={styles.questionsSummaryLabel}>Mandate</span>
+                <span className={styles.questionsSummaryValue}>2022–2027</span>
+              </div>
             </div>
           </div>
+
+          {allExpenses.length > 0 ? (
+            <>
+<h3 className={styles.financesSectionHeading} style={{ marginTop: 'var(--spacing-xl)', marginBottom: 'var(--s-4)' }}>Office <em>expenses</em></h3>
+
+              <div className={styles.salaryCards}>
+                <div className={styles.salaryCard}>
+                  <span className={styles.questionsSummaryLabel}>Total mandate expenses</span>
+                  <span className={styles.questionsSummaryValue}>{gbp(mandateTotalExpenses.toFixed(2))}</span>
+                </div>
+                <div className={styles.salaryCard}>
+                  <span className={styles.questionsSummaryLabel}>{(selectedExpenses?.period ?? selectedYear).replace(/\b(January|February|March|April|May|June|July|August|September|October|November|December)\b/g, m => m.slice(0, 3))} expenses rank</span>
+                  <span className={styles.questionsSummaryValue}>
+                    {selectedExpenses ? (() => {
+                      const pctile = selectedExpenses.total_members > 1 ? (selectedExpenses.rank - 1) / (selectedExpenses.total_members - 1) : 0
+                      const color = pctile <= 0.33 ? 'var(--crimson)' : pctile <= 0.66 ? '#92400E' : 'var(--forest)'
+                      return <span style={{ color }}>{selectedExpenses.rank}<span className={styles.expenseFraction}>/{selectedExpenses.total_members}</span></span>
+                    })() : <span className={styles.statMuted}>—</span>}
+                  </span>
+                </div>
+                <div className={styles.salaryCard}>
+                  <span className={styles.questionsSummaryLabel}>Overall mandate expenses rank</span>
+                  <span className={styles.questionsSummaryValue}>
+                    {mandateExpensesRank !== null && mandateExpensesTotalMembers !== null ? (() => {
+                      const pctile = mandateExpensesTotalMembers > 1 ? (mandateExpensesRank - 1) / (mandateExpensesTotalMembers - 1) : 0
+                      const color = pctile <= 0.33 ? 'var(--crimson)' : pctile <= 0.66 ? '#92400E' : 'var(--forest)'
+                      return <span style={{ color }}>{mandateExpensesRank}<span className={styles.expenseFraction}>/{mandateExpensesTotalMembers}</span></span>
+                    })() : <span className={styles.statMuted}>—</span>}
+                  </span>
+                </div>
+              </div>
+
+              {allExpenses.length > 1 && (
+                <div className={styles.expensesYearDropdownWrap} ref={yearDropdownRef}>
+                  <button
+                    className={styles.expensesYearTrigger}
+                    onClick={() => setYearDropdownOpen(o => !o)}
+                    aria-haspopup="listbox"
+                    aria-expanded={yearDropdownOpen}
+                    aria-label={`Select financial year, currently ${selectedYear}`}
+                  >
+                    <span>{selectedYear}</span>
+                    <svg
+                      className={`${styles.expensesYearChevron} ${yearDropdownOpen ? styles.expensesYearChevronOpen : ''}`}
+                      width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+                    >
+                      <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </button>
+                  {yearDropdownOpen && (
+                    <ul className={styles.expensesYearDropdownList} role="listbox">
+                      {allExpenses.map(e => (
+                        <li
+                          key={e.financial_year}
+                          role="option"
+                          aria-selected={e.financial_year === selectedYear}
+                          className={`${styles.expensesYearDropdownItem} ${e.financial_year === selectedYear ? styles.expensesYearDropdownItemSelected : ''}`}
+                          onClick={() => { setSelectedYear(e.financial_year); setYearDropdownOpen(false) }}
+                        >
+                          {e.financial_year}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              {selectedExpenses && (
+                <div className={styles.expensesPanel} style={{ marginTop: allExpenses.length <= 1 ? 'var(--s-6)' : undefined }}>
+                  <div className={styles.expensesGrid}>
+                    <div className={styles.expensesCard}>
+                      <span className={styles.expenseLabel}>Staff costs</span>
+                      <span className={styles.expenseValue}>{gbp(selectedExpenses.staff_costs)}</span>
+                    </div>
+                    <div className={styles.expensesCard}>
+                      <span className={styles.expenseLabel}>Constituency office</span>
+                      <span className={styles.expenseValue}>{gbp(selectedExpenses.constituency_office)}</span>
+                    </div>
+                    <div className={styles.expensesCard}>
+                      <span className={styles.expenseLabel}>Allowances</span>
+                      <span className={styles.expenseValue}>{gbp(selectedExpenses.allowances)}</span>
+                    </div>
+                    <div className={styles.expensesCard}>
+                      <span className={styles.expenseLabel}>Other expenses</span>
+                      <span className={styles.expenseValue}>{gbp(selectedExpenses.other_expenses)}</span>
+                    </div>
+                    <div className={styles.expensesCard}>
+                      <span className={styles.expenseLabel}>Total</span>
+                      <span className={styles.expenseValue}>{gbp(selectedExpenses.total)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className={styles.interestsEmpty}>No expenses data available.</p>
+          )}
         </div>
       )}
 
-      {activeTab === 'expenses' && !latestExpenses && (
-        <p className={styles.interestsEmpty}>No expenses data available.</p>
-      )}
-
       {activeTab === 'interests' && (
-        <div className={styles.interestsSection}>
+        <div id="panel-interests" role="tabpanel" aria-labelledby="tab-interests" className={styles.interestsSection}>
           {interests.length === 0 ? (
             <p className={styles.interestsEmpty}>No interests currently registered.</p>
           ) : (

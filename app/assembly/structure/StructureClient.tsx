@@ -30,7 +30,7 @@ interface Props {
   officialLinks: Record<string, string>
 }
 
-function PersonPhoto({ imgUrl, name, size }: { imgUrl: string | null; name: string; size: number }) {
+function PersonPhoto({ imgUrl, name, size, priority }: { imgUrl: string | null; name: string; size: number; priority?: boolean }) {
   if (!imgUrl) return <div style={{ width: size, height: size, borderRadius: 'var(--r-2)', background: 'var(--paper-3)', border: '1px solid var(--rule)', flexShrink: 0 }} />
   return (
     <Image
@@ -38,7 +38,7 @@ function PersonPhoto({ imgUrl, name, size }: { imgUrl: string | null; name: stri
       alt={name}
       width={size}
       height={size}
-     
+      priority={priority}
       style={{ width: size, height: size, objectFit: 'cover', objectPosition: 'top center', borderRadius: 'var(--r-2)', border: '1px solid var(--rule)', flexShrink: 0 }}
     />
   )
@@ -70,7 +70,7 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
                 style={{ '--party-c': partyBorderColor(role.party) } as React.CSSProperties}
               >
                 <div className={styles.execPhoto}>
-                  <PersonPhoto imgUrl={role.imgUrl} name={role.fullName} size={72} />
+                  <PersonPhoto imgUrl={role.imgUrl} name={role.fullName} size={72} priority />
                 </div>
                 <div className={styles.execInfo}>
                   <span className={styles.execMinistry}>{role.roleTitle}</span>

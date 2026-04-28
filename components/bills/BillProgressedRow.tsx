@@ -51,6 +51,7 @@ export default function BillProgressedRow({ bill }: { bill: BillProgressedThisWe
           ))}
         </div>
 
+
         <div className={styles.progressBar}>
           {BILL_STAGES.map((s, i) => {
             const completedUpTo = scheduledIdx !== null ? scheduledIdx - 1 : stageIdx

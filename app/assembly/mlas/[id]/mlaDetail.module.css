@@ -264,6 +264,8 @@
   border-right: 1px solid var(--rule);
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 4px;
 }
 
@@ -276,6 +278,8 @@
     border-right: none;
     border-bottom: 1px solid var(--rule);
     padding: var(--s-4);
+    align-items: flex-start;
+    text-align: left;
   }
 
   .statCell:last-child {
@@ -451,6 +455,228 @@
   gap: 0;
 }
 
+/* Expenses year picker */
+.expensesMandateTotal {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--s-3) 0;
+  margin-bottom: var(--s-3);
+  border-bottom: 1px solid var(--rule);
+}
+
+.expensesMandateTotalLabel {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+.expensesMandateTotalValue {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.expensesYearDropdownWrap {
+  position: relative;
+  margin-top: var(--s-6);
+  margin-bottom: var(--s-6);
+  width: 130px;
+}
+
+.expensesYearLabel {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--ink-2);
+  margin-bottom: var(--s-2);
+}
+
+.expensesYearTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 150ms;
+}
+
+.expensesYearTrigger:hover { border-color: var(--rule-strong); }
+.expensesYearTrigger:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+.expensesYearChevron {
+  color: var(--ink-3);
+  transition: transform 150ms ease;
+  flex-shrink: 0;
+}
+
+.expensesYearChevronOpen { transform: rotate(180deg); }
+
+.expensesYearDropdownList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 130px;
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  overflow: hidden;
+  box-shadow: 0 4px 16px oklch(16% 0.015 250 / 0.08);
+}
+
+.expensesYearDropdownItem {
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+  transition: background 100ms, color 100ms;
+  user-select: none;
+}
+
+.expensesYearDropdownItem:last-child { border-bottom: none; }
+.expensesYearDropdownItem:hover { background: var(--paper-2); color: var(--ink); }
+.expensesYearDropdownItemSelected { background: var(--paper-3); color: var(--ink); font-weight: 500; }
+
+/* Finances tab */
+.financesPanel {
+  padding: 0;
+}
+
+.financesDivider {
+  border: none;
+  border-top: 1.5px solid var(--border);
+  margin-block: var(--spacing-xl);
+  opacity: 0.8;
+}
+
+.financesSectionHeading {
+  font-size: 24px;
+  font-weight: 500;
+  font-family: var(--font-serif);
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--s-2);
+}
+
+.financesSectionHeading em {
+  font-style: italic;
+  color: var(--teal);
+}
+
+.salaryPanel {
+  padding: 0;
+}
+
+.salaryCards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.salaryCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-4) var(--s-3);
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+
+.salaryCard:last-child {
+  border-right: none;
+}
+
+.salaryTimeline {
+  margin-bottom: var(--s-4);
+}
+
+.salaryTimelineList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.salaryTimelineItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--rule);
+  gap: var(--s-4);
+}
+
+.salaryTimelineItem:last-child {
+  border-bottom: none;
+}
+
+.salaryTimelineRole {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.salaryTimelineDates {
+  font-size: 13px;
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.salaryFootnote {
+  font-size: 12px;
+  color: var(--ink-4);
+  font-style: italic;
+  margin-bottom: var(--s-4);
+}
+
+@media (max-width: 640px) {
+  .salaryCards {
+    grid-template-columns: 1fr;
+  }
+
+  .salaryCard {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .salaryCard:last-child {
+    border-bottom: none;
+  }
+
+  .salaryTimelineItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-1);
+  }
+}
+
 /* Questions tab */
 .questionsPanel {
   padding: 0;
@@ -481,6 +707,8 @@
   .questionsSummaryCell {
     border-right: none;
     border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+    text-align: left;
   }
 
   .questionsSummaryCell:last-child {
@@ -522,10 +750,11 @@
 
 .questionsSummaryValue {
   font-family: var(--font-sans);
-  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   color: var(--ink);
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
 .questionsSummaryMeta {
@@ -634,7 +863,7 @@
 
 .expensesGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(5, 1fr);
   gap: 0;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -653,15 +882,11 @@
   gap: 4px;
   padding: var(--s-5) var(--s-5);
   border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-
-.expensesCard:nth-child(even) {
-  border-right: none;
-}
-
-.expensesCard:nth-last-child(-n+2) {
   border-bottom: none;
+}
+
+.expensesCard:last-child {
+  border-right: none;
 }
 
 .expenseLabel {
@@ -718,11 +943,8 @@
 
   .expensesCard {
     border-right: none;
-    padding: var(--spacing-sm) var(--spacing-md);
-  }
-
-  .expensesCard:nth-last-child(-n+2) {
     border-bottom: 1px solid var(--border);
+    padding: var(--spacing-sm) var(--spacing-md);
   }
 
   .expensesCard:last-child {
@@ -732,6 +954,7 @@
   .expenseValue {
     font-size: 16px;
   }
+
 
   .subjectTitle {
     font-family: var(--font-sans);

@@ -2,11 +2,10 @@ export const dynamic = 'force-static'
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getExpensesLeagueTable, getMlasWithoutExpenses } from '@/lib/db/queries'
+import { getAllExpensesLeagueTable, getMlasWithoutExpenses } from '@/lib/db/queries'
 import ExpensesListClient from './ExpensesListClient'
 import MissingMlasTable from './MissingMlasTable'
 import styles from './expenses.module.css'
-
 
 export const metadata: Metadata = {
   title: 'MLA Expenses',
@@ -19,23 +18,24 @@ export const metadata: Metadata = {
 }
 
 export default async function ExpensesPage() {
-  const [rows, missing] = await Promise.all([
-    getExpensesLeagueTable(),
+  const [allRows, missing] = await Promise.all([
+    getAllExpensesLeagueTable(),
     getMlasWithoutExpenses(),
   ])
 
-  const financialYear = rows[0]?.financialYear ?? null
-  const period = rows[0]?.period ?? null
+  const years = [...new Set(allRows.map(r => r.financialYear as string))].sort((a, b) => b.localeCompare(a))
+  const latestYear = years[0] ?? null
 
-  const mappedRows = rows.map(r => ({
-    personId: r.personId,
-    fullName: r.fullName,
-    party: r.party,
-    constituency: r.constituency,
-    imgUrl: r.imgUrl,
-    mandateStart: r.mandateStart,
-    total: r.total,
-    period: r.period,
+  const mappedRows = allRows.map(r => ({
+    personId: r.personId as string,
+    fullName: r.fullName as string,
+    party: r.party as string | null,
+    constituency: r.constituency as string | null,
+    imgUrl: r.imgUrl as string | null,
+    mandateStart: r.mandateStart as string | null,
+    total: r.total as string | null,
+    period: r.period as string | null,
+    financialYear: r.financialYear as string,
   }))
 
   return (
@@ -63,11 +63,7 @@ export default async function ExpensesPage() {
         </div>
       )}
 
-      {financialYear && period && (
-        <p className={styles.coverageNote}>Figures shown cover <strong>{period}</strong> ({financialYear})</p>
-      )}
-
-      <ExpensesListClient rows={mappedRows} totalMlaCount={mappedRows.length} />
+      <ExpensesListClient rows={mappedRows} years={years} latestYear={latestYear} />
     </div>
   )
 }

@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getMemberExpensesWithRank, getRegisteredInterestsByMember, getAllMembersIncludingFormer, getQuestionStatsByMember, getQuestionRankForMember } from '@/lib/db/queries'
+import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getAllMemberExpenses, getMandateExpensesRank, getRegisteredInterestsByMember, getAllMembersIncludingFormer, getQuestionStatsByMember, getQuestionRankForMember, getMemberRoleHistory } from '@/lib/db/queries'
 
 export async function generateStaticParams() {
   const members = await getAllMembersIncludingFormer()
   return members.map(m => ({ id: m.personId }))
 }
 import { formatDate, formatMemberName, formatRoleTitle, partyBorderColor, abbreviateParty } from '@/lib/format'
+import { calculateMandateEarnings, getCurrentAnnualSalary, apiRoleToSalaryRole, type RoleInterval } from '@/lib/salaries'
 import dynamic from 'next/dynamic'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
@@ -40,17 +41,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MlaDetailPage({ params }: Props) {
   const { id } = await params
-  const [member, history, structureRole, expensesData, interests, questionStatsRows, questionRank] = await Promise.all([
+  const [member, history, structureRole, allExpensesRaw, interests, questionStatsRows, questionRank, roleHistory] = await Promise.all([
     getMemberById(id),
     getMemberVotingHistory(id),
     getMemberStructureRole(id),
-    getMemberExpensesWithRank(id),
+    getAllMemberExpenses(id),
     getRegisteredInterestsByMember(id),
     getQuestionStatsByMember(id),
     getQuestionRankForMember(id),
+    getMemberRoleHistory(id),
   ])
 
   if (!member) notFound()
+
+  const mandateExpensesRankRow = await getMandateExpensesRank(member.personId)
+  const mandateRank = mandateExpensesRankRow ? Number(mandateExpensesRankRow.rank) : null
+  const mandateTotalMembers = mandateExpensesRankRow ? Number(mandateExpensesRankRow.total_members) : null
+
+  const roleIntervals: RoleInterval[] = roleHistory
+    .map(r => {
+      const salaryRole = apiRoleToSalaryRole(r.roleType, r.role, r.organisation ?? '')
+      if (!salaryRole) return null
+      return {
+        salaryRole,
+        startDate: r.startDate,
+        endDate: r.endDate ?? null,
+      }
+    })
+    .filter((r): r is RoleInterval => r !== null)
+
+  const today = new Date().toISOString().slice(0, 10)
+  const currentSalary = getCurrentAnnualSalary(roleIntervals, today)
+  const mandateEarnings = calculateMandateEarnings(roleIntervals, today)
 
   const totalQuestions = questionStatsRows.reduce((s, r) => s + r.writtenCount + r.oralCount, 0)
   const writtenCount = questionStatsRows.reduce((s, r) => s + r.writtenCount, 0)
@@ -76,11 +98,10 @@ export default async function MlaDetailPage({ params }: Props) {
     ? Math.round((present / totalDivisions) * 100)
     : 0
 
-  const isPresidingOfficer = !!member.assemblyRole && !roleEnd
+  const isPresidingOfficer = member.assemblyRole === 'Speaker' && !roleEnd
   const hideQuestionsTab = isPresidingOfficer || structureRole?.type === 'minister'
 
-  const latestExpenses = expensesData as {
-    person_id: string
+  type ExpenseRow = {
     financial_year: string
     period: string
     constituency_office: string | null
@@ -90,7 +111,9 @@ export default async function MlaDetailPage({ params }: Props) {
     total: string | null
     rank: number
     total_members: number
-  } | null
+  }
+  const allExpenses = allExpensesRaw as ExpenseRow[]
+  const latestExpenses = allExpenses[0] ?? null
 
   const serialisedInterests = interests.map(i => ({
     ...i,
@@ -154,6 +177,7 @@ export default async function MlaDetailPage({ params }: Props) {
               imgUrl={member.imgUrl ?? ''}
               size={112}
               decorative
+              priority
             />
           </div>
 
@@ -274,6 +298,7 @@ export default async function MlaDetailPage({ params }: Props) {
           <h2 id="activity-heading" className={styles.sectionHeading}>Activity &amp; Finances</h2>
           <ActivityTabsClient
             expenses={latestExpenses}
+            allExpenses={allExpenses}
             interests={serialisedInterests}
             totalQuestions={totalQuestions}
             writtenCount={writtenCount}
@@ -282,6 +307,11 @@ export default async function MlaDetailPage({ params }: Props) {
             hideQuestionsTab={hideQuestionsTab}
             partyColor={partyBorderColor(member.party)}
             questionRank={questionRank}
+            currentSalary={currentSalary}
+            mandateEarnings={mandateEarnings}
+            roleIntervals={roleIntervals}
+            mandateExpensesRank={mandateRank}
+            mandateExpensesTotalMembers={mandateTotalMembers}
           />
         </section>
       )}

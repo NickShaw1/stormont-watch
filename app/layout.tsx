@@ -63,7 +63,6 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: '/apple-touch-icon.png?v=2', sizes: '180x180' }],
   },
-  manifest: '/site.webmanifest?v=2',
   robots: {
     index: true,
     follow: true,
@@ -84,6 +83,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en-GB" className={`${inter.variable} ${instrumentSerif.variable} ${ibmPlexMono.variable}`}>
+      <head>
+        {/* fetchpriority="low" keeps the manifest out of the critical request chain */}
+        <link rel="manifest" href="/site.webmanifest?v=2" fetchPriority="low" />
+      </head>
       <body>
         <a href="#main-content" className="skip-link">
           Skip to main content
