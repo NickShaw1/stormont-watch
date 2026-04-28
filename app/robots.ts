@@ -32,7 +32,6 @@ export default function robots(): MetadataRoute.Robots {
           'YouBot',
           'PerplexityBot',
           'AI2Bot',
-          'Kangaroo Bot',
         ],
         disallow: '/',
       },
