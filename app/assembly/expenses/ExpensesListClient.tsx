@@ -130,7 +130,10 @@ export default function ExpensesListClient({ rows, years }: Props) {
   const handleLoadMore = useCallback(() => {
     setVisibleCount(c => c + 50)
     requestAnimationFrame(() => {
-      if (firstNewRef.current) firstNewRef.current.focus()
+      if (firstNewRef.current) {
+        firstNewRef.current.scrollIntoView({ block: 'start' })
+        firstNewRef.current.focus({ preventScroll: true })
+      }
     })
   }, [])
 

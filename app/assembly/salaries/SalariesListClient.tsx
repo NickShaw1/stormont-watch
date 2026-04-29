@@ -73,7 +73,12 @@ export default function SalariesListClient({ bySalary, byEarnings }: Props) {
 
   const handleLoadMore = useCallback(() => {
     setVisibleCount(c => c + 50)
-    requestAnimationFrame(() => { if (firstNewRef.current) firstNewRef.current.focus() })
+    requestAnimationFrame(() => {
+      if (firstNewRef.current) {
+        firstNewRef.current.scrollIntoView({ block: 'start' })
+        firstNewRef.current.focus({ preventScroll: true })
+      }
+    })
   }, [])
 
   const colLabel = sortMode === 'salary' ? 'Current salary' : 'Mandate earnings'

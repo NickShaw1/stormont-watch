@@ -63,7 +63,12 @@ export default function OverallCostListClient({ rows }: Props) {
 
   const handleLoadMore = useCallback(() => {
     setVisibleCount(c => c + 50)
-    requestAnimationFrame(() => { if (firstNewRef.current) firstNewRef.current.focus() })
+    requestAnimationFrame(() => {
+      if (firstNewRef.current) {
+        firstNewRef.current.scrollIntoView({ block: 'start' })
+        firstNewRef.current.focus({ preventScroll: true })
+      }
+    })
   }, [])
 
   return (

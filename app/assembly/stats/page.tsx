@@ -209,7 +209,7 @@ export default async function StatsPage() {
           Since May 2022, the Assembly has held{' '}
           <strong>{totalDivisions}</strong> votes.{' '}
           <strong>{overallPassRate}%</strong> of divisions passed.
-          Unionist and nationalist MLAs voted Aye together on{' '}
+          Unionist and nationalist MLAs voted the same way on{' '}
           <strong>{overallAgreementRate}%</strong> of divisions.{' '}
         </p>
 

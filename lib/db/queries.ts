@@ -951,7 +951,10 @@ export async function getOverallAgreementRate() {
     SELECT
       ROUND(
         COUNT(*) FILTER (WHERE
-          unionist_ayes > unionist_noes AND nationalist_ayes > nationalist_noes
+          (nationalist_ayes > (nationalist_noes + nationalist_ayes) * 0.5
+            AND unionist_ayes > (unionist_noes + unionist_ayes) * 0.5)
+          OR (nationalist_noes > (nationalist_noes + nationalist_ayes) * 0.5
+            AND unionist_noes > (unionist_noes + unionist_ayes) * 0.5)
         ) * 100.0 / NULLIF(COUNT(*), 0)
       ) as agreement_pct
     FROM divisions

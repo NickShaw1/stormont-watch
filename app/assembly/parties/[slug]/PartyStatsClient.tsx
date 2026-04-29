@@ -234,7 +234,7 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
           <span className={styles.statLabel}>Party Division Attendance Average</span>
           <span className={styles.statValue}>{stats.attendancePct}%</span>
           <span className={styles.statSub}>Across {mlaCount} current MLA{mlaCount !== 1 ? 's' : ''}</span>
-          <span className={styles.statSub}>{stats.present.toLocaleString()} / {stats.total.toLocaleString()} divisions attended</span>
+          <span className={styles.statSub}>{stats.present.toLocaleString()} / {stats.total.toLocaleString()} divisions party participated in</span>
           <div className={styles.statDivider} />
           {singleMla ? (
             <MlaStatRow mla={stats.highestMla} />
