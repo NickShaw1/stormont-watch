@@ -67,7 +67,7 @@ export default function AssemblyProductivityClient({
         <div className={styles.overviewCard}>
           <span className={styles.overviewLabel}>Avg per sitting month</span>
           <span className={styles.overviewValue}>{avg}</span>
-          <span className={styles.overviewMeta}>excluding months with no sittings</span>
+          <span className={styles.overviewMeta}>since Assembly resumed, excluding months with no sittings</span>
         </div>
       </div>
 
