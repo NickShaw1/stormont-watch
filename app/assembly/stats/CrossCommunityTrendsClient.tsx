@@ -86,9 +86,9 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
                     const idx = item.dataIndex
                     const row = data[idx]
                     return [
-                      `Both blocs voted Aye: ${item.raw}%`,
+                      `Both blocs voted same way: ${item.raw}%`,
                       `Divisions that month: ${row.total_divisions}`,
-                      `Both Aye: ${row.agreed_divisions} of ${row.total_divisions}`,
+                      `Voted same way: ${row.agreed_divisions} of ${row.total_divisions}`,
                     ]
                   },
                 },
@@ -96,7 +96,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
             },
             scales: {
               x: { ticks: { font: { size: 10 }, color: '#888780', maxRotation: 45, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
-              y: { min: 0, max: 100, title: { display: true, text: 'Both voted Aye (%)', font: { size: 10 }, color: '#888780' }, ticks: { font: { size: 10 }, color: '#888780', callback: (v: number | string) => Number(v) % 25 === 0 ? v + '%' : '', stepSize: 25 }, grid: { color: 'rgba(136,135,128,0.15)' } },
+              y: { min: 0, max: 100, title: { display: true, text: 'Voted same way (%)', font: { size: 10 }, color: '#888780' }, ticks: { font: { size: 10 }, color: '#888780', callback: (v: number | string) => Number(v) % 25 === 0 ? v + '%' : '', stepSize: 25 }, grid: { color: 'rgba(136,135,128,0.15)' } },
             },
           },
         })
@@ -109,7 +109,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
             labels,
             datasets: [
               { label: 'Total divisions that month', data: totals, backgroundColor: '#E2E8F0', borderRadius: 3 },
-              { label: 'Both blocs voted Aye', data: agreed, backgroundColor: '#34D399', borderRadius: 3 },
+              { label: 'Both blocs voted same way', data: agreed, backgroundColor: '#34D399', borderRadius: 3 },
             ],
           },
           options: {
@@ -140,7 +140,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
                     const idx = item.dataIndex
                     const row = data[idx]
                     if (item.datasetIndex === 0) return `Total divisions: ${row.total_divisions}`
-                    return `Both blocs voted Aye: ${row.agreed_divisions}`
+                    return `Both blocs voted same way: ${row.agreed_divisions}`
                   },
                 },
               },
@@ -183,7 +183,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
           <span className={styles.overviewMeta}>months rolling</span>
         </div>
         <div className={styles.overviewCard}>
-          <span className={styles.overviewLabel}>Highest both-Aye month</span>
+          <span className={styles.overviewLabel}>Highest agreement month</span>
           <span className={styles.overviewValue}>{peakMonth?.agreement_pct ?? '—'}%</span>
           <span className={styles.overviewMeta}>{peakLabel} ({peakMonth?.total_divisions} divisions)</span>
         </div>
@@ -196,7 +196,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
         </div>
       </div>
 
-      <h3 className={styles.chartTitle}>Percentage of divisions where both blocs voted Aye</h3>
+      <h3 className={styles.chartTitle}>Percentage of divisions where both blocs voted the same way</h3>
       <div className={styles.trendLegend}>
         <span className={styles.trendLegendItem}><span className={styles.trendDotLg} />3+ divisions</span>
         <span className={styles.trendLegendItem}><span className={styles.trendDotSm} />Fewer than 3 divisions</span>
@@ -210,14 +210,14 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
           <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
           <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
         </svg>
-        <p>Percentage of divisions in each month where the majority of unionist and nationalist MLAs both voted Aye. Smaller points indicate months with fewer than 3 divisions, which are less statistically reliable.</p>
+        <p>Percentage of divisions in each month where the majority of unionist and nationalist MLAs voted the same way (both majority Aye or both majority No). Smaller points indicate months with fewer than 3 divisions, which are less statistically reliable.</p>
       </div>
 
       <h3 className={styles.chartTitle}>Cross-community agreement by month</h3>
-      <p className={styles.trendNote} style={{ marginBottom: '0.75rem' }}>How many divisions each month saw both unionist and nationalist MLAs vote Aye, compared to the total number of divisions that month.</p>
+      <p className={styles.trendNote} style={{ marginBottom: '0.75rem' }}>How many divisions each month saw both unionist and nationalist MLAs vote the same way, compared to the total number of divisions that month.</p>
       <div className={styles.trendLegend}>
         <span className={styles.trendLegendItem}><span className={styles.trendDotTotal} />Total divisions that month</span>
-        <span className={styles.trendLegendItem}><span className={styles.trendDotAgreed} />Both blocs voted Aye</span>
+        <span className={styles.trendLegendItem}><span className={styles.trendDotAgreed} />Both blocs voted same way</span>
       </div>
       <div style={{ position: 'relative', width: '100%', height: '240px' }}>
         <canvas ref={c2} role="img" aria-label="Grouped bar chart showing total divisions versus cross-community agreed divisions per month over the last 24 months" />

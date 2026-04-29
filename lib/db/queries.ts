@@ -406,15 +406,26 @@ export async function getMostRebelliousMla(): Promise<{
 export async function getMostCrossCommunityAgreement(): Promise<typeof divisions.$inferSelect | null> {
   const result = await db.execute(sql`
     SELECT *,
-      LEAST(
-        nationalist_ayes::float / NULLIF(nationalist_ayes + nationalist_noes, 0),
-        unionist_ayes::float / NULLIF(unionist_ayes + unionist_noes, 0)
-      ) as min_aye_pct
+      CASE
+        WHEN nationalist_ayes > nationalist_noes AND unionist_ayes > unionist_noes THEN
+          LEAST(
+            nationalist_ayes::float / NULLIF(nationalist_ayes + nationalist_noes, 0),
+            unionist_ayes::float / NULLIF(unionist_ayes + unionist_noes, 0)
+          )
+        WHEN nationalist_noes > nationalist_ayes AND unionist_noes > unionist_ayes THEN
+          LEAST(
+            nationalist_noes::float / NULLIF(nationalist_ayes + nationalist_noes, 0),
+            unionist_noes::float / NULLIF(unionist_ayes + unionist_noes, 0)
+          )
+        ELSE 0
+      END as agreement_score
     FROM divisions
     WHERE nationalist_ayes + nationalist_noes > 3
     AND unionist_ayes + unionist_noes > 3
     AND mandate = ${CURRENT_MANDATE}
-    ORDER BY min_aye_pct DESC
+    ORDER BY agreement_score DESC,
+      (nationalist_ayes + nationalist_noes + unionist_ayes + unionist_noes) DESC,
+      division_date DESC
     LIMIT 1
   `)
   return (result.rows[0] as typeof divisions.$inferSelect) ?? null
@@ -925,11 +936,13 @@ export async function getCrossCommunityTrends() {
         DATE_TRUNC('month', division_date) as month,
         COUNT(*) as total_divisions,
         COUNT(*) FILTER (WHERE
-          unionist_ayes > unionist_noes AND nationalist_ayes > nationalist_noes
+          (unionist_ayes > unionist_noes AND nationalist_ayes > nationalist_noes)
+          OR (unionist_noes > unionist_ayes AND nationalist_noes > nationalist_ayes)
         ) as agreed_divisions,
         ROUND(
           COUNT(*) FILTER (WHERE
-            unionist_ayes > unionist_noes AND nationalist_ayes > nationalist_noes
+            (unionist_ayes > unionist_noes AND nationalist_ayes > nationalist_noes)
+            OR (unionist_noes > unionist_ayes AND nationalist_noes > nationalist_ayes)
           ) * 100.0 / NULLIF(COUNT(*), 0)
         ) as agreement_pct
       FROM divisions

@@ -846,7 +846,7 @@ export default async function StatsPage() {
               <h3 className={styles.overviewLabel}>Most cross-community agreement</h3>
               {crossCommunity && crossCommunityDivisionId ? (
                 <>
-                  <span className={styles.patternNote}>The division where unionist and nationalist MLAs voted Aye together most unanimously.</span>
+                  <span className={styles.patternNote}>The division with the strongest cross-community consensus by total votes cast.</span>
                   <Link
                     href={`/assembly/divisions/${crossCommunityDivisionId}`}
                     className={styles.patternDivisionLink}
@@ -908,7 +908,7 @@ export default async function StatsPage() {
           <p className="eyebrow">Unionist and nationalist blocs</p>
           <h2 id="cross-community-heading" className={styles.sectionTitle}>Cross-community voting</h2>
           <div className={styles.sectionRule}></div>
-          <p className={styles.sectionDesc}>How often unionist and nationalist MLAs both voted Aye on the same division.</p>
+          <p className={styles.sectionDesc}>How often unionist and nationalist MLAs voted the same way on the same division.</p>
           <div className="note-card">
             <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
