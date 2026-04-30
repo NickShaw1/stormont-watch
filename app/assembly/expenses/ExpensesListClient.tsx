@@ -139,6 +139,12 @@ export default function ExpensesListClient({ rows, years }: Props) {
 
   return (
     <>
+      {/* Rankings header */}
+      <div className={styles.rankingsHeader}>
+        <h2 className={styles.rankingsTitle}>MLA expenses rankings</h2>
+        <p className={styles.rankingsSubtitle}>Showing overall expenses across all published years by default. Use the filter to view a specific financial year.</p>
+      </div>
+
       {/* Year dropdown */}
       {years.length > 1 && (
         <div className={styles.yearDropdownWrap} ref={yearDropdownRef}>

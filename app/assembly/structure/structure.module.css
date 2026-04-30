@@ -349,7 +349,7 @@ a.deptName:hover { text-decoration: underline; }
 
 .personRole {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ink-3);

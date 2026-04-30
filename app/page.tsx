@@ -223,10 +223,11 @@ export default async function HomePage() {
 
       {/* Expenses promo */}
       <section className={styles.section}>
-        <div className={`${styles.sectionHead}`}>
+        <div className={`${styles.sectionHead} ${styles.sectionHeadWithSubtitle}`}>
           <div>
             <span className={styles.sectionEyebrow}>Public spending</span>
             <h2 className={styles.sectionTitle}>Expenses League Table</h2>
+            <p className={styles.sectionSubtitle}>Expense claims for each MLA across all published financial years.</p>
           </div>
         </div>
         <Link href="/assembly/expenses" className={styles.expensesCard}>
@@ -263,7 +264,7 @@ export default async function HomePage() {
         </div>
         <div className={styles.twStrip}>
           <div className={styles.twCell}>
-            <div className={styles.twLabel}>Votes</div>
+            <div className={styles.twLabel}>Divisions</div>
             <div className={styles.twVal}>{stats.thisWeekDivisions}</div>
           </div>
           <div className={styles.twCell}>
@@ -359,7 +360,7 @@ export default async function HomePage() {
         <div className={`${styles.sectionHead} ${styles.sectionHeadBills}`}>
           <div>
             <span className={styles.sectionEyebrow}>Legislation</span>
-            <h2 className={styles.sectionTitle}>Active Legislation</h2>
+            <h2 className={styles.sectionTitle}>Active legislation</h2>
           </div>
           <Link href="/assembly/bills" className={styles.viewAll}>All bills ↗</Link>
         </div>
@@ -435,10 +436,11 @@ export default async function HomePage() {
 
       {/* Overall cost promo */}
       <section className={styles.section}>
-        <div className={styles.sectionHead}>
+        <div className={`${styles.sectionHead} ${styles.sectionHeadWithSubtitle}`}>
           <div>
             <span className={styles.sectionEyebrow}>Public spending</span>
-            <h2 className={styles.sectionTitle}>Overall Cost</h2>
+            <h2 className={styles.sectionTitle}>Overall cost</h2>
+            <p className={styles.sectionSubtitle}>Estimated salary plus claimed expenses for each MLA since May 2022.</p>
           </div>
         </div>
         <Link href="/assembly/overall-cost" className={styles.expensesCard}>
@@ -448,7 +450,7 @@ export default async function HomePage() {
               <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
               <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
             </svg>
-            <span className={styles.expensesCardText}>View overall cost rankings (salary + expenses)</span>
+            <span className={styles.expensesCardText}>View overall cost rankings <span className={styles.expensesCardTextSub}>(salary + expenses)</span></span>
           </span>
           <span className={styles.expensesCardArrow} aria-hidden="true">↗</span>
         </Link>

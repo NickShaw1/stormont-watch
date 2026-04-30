@@ -49,7 +49,7 @@ export default async function ExpensesPage() {
           </ol>
         </nav>
         <h1>MLA expenses</h1>
-        <p className="lede">Expenses claimed by every MLA: office costs, travel, constituency support and staff salaries. Published by the Assembly Commission and made searchable here.</p>
+        <p className="lede">Expenses claimed by every MLA: office costs, travel, constituency support and staff salaries.</p>
       </header>
 
       {missing.length > 0 && (

@@ -589,6 +589,45 @@ export interface PartyExpenseStats {
   mlas: PartyMlaExpense[]
 }
 
+export async function getPartyMandateExpenses(party: string): Promise<{ mandateTotal: number; mandateAvgPerMla: number; mlaCount: number; rankTotal: number; rankAvg: number; partyCount: number } | null> {
+  const result = await db.execute(sql`
+    WITH party_totals AS (
+      SELECT
+        m.party,
+        COALESCE(SUM(e.total), 0) as mandate_total,
+        COUNT(DISTINCT e.person_id) as mla_count
+      FROM expenses e
+      JOIN members m ON m.person_id = e.person_id
+      WHERE e.total IS NOT NULL
+      GROUP BY m.party
+    ),
+    ranked AS (
+      SELECT
+        party,
+        mandate_total,
+        mla_count,
+        CASE WHEN mla_count > 0 THEN mandate_total / mla_count ELSE 0 END as avg_per_mla,
+        RANK() OVER (ORDER BY mandate_total DESC) as rank_total,
+        RANK() OVER (ORDER BY CASE WHEN mla_count > 0 THEN mandate_total / mla_count ELSE 0 END DESC) as rank_avg,
+        COUNT(*) OVER () as party_count
+      FROM party_totals
+    )
+    SELECT mandate_total, mla_count, avg_per_mla, rank_total, rank_avg, party_count
+    FROM ranked
+    WHERE party = ${party}
+  `)
+  const row = result.rows[0] as { mandate_total: string; mla_count: string; avg_per_mla: string; rank_total: string; rank_avg: string; party_count: string } | undefined
+  if (!row) return null
+  return {
+    mandateTotal: Number(row.mandate_total),
+    mandateAvgPerMla: Number(row.avg_per_mla),
+    mlaCount: Number(row.mla_count),
+    rankTotal: Number(row.rank_total),
+    rankAvg: Number(row.rank_avg),
+    partyCount: Number(row.party_count),
+  }
+}
+
 export async function getPartyExpenses(party: string): Promise<PartyExpenseStats | null> {
   const [mlaRows, visitRows, rankRows] = await Promise.all([
     db

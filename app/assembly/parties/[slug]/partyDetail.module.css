@@ -779,6 +779,26 @@
   margin-bottom: var(--s-4);
 }
 
+.expensesSectionHeading {
+  font-size: 24px;
+  font-weight: 500;
+  font-family: var(--font-serif);
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--s-2);
+}
+
+.expensesSectionHeading em {
+  font-style: italic;
+  color: var(--teal);
+}
+
+.expensesHeadingDate {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin-bottom: 6px;
+}
+
 .divisionsTable {
   border: 1px solid var(--rule);
   border-radius: var(--r-3);
@@ -1111,9 +1131,60 @@
   padding-top: var(--s-2);
 }
 
-.expCoverageNote {
-  font-size: 0.875rem;
+.overviewGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.overviewCard {
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: var(--spacing-lg);
+  background: var(--paper-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.overviewLabel {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--ink-3);
+  font-family: var(--font-mono);
+}
+
+.overviewValue {
+  font-size: clamp(26px, 4vw, 32px);
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.overviewMeta {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+}
+
+@media (max-width: 500px) {
+  .overviewGrid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .overviewCard {
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+.expCoverageNote {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink-2);
   font-family: var(--font-sans);
   margin-bottom: var(--s-5);
 }
@@ -1165,6 +1236,15 @@
   border-radius: var(--r-3);
   padding: var(--s-5);
   flex: 1;
+  align-items: center;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .expMiniCard {
+    align-items: flex-start;
+    text-align: left;
+  }
 }
 
 .expMetricLabel {

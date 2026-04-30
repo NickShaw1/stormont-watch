@@ -10,6 +10,7 @@ import styles from './partyDetail.module.css'
 
 interface PartyExpensesProps {
   expenses: PartyExpenseStats
+  mandateExpenses: { mandateTotal: number; mandateAvgPerMla: number; mlaCount: number; rankTotal: number; rankAvg: number; partyCount: number } | null
   partyColor: string
 }
 
@@ -48,13 +49,39 @@ function MlaExpenseRow({ mla, rankSub }: { mla: PartyExpenseStats['highestMla'];
   )
 }
 
-export default function PartyExpensesClient({ expenses, partyColor }: PartyExpensesProps) {
+export default function PartyExpensesClient({ expenses, mandateExpenses, partyColor }: PartyExpensesProps) {
   const router = useRouter()
   const singleMla = expenses.mlas.length === 1
   const maxTotal = expenses.highestMla.total
 
   return (
     <div className={styles.expSection}>
+      {/* Mandate totals */}
+      {mandateExpenses && (
+        <>
+          <h3 className={styles.expensesSectionHeading} style={{ marginTop: 0 }}>Total mandate <em>expenses</em></h3>
+          <p className={styles.expensesHeadingDate}>May 2022 – present</p>
+          <p className={styles.expCoverageNote} style={{ marginBottom: 'var(--s-4)' }}>All published financial years of the 2022–2027 mandate.</p>
+          <div className={styles.overviewGrid2} style={{ marginBottom: 'var(--s-6)' }}>
+            <div className={styles.overviewCard}>
+              <span className={styles.overviewLabel}>Total claimed</span>
+              <span className={styles.overviewValue}>{gbp(mandateExpenses.mandateTotal)}</span>
+              <span className={styles.overviewMeta}>all published years</span>
+              <span className={styles.rankBadge} style={{ color: rankColor(mandateExpenses.rankTotal, mandateExpenses.partyCount) }}>{ordinal(mandateExpenses.rankTotal)} of {mandateExpenses.partyCount} parties</span>
+            </div>
+            <div className={styles.overviewCard}>
+              <span className={styles.overviewLabel}>Average per MLA</span>
+              <span className={styles.overviewValue}>{gbp(mandateExpenses.mandateAvgPerMla)}</span>
+              <span className={styles.overviewMeta}>across {mandateExpenses.mlaCount} MLA{mandateExpenses.mlaCount !== 1 ? 's' : ''} with published data</span>
+              <span className={styles.rankBadge} style={{ color: rankColor(mandateExpenses.rankAvg, mandateExpenses.partyCount) }}>{ordinal(mandateExpenses.rankAvg)} of {mandateExpenses.partyCount} parties</span>
+            </div>
+          </div>
+          <hr className="section-rule" />
+          <h3 className={styles.expensesSectionHeading}>Latest published <em>expenses</em></h3>
+          <p className={styles.expensesHeadingDate}>{expenses.period}</p>
+        </>
+      )}
+
       {/* Coverage note */}
       <p className={styles.expCoverageNote}>
         <span className={styles.expHideMobile}>Figures shown cover </span><span className={styles.expShowMobile}>Figures for: </span><strong>{expenses.period}</strong>

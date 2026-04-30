@@ -29,6 +29,7 @@ import StatsQuestionsSection from './StatsQuestionsSection'
 
 import CrossCommunityTrendsClient from './CrossCommunityTrendsClient'
 import AssemblyProductivityClient from './AssemblyProductivityClient'
+import StatsHeaderChart from './StatsHeaderChart'
 import MlaPhoto from '@/components/MlaPhoto'
 import { formatMemberName, partyBorderColor, abbreviateParty } from '@/lib/format'
 import PartyName from '@/components/PartyName'
@@ -199,15 +200,20 @@ export default async function StatsPage() {
     <div className="container">
       {/* 1. Assembly at a glance */}
       <section aria-labelledby="assembly-stats-heading" className={styles.section}>
-        <header className="page-header">
-          <span className="eyebrow">Statistics</span>
-          <h1 id="assembly-stats-heading">At a glance</h1>
-          <p className="lede">Assembly voting patterns and attendance since May 2022, with expenses from the most recently published period.</p>
+        <header className={`page-header ${styles.statsPageHeader}`}>
+          <div>
+            <span className="eyebrow">Statistics</span>
+            <h1 id="assembly-stats-heading">At a glance</h1>
+            <p className="lede">Voting, attendance, salaries, expenses and cross-community trends since May 2022.</p>
+          </div>
+          <div className={styles.statsHeaderChart}>
+            <StatsHeaderChart data={divisionsPerMonth} />
+          </div>
         </header>
 
         <p className={styles.assemblyStatement}>
           Since May 2022, the Assembly has held{' '}
-          <strong>{totalDivisions}</strong> votes.{' '}
+          <strong>{totalDivisions}</strong> divisions.{' '}
           <strong>{overallPassRate}%</strong> of divisions passed.
           Unionist and nationalist MLAs voted the same way on{' '}
           <strong>{overallAgreementRate}%</strong> of divisions.{' '}
@@ -321,10 +327,10 @@ export default async function StatsPage() {
         )?.period ?? ''
 
         const ExpensesCard = ({ title, rows }: { title: string; rows: typeof top5 }) => (
-          <div className={styles.card}>
-            <h3 className={styles.cardTitle}>{title}</h3>
+          <div className={styles.partyRankingCard}>
+            <p className={styles.partyRankingTitle}>{title}</p>
             {periodLabel && <p className={styles.partyRankingSubtitle}>{periodLabel}</p>}
-            <ol className={styles.list}>
+            <ol className={styles.list} style={{ marginTop: 'var(--s-2)' }}>
               {rows.map((row, i) => (
                 <li key={row.personId} className={styles.row}>
                   <span className={styles.rank}>{i + 1}</span>
@@ -366,19 +372,6 @@ export default async function StatsPage() {
               </div>
               <h2 id="expenses-heading" className={styles.sectionTitle}>Member expenses</h2>
               <div className={styles.sectionRule}></div>
-              <p className={styles.expensesMeta}>
-              <strong className={styles.expensesPeriod}>{periodLabel}</strong>
-              <span className={styles.expensesMetaSep} aria-hidden="true">|</span>
-              <span className={styles.expensesStat}>
-                <strong className={styles.expensesStatValue}>{gbp(String(assemblyTotal))}</strong>
-                <span className={styles.expensesStatLabel}>total</span>
-              </span>
-              <span className={styles.expensesMetaSep} aria-hidden="true">|</span>
-              <span className={styles.expensesStat}>
-                <strong className={styles.expensesStatValue}>{gbp(String(assemblyAvg))}</strong>
-                <span className={styles.expensesStatLabel}>avg per MLA</span>
-              </span>
-            </p>
             </div>
             <Link href="/assembly/expenses" className={styles.expensesRankingsCard} style={{ marginTop: 0 }}>
               <span className={styles.expensesRankingsCardLeft}>
@@ -454,6 +447,21 @@ export default async function StatsPage() {
 
               return (
                 <>
+                  <h3 className={styles.chartTitle}>Latest published expenses</h3>
+                  <p className={styles.expensesMeta} style={{ marginBottom: 'var(--s-3)' }}>
+                    <strong className={styles.expensesPeriod}>{periodLabel}</strong>
+                    <span className={styles.expensesMetaSep} aria-hidden="true">|</span>
+                    <span className={styles.expensesStat}>
+                      <strong className={styles.expensesStatValue}>{gbp(String(assemblyTotal))}</strong>
+                      <span className={styles.expensesStatLabel}>total</span>
+                    </span>
+                    <span className={styles.expensesMetaSep} aria-hidden="true">|</span>
+                    <span className={styles.expensesStat}>
+                      <strong className={styles.expensesStatValue}>{gbp(String(assemblyAvg))}</strong>
+                      <span className={styles.expensesStatLabel}>avg per MLA</span>
+                    </span>
+                  </p>
+                  <p className={styles.trendNote} style={{ marginBottom: 'var(--spacing-lg)' }}>Expenses claimed by <strong>current MLAs</strong> in the most recently published financial year.</p>
                   <div className={styles.expensesCardGrid}>
                     <ExpensesCard title="Most expenses claimed" rows={top5} />
                     <ExpensesCard title="Least expenses claimed" rows={bottom5} />
@@ -511,9 +519,10 @@ export default async function StatsPage() {
                     const mandateBottom5 = [...mandateRows].reverse().slice(0, 5)
 
                     const MandateCard = ({ title, rows }: { title: string; rows: typeof mandateTop5 }) => (
-                      <div className={styles.card}>
-                        <h3 className={styles.cardTitle}>{title}</h3>
-                        <ol className={styles.list}>
+                      <div className={styles.partyRankingCard}>
+                        <p className={styles.partyRankingTitle}>{title}</p>
+                        <p className={styles.partyRankingSubtitle}>Expenses across all published years</p>
+                        <ol className={`${styles.list}`} style={{ marginTop: 'var(--s-2)' }}>
                           {rows.map((row, i) => (
                             <li key={row.personId} className={styles.row}>
                               <span className={styles.rank}>{i + 1}</span>
@@ -564,6 +573,82 @@ export default async function StatsPage() {
                           <MandateCard title="Highest mandate expenses" rows={mandateTop5} />
                           <MandateCard title="Lowest mandate expenses" rows={mandateBottom5} />
                         </div>
+
+                        {(() => {
+                          const fmt = (n: number) => Math.round(n).toLocaleString('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })
+                          type ExpPartyRow = { party: string; mla_count: number; party_total: number; per_mla_avg: number }
+                          const partyMap: Record<string, { total: number; count: number }> = {}
+                          for (const m of allCurrentMembers) {
+                            if (!m.party) continue
+                            const exp = expenseTotalsMap.get(m.personId) ?? 0
+                            if (!partyMap[m.party]) partyMap[m.party] = { total: 0, count: 0 }
+                            partyMap[m.party].total += exp
+                            partyMap[m.party].count += 1
+                          }
+                          const expPartyRows: ExpPartyRow[] = Object.entries(partyMap)
+                            .filter(([, v]) => v.total > 0)
+                            .map(([party, { total, count }]) => ({ party, mla_count: count, party_total: total, per_mla_avg: count > 0 ? total / count : 0 }))
+                          const byTotal = [...expPartyRows].sort((a, b) => b.party_total - a.party_total)
+                          const byAvg = [...expPartyRows].sort((a, b) => b.per_mla_avg - a.per_mla_avg)
+                          const maxTotal = byTotal[0]?.party_total ?? 1
+                          const maxAvg = byAvg[0]?.per_mla_avg ?? 1
+
+                          const ExpPartyCard = ({ title, subtitle, rows, getValue, getMax }: { title: string; subtitle: string; rows: ExpPartyRow[]; getValue: (r: ExpPartyRow) => number; getMax: number }) => (
+                            <div className={styles.partyRankingCard}>
+                              <p className={styles.partyRankingTitle}>{title}</p>
+                              <p className={styles.partyRankingSubtitle}>{subtitle}</p>
+                              <table className={styles.partyRankingTable}>
+                                <thead>
+                                  <tr>
+                                    <th scope="col">Party</th>
+                                    <th scope="col"><abbr title="Members">Mbrs</abbr></th>
+                                    <th scope="col" aria-label="Proportion"></th>
+                                    <th scope="col">Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {rows.map((row, i) => (
+                                    <tr key={row.party}>
+                                      <td>
+                                        <span className={styles.partyRankingParty}>
+                                          <span className={styles.partyRankingRank}>{i + 1}</span>
+                                          <span className={styles.partyDot} style={{ background: partyBorderColor(row.party) }} aria-hidden="true" />
+                                          <PartyName party={row.party} />
+                                        </span>
+                                      </td>
+                                      <td className={styles.cohesionMembers}>{row.mla_count}</td>
+                                      <td className={styles.partyRankingBarCell}>
+                                        <div className={styles.partyRankingBarTrack} aria-hidden="true">
+                                          <div className={styles.partyRankingBarFill} style={{ width: `${Math.round(getValue(row) / getMax * 100)}%`, background: partyBorderColor(row.party) }} />
+                                        </div>
+                                      </td>
+                                      <td className={styles.partyRankingValue}>{fmt(getValue(row))}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )
+
+                          return (
+                            <div className={styles.partyRankingGrid} style={{ marginTop: 'var(--spacing-lg)' }}>
+                              <ExpPartyCard
+                                title="Total expenses by party"
+                                subtitle="All MLAs · expenses across all published years"
+                                rows={byTotal}
+                                getValue={(r) => r.party_total}
+                                getMax={maxTotal}
+                              />
+                              <ExpPartyCard
+                                title="Expenses per MLA by party"
+                                subtitle="Average expenses per MLA within each party"
+                                rows={byAvg}
+                                getValue={(r) => r.per_mla_avg}
+                                getMax={maxAvg}
+                              />
+                            </div>
+                          )
+                        })()}
                       </>
                     )
                   })()}

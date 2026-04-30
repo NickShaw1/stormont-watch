@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getAllPartiesWithStats, getPartyBySlug, getPartyAssemblyStats, getPartyExpenses, getQuestionStatsByParty } from '@/lib/db/queries'
+import { getAllPartiesWithStats, getPartyBySlug, getPartyAssemblyStats, getPartyExpenses, getPartyMandateExpenses, getQuestionStatsByParty } from '@/lib/db/queries'
 import type { CSSProperties } from 'react'
 import { partyBorderColor, abbreviateParty } from '@/lib/format'
 import styles from './partyDetail.module.css'
@@ -78,9 +78,10 @@ export default async function PartyDetailPage({ params }: Props) {
   const party = await getPartyBySlug(slug)
   if (!party) notFound()
 
-  const [stats, expenses, borderColor, questionStatsRows] = await Promise.all([
+  const [stats, expenses, mandateExpenses, borderColor, questionStatsRows] = await Promise.all([
     getPartyAssemblyStats(party.party),
     getPartyExpenses(party.party),
+    getPartyMandateExpenses(party.party),
     Promise.resolve(partyBorderColor(party.party)),
     getQuestionStatsByParty(party.party),
   ])
@@ -158,7 +159,7 @@ export default async function PartyDetailPage({ params }: Props) {
         }
         expensesContent={
           expenses ? (
-            <PartyExpensesClient expenses={expenses} partyColor={borderColor} />
+            <PartyExpensesClient expenses={expenses} mandateExpenses={mandateExpenses} partyColor={borderColor} />
           ) : (
             <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>No expenses data available.</p>
           )

@@ -657,6 +657,16 @@ a.agendaTitle:hover {
   color: var(--paper);
 }
 
+.expensesCardTextSub {
+  display: inline;
+}
+
+@media (max-width: 600px) {
+  .expensesCardTextSub {
+    display: none;
+  }
+}
+
 .expensesCardArrow {
   font-size: 18px;
   color: var(--paper);
@@ -700,6 +710,22 @@ a.agendaTitle:hover {
   letter-spacing: -0.03em;
   color: var(--ink);
   margin: var(--s-1) 0 0;
+}
+
+.sectionSubtitle {
+  font-size: 0.9375rem;
+  color: var(--ink-2);
+  margin: var(--s-2) 0 0;
+}
+
+.sectionHeadWithSubtitle {
+  margin-bottom: var(--s-6);
+}
+
+@media (max-width: 600px) {
+  .sectionSubtitle {
+    font-size: 0.875rem;
+  }
 }
 
 .sectionTitle em {

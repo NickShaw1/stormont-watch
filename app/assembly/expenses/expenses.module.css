@@ -1,3 +1,20 @@
+.rankingsHeader {
+  margin-bottom: var(--s-4);
+}
+
+.rankingsTitle {
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 var(--s-1);
+}
+
+.rankingsSubtitle {
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  margin: 0;
+}
+
 .yearDropdownWrap {
   position: relative;
   width: 130px;
@@ -389,7 +406,7 @@
 
 .missingHeading {
   font-family: var(--font-sans);
-  font-size: clamp(20px, 2.5vw, 28px);
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
   font-weight: 500;
   letter-spacing: -0.03em;
   color: var(--ink);
