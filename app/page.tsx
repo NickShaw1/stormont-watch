@@ -226,7 +226,7 @@ export default async function HomePage() {
         <div className={`${styles.sectionHead} ${styles.sectionHeadWithSubtitle}`}>
           <div>
             <span className={styles.sectionEyebrow}>Public spending</span>
-            <h2 className={styles.sectionTitle}>Expenses League Table</h2>
+            <h2 className={styles.sectionTitle}>Expenses league table</h2>
             <p className={styles.sectionSubtitle}>Expense claims for each MLA across all published financial years.</p>
           </div>
         </div>
