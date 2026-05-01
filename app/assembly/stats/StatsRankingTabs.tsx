@@ -166,6 +166,14 @@ export default function StatsRankingTabs({ data }: Props) {
           )
         })}
       </div>
+      <div className="note-card" style={{ marginTop: 'var(--s-4)' }}>
+        <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
+          <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+          <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+        </svg>
+        <p>Current MLAs only. Excludes presiding officers and divisions before each MLA&apos;s mandate start date.</p>
+      </div>
     </div>
   )
 }

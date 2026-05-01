@@ -257,10 +257,11 @@ export async function getMlaLeaderboard() {
       divisions,
       and(
         eq(votes.documentId, divisions.documentId),
-        sql`${divisions.divisionDate} >= coalesce(${members.mandateStart}::date, '2022-05-01'::date)`
+        sql`${divisions.divisionDate} >= coalesce(${members.mandateStart}::date, '2022-05-01'::date)`,
+        sql`(${members.assemblyRoleStart} IS NULL OR (${members.assemblyRoleEnd} IS NOT NULL AND (${divisions.divisionDate} < ${members.assemblyRoleStart}::date OR ${divisions.divisionDate} >= ${members.assemblyRoleEnd}::date)))`
       )
     )
-    .where(and(eq(members.isCurrent, true), sql`${members.assemblyRole} is null`))
+    .where(eq(members.isCurrent, true))
     .groupBy(members.personId, members.fullName, members.party, members.constituency, members.imgUrl, members.mandateStart)
 
   return rows.map((r) => ({
@@ -294,9 +295,11 @@ export async function getAverageAttendance(): Promise<number> {
         COUNT(*) FILTER (WHERE v.vote != 'NO_SHOW') * 100.0 / COUNT(*) as attendance_pct
       FROM members m
       JOIN votes v ON m.person_id = v.person_id
+      JOIN divisions d ON d.document_id = v.document_id
       WHERE m.is_current = true
-      AND m.assembly_role IS NULL
       AND v.mandate = ${CURRENT_MANDATE}
+      AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
+      AND (m.assembly_role_start IS NULL OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date)))
       GROUP BY m.person_id
     ) attendance
   `)
@@ -1189,9 +1192,11 @@ export async function getLeastEngagedMLA() {
     JOIN members m ON v.person_id = m.person_id
     JOIN divisions d ON v.document_id = d.document_id
     WHERE m.is_current = true
-    AND (m.assembly_role IS NULL
-         OR m.assembly_role NOT ILIKE '%speaker%')
     AND d.division_date >= m.mandate_start
+    AND (
+      m.assembly_role_start IS NULL
+      OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date))
+    )
     GROUP BY m.person_id, m.full_name, m.party, m.img_url
     ORDER BY attendance_pct ASC
     LIMIT 1
@@ -1225,9 +1230,11 @@ export async function getMostEngagedMLA() {
     JOIN members m ON v.person_id = m.person_id
     JOIN divisions d ON v.document_id = d.document_id
     WHERE m.is_current = true
-    AND (m.assembly_role IS NULL
-         OR m.assembly_role NOT ILIKE '%speaker%')
     AND d.division_date >= m.mandate_start
+    AND (
+      m.assembly_role_start IS NULL
+      OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date))
+    )
     GROUP BY m.person_id, m.full_name, m.party, m.img_url
     ORDER BY attendance_pct DESC
     LIMIT 1
@@ -1636,8 +1643,12 @@ export async function getPartyAssemblyStats(party: string): Promise<PartyVoteSta
         ) as attendance_pct
       FROM votes v
       JOIN members m ON m.person_id = v.person_id
+      JOIN divisions d ON d.document_id = v.document_id
       WHERE m.mandate = '2022-2027'
       AND m.party = ${party}
+      AND (m.assembly_role IS NULL OR m.assembly_role NOT ILIKE '%speaker%')
+      AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
+      AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
     `),
     db.execute(sql`
       SELECT person_id, full_name, attendance_pct, present, total, constituency
@@ -1686,6 +1697,9 @@ export async function getPartyAssemblyStats(party: string): Promise<PartyVoteSta
       JOIN divisions d ON d.document_id = v.document_id
       WHERE m.mandate = '2022-2027'
       AND m.party = ${party}
+      AND (m.assembly_role IS NULL OR m.assembly_role NOT ILIKE '%speaker%')
+      AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
+      AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
       GROUP BY DATE_TRUNC('month', d.division_date)
       ORDER BY month_date ASC
     `),
@@ -1864,6 +1878,34 @@ export async function getMemberRoleHistory(personId: string) {
     .where(eq(memberRoleHistory.personId, personId))
     .orderBy(memberRoleHistory.startDate)
   return rows
+}
+
+export async function getPartyAttendanceAll(): Promise<{ party: string; attendancePct: number; memberCount: number }[]> {
+  const result = await db.execute(sql`
+    SELECT
+      m.party,
+      COUNT(DISTINCT m.person_id) as member_count,
+      ROUND(
+        COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) * 100.0 /
+        NULLIF(COUNT(*), 0), 1
+      ) as attendance_pct
+    FROM votes v
+    JOIN members m ON m.person_id = v.person_id
+    JOIN divisions d ON d.document_id = v.document_id
+    WHERE m.mandate = ${CURRENT_MANDATE}
+    AND m.party IS NOT NULL
+    AND (m.assembly_role IS NULL OR m.assembly_role NOT ILIKE '%speaker%')
+    AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
+    AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
+    GROUP BY m.party
+    ORDER BY attendance_pct DESC
+  `)
+  type Row = { party: string; attendance_pct: unknown; member_count: unknown }
+  return (result.rows as unknown as Row[]).map((r) => ({
+    party: r.party,
+    attendancePct: Number(r.attendance_pct),
+    memberCount: Number(r.member_count),
+  }))
 }
 
 export async function getAllMemberRoleHistories() {

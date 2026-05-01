@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import { formatMemberName, formatConstituency, formatDate } from '@/lib/format'
@@ -233,8 +233,8 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Party Division Attendance Average</span>
           <span className={styles.statValue}>{stats.attendancePct}%</span>
-          <span className={styles.statSub}>Across {mlaCount} current MLA{mlaCount !== 1 ? 's' : ''}</span>
-          <span className={styles.statSub}>{stats.present.toLocaleString()} / {stats.total.toLocaleString()} divisions party participated in</span>
+          <span className={styles.statSub}>Across current and former MLAs in the 2022–2027 mandate, excluding presiding officers</span>
+          <span className={styles.statSub}><strong>{stats.present.toLocaleString()} / {stats.total.toLocaleString()}</strong> divisions party participated in</span>
           <div className={styles.statDivider} />
           {singleMla ? (
             <MlaStatRow mla={stats.highestMla} />
@@ -247,13 +247,13 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
               <MlaStatRow mla={stats.lowestMla} />
             </>
           )}
-          <p className={styles.statNote}>* Based on division participation, excluding Speakers and First/Deputy First Ministers</p>
+          <p className={styles.statNote}>Based on division participation, excluding Speakers and First/Deputy First Ministers</p>
         </div>
 
         {/* Donut card */}
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Voting Breakdown</span>
-          <span className={styles.statSub}>All votes cast by all MLAs across every division</span>
+          <span className={styles.statSub}>All votes cast by current and former MLAs, excluding presiding officers</span>
           <DonutChart stats={stats} partyColor={partyColor} />
         </div>
       </div>
@@ -265,7 +265,7 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
         <TrendChart trend={stats.trend} partyColor={partyColor} />
       </div>
       <p style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 'var(--s-2)' }}>
-        * Only months with recorded divisions are shown. Months with no Assembly activity are not plotted.
+        Only months with recorded divisions are shown. Excludes presiding officers and divisions before each MLA&apos;s mandate start date.
       </p>
 
       <hr className="section-rule" />

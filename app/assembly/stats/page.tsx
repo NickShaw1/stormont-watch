@@ -22,6 +22,7 @@ import {
   getAllMinisters,
   getAllMemberRoleHistories,
   getTotalExpensesPerMember,
+  getPartyAttendanceAll,
 } from '@/lib/db/queries'
 import { calculateMandateEarnings, getCurrentAnnualSalary, apiRoleToSalaryRole, type RoleInterval } from '@/lib/salaries'
 import StatsRankingTabs from './StatsRankingTabs'
@@ -30,6 +31,7 @@ import StatsQuestionsSection from './StatsQuestionsSection'
 import CrossCommunityTrendsClient from './CrossCommunityTrendsClient'
 import AssemblyProductivityClient from './AssemblyProductivityClient'
 import StatsHeaderChart from './StatsHeaderChart'
+import PartyAttendanceChart from './PartyAttendanceChart'
 import MlaPhoto from '@/components/MlaPhoto'
 import { formatMemberName, partyBorderColor, abbreviateParty } from '@/lib/format'
 import PartyName from '@/components/PartyName'
@@ -47,7 +49,7 @@ export const metadata: Metadata = {
 }
 
 export default async function StatsPage() {
-  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, expensesLeague, expensesByParty, crossCommunityTrends, divisionsPerMonth, passRateByYear, overallAgreementRate, allCurrentMembers, latestExpensesYear, sittingDays, questionTotalsRaw, ministerRows, allRoleHistories, totalExpensesData] = await Promise.all([
+  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, expensesLeague, expensesByParty, crossCommunityTrends, divisionsPerMonth, passRateByYear, overallAgreementRate, allCurrentMembers, latestExpensesYear, sittingDays, questionTotalsRaw, ministerRows, allRoleHistories, totalExpensesData, partyAttendance] = await Promise.all([
     getMlaLeaderboard(),
     getAssemblyStats(),
     getAverageAttendance(),
@@ -67,6 +69,7 @@ export default async function StatsPage() {
     getAllMinisters(),
     getAllMemberRoleHistories(),
     getTotalExpensesPerMember(),
+    getPartyAttendanceAll(),
   ])
 
   // Compute salary rankings
@@ -448,7 +451,7 @@ export default async function StatsPage() {
               return (
                 <>
                   <h3 className={styles.chartTitle}>Latest published expenses</h3>
-                  <p className={styles.expensesMeta} style={{ marginBottom: 'var(--s-3)' }}>
+                  <p className={styles.expensesMeta} style={{ marginTop: 'var(--s-3)', marginBottom: 'var(--s-3)' }}>
                     <strong className={styles.expensesPeriod}>{periodLabel}</strong>
                     <span className={styles.expensesMetaSep} aria-hidden="true">|</span>
                     <span className={styles.expensesStat}>
@@ -852,6 +855,14 @@ export default async function StatsPage() {
           <p className={styles.sectionDesc}>Who shows up, who votes Aye and who votes No. The top and bottom 5 MLAs ranked.</p>
         </div>
         <StatsRankingTabs data={leaderboard} />
+
+        {partyAttendance.length > 0 && (
+          <div style={{ marginTop: 'var(--s-10)' }}>
+            <h3 className={styles.chartTitle} style={{ marginTop: 0 }}>Party Attendance</h3>
+            <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>Average percentage of divisions attended by each party&apos;s <strong>current and former MLAs</strong> across the 2022–2027 mandate, excluding presiding officers and divisions before each MLA&apos;s mandate start date.</p>
+            <PartyAttendanceChart data={partyAttendance} />
+          </div>
+        )}
       </section>
 
       <hr className="section-rule" />
@@ -921,7 +932,7 @@ export default async function StatsPage() {
 
             {/* Average attendance */}
             <div className={styles.patternStackItem}>
-              <h3 className={styles.overviewLabel}>Average MLA attendance</h3>
+              <h3 className={styles.overviewLabel}>Average current MLA attendance</h3>
               <span className={styles.patternBigValue}>{avgAttendance}%</span>
               <span className={styles.patternNote}>of divisions attended, excluding presiding officers</span>
             </div>
