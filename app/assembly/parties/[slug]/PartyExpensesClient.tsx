@@ -1,6 +1,5 @@
 'use client'
 
-import React from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import MlaPhoto from '@/components/MlaPhoto'
@@ -60,8 +59,7 @@ export default function PartyExpensesClient({ expenses, mandateExpenses, partyCo
       {mandateExpenses && (
         <>
           <h3 className={styles.expensesSectionHeading} style={{ marginTop: 0 }}>Total mandate <em>expenses</em></h3>
-          <p className={styles.expensesHeadingDate}>May 2022 – present</p>
-          <p className={styles.expCoverageNote} style={{ marginBottom: 'var(--s-4)' }}>All published financial years of the 2022–2027 mandate.</p>
+          <p className={styles.expensesHeadingDate}>May 2022 - present</p>
           <div className={styles.overviewGrid2} style={{ marginBottom: 'var(--s-6)' }}>
             <div className={styles.overviewCard}>
               <span className={styles.overviewLabel}>Total claimed</span>
@@ -72,20 +70,23 @@ export default function PartyExpensesClient({ expenses, mandateExpenses, partyCo
             <div className={styles.overviewCard}>
               <span className={styles.overviewLabel}>Average per MLA</span>
               <span className={styles.overviewValue}>{gbp(mandateExpenses.mandateAvgPerMla)}</span>
-              <span className={styles.overviewMeta}>across {mandateExpenses.mlaCount} MLA{mandateExpenses.mlaCount !== 1 ? 's' : ''} with published data</span>
+              <span className={styles.overviewMeta}>across {mandateExpenses.mlaCount} MLA{mandateExpenses.mlaCount !== 1 ? 's' : ''} (current &amp; former) with published data</span>
               <span className={styles.rankBadge} style={{ color: rankColor(mandateExpenses.rankAvg, mandateExpenses.partyCount) }}>{ordinal(mandateExpenses.rankAvg)} of {mandateExpenses.partyCount} parties</span>
             </div>
           </div>
           <hr className="section-rule" />
           <h3 className={styles.expensesSectionHeading}>Latest published <em>expenses</em></h3>
           <p className={styles.expensesHeadingDate}>{expenses.period}</p>
+          <p className={styles.expCoverageNote}>All current and former {expenses.mlas.length > 0 ? `${expenses.mlas.length} ` : ''}MLAs who claimed expenses in this financial year.</p>
         </>
       )}
 
-      {/* Coverage note */}
-      <p className={styles.expCoverageNote}>
-        <span className={styles.expHideMobile}>Figures shown cover </span><span className={styles.expShowMobile}>Figures for: </span><strong>{expenses.period}</strong>
-      </p>
+      {/* Coverage note — only shown when there's no mandate section (which already shows the period) */}
+      {!mandateExpenses && (
+        <p className={styles.expCoverageNote}>
+          <span className={styles.expHideMobile}>Figures shown cover </span><span className={styles.expShowMobile}>Figures for: </span><strong>{expenses.period}</strong>
+        </p>
+      )}
 
       {/* Metric cards */}
       <div className={styles.expCardGrid}>

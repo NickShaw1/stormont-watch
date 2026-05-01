@@ -646,9 +646,8 @@ export async function getPartyExpenses(party: string): Promise<PartyExpenseStats
       .from(expenses)
       .innerJoin(members, eq(expenses.personId, members.personId))
       .where(and(
-        eq(expenses.financialYear, '2025-2026'),
+        sql`${expenses.financialYear} = (SELECT MAX(financial_year) FROM expenses)`,
         eq(members.mandate, CURRENT_MANDATE),
-        eq(members.isCurrent, true),
         eq(members.party, party),
       ))
       .orderBy(desc(expenses.total)),
@@ -674,9 +673,8 @@ export async function getPartyExpenses(party: string): Promise<PartyExpenseStats
         ON ri.person_id = m.person_id
         AND ri.register_category = 'Visits'
         AND m.mandate = '2022-2027'
-      WHERE e.financial_year = '2025-2026'
+      WHERE e.financial_year = (SELECT MAX(financial_year) FROM expenses)
         AND m.mandate = '2022-2027'
-        AND m.is_current = true
       GROUP BY m.party
     `),
   ])
@@ -1646,9 +1644,9 @@ export async function getPartyAssemblyStats(party: string): Promise<PartyVoteSta
       JOIN divisions d ON d.document_id = v.document_id
       WHERE m.mandate = '2022-2027'
       AND m.party = ${party}
-      AND (m.assembly_role IS NULL OR m.assembly_role NOT ILIKE '%speaker%')
       AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
       AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
+      AND (m.assembly_role_start IS NULL OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date)))
     `),
     db.execute(sql`
       SELECT person_id, full_name, attendance_pct, present, total, constituency
@@ -1697,9 +1695,9 @@ export async function getPartyAssemblyStats(party: string): Promise<PartyVoteSta
       JOIN divisions d ON d.document_id = v.document_id
       WHERE m.mandate = '2022-2027'
       AND m.party = ${party}
-      AND (m.assembly_role IS NULL OR m.assembly_role NOT ILIKE '%speaker%')
       AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
       AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
+      AND (m.assembly_role_start IS NULL OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date)))
       GROUP BY DATE_TRUNC('month', d.division_date)
       ORDER BY month_date ASC
     `),
@@ -1894,9 +1892,9 @@ export async function getPartyAttendanceAll(): Promise<{ party: string; attendan
     JOIN divisions d ON d.document_id = v.document_id
     WHERE m.mandate = ${CURRENT_MANDATE}
     AND m.party IS NOT NULL
-    AND (m.assembly_role IS NULL OR m.assembly_role NOT ILIKE '%speaker%')
     AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
     AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
+    AND (m.assembly_role_start IS NULL OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date)))
     GROUP BY m.party
     ORDER BY attendance_pct DESC
   `)
