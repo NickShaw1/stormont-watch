@@ -78,6 +78,7 @@ export default async function HomePage() {
 
   const divisionsThisMonth = divisionsPerMonth.at(-1)?.total_divisions ?? 0
   const divisionsLastMonth = divisionsPerMonth.at(-2)?.total_divisions ?? 0
+  const currentMonthName = new Date().toLocaleString('en-GB', { month: 'short' })
   const divisionsDelta = Number(divisionsThisMonth) - Number(divisionsLastMonth)
   const thisYear = now.getFullYear()
   const billsThisYear = billsPassedPerMonth
@@ -164,7 +165,7 @@ export default async function HomePage() {
       {/* Key figures strip */}
       <div className={styles.kfigs}>
         <div className={styles.kfig}>
-          <div className={styles.kfigLabel}>Divisions this month</div>
+          <div className={styles.kfigLabel}>Divisions this month ({currentMonthName})</div>
           <div className={styles.kfigNum}>{Number(divisionsThisMonth)}</div>
           <div className={styles.kfigSub}>
             <span style={{ color: divisionsDelta > 0 ? 'var(--forest)' : divisionsDelta < 0 ? 'var(--crimson)' : 'inherit' }}>
