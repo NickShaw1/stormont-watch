@@ -1,21 +1,36 @@
 
 .statsPageHeader {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  align-items: stretch;
   gap: var(--spacing-lg);
-  margin-bottom: var(--s-8);
+}
+
+.statsPageHeader > div:first-child {
+  flex: 0 0 60%;
 }
 
 .statsHeaderChart {
-  flex: 0 0 220px;
-  width: 220px;
+  flex: 0 0 30%;
+  margin-left: auto;
+  position: relative;
   opacity: 0.7;
+}
+
+.statsHeaderChart svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 @media (max-width: 700px) {
   .statsPageHeader {
     display: block;
+  }
+  .statsPageHeader > div:first-child {
+    flex: none;
+    width: 100%;
   }
   .statsHeaderChart {
     display: none;
@@ -1155,6 +1170,14 @@
   margin-bottom: 6px;
 }
 
+.partyRankingSubtitleList {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin: 0 0 6px 0;
+  padding-left: 16px;
+  list-style: disc;
+}
+
 .partyRankingTable {
   width: 100%;
   border-collapse: collapse;
@@ -1261,7 +1284,7 @@
 
 .assemblyStatement {
   font-size: 15px;
-  line-height: 1.7;
+  line-height: 1.5;
   color: var(--ink-2);
   font-family: var(--font-sans);
   font-weight: 400;
@@ -1377,7 +1400,7 @@
   }
 
   .trendNote {
-    font-size: 1rem;
+    font-size: 15px;
   }
 
   .sectionDesc,
@@ -1386,7 +1409,7 @@
   }
 
   .assemblyStatement {
-    font-size: 0.875rem;
+    font-size: 15px;
   }
 
   .sectionEyebrow {

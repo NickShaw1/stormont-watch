@@ -23,6 +23,7 @@ import {
   getAllMemberRoleHistories,
   getTotalExpensesPerMember,
   getPartyAttendanceAll,
+  getAllMandateMembers,
 } from '@/lib/db/queries'
 import { calculateMandateEarnings, getCurrentAnnualSalary, apiRoleToSalaryRole, type RoleInterval } from '@/lib/salaries'
 import StatsRankingTabs from './StatsRankingTabs'
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
 }
 
 export default async function StatsPage() {
-  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, expensesLeague, expensesByParty, crossCommunityTrends, divisionsPerMonth, passRateByYear, overallAgreementRate, allCurrentMembers, latestExpensesYear, sittingDays, questionTotalsRaw, ministerRows, allRoleHistories, totalExpensesData, partyAttendance] = await Promise.all([
+  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, expensesLeague, expensesByParty, crossCommunityTrends, divisionsPerMonth, passRateByYear, overallAgreementRate, allCurrentMembers, latestExpensesYear, sittingDays, questionTotalsRaw, ministerRows, allRoleHistories, totalExpensesData, partyAttendance, allMandateMembers] = await Promise.all([
     getMlaLeaderboard(),
     getAssemblyStats(),
     getAverageAttendance(),
@@ -70,6 +71,7 @@ export default async function StatsPage() {
     getAllMemberRoleHistories(),
     getTotalExpensesPerMember(),
     getPartyAttendanceAll(),
+    getAllMandateMembers(),
   ])
 
   // Compute salary rankings
@@ -106,8 +108,7 @@ export default async function StatsPage() {
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
   const oneYearAgoStr = oneYearAgo.toISOString().slice(0, 10)
 
-  const overallCostRows = allCurrentMembers
-    .filter(m => m.mandateStart && m.mandateStart <= oneYearAgoStr)
+  const overallCostRows = allMandateMembers
     .map(m => {
       const history = rolesByPerson.get(m.personId) ?? []
       const roleIntervals: RoleInterval[] = history
@@ -131,8 +132,12 @@ export default async function StatsPage() {
     })
     .sort((a, b) => b.totalCost - a.totalCost)
 
-  const mostCostly5 = overallCostRows.slice(0, 5)
-  const leastCostly5 = [...overallCostRows].reverse().slice(0, 5)
+  const costRowsForLeaderboard = overallCostRows.filter(r => {
+    const m = allMandateMembers.find(m => m.personId === r.personId)
+    return m?.isCurrent && m.mandateStart && m.mandateStart <= oneYearAgoStr
+  })
+  const mostCostly5 = costRowsForLeaderboard.slice(0, 5)
+  const leastCostly5 = [...costRowsForLeaderboard].reverse().slice(0, 5)
 
   // Build question rankings — exclude ministers and speakers (use leaderboard as allowlist, then remove ministers)
   const eligibleIds = new Set(leaderboard.map(r => r.personId))
@@ -203,14 +208,24 @@ export default async function StatsPage() {
     <div className="container">
       {/* 1. Assembly at a glance */}
       <section aria-labelledby="assembly-stats-heading" className={styles.section}>
-        <header className={`page-header ${styles.statsPageHeader}`}>
-          <div>
-            <span className="eyebrow">Statistics</span>
-            <h1 id="assembly-stats-heading">At a glance</h1>
-            <p className="lede">Voting, attendance, salaries, expenses and cross-community trends since May 2022.</p>
-          </div>
-          <div className={styles.statsHeaderChart}>
-            <StatsHeaderChart data={divisionsPerMonth} />
+        <header className="page-header" style={{ paddingBlockEnd: 0 }}>
+          <span className="eyebrow">Statistics</span>
+          <div className={styles.statsPageHeader}>
+            <div>
+              <h1 id="assembly-stats-heading">At a glance</h1>
+              <p className="lede">Voting, attendance, salaries, expenses and cross-community trends since May 2022.</p>
+              <div className="note-card">
+              <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
+                <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+                <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+              </svg>
+              <p>Some statistics reflect current MLAs only. Others include former MLAs where data is available. Every effort has been made to clarify which applies throughout.</p>
+            </div>
+            </div>
+            <div className={styles.statsHeaderChart}>
+              <StatsHeaderChart data={divisionsPerMonth} />
+            </div>
           </div>
         </header>
 
@@ -489,15 +504,15 @@ export default async function StatsPage() {
                   {/* Total mandate expenses subsection */}
                   {(() => {
                     const gbpShort = (v: number) => {
-                      if (v >= 1_000_000) return `£${(v / 1_000_000).toFixed(1)}m`
+                      if (v >= 1_000_000) return `£${(v / 1_000_000).toFixed(2)}m`
                       if (v >= 1_000) return `£${Math.round(v / 1_000)}k`
                       return `£${Math.round(v).toLocaleString('en-GB')}`
                     }
                     const gbpM = (v: number) => `£${Math.round(v).toLocaleString('en-GB')}`
 
-                    // Party totals from all-years expense data
+                    // Party totals from all-years expense data (all mandate members, current + former)
                     const partyExpTotals: Record<string, number> = {}
-                    for (const m of allCurrentMembers) {
+                    for (const m of allMandateMembers) {
                       if (!m.party) continue
                       partyExpTotals[m.party] = (partyExpTotals[m.party] ?? 0) + (expenseTotalsMap.get(m.personId) ?? 0)
                     }
@@ -506,8 +521,8 @@ export default async function StatsPage() {
                     const lowestParty = partyExpEntries[partyExpEntries.length - 1]
                     const grandTotal = partyExpEntries.reduce((s, [, v]) => s + v, 0)
 
-                    const mandateRows = allCurrentMembers
-                      .filter(m => m.mandateStart && m.mandateStart <= oneYearAgoStr)
+                    const mandateRows = allMandateMembers
+                      .filter(m => m.isCurrent && m.mandateStart && m.mandateStart <= oneYearAgoStr)
                       .map(m => ({
                         personId: m.personId,
                         fullName: m.fullName,
@@ -524,7 +539,11 @@ export default async function StatsPage() {
                     const MandateCard = ({ title, rows }: { title: string; rows: typeof mandateTop5 }) => (
                       <div className={styles.partyRankingCard}>
                         <p className={styles.partyRankingTitle}>{title}</p>
-                        <p className={styles.partyRankingSubtitle}>Expenses across all published years</p>
+                        <ul className={styles.partyRankingSubtitleList}>
+                          <li>Current MLAs only (former MLAs excluded)</li>
+                          <li>Expenses across all published years</li>
+                          <li>Excludes MLAs who joined within the last year</li>
+                        </ul>
                         <ol className={`${styles.list}`} style={{ marginTop: 'var(--s-2)' }}>
                           {rows.map((row, i) => (
                             <li key={row.personId} className={styles.row}>
@@ -550,7 +569,7 @@ export default async function StatsPage() {
                     return (
                       <>
                         <h3 className={styles.chartTitle}>Total mandate expenses</h3>
-                        <p className={styles.trendNote} style={{ marginBottom: 'var(--spacing-lg)' }}>Total expenses claimed by <strong>current MLAs</strong> across all published financial years of the 2022–2027 mandate. Those who joined within the last year are excluded as their figures are not yet comparable.</p>
+                        <p className={styles.trendNote} style={{ marginBottom: 'var(--spacing-lg)' }}>Total expenses claimed by <strong>all current and former MLAs</strong> across all published financial years of the 2022–2027 mandate. Derived by summing each MLA&apos;s expenses across every published financial year.</p>
                         <div className={styles.overviewGridThree} style={{ marginBottom: 'var(--spacing-lg)' }}>
                           <div className={styles.overviewCard}>
                             <span className={styles.overviewLabel}>Total claimed</span>
@@ -572,16 +591,11 @@ export default async function StatsPage() {
                             </div>
                           )}
                         </div>
-                        <div className={styles.expensesCardGrid}>
-                          <MandateCard title="Highest mandate expenses" rows={mandateTop5} />
-                          <MandateCard title="Lowest mandate expenses" rows={mandateBottom5} />
-                        </div>
-
                         {(() => {
                           const fmt = (n: number) => Math.round(n).toLocaleString('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })
                           type ExpPartyRow = { party: string; mla_count: number; party_total: number; per_mla_avg: number }
                           const partyMap: Record<string, { total: number; count: number }> = {}
-                          for (const m of allCurrentMembers) {
+                          for (const m of allMandateMembers) {
                             if (!m.party) continue
                             const exp = expenseTotalsMap.get(m.personId) ?? 0
                             if (!partyMap[m.party]) partyMap[m.party] = { total: 0, count: 0 }
@@ -596,10 +610,12 @@ export default async function StatsPage() {
                           const maxTotal = byTotal[0]?.party_total ?? 1
                           const maxAvg = byAvg[0]?.per_mla_avg ?? 1
 
-                          const ExpPartyCard = ({ title, subtitle, rows, getValue, getMax }: { title: string; subtitle: string; rows: ExpPartyRow[]; getValue: (r: ExpPartyRow) => number; getMax: number }) => (
+                          const ExpPartyCard = ({ title, subtitleList, rows, getValue, getMax }: { title: string; subtitleList: string[]; rows: ExpPartyRow[]; getValue: (r: ExpPartyRow) => number; getMax: number }) => (
                             <div className={styles.partyRankingCard}>
                               <p className={styles.partyRankingTitle}>{title}</p>
-                              <p className={styles.partyRankingSubtitle}>{subtitle}</p>
+                              <ul className={styles.partyRankingSubtitleList}>
+                                {subtitleList.map((s, i) => <li key={i}>{s}</li>)}
+                              </ul>
                               <table className={styles.partyRankingTable}>
                                 <thead>
                                   <tr>
@@ -634,17 +650,17 @@ export default async function StatsPage() {
                           )
 
                           return (
-                            <div className={styles.partyRankingGrid} style={{ marginTop: 'var(--spacing-lg)' }}>
+                            <div className={styles.partyRankingGrid} style={{ marginBottom: 'var(--spacing-lg)' }}>
                               <ExpPartyCard
                                 title="Total expenses by party"
-                                subtitle="All MLAs · expenses across all published years"
+                                subtitleList={['All current and former MLAs', 'Expenses across all published years']}
                                 rows={byTotal}
                                 getValue={(r) => r.party_total}
                                 getMax={maxTotal}
                               />
                               <ExpPartyCard
                                 title="Expenses per MLA by party"
-                                subtitle="Average expenses per MLA within each party"
+                                subtitleList={['All current and former MLAs', 'All published years']}
                                 rows={byAvg}
                                 getValue={(r) => r.per_mla_avg}
                                 getMax={maxAvg}
@@ -652,6 +668,11 @@ export default async function StatsPage() {
                             </div>
                           )
                         })()}
+
+                        <div className={styles.expensesCardGrid}>
+                          <MandateCard title="Highest mandate expenses" rows={mandateTop5} />
+                          <MandateCard title="Lowest mandate expenses" rows={mandateBottom5} />
+                        </div>
                       </>
                     )
                   })()}
@@ -671,6 +692,10 @@ export default async function StatsPage() {
         const CostCard = ({ title, rows }: { title: string; rows: typeof mostCostly5 }) => (
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>{title}</h3>
+            <ul className={styles.partyRankingSubtitleList} style={{ marginBottom: 'var(--s-3)' }}>
+              <li>Current MLAs only (former MLAs excluded)</li>
+              <li>Excludes MLAs who joined within the last year</li>
+            </ul>
             <ol className={styles.list}>
               {rows.map((row, i) => (
                 <li key={row.personId} className={styles.row}>
@@ -700,7 +725,7 @@ export default async function StatsPage() {
               <p className="eyebrow">Public spending</p>
               <h2 id="overall-cost-heading" className={styles.sectionTitle}>Overall cost</h2>
               <div className={styles.sectionRule}></div>
-              <p className={styles.sectionDesc}>Estimated mandate salary plus all published expenses for <strong>current MLAs</strong>. Those who joined within the last year are excluded as their figures are not yet comparable.</p>
+              <p className={styles.sectionDesc}>Estimated mandate salary plus all published expenses for <strong>all current and former MLAs</strong> in the 2022–2027 mandate. Salary is estimated from each MLA&apos;s role history: base MLA salary plus any additional roles held (minister, committee chair, etc.), pro-rated for the time each role was held. Expenses are summed across all published financial years.</p>
             </div>
             <Link href="/assembly/overall-cost" className={styles.expensesRankingsCard} style={{ marginTop: 0 }}>
               <span className={styles.expensesRankingsCardLeft}>
@@ -756,10 +781,6 @@ export default async function StatsPage() {
                 </div>
               )
             })()}
-            <div className={styles.expensesCardGrid}>
-              <CostCard title="Highest public cost" rows={mostCostly5} />
-              <CostCard title="Lowest public cost" rows={leastCostly5} />
-            </div>
             {(() => {
               const fmt2 = (n: number) => Math.round(n).toLocaleString('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })
               type CostPartyRow = { party: string; mla_count: number; party_total: number; per_mla_avg: number }
@@ -781,10 +802,12 @@ export default async function StatsPage() {
               const maxTotal = byTotal[0]?.party_total ?? 1
               const maxAvg = byAvg[0]?.per_mla_avg ?? 1
 
-              const CostPartyCard = ({ title, subtitle, rows, getValue, getMax }: { title: string; subtitle: string; rows: CostPartyRow[]; getValue: (r: CostPartyRow) => number; getMax: number }) => (
+              const CostPartyCard = ({ title, subtitleList, rows, getValue, getMax }: { title: string; subtitleList: string[]; rows: CostPartyRow[]; getValue: (r: CostPartyRow) => number; getMax: number }) => (
                 <div className={styles.partyRankingCard}>
                   <p className={styles.partyRankingTitle}>{title}</p>
-                  <p className={styles.partyRankingSubtitle}>{subtitle}</p>
+                  <ul className={styles.partyRankingSubtitleList}>
+                    {subtitleList.map((s, i) => <li key={i}>{s}</li>)}
+                  </ul>
                   <table className={styles.partyRankingTable}>
                     <thead>
                       <tr>
@@ -822,17 +845,17 @@ export default async function StatsPage() {
               )
 
               return (
-                <div className={styles.partyRankingGrid}>
+                <div className={styles.partyRankingGrid} style={{ marginBottom: 'var(--spacing-lg)' }}>
                   <CostPartyCard
                     title="Total cost by party"
-                    subtitle="All MLAs · salary + expenses across mandate"
+                    subtitleList={['All current and former MLAs', 'Salary and expenses across the 2022-2027 mandate']}
                     rows={byTotal}
                     getValue={(r) => r.party_total}
                     getMax={maxTotal}
                   />
                   <CostPartyCard
                     title="Cost per MLA by party"
-                    subtitle="Average cost per MLA within each party"
+                    subtitleList={['All current and former MLAs', 'Salary and expenses across the 2022-2027 mandate']}
                     rows={byAvg}
                     getValue={(r) => r.per_mla_avg}
                     getMax={maxAvg}
@@ -840,6 +863,10 @@ export default async function StatsPage() {
                 </div>
               )
             })()}
+            <div className={styles.expensesCardGrid}>
+              <CostCard title="Highest public cost" rows={mostCostly5} />
+              <CostCard title="Lowest public cost" rows={leastCostly5} />
+            </div>
           </section>
         )
       })()}
@@ -852,7 +879,15 @@ export default async function StatsPage() {
           <p className="eyebrow">Individual performance</p>
           <h2 id="mla-stats-heading" className={styles.sectionTitle}>MLA Voting</h2>
           <div className={styles.sectionRule}></div>
-          <p className={styles.sectionDesc}>Who shows up, who votes Aye and who votes No. The top and bottom 5 MLAs ranked.</p>
+          <p className={styles.sectionDesc}>Who shows up, who votes Aye and who votes No. The top and bottom 5 <strong>current MLAs</strong> ranked.</p>
+          <div className="note-card">
+            <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
+              <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+              <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+            </svg>
+            <p>Ministers may record lower division attendance due to Executive and departmental responsibilities.</p>
+          </div>
         </div>
         <StatsRankingTabs data={leaderboard} />
 
