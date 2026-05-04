@@ -322,6 +322,7 @@ export default async function HomePage() {
                       const colonIdx = item.title.indexOf(':')
                       const typeLabel = colonIdx > -1
                         ? item.title.slice(0, colonIdx).trim()
+                        : item.title.includes(' - Amendment') ? 'Amendment'
                         : item.plenary_type_id === '5' ? 'Debate' : 'Motion'
                       const rawTitle = colonIdx > -1 ? item.title.slice(colonIdx + 1).trim() : item.title
                       const billIdMatch = rawTitle.match(/\(NIA Bill (\d+\/\d{2}-\d{2,4})\)$/)
