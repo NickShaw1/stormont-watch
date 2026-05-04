@@ -24,6 +24,7 @@ import {
   getTotalExpensesPerMember,
   getPartyAttendanceAll,
   getAllMandateMembers,
+  getPartyAlignmentWithBigTwo,
 } from '@/lib/db/queries'
 import { calculateMandateEarnings, getCurrentAnnualSalary, apiRoleToSalaryRole, type RoleInterval } from '@/lib/salaries'
 import StatsRankingTabs from './StatsRankingTabs'
@@ -33,6 +34,7 @@ import CrossCommunityTrendsClient from './CrossCommunityTrendsClient'
 import AssemblyProductivityClient from './AssemblyProductivityClient'
 import StatsHeaderChart from './StatsHeaderChart'
 import PartyAttendanceChart from './PartyAttendanceChart'
+import PartyAlignmentTable from './PartyAlignmentTable'
 import MlaPhoto from '@/components/MlaPhoto'
 import { formatMemberName, partyBorderColor, abbreviateParty } from '@/lib/format'
 import PartyName from '@/components/PartyName'
@@ -50,7 +52,7 @@ export const metadata: Metadata = {
 }
 
 export default async function StatsPage() {
-  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, expensesLeague, expensesByParty, crossCommunityTrends, divisionsPerMonth, passRateByYear, overallAgreementRate, allCurrentMembers, latestExpensesYear, sittingDays, questionTotalsRaw, ministerRows, allRoleHistories, totalExpensesData, partyAttendance, allMandateMembers] = await Promise.all([
+  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, expensesLeague, expensesByParty, crossCommunityTrends, divisionsPerMonth, passRateByYear, overallAgreementRate, allCurrentMembers, latestExpensesYear, sittingDays, questionTotalsRaw, ministerRows, allRoleHistories, totalExpensesData, partyAttendance, allMandateMembers, partyAlignment] = await Promise.all([
     getMlaLeaderboard(),
     getAssemblyStats(),
     getAverageAttendance(),
@@ -72,6 +74,7 @@ export default async function StatsPage() {
     getTotalExpensesPerMember(),
     getPartyAttendanceAll(),
     getAllMandateMembers(),
+    getPartyAlignmentWithBigTwo(),
   ])
 
   // Compute salary rankings
@@ -898,6 +901,7 @@ export default async function StatsPage() {
             <PartyAttendanceChart data={partyAttendance} />
           </div>
         )}
+
       </section>
 
       <hr className="section-rule" />
@@ -1016,6 +1020,18 @@ export default async function StatsPage() {
           </div>
 
         </div>
+
+        {partyAlignment.rows.length > 0 && (
+          <div style={{ marginTop: 'var(--s-10)' }}>
+            <h3 className={styles.chartTitle} style={{ marginTop: 0 }}>Smaller party alignment with SF &amp; DUP</h3>
+            <p className={styles.sectionDesc} style={{ marginBottom: 'var(--spacing-md)' }}>
+              For each of the {partyAlignment.totalDivisions}{' '}divisions since May 2022, each party&apos;s majority position is whichever of Aye, No, Abstain, or No Show was recorded by the most of its MLAs. If no single position has a strict majority, that division is excluded. The figures below show how many divisions each smaller party&apos;s majority position matched SF&apos;s or DUP&apos;s, including divisions where both parties majority no-showed. Both current and former mandate MLAs are included.
+            </p>
+            <div className={styles.patternsGrid}>
+              <PartyAlignmentTable data={partyAlignment.rows} totalDivisions={partyAlignment.totalDivisions} />
+            </div>
+          </div>
+        )}
       </section>
 
       <hr className="section-rule" />

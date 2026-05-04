@@ -1920,6 +1920,94 @@ export async function getPartyAttendanceAll(): Promise<{ party: string; attendan
   }))
 }
 
+export type PartyAlignmentRow = {
+  party: string
+  sfAgreed: number
+  sfAgreePct: number
+  dupAgreed: number
+  dupAgreePct: number
+}
+
+export async function getPartyAlignmentWithBigTwo(): Promise<{ rows: PartyAlignmentRow[]; totalDivisions: number }> {
+  const result = await db.execute(sql`
+    WITH total AS (
+      SELECT COUNT(DISTINCT document_id) AS total_divisions
+      FROM divisions
+      WHERE mandate = ${CURRENT_MANDATE}
+    ),
+    party_votes AS (
+      SELECT
+        v.document_id,
+        m.party,
+        COUNT(*) FILTER (WHERE v.vote = 'AYE') AS ayes,
+        COUNT(*) FILTER (WHERE v.vote = 'NO') AS noes,
+        COUNT(*) FILTER (WHERE v.vote = 'ABSTAINED') AS abstains,
+        COUNT(*) FILTER (WHERE v.vote = 'NO_SHOW') AS noshows
+      FROM votes v
+      JOIN members m ON m.person_id = v.person_id
+      WHERE m.mandate = ${CURRENT_MANDATE}
+        AND m.party IS NOT NULL
+        AND v.mandate = ${CURRENT_MANDATE}
+      GROUP BY v.document_id, m.party
+    ),
+    division_majorities AS (
+      SELECT
+        document_id,
+        party,
+        CASE
+          WHEN ayes > noes AND ayes > abstains AND ayes > noshows THEN 'AYE'
+          WHEN noes > ayes AND noes > abstains AND noes > noshows THEN 'NO'
+          WHEN abstains > ayes AND abstains > noes AND abstains > noshows THEN 'ABSTAINED'
+          WHEN noshows > ayes AND noshows > noes AND noshows > abstains THEN 'NO_SHOW'
+          ELSE NULL
+        END AS majority_vote
+      FROM party_votes
+    ),
+    sf AS (
+      SELECT document_id, majority_vote AS sf_vote
+      FROM division_majorities
+      WHERE party = 'Sinn Féin' AND majority_vote IS NOT NULL
+    ),
+    dup AS (
+      SELECT document_id, majority_vote AS dup_vote
+      FROM division_majorities
+      WHERE party = 'Democratic Unionist Party' AND majority_vote IS NOT NULL
+    ),
+    smaller AS (
+      SELECT document_id, party, majority_vote
+      FROM division_majorities
+      WHERE party NOT IN ('Sinn Féin', 'Democratic Unionist Party')
+        AND majority_vote IS NOT NULL
+    )
+    SELECT
+      s.party,
+      (SELECT total_divisions FROM total) AS total_divisions,
+      COUNT(DISTINCT sf.document_id) FILTER (WHERE sf.sf_vote = s.majority_vote) AS sf_agreed,
+      ROUND(COUNT(DISTINCT sf.document_id) FILTER (WHERE sf.sf_vote = s.majority_vote) * 100.0 / (SELECT total_divisions FROM total), 1) AS sf_agree_pct,
+      COUNT(DISTINCT dup.document_id) FILTER (WHERE dup.dup_vote = s.majority_vote) AS dup_agreed,
+      ROUND(COUNT(DISTINCT dup.document_id) FILTER (WHERE dup.dup_vote = s.majority_vote) * 100.0 / (SELECT total_divisions FROM total), 1) AS dup_agree_pct
+    FROM smaller s
+    LEFT JOIN sf ON sf.document_id = s.document_id
+    LEFT JOIN dup ON dup.document_id = s.document_id
+    GROUP BY s.party
+    ORDER BY sf_agree_pct DESC NULLS LAST
+  `)
+
+  type Row = Record<string, unknown>
+  const rows = result.rows as unknown as Row[]
+  const totalDivisions = rows[0] ? Number(rows[0].total_divisions) : 0
+  return {
+    totalDivisions,
+    rows: rows.map((r) => ({
+      party: String(r.party),
+      sfAgreed: Number(r.sf_agreed),
+      sfAgreePct: Number(r.sf_agree_pct),
+      dupAgreed: Number(r.dup_agreed),
+      dupAgreePct: Number(r.dup_agree_pct),
+    })),
+  }
+}
+
 export async function getAllMemberRoleHistories() {
   const rows = await db
     .select({

@@ -1480,6 +1480,95 @@
   white-space: nowrap;
 }
 
+/* Party alignment tables */
+.alignmentTablesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-8);
+  margin-top: var(--s-4);
+}
+
+@media (max-width: 600px) {
+  .alignmentTablesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.alignmentScenarioBlock {
+  min-width: 0;
+}
+
+.alignmentScenarioHeading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 var(--s-2) 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+
+.alignmentDivCount {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.alignmentTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.alignmentTable thead tr {
+  border-bottom: 1px solid var(--paper-3);
+}
+
+.alignmentTable th {
+  padding: var(--s-1) var(--s-2);
+  font-weight: 600;
+  color: var(--ink-2);
+  text-align: right;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.alignmentTable th.alignmentPartyCol {
+  text-align: left;
+}
+
+.alignmentTable td {
+  padding: var(--s-1) var(--s-2);
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--paper-2);
+}
+
+.alignmentPartyCell {
+  text-align: left !important;
+  font-family: var(--font-sans, inherit) !important;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.alignmentPartyDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.alignmentAgreedCell {
+  font-weight: 600;
+  color: var(--ink) !important;
+}
+
 .rankingLink {
   margin-top: var(--spacing-md);
   font-size: 0.875rem;
