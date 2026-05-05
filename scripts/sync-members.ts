@@ -218,7 +218,10 @@ async function syncMandateAndRoles(db: Db) {
         if (roleType === 'Committee Role (incl Assembly Commission)' && AD_HOC_RE.test(organisation)) continue
 
         const salaryRole = apiRoleToSalaryRole(roleType, role, organisation)
-        if (!salaryRole) continue
+        if (!salaryRole) {
+          console.warn(`[syncMandateAndRoles] Unrecognised role skipped — personId: ${personId}, roleType: "${roleType}", role: "${role}", organisation: "${organisation}"`)
+          continue
+        }
 
         await db
           .insert(schema.memberRoleHistory)

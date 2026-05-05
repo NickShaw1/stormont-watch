@@ -229,7 +229,7 @@ export function calculateMandateEarnings(
         }
       }
 
-      total += (period.rates[effectiveRole] * daysInSeg) / fullDaysInPeriod
+      if (bestPriority > 0) total += (period.rates[effectiveRole] * daysInSeg) / fullDaysInPeriod
     }
   }
 

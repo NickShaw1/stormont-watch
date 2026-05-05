@@ -1,17 +1,17 @@
 export const dynamic = 'force-static'
 
 import type { Metadata } from 'next'
-import { getAllMinisters, getAllCommitteeChairs } from '@/lib/db/queries'
+import { getAllMinisters, getAllCommitteeChairs, getPresidingOfficers } from '@/lib/db/queries'
 
 import StructureClient from './StructureClient'
 import styles from './structure.module.css'
 
 export const metadata: Metadata = {
   title: 'Assembly Structure',
-  description: 'The Executive, departments and committee chairs of the Northern Ireland Assembly.',
+  description: 'The Executive, presiding officers, departments and committee chairs of the Northern Ireland Assembly.',
   openGraph: {
     title: 'Assembly Structure — Stormont Watch',
-    description: 'The Executive, departments and committee chairs of the Northern Ireland Assembly.',
+    description: 'The Executive, presiding officers, departments and committee chairs of the Northern Ireland Assembly.',
     images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },
   alternates: { canonical: 'https://www.stormontwatch.com/assembly/structure' },
@@ -45,9 +45,10 @@ const officialLinks: Record<string, string> = {
 }
 
 export default async function StructurePage() {
-  const [ministers, chairs] = await Promise.all([
+  const [ministers, chairs, presidingOfficers] = await Promise.all([
     getAllMinisters(),
     getAllCommitteeChairs(),
+    getPresidingOfficers(),
   ])
 
   const fm = ministers.find(
@@ -78,6 +79,7 @@ export default async function StructurePage() {
         departments={departments}
         chairs={chairs}
         officialLinks={officialLinks}
+        presidingOfficers={presidingOfficers}
       />
     </div>
   )

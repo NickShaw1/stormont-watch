@@ -21,6 +21,14 @@ type Chair = {
   assemblyRole: string | null
 }
 
+type PresidingOfficer = {
+  personId: string
+  fullName: string
+  party: string | null
+  assemblyRole: string | null
+  imgUrl: string | null
+}
+
 interface Props {
   fm: Minister | undefined
   dfm: Minister | undefined
@@ -28,6 +36,7 @@ interface Props {
   departments: Minister[]
   chairs: Chair[]
   officialLinks: Record<string, string>
+  presidingOfficers: PresidingOfficer[]
 }
 
 function PersonPhoto({ imgUrl, name, size, priority }: { imgUrl: string | null; name: string; size: number; priority?: boolean }) {
@@ -44,7 +53,7 @@ function PersonPhoto({ imgUrl, name, size, priority }: { imgUrl: string | null; 
   )
 }
 
-export default function StructureClient({ fm, dfm, juniorMinisters, departments, chairs, officialLinks }: Props) {
+export default function StructureClient({ fm, dfm, juniorMinisters, departments, chairs, officialLinks, presidingOfficers }: Props) {
   return (
     <>
       {/* Executive */}
@@ -59,49 +68,75 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
           The <a href="https://www.northernireland.gov.uk/" target="_blank" rel="noopener noreferrer">Northern Ireland Executive</a> is the devolved government established under the <a href="https://en.wikipedia.org/wiki/Good_Friday_Agreement" target="_blank" rel="noopener noreferrer">Good Friday Agreement</a>. It operates on a mandatory power-sharing basis, with the First Minister and Deputy First Minister drawn from the largest unionist and nationalist parties respectively.
         </p>
 
-        <div className={styles.execTop}>
+        <div className={styles.deptGrid}>
           {[fm, dfm].filter(Boolean).map((role) => {
             if (!role) return null
             return (
-              <Link
-                key={role.personId}
-                href={`/assembly/mlas/${role.personId}`}
-                className={styles.execCard}
-                style={{ '--party-c': partyBorderColor(role.party) } as React.CSSProperties}
-              >
-                <div className={styles.execPhoto}>
-                  <PersonPhoto imgUrl={role.imgUrl} name={role.fullName} size={72} priority />
-                </div>
-                <div className={styles.execInfo}>
-                  <span className={styles.execMinistry}>{role.roleTitle}</span>
-                  <span className={styles.execName}>{formatMemberName(role.fullName)}</span>
-                  {role.party && (
-                    <span className="party-pill" data-party={abbreviateParty(role.party)}>{abbreviateParty(role.party)}</span>
-                  )}
-                </div>
-              </Link>
+              <div key={role.personId} className={styles.deptBlock}>
+                <Link href={`/assembly/mlas/${role.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(role.party) } as React.CSSProperties}>
+                  <div className={styles.deptPhoto}><PersonPhoto imgUrl={role.imgUrl} name={role.fullName} size={56} priority /></div>
+                  <div className={styles.deptInfo}>
+                    <span className={styles.deptLabel}>{role.roleTitle}</span>
+                    <span className={styles.deptMlaName}>{formatMemberName(role.fullName)}</span>
+                    {role.party && <span className="party-pill" data-party={abbreviateParty(role.party)}>{abbreviateParty(role.party)}</span>}
+                  </div>
+                  <span className={styles.deptArrow}>→</span>
+                </Link>
+              </div>
             )
           })}
         </div>
 
         {juniorMinisters.length > 0 && (
-          <div className={styles.juniorGrid}>
+          <div className={styles.deptGrid} style={{ marginTop: 'var(--s-5)' }}>
             {[...juniorMinisters].reverse().map((jm) => (
-              <Link
-                key={jm.personId}
-                href={`/assembly/mlas/${jm.personId}`}
-                className={styles.juniorCard}
-                style={{ '--party-c': partyBorderColor(jm.party) } as React.CSSProperties}
-              >
-                <PersonPhoto imgUrl={jm.imgUrl} name={jm.fullName} size={72} />
-                <div className={styles.personInfo}>
-                  <span className={styles.personRole}>Junior Minister</span>
-                  <span className={styles.personName}>{formatMemberName(jm.fullName)}</span>
-                  {jm.party && (
-                    <span className="party-pill" data-party={abbreviateParty(jm.party)}>{abbreviateParty(jm.party)}</span>
-                  )}
-                </div>
-              </Link>
+              <div key={jm.personId} className={styles.deptBlock}>
+                <Link href={`/assembly/mlas/${jm.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(jm.party) } as React.CSSProperties}>
+                  <div className={styles.deptPhoto}><PersonPhoto imgUrl={jm.imgUrl} name={jm.fullName} size={56} /></div>
+                  <div className={styles.deptInfo}>
+                    <span className={styles.deptLabel}>Junior Minister</span>
+                    <span className={styles.deptMlaName}>{formatMemberName(jm.fullName)}</span>
+                    {jm.party && <span className="party-pill" data-party={abbreviateParty(jm.party)}>{abbreviateParty(jm.party)}</span>}
+                  </div>
+                  <span className={styles.deptArrow}>→</span>
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <hr className="section-rule" />
+
+      {/* Presiding Officers */}
+      <section aria-label="Presiding Officers" className={styles.section}>
+        <div className={styles.sectionHead}>
+          <div>
+            <span className={styles.sectionEyebrow}>Assembly business</span>
+            <h2 className={styles.sectionTitle}>Presiding Officers</h2>
+          </div>
+        </div>
+        <p className={styles.sectionBlurb}>
+          The presiding officers chair plenary sessions of the Assembly, maintain order in the chamber and oversee the conduct of Assembly business. The Speaker is elected by members at the start of each mandate.
+        </p>
+        {presidingOfficers.length === 0 ? (
+          <p className="text-secondary">Presiding officer data is not currently available.</p>
+        ) : (
+          <div className={styles.deptGrid}>
+            {presidingOfficers.map((p) => (
+              <div key={p.personId} className={styles.deptBlock}>
+                <Link href={`/assembly/mlas/${p.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(p.party) } as React.CSSProperties}>
+                  <div className={styles.deptPhoto}>
+                    <PersonPhoto imgUrl={p.imgUrl} name={p.fullName} size={56} />
+                  </div>
+                  <div className={styles.deptInfo}>
+                    <span className={styles.deptLabel}>{p.assemblyRole}</span>
+                    <span className={styles.deptMlaName}>{formatMemberName(p.fullName)}</span>
+                    {p.party && <span className="party-pill" data-party={abbreviateParty(p.party)}>{abbreviateParty(p.party)}</span>}
+                  </div>
+                  <span className={styles.deptArrow}>→</span>
+                </Link>
+              </div>
             ))}
           </div>
         )}

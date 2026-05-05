@@ -106,7 +106,7 @@ export default function AssemblyProductivityClient({
                       color: 'var(--text-primary)',
                       outline: isCurrentMonth ? '2px solid var(--accent)' : 'none',
                     }}>
-                      {!isFuture && val !== undefined && val > 0 ? val : ''}
+                      {!isFuture && val !== undefined && (val > 0 || isCurrentMonth) ? (val ?? 0) : ''}
                     </td>
                   )
                 })}
@@ -149,7 +149,7 @@ export default function AssemblyProductivityClient({
                       color: '#203F59',
                       outline: isCurrentCell ? '2px solid var(--accent)' : 'none',
                     }}>
-                      {!isFuture && val !== undefined && Number(val) > 0 ? val : ''}
+                      {!isFuture && val !== undefined && (Number(val) > 0 || isCurrentCell) ? (val ?? 0) : ''}
                     </td>
                   )
                 })}

@@ -508,6 +508,27 @@ export async function getAllCommitteeChairs() {
   return rows.map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
 }
 
+export async function getPresidingOfficers() {
+  const ROLE_ORDER: Record<string, number> = { 'Speaker': 1, 'Principal Deputy Speaker': 2, 'Deputy Speaker': 3 }
+  const rows = await db
+    .select({
+      personId: members.personId,
+      fullName: members.fullName,
+      party: members.party,
+      assemblyRole: members.assemblyRole,
+    })
+    .from(members)
+    .where(
+      and(
+        sql`${members.assemblyRole} ILIKE '%speaker%'`,
+        isNull(members.assemblyRoleEnd),
+      )
+    )
+  return rows
+    .map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
+    .sort((a, b) => (ROLE_ORDER[a.assemblyRole ?? ''] ?? 99) - (ROLE_ORDER[b.assemblyRole ?? ''] ?? 99))
+}
+
 export async function getTotalExpensesPerMember() {
   const result = await db.execute(sql`
     SELECT person_id as "personId", SUM(total) as "totalExpenses"

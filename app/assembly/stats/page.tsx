@@ -572,7 +572,7 @@ export default async function StatsPage() {
                     return (
                       <>
                         <h3 className={styles.chartTitle}>Total mandate expenses</h3>
-                        <p className={styles.trendNote} style={{ marginBottom: 'var(--spacing-lg)' }}>Total expenses claimed by <strong>all current and former MLAs</strong> across all published financial years of the 2022–2027 mandate. Derived by summing each MLA&apos;s expenses across every published financial year.</p>
+                        <p className={styles.trendNote} style={{ marginBottom: 'var(--spacing-lg)' }}>Total expenses claimed by <strong>all current and former MLAs with published expense data</strong> across all published financial years of the 2022–2027 mandate. Derived by summing each MLA&apos;s expenses across every published financial year.</p>
                         <div className={styles.overviewGridThree} style={{ marginBottom: 'var(--spacing-lg)' }}>
                           <div className={styles.overviewCard}>
                             <span className={styles.overviewLabel}>Total claimed</span>
@@ -603,7 +603,7 @@ export default async function StatsPage() {
                             const exp = expenseTotalsMap.get(m.personId) ?? 0
                             if (!partyMap[m.party]) partyMap[m.party] = { total: 0, count: 0 }
                             partyMap[m.party].total += exp
-                            partyMap[m.party].count += 1
+                            if (expenseTotalsMap.has(m.personId)) partyMap[m.party].count += 1
                           }
                           const expPartyRows: ExpPartyRow[] = Object.entries(partyMap)
                             .filter(([, v]) => v.total > 0)
@@ -656,14 +656,14 @@ export default async function StatsPage() {
                             <div className={styles.partyRankingGrid} style={{ marginBottom: 'var(--spacing-lg)' }}>
                               <ExpPartyCard
                                 title="Total expenses by party"
-                                subtitleList={['All current and former MLAs', 'Expenses across all published years']}
+                                subtitleList={['All current and former MLAs with published expense data', 'Expenses across all published years']}
                                 rows={byTotal}
                                 getValue={(r) => r.party_total}
                                 getMax={maxTotal}
                               />
                               <ExpPartyCard
                                 title="Expenses per MLA by party"
-                                subtitleList={['All current and former MLAs', 'All published years']}
+                                subtitleList={['All current and former MLAs with published expense data', 'All published years']}
                                 rows={byAvg}
                                 getValue={(r) => r.per_mla_avg}
                                 getMax={maxAvg}
@@ -728,7 +728,7 @@ export default async function StatsPage() {
               <p className="eyebrow">Public spending</p>
               <h2 id="overall-cost-heading" className={styles.sectionTitle}>Overall cost</h2>
               <div className={styles.sectionRule}></div>
-              <p className={styles.sectionDesc}>Estimated mandate salary plus all published expenses for <strong>all current and former MLAs</strong> in the 2022–2027 mandate. Salary is estimated from each MLA&apos;s role history: base MLA salary plus any additional roles held (minister, committee chair, etc.), pro-rated for the time each role was held. Expenses are summed across all published financial years.</p>
+              <p className={styles.sectionDesc}>Estimated mandate salary plus all published expenses for <strong>all current and former MLAs</strong> in the 2022–2027 mandate. Salary is estimated from each MLA&apos;s role history: the published salary rate for their highest-paid role at any given time (minister, committee chair, or base MLA rate), pro-rated across the mandate. Expenses are summed across all published financial years.</p>
             </div>
             <Link href="/assembly/overall-cost" className={styles.expensesRankingsCard} style={{ marginTop: 0 }}>
               <span className={styles.expensesRankingsCardLeft}>
@@ -851,14 +851,14 @@ export default async function StatsPage() {
                 <div className={styles.partyRankingGrid} style={{ marginBottom: 'var(--spacing-lg)' }}>
                   <CostPartyCard
                     title="Total cost by party"
-                    subtitleList={['All current and former MLAs', 'Salary and expenses across the 2022-2027 mandate']}
+                    subtitleList={['All current and former MLAs', 'Salary and expenses across the 2022-2027 mandate', 'Some MLAs have no published expense data and contribute salary estimates only']}
                     rows={byTotal}
                     getValue={(r) => r.party_total}
                     getMax={maxTotal}
                   />
                   <CostPartyCard
                     title="Cost per MLA by party"
-                    subtitleList={['All current and former MLAs', 'Salary and expenses across the 2022-2027 mandate']}
+                    subtitleList={['All current and former MLAs', 'Salary and expenses across the 2022-2027 mandate', 'Some MLAs have no published expense data and contribute salary estimates only']}
                     rows={byAvg}
                     getValue={(r) => r.per_mla_avg}
                     getMax={maxAvg}
@@ -1028,7 +1028,7 @@ export default async function StatsPage() {
               For each of the {partyAlignment.totalDivisions}{' '}divisions since May 2022, each party&apos;s majority position is whichever of Aye, No, Abstain, or No Show was recorded by the most of its MLAs. If no single position has a strict majority, that division is excluded. The figures below show how many divisions each smaller party&apos;s majority position matched SF&apos;s or DUP&apos;s, including divisions where both parties majority no-showed. Both current and former mandate MLAs are included.
             </p>
             <div className={styles.patternsGrid}>
-              <PartyAlignmentTable data={partyAlignment.rows} totalDivisions={partyAlignment.totalDivisions} />
+              <PartyAlignmentTable data={partyAlignment.rows} />
             </div>
           </div>
         )}
@@ -1053,7 +1053,7 @@ export default async function StatsPage() {
       <section aria-labelledby="cross-community-heading" className={styles.section}>
         <div className={styles.sectionHeader}>
           <p className="eyebrow">Unionist and nationalist blocs</p>
-          <h2 id="cross-community-heading" className={styles.sectionTitle}>Cross-community voting</h2>
+          <h2 id="cross-community-heading" className={styles.sectionTitle}>Bloc voting agreement</h2>
           <div className={styles.sectionRule}></div>
           <p className={styles.sectionDesc}>How often unionist and nationalist MLAs voted the same way on the same division.</p>
           <div className="note-card">

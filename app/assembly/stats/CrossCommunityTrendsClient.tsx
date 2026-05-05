@@ -169,7 +169,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
   const peakMonth = data
     .filter(r => r.total_divisions >= 3 && r.agreement_pct !== null)
     .sort((a, b) => (b.agreement_pct ?? 0) - (a.agreement_pct ?? 0))[0] ?? null
-  const latestWithData = [...data].reverse().find(r => r.total_divisions >= 3)
+  const latestWithData = [...data].at(-1) ?? null
   const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   const peakLabel = peakMonth ? (() => { const d = new Date(peakMonth.month); return `${mn[d.getMonth()]} ${d.getFullYear()}` })() : ''
   const latestLabel = latestWithData ? (() => { const d = new Date(latestWithData.month); return `${mn[d.getMonth()]} ${d.getFullYear()}` })() : ''
@@ -213,7 +213,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
         <p>Percentage of divisions in each month where the majority of unionist and nationalist MLAs voted the same way (both majority Aye or both majority No). Smaller points indicate months with fewer than 3 divisions, which are less statistically reliable.</p>
       </div>
 
-      <h3 className={styles.chartTitle}>Cross-community agreement by month</h3>
+      <h3 className={styles.chartTitle}>Bloc voting agreement by month</h3>
       <p className={styles.trendNote} style={{ marginBottom: '0.75rem' }}>How many divisions each month saw both unionist and nationalist MLAs vote the same way, compared to the total number of divisions that month.</p>
       <div className={styles.trendLegend}>
         <span className={styles.trendLegendItem}><span className={styles.trendDotTotal} />Total divisions that month</span>

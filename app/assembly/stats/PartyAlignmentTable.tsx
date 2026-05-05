@@ -4,10 +4,9 @@ import styles from './stats.module.css'
 
 interface Props {
   data: PartyAlignmentRow[]
-  totalDivisions: number
 }
 
-export default function PartyAlignmentTable({ data, totalDivisions }: Props) {
+export default function PartyAlignmentTable({ data }: Props) {
   const tables = [
     {
       title: 'Agreement with Sinn Féin',
