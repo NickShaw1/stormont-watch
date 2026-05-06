@@ -389,7 +389,7 @@ export default async function HomePage() {
             const typeLabel = isStatutory
               ? 'Regulations'
               : isBill && billAmendMatch
-                ? `Bill · Amendment ${billAmendMatch[1]}`
+                ? `Bill · ${subtitle ? `${subtitle} · ` : ''}Amendment ${billAmendMatch[1]}`
                 : isBill
                   ? (subtitle ?? 'Bill')
                   : motionAmendMatch
@@ -403,7 +403,6 @@ export default async function HomePage() {
                 <div className={styles.divMeta}>
                   <span className={styles.divSub}>
                     {d ? `${d.getDate()} ${d.toLocaleString('en',{month:'short'})} ${d.getFullYear()} · ${typeLabel}` : typeLabel}
-                    {subtitle && isBill && billAmendMatch ? ` · ${subtitle}` : ''}
                   </span>
                 </div>
               </Link>

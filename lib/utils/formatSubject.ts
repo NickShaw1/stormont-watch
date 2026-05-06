@@ -14,11 +14,11 @@ export function formatDivisionSubject(raw: string): {
   }
 
   // Pattern 2 — older format: "Amendment 12 - Consideration Stage: Bill Title (NIA Bill...) [Member]"
-  const stageAmendmentMatch = raw.match(/^(Amendment \d+)\s+-\s+[^:]+:\s+(.+?)(?:\s+\(NIA Bill[^)]+\))?(?:\s+\[.+\])?$/)
+  const stageAmendmentMatch = raw.match(/^(Amendment \d+)\s+-\s+([^:]+):\s+(.+?)(?:\s+\(NIA Bill[^)]+\))?(?:\s+\[.+\])?$/)
   if (stageAmendmentMatch) {
     return {
-      title: stageAmendmentMatch[2].trim(),
-      subtitle: stageAmendmentMatch[1].trim(),
+      title: stageAmendmentMatch[3].trim(),
+      subtitle: stageAmendmentMatch[2].trim(),
     }
   }
 
