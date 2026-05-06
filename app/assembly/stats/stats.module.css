@@ -10,7 +10,8 @@
 }
 
 .statsHeaderChart {
-  flex: 0 0 30%;
+  flex: 0 0 320px;
+  width: 320px;
   margin-left: auto;
   position: relative;
   opacity: 0.7;

@@ -217,18 +217,18 @@ export default async function StatsPage() {
             <div>
               <h1 id="assembly-stats-heading">At a glance</h1>
               <p className="lede">Voting, attendance, salaries, expenses and cross-community trends since May 2022.</p>
-              <div className="note-card">
-              <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
-                <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
-                <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
-              </svg>
-              <p>Some statistics reflect current MLAs only. Others include former MLAs where data is available. Every effort has been made to clarify which applies throughout.</p>
-            </div>
             </div>
             <div className={styles.statsHeaderChart}>
               <StatsHeaderChart data={divisionsPerMonth} />
             </div>
+          </div>
+          <div className="note-card" style={{ background: 'var(--ochre-wash)', borderLeftColor: 'var(--ochre)', border: '1px solid var(--rule)', borderLeft: '3px solid var(--ochre)', marginTop: 'var(--s-6)', marginBottom: 'var(--s-10)' }}>
+            <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="10" cy="10" r="10" fill="var(--ochre)"/>
+              <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+              <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+            </svg>
+            <p>Some statistics reflect current MLAs only. Others include former MLAs where data is available. Every effort has been made to clarify which applies throughout.</p>
           </div>
         </header>
 
@@ -236,7 +236,7 @@ export default async function StatsPage() {
           Since May 2022, the Assembly has held{' '}
           <strong>{totalDivisions}</strong> divisions.{' '}
           <strong>{overallPassRate}%</strong> of divisions passed.
-          Unionist and nationalist MLAs voted the same way on{' '}
+          A majority of unionist-designated and nationalist-designated MLAs voted the same way on{' '}
           <strong>{overallAgreementRate}%</strong> of divisions.{' '}
         </p>
 
