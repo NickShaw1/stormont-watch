@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getAllPartiesWithStats, getPartyBySlug, getPartyAssemblyStats, getPartyExpenses, getPartyMandateExpenses, getQuestionStatsByParty } from '@/lib/db/queries'
+import { getAllPartiesWithStats, getPartyBySlug, getPartyAssemblyStats, getPartyExpenses, getPartyMandateExpenses, getQuestionStatsByParty, getHansardStatsByParty, getHansardPartyRank, getHansardPartyDebateRank, getHansardSittingsByMonthForParty } from '@/lib/db/queries'
 import type { CSSProperties } from 'react'
 import { partyBorderColor, abbreviateParty } from '@/lib/format'
 import styles from './partyDetail.module.css'
 import PartyDetailClient from './PartyDetailClient'
 import PartyStatsClient from './PartyStatsClient'
 import PartyExpensesClient from './PartyExpensesClient'
+import PartyChamberClient from './PartyChamberClient'
 
 const PARTY_URLS: Record<string, string> = {
   'Sinn Féin': 'https://sinnfein.ie/',
@@ -78,12 +79,16 @@ export default async function PartyDetailPage({ params }: Props) {
   const party = await getPartyBySlug(slug)
   if (!party) notFound()
 
-  const [stats, expenses, mandateExpenses, borderColor, questionStatsRows] = await Promise.all([
+  const [stats, expenses, mandateExpenses, borderColor, questionStatsRows, hansardStats, hansardPartyRank, hansardPartyDebateRank, hansardSittingsByMonth] = await Promise.all([
     getPartyAssemblyStats(party.party),
     getPartyExpenses(party.party),
     getPartyMandateExpenses(party.party),
     Promise.resolve(partyBorderColor(party.party)),
     getQuestionStatsByParty(party.party),
+    getHansardStatsByParty(party.party),
+    getHansardPartyRank(party.party),
+    getHansardPartyDebateRank(party.party),
+    getHansardSittingsByMonthForParty(party.party, '2022-05-01'),
   ])
 
   const totalQuestions = questionStatsRows.reduce((s, r) => s + r.writtenCount + r.oralCount, 0)
@@ -155,6 +160,16 @@ export default async function PartyDetailPage({ params }: Props) {
             stats={stats}
             partyColor={borderColor}
             mlaCount={party.mlaCount}
+          />
+        }
+        chamberContent={
+          <PartyChamberClient
+            hansardStats={hansardStats}
+            hansardPartyRank={hansardPartyRank}
+            hansardPartyDebateRank={hansardPartyDebateRank}
+            hansardSittingsByMonth={hansardSittingsByMonth}
+            partyColor={borderColor}
+            party={party.party}
           />
         }
         expensesContent={

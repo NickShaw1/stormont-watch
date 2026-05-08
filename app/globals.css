@@ -541,6 +541,20 @@ a:hover {
   outline-offset: 2px;
 }
 
+/* ── Yellow notice callout ──────────────────────────────────── */
+.notice-card {
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--ochre);
+  background: var(--ochre-wash);
+  border-radius: 0 6px 6px 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
 /* ── Note card (grey left border info callout) ──────────────── */
 .note-card {
   display: flex;

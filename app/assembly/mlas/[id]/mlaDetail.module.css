@@ -647,6 +647,20 @@
   flex-shrink: 0;
 }
 
+.salaryNotice {
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--ochre);
+  background: var(--ochre-wash);
+  border-radius: 0 var(--r-2) var(--r-2) 0;
+  padding: var(--s-3) var(--s-4);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin-top: var(--s-6);
+  margin-bottom: var(--s-6);
+}
+
 .salaryFootnote {
   font-size: 12px;
   color: var(--ink-4);
@@ -682,6 +696,89 @@
   padding: 0;
 }
 
+.speechDebateWrap {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.speechDebateList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.speechDebateRow {
+  border-bottom: 1px solid var(--border);
+}
+
+.speechDebateRow:last-child {
+  border-bottom: none;
+}
+
+.speechDebateLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-decoration: none;
+  color: var(--text-primary) !important;
+  transition: background 120ms ease;
+}
+
+.speechDebateLink:hover {
+  background: var(--surface);
+}
+
+.speechDebateTitle {
+  font-family: var(--font-sans) !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--text-primary) !important;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+}
+
+.speechDebateLink:hover .speechDebateTitle {
+  color: var(--accent) !important;
+}
+
+.speechDebateDate {
+  flex-shrink: 0;
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.04em !important;
+  color: var(--ink-3) !important;
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .speechDebateLink {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-1);
+  }
+
+  .speechDebateTitle {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .speechDebateDate {
+    font-size: 11px !important;
+    align-self: flex-start;
+    text-align: left;
+  }
+}
+
 .questionsCard {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -692,7 +789,6 @@
 .questionsSummary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-bottom: 1px solid var(--border);
 }
 
 @media (max-width: 640px) {
@@ -707,8 +803,17 @@
   .questionsSummaryCell {
     border-right: none;
     border-bottom: 1px solid var(--border);
-    align-items: flex-start;
-    text-align: left;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+
+  .questionsSummaryLabel,
+  .questionsSummaryValue,
+  .questionsSummaryMeta,
+  .questionsSummarySubtitle {
+    text-align: left !important;
+    align-self: flex-start !important;
   }
 
   .questionsSummaryCell:last-child {
@@ -722,6 +827,7 @@
 
 .questionsChartArea {
   padding: var(--s-4) var(--s-5);
+  border-top: 1px solid var(--border);
 }
 
 .questionsSummaryCell {
@@ -762,6 +868,14 @@
   color: var(--ink-3);
   font-family: var(--font-sans);
   margin-top: var(--s-1);
+}
+
+.questionsSummarySubtitle {
+  font-size: 11px;
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  margin-top: var(--s-1);
+  font-style: italic;
 }
 
 /* Register of interests */
@@ -1239,6 +1353,8 @@
   flex-direction: column;
   gap: 5px;
   padding: 12px 0;
+  text-decoration: none;
+  color: inherit;
 }
 
 .subjectCell a:hover .subjectTitle {

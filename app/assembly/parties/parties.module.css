@@ -78,18 +78,18 @@
 .card {
   display: flex;
   flex-direction: column;
-  background: var(--paper);
+  background: var(--paper-2);
   border: 1px solid var(--rule);
   border-radius: var(--r-3);
   text-decoration: none;
   color: inherit;
   overflow: hidden;
-  transition: border-color 150ms, box-shadow 150ms;
+  transition: border-color 150ms, background 150ms;
 }
 
 .card:hover {
   border-color: var(--teal);
-  background: var(--paper-2);
+  background: var(--paper-3);
   text-decoration: none;
 }
 
@@ -132,7 +132,7 @@
 
 .mlaCount {
   font-size: 13px;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 .description {

@@ -156,7 +156,7 @@ export default function VotesListClient({ allItems }: Props) {
         >
           All
         </button>
-        <div className={styles.yearFilters}>
+        <div role="group" aria-label="Filter by year" className={styles.yearFilters}>
           {years.map((y) => (
             <button
               key={y}
@@ -169,7 +169,7 @@ export default function VotesListClient({ allItems }: Props) {
           ))}
         </div>
         <div className={`${styles.filterDivider} ${styles.yearDivider}`} aria-hidden="true" />
-        <div className={styles.resultGroup}>
+        <div role="group" aria-label="Filter by type" className={styles.resultGroup}>
           <button
             aria-pressed={typeFilter === 'BILLS'}
             className={`${styles.filterBtn} ${typeFilter === 'BILLS' ? styles.filterBtnActive : ''}`}
@@ -193,7 +193,7 @@ export default function VotesListClient({ allItems }: Props) {
           </button>
         </div>
         <div className={styles.filterDivider} aria-hidden="true" />
-        <div className={styles.resultGroup}>
+        <div role="group" aria-label="Filter by outcome" className={styles.resultGroup}>
           <button
             aria-pressed={resultFilter === 'PASSED'}
             className={`${styles.filterBtn} ${resultFilter === 'PASSED' ? styles.filterBtnActive : ''}`}
@@ -240,10 +240,10 @@ export default function VotesListClient({ allItems }: Props) {
       {monthGroups.map((group) => (
         <React.Fragment key={group.label}>
           <hr className={styles.monthRule} />
-          <section className={styles.monthSection} aria-labelledby={`month-${group.label.replace(/\s+/g, '-')}`}>
-            <h2 id={`month-${group.label.replace(/\s+/g, '-')}`} className={styles.monthHeading}>
+          <section className={styles.monthSection} aria-label={`${group.label} — ${group.totalCount} division${group.totalCount !== 1 ? 's' : ''}`}>
+            <h2 className={styles.monthHeading}>
               {group.label}
-              <span className={styles.monthCount}>{group.totalCount}</span>
+              <span className={styles.monthCount} aria-hidden="true">{group.totalCount}</span>
             </h2>
             <div className={styles.divList}>
               {buildGroups(group.items).map((g) => {

@@ -48,7 +48,7 @@ export default async function QuestionsPage() {
       <header className="page-header">
         <nav aria-label="Breadcrumb" className="breadcrumb">
           <ol>
-            <li><Link href="/assembly/stats">Stats</Link></li>
+            <li><Link href="/assembly/stats">Statistics</Link></li>
             <li aria-current="page">MLA questions</li>
           </ol>
         </nav>

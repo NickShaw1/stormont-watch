@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getAllMemberExpenses, getMandateExpensesRank, getRegisteredInterestsByMember, getAllMembersIncludingFormer, getQuestionStatsByMember, getQuestionRankForMember, getMemberRoleHistory } from '@/lib/db/queries'
+import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getAllMemberExpenses, getMandateExpensesRank, getRegisteredInterestsByMember, getAllMembersIncludingFormer, getQuestionStatsByMember, getQuestionRankForMember, getMemberRoleHistory, getHansardStatsByMember, getHansardRankForMember, getHansardSittingsByMonth, getHansardDebateRankForMember } from '@/lib/db/queries'
 
 export async function generateStaticParams() {
   const members = await getAllMembersIncludingFormer()
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MlaDetailPage({ params }: Props) {
   const { id } = await params
-  const [member, history, structureRole, allExpensesRaw, interests, questionStatsRows, questionRank, roleHistory] = await Promise.all([
+  const [member, history, structureRole, allExpensesRaw, interests, questionStatsRows, questionRank, roleHistory, hansardRows, hansardRank, hansardDebateRank] = await Promise.all([
     getMemberById(id),
     getMemberVotingHistory(id),
     getMemberStructureRole(id),
@@ -51,9 +51,17 @@ export default async function MlaDetailPage({ params }: Props) {
     getQuestionStatsByMember(id),
     getQuestionRankForMember(id),
     getMemberRoleHistory(id),
+    getHansardStatsByMember(id),
+    getHansardRankForMember(id),
+    getHansardDebateRankForMember(id),
   ])
 
   if (!member) notFound()
+
+  const hansardSittingsByMonth = member.mandateStart
+    ? await getHansardSittingsByMonth(String(member.mandateStart).slice(0, 10))
+    : []
+
 
   const mandateExpensesRankRow = await getMandateExpensesRank(member.personId)
   const mandateRank = mandateExpensesRankRow ? Number(mandateExpensesRankRow.rank) : null
@@ -313,6 +321,10 @@ export default async function MlaDetailPage({ params }: Props) {
             roleIntervals={roleIntervals}
             mandateExpensesRank={mandateRank}
             mandateExpensesTotalMembers={mandateTotalMembers}
+            hansardRows={hansardRows}
+            hansardRank={hansardRank}
+            hansardDebateRank={hansardDebateRank}
+            hansardSittingsByMonth={hansardSittingsByMonth}
           />
         </section>
       )}

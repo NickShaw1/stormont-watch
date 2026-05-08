@@ -14,6 +14,7 @@
     "sync:full": "tsx scripts/sync-full.ts",
     "sync:members": "tsx scripts/sync-members.ts",
     "sync:hansard": "tsx scripts/sync-hansard.ts",
+    "sync:hansard-contributions": "tsx scripts/sync-hansard-contributions.ts",
     "sync:motion-text": "tsx scripts/sync-motion-text.ts",
     "sync:structure": "tsx scripts/sync-structure.ts",
     "sync:bills": "npx tsx scripts/sync-bills.ts",

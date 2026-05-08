@@ -63,14 +63,15 @@ export default async function SalariesPage() {
       <header className="page-header">
         <nav aria-label="Breadcrumb" className="breadcrumb">
           <ol>
-            <li><Link href="/assembly/stats">Stats</Link></li>
+            <li><Link href="/assembly/stats">Statistics</Link></li>
             <li aria-current="page">MLA Salaries</li>
           </ol>
         </nav>
         <h1>MLA Salaries</h1>
         <p className="lede">Estimated salaries for all current MLAs based on published Assembly rates. Figures include role supplements for ministers, committee chairs and other officeholders.</p>
-        <p style={{ fontSize: '12px', color: 'var(--ink-4)', fontStyle: 'italic', marginBottom: 'var(--s-4)' }}>* Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</p>
       </header>
+
+      <div className="notice-card">Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</div>
 
       <SalariesListClient bySalary={bySalary} byEarnings={byEarnings} />
     </div>

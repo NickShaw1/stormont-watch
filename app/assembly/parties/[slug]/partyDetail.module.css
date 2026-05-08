@@ -118,7 +118,6 @@
 .questionsSummary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-bottom: 1px solid var(--border);
 }
 
 .questionsSummaryCell {
@@ -176,6 +175,8 @@
   .questionsSummaryCell {
     border-right: none;
     border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+    text-align: left;
   }
 
   .questionsSummaryCell:last-child {
@@ -232,10 +233,10 @@
 @media (max-width: 767px) {
   .billTabs {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: var(--s-2);
     border-bottom: none;
-    margin-bottom: var(--s-2);
+    margin-bottom: var(--s-5);
     overflow: visible;
   }
 
@@ -626,15 +627,9 @@
   color: var(--ink-3);
 }
 
-@media (max-width: 767px) {
-  .statLabel {
-    font-size: 0.8125rem;
-  }
-}
-
 .statValue {
-  font-size: clamp(26px, 4vw, 32px);
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--ink);
   line-height: 1.1;
   margin-top: var(--s-1);
@@ -795,7 +790,7 @@
 .expensesHeadingDate {
   font-size: 13px;
   color: var(--ink-2);
-  margin-bottom: 6px;
+  margin-bottom: var(--s-4);
 }
 
 .divisionsTable {
@@ -985,7 +980,7 @@
 /* ── MLA questions ranking table ────────────────────────────── */
 .qRankWrap {
   width: 100%;
-  overflow-x: auto;
+  overflow: hidden;
   border: 1px solid var(--rule);
   border-radius: var(--r-3);
   margin-top: var(--s-5);
@@ -1012,7 +1007,7 @@
   font-family: var(--font-mono);
   padding: 10px 12px;
   text-align: left;
-  border-bottom: 2px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
   white-space: nowrap;
 }
 
@@ -1020,14 +1015,10 @@
 .qRankTable thead th:last-child  { text-align: right; }
 
 .qRankTable tbody tr {
-  border-bottom: 1px solid var(--rule);
-  background: var(--paper);
   transition: background 100ms ease;
 }
 
-.qRankTable tbody tr:last-child { border-bottom: none; }
-
-.qRankTable tbody tr:hover { background: var(--paper-2); }
+.qRankTable tbody tr:hover td { background: var(--paper-2); }
 
 .qRankTable tbody tr:hover .qMlaName { color: var(--teal); }
 
@@ -1037,7 +1028,11 @@
   color: var(--ink);
   vertical-align: middle;
   overflow: hidden;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
 }
+
+.qRankTable tbody tr:last-child td { border-bottom: none; }
 
 .qTdRank {
   text-align: center;
@@ -1138,23 +1133,22 @@
 
 .overviewCard {
   border: 1px solid var(--rule);
-  border-radius: 3px;
-  padding: var(--spacing-lg);
+  border-radius: var(--r-3);
+  padding: var(--s-5);
   background: var(--paper-2);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 6px;
+  gap: var(--s-1);
 }
 
 .overviewLabel {
   font-size: 11px;
-  font-weight: 500;
+  font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-3);
-  font-family: var(--font-mono);
 }
 
 .overviewValue {
@@ -1166,19 +1160,21 @@
 }
 
 .overviewMeta {
-  font-size: 0.8125rem;
+  font-size: 12px;
   color: var(--ink-3);
 }
 
-@media (max-width: 500px) {
+@media (max-width: 640px) {
   .overviewGrid2 {
     grid-template-columns: 1fr;
   }
 
   .overviewCard {
+    padding: var(--s-4);
     align-items: flex-start;
     text-align: left;
   }
+
 }
 
 .expCoverageNote {
@@ -1358,7 +1354,7 @@
 /* ── MLA expenses table ─────────────────────────────────────── */
 .expTableWrap {
   width: 100%;
-  overflow-x: auto;
+  overflow: hidden;
   border: 1px solid var(--rule);
   border-radius: var(--r-3);
 }
@@ -1384,7 +1380,7 @@
   font-family: var(--font-mono);
   padding: 10px 12px;
   text-align: left;
-  border-bottom: 2px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
   white-space: nowrap;
 }
 
@@ -1397,16 +1393,10 @@
 }
 
 .expTable tbody tr {
-  border-bottom: 1px solid var(--rule);
-  background: var(--paper);
   transition: background 100ms ease;
 }
 
-.expTable tbody tr:last-child {
-  border-bottom: none;
-}
-
-.expTableRow:hover {
+.expTableRow:hover td {
   background: var(--paper-2);
 }
 
@@ -1414,14 +1404,17 @@
   color: var(--teal);
 }
 
-
 .expTable tbody td {
   padding: 10px 12px;
   font-size: 0.875rem;
   color: var(--ink);
   vertical-align: middle;
   overflow: hidden;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
 }
+
+.expTable tbody tr:last-child td { border-bottom: none; }
 
 .expTdRank {
   text-align: center;
@@ -1530,5 +1523,45 @@
   .expTable tbody td {
     padding: 8px 10px;
   }
+}
+
+.chamberFilterBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  min-height: 44px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .chamberFilterBtn {
+    flex: 1;
+  }
+}
+
+.chamberFilterBtn:hover {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+.chamberFilterBtnActive {
+  background: var(--teal);
+  color: #fff;
+  border-color: var(--teal);
+}
+
+.chamberFilterBtnActive:hover {
+  background: var(--teal);
+  color: #fff;
 }
 

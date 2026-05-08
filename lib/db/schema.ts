@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, date, serial, unique, boolean, numeric, primaryKey, smallint } from 'drizzle-orm/pg-core'
+import { pgTable, text, integer, timestamp, date, serial, unique, boolean, numeric, primaryKey, smallint, uniqueIndex } from 'drizzle-orm/pg-core'
 
 export const members = pgTable('members', {
   personId: text('person_id').primaryKey(),
@@ -61,6 +61,19 @@ export const hansardReports = pgTable('hansard_reports', {
   mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
+
+export const hansardContributions = pgTable('hansard_contributions', {
+  id: serial('id').primaryKey(),
+  personId: text('person_id').notNull().references(() => members.personId),
+  reportDocId: text('report_doc_id').notNull(),
+  plenaryDate: date('plenary_date').notNull(),
+  debateTitle: text('debate_title').notNull(),
+  mandate: text('mandate').notNull().default('2022-2027'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  uniqueContribution: uniqueIndex('hansard_contributions_person_report_debate_unique')
+    .on(table.personId, table.reportDocId, table.debateTitle),
+}))
 
 export const ministers = pgTable('ministers', {
   personId: text('person_id').primaryKey().references(() => members.personId),

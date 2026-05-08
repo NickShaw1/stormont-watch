@@ -219,7 +219,7 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
     }
   }, [trend, partyColor])
 
-  return <canvas ref={canvasRef} role="img" aria-label="Party attendance over time (line chart)" />
+  return <canvas ref={canvasRef} role="img" aria-label="Party Division Attendance over time (line chart)" />
 }
 
 export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyStatsProps) {
@@ -260,13 +260,18 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
 
       {/* Trend chart */}
       <hr className="section-rule" />
-      <h3 className={styles.statsHeading}>Party attendance over time</h3>
+      <h3 className={styles.expensesSectionHeading} style={{ marginBottom: 'var(--s-4)' }}>Party Division <em>Attendance</em></h3>
       <div style={{ position: 'relative', width: '100%', height: '200px' }}>
         <TrendChart trend={stats.trend} partyColor={partyColor} />
       </div>
-      <p style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 'var(--s-2)' }}>
-        Only months with recorded divisions are shown. Excludes presiding officers and divisions before each MLA&apos;s mandate start date.
-      </p>
+      <div className="note-card" style={{ marginTop: 'var(--s-3)' }}>
+        <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
+          <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+          <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+        </svg>
+        <p>Only months with recorded divisions are shown. Excludes presiding officers and divisions before each MLA&apos;s mandate start date.</p>
+      </div>
 
       <hr className="section-rule" />
       {/* Recent divisions */}

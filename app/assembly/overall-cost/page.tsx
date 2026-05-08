@@ -73,14 +73,15 @@ export default async function OverallCostPage() {
       <header className="page-header">
         <nav aria-label="Breadcrumb" className="breadcrumb">
           <ol>
-            <li><Link href="/assembly/stats">Stats</Link></li>
+            <li><Link href="/assembly/stats">Statistics</Link></li>
             <li aria-current="page">Overall cost</li>
           </ol>
         </nav>
         <h1>Overall cost</h1>
         <p className="lede">Total estimated mandate salary plus all published expenses for every <strong>current MLA</strong>. MLAs who joined within the last year are excluded as their figures are not comparable.</p>
-        <p style={{ fontSize: '12px', color: 'var(--ink-4)', fontStyle: 'italic', marginBottom: 'var(--s-4)' }}>* Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</p>
       </header>
+
+      <div className="notice-card">Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</div>
 
       <OverallCostListClient rows={rows} />
     </div>

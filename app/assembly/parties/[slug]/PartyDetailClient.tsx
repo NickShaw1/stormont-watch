@@ -47,7 +47,7 @@ interface Props {
 
 type QuestionStatRow = { personId: string; year: number; month: number; writtenCount: number; oralCount: number }
 
-const tabs = ['stats', 'expenses', 'questions'] as const
+const tabs = ['stats', 'expenses', 'questions', 'chamber'] as const
 type Tab = typeof tabs[number]
 
 interface FullProps extends Props {
@@ -56,6 +56,7 @@ interface FullProps extends Props {
   partyUrl?: string
   statsContent?: React.ReactNode
   expensesContent?: React.ReactNode
+  chamberContent?: React.ReactNode
   totalQuestions?: number
   writtenCount?: number
   oralCount?: number
@@ -110,7 +111,7 @@ function QuestionsYearChart({ questionStats, partyColor }: { questionStats: Ques
   )
 }
 
-export default function PartyDetailClient({ party, mlas, ministers, chairs, borderColor, description, statsContent, expensesContent, totalQuestions = 0, writtenCount = 0, oralCount = 0, questionStats = [] }: FullProps) {
+export default function PartyDetailClient({ party, mlas, ministers, chairs, borderColor, description, statsContent, expensesContent, chamberContent, totalQuestions = 0, writtenCount = 0, oralCount = 0, questionStats = [] }: FullProps) {
   const [activeTab, setActiveTab] = useState<Tab>('stats')
   const router = useRouter()
 
@@ -149,7 +150,7 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
       <div className={styles.tabSection}>
         <div className={styles.billTabs} role="tablist" aria-label="Party sections">
           {tabs.filter(tab => tab !== 'questions' || totalQuestions > 0).map((tab) => {
-            const label = tab === 'stats' ? 'Attendance' : tab === 'expenses' ? 'Expenses' : 'Questions'
+            const label = tab === 'stats' ? 'Attendance' : tab === 'expenses' ? 'Expenses' : tab === 'questions' ? 'Questions' : 'Chamber'
             return (
               <button
                 key={tab}
@@ -188,6 +189,17 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
             <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>No expenses data available.</p>
           )}
         </div>
+        <div
+          id="tabpanel-chamber"
+          role="tabpanel"
+          aria-labelledby="tab-chamber"
+          hidden={activeTab !== 'chamber'}
+          className={styles.tabContent}
+        >
+          {chamberContent ?? (
+            <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>No chamber data available.</p>
+          )}
+        </div>
         {totalQuestions > 0 && (
           <div
             id="tabpanel-questions"
@@ -198,26 +210,29 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
           >
             <div className={styles.questionsPanel}>
               <div className={styles.questionsCard}>
-              <div className={styles.questionsSummary}>
-                <div className={styles.questionsSummaryCell}>
-                  <span className={styles.questionsSummaryLabel}>Total questions</span>
-                  <span className={styles.questionsSummaryValue}>{totalQuestions.toLocaleString()}</span>
-                </div>
-                <div className={styles.questionsSummaryCell}>
-                  <span className={styles.questionsSummaryLabel}>Written</span>
-                  <span className={styles.questionsSummaryValue}>{writtenCount.toLocaleString()}</span>
-                  <span className={styles.questionsSummaryMeta}>{pct(writtenCount, totalQuestions)}% of total</span>
-                </div>
-                <div className={styles.questionsSummaryCell}>
-                  <span className={styles.questionsSummaryLabel}>Oral</span>
-                  <span className={styles.questionsSummaryValue}>{oralCount.toLocaleString()}</span>
-                  <span className={styles.questionsSummaryMeta}>{pct(oralCount, totalQuestions)}% of total</span>
+                <div className={styles.questionsSummary}>
+                  <div className={styles.questionsSummaryCell}>
+                    <span className={styles.questionsSummaryLabel}>Total questions</span>
+                    <span className={styles.questionsSummaryValue}>{totalQuestions.toLocaleString()}</span>
+                    <span className={styles.questionsSummaryMeta}>Since 2022</span>
+                  </div>
+                  <div className={styles.questionsSummaryCell}>
+                    <span className={styles.questionsSummaryLabel}>Written</span>
+                    <span className={styles.questionsSummaryValue}>{writtenCount.toLocaleString()}</span>
+                    <span className={styles.questionsSummaryMeta}>{pct(writtenCount, totalQuestions)}% of total</span>
+                  </div>
+                  <div className={styles.questionsSummaryCell}>
+                    <span className={styles.questionsSummaryLabel}>Oral</span>
+                    <span className={styles.questionsSummaryValue}>{oralCount.toLocaleString()}</span>
+                    <span className={styles.questionsSummaryMeta}>{pct(oralCount, totalQuestions)}% of total</span>
+                  </div>
                 </div>
               </div>
-              <div className={styles.questionsChartArea}>
+              <div className={styles.statsSection} style={{ marginTop: '2rem' }}>
+                <h3 className={styles.expensesSectionHeading} style={{ marginBottom: 'var(--s-2)' }}>Questions <em>by Year</em></h3>
+                <p style={{ fontSize: '15px', color: 'var(--ink-2)', margin: '0.25rem 0 0.75rem' }}>Total written and oral questions submitted to ministers each year since the mandate began in May 2022.</p>
                 <QuestionsYearChart questionStats={questionStats} partyColor={borderColor} />
               </div>
-            </div>
             </div>
 
             {rankedMlaQuestions.length > 0 && (

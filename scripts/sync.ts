@@ -2,6 +2,7 @@ import './load-env'
 import { syncBills } from './sync-bills'
 import { syncContactDetails } from './sync-contact-details'
 import { syncQuestionStats } from './sync-question-stats'
+import { syncHansardContributions } from './sync-hansard-contributions'
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
 import { and, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm'
@@ -972,6 +973,7 @@ async function main() {
     await runSync('syncContactDetails', () => syncContactDetails(db))
     await runSync('syncRegisteredInterests', () => syncRegisteredInterests(db))
     await runSync('syncQuestionStats', () => syncQuestionStats(db))
+    await runSync('syncHansardContributions', () => syncHansardContributions(db))
     await runSync('syncPlenaryItems', () => syncPlenaryItems(db))
   } else {
     // On non-Monday days, load member IDs from DB directly for syncNewDivisions

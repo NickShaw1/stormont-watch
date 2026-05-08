@@ -35,6 +35,12 @@ type QuestionStat = {
   oralCount: number
 }
 
+type HansardRow = {
+  reportDocId: string
+  plenaryDate: string
+  debateTitle: string
+}
+
 interface Props {
   expenses: Expenses
   allExpenses: ExpenseRow[]
@@ -51,6 +57,10 @@ interface Props {
   roleIntervals: RoleInterval[]
   mandateExpensesRank: number | null
   mandateExpensesTotalMembers: number | null
+  hansardRows: HansardRow[]
+  hansardRank: { rank: number; eligibleCount: number } | null
+  hansardDebateRank: { rank: number; eligibleCount: number; debates: number } | null
+  hansardSittingsByMonth: { year: number; month: number; totalSittings: number }[]
 }
 
 const gbp = (val: string | null | undefined) =>
@@ -61,7 +71,7 @@ function formatInterestDate(date: string | null): string {
   return new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-type Tab = 'questions' | 'finances' | 'interests'
+type Tab = 'questions' | 'finances' | 'interests' | 'speeches'
 
 
 function gbpSalary(val: number): string {
@@ -89,7 +99,7 @@ function QuestionsChart({ questionStats, partyColor }: { questionStats: Question
       months.push({
         year: d.getFullYear(),
         month: d.getMonth() + 1,
-        label: d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }),
+        label: d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }),
       })
     }
 
@@ -120,10 +130,19 @@ function QuestionsChart({ questionStats, partyColor }: { questionStats: Question
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { mode: 'index' } },
+          plugins: {
+              legend: { display: false },
+              tooltip: {
+                mode: 'index',
+                multiKeyBackground: partyColor,
+                callbacks: {
+                  labelColor: () => ({ borderColor: partyColor, backgroundColor: partyColor, borderDash: [0, 0], borderRadius: 2 }),
+                },
+              },
+            },
           scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-            y: { beginAtZero: true, ticks: { precision: 0, font: { size: 11 } } },
+            x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#888780' } },
+            y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 }, color: '#888780' }, grid: { color: 'rgba(136,135,128,0.15)' } },
           },
         },
       })
@@ -133,15 +152,139 @@ function QuestionsChart({ questionStats, partyColor }: { questionStats: Question
   }, [questionStats, partyColor])
 
   return (
-    <div style={{ height: 180, marginTop: '1rem' }}>
-      <canvas ref={canvasRef} />
+    <div style={{ marginTop: '2rem' }}>
+      <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--ink)', marginBottom: 'var(--spacing-sm)', marginTop: 0 }}>Questions asked by month</h3>
+      <p style={{ fontSize: '15px', fontWeight: 400, fontStyle: 'normal', color: 'var(--ink-2)', marginBottom: '0.75rem', fontFamily: 'var(--font-sans)' }}>Total written and oral questions submitted to ministers each month over the last 12 months.</p>
+      <div style={{ position: 'relative', width: '100%', height: 180 }}>
+        <canvas ref={canvasRef} />
+      </div>
+    </div>
+  )
+}
+
+function SpeechesChart({ hansardRows, hansardSittingsByMonth, partyColor }: {
+  hansardRows: HansardRow[]
+  hansardSittingsByMonth: { year: number; month: number; totalSittings: number }[]
+  partyColor: string
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    if (!canvasRef.current) return
+
+    const now = new Date()
+    const months: { year: number; month: number; label: string }[] = []
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      months.push({
+        year: d.getFullYear(),
+        month: d.getMonth() + 1,
+        label: d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }),
+      })
+    }
+
+    // Total sittings that month from DB
+    const totalMap = new Map(hansardSittingsByMonth.map(r => [`${r.year}-${r.month}`, r.totalSittings]))
+
+    // Distinct sittings spoken in per month from hansardRows
+    const spokenMap = new Map<string, Set<string>>()
+    for (const row of hansardRows) {
+      const year = parseInt(row.plenaryDate.slice(0, 4))
+      const month = parseInt(row.plenaryDate.slice(5, 7))
+      const key = `${year}-${month}`
+      if (!spokenMap.has(key)) spokenMap.set(key, new Set())
+      spokenMap.get(key)!.add(row.reportDocId)
+    }
+
+    const totalData = months.map(m => totalMap.get(`${m.year}-${m.month}`) ?? 0)
+    const spokenData = months.map(m => spokenMap.get(`${m.year}-${m.month}`)?.size ?? 0)
+    const labels = months.map(m => m.label)
+
+    let chart: import('chart.js').Chart | null = null
+
+    import('chart.js/auto').then(({ default: Chart }) => {
+      if (!canvasRef.current) return
+      const existing = Chart.getChart(canvasRef.current)
+      if (existing) existing.destroy()
+      chart = new Chart(canvasRef.current, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Total sittings that month',
+              data: totalData,
+              backgroundColor: '#E2E8F0',
+              borderRadius: 3,
+            },
+            {
+              label: 'Sittings spoken in',
+              data: spokenData,
+              backgroundColor: partyColor,
+              borderRadius: 3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1a2a3a',
+              titleColor: '#ffffff',
+              bodyColor: '#a0b8c8',
+              borderColor: 'rgba(255,255,255,0.08)',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 6,
+              titleFont: { size: 13, weight: 'bold' },
+              bodyFont: { size: 12 },
+              bodySpacing: 4,
+              displayColors: false,
+              callbacks: {
+                label: (item) => {
+                  if (item.datasetIndex === 0) return `Total sittings: ${item.raw}`
+                  return `Sittings spoken in: ${item.raw}`
+                },
+              },
+            },
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#888780', maxRotation: 45, autoSkip: true, maxTicksLimit: 12 } },
+            y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 }, color: '#888780', stepSize: 5 }, grid: { color: 'rgba(136,135,128,0.15)' } },
+          },
+        },
+      })
+    })
+
+    return () => { chart?.destroy() }
+  }, [hansardRows, hansardSittingsByMonth, partyColor])
+
+  return (
+    <div style={{ marginTop: '2rem' }}>
+      <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--ink)', marginBottom: 'var(--spacing-sm)', marginTop: 0 }}>Plenary participation by month</h3>
+      <p style={{ fontSize: '15px', fontWeight: 400, fontStyle: 'normal', color: 'var(--ink-2)', marginBottom: '0.75rem', fontFamily: 'var(--font-sans)' }}>How many plenary sittings this MLA spoke in each month, compared to the total sittings that month.</p>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '11px', color: 'var(--ink-3)' }}>
+          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: '#E2E8F0', border: '1px solid #cbd5e1' }} />
+          Total sittings that month
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '11px', color: 'var(--ink-3)' }}>
+          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: partyColor }} />
+          Sittings spoken in
+        </span>
+      </div>
+      <div style={{ position: 'relative', width: '100%', height: 180 }}>
+        <canvas ref={canvasRef} />
+      </div>
     </div>
   )
 }
 
 export default function ActivityTabsClient(props: Props) {
-  const { allExpenses, interests, totalQuestions, writtenCount, oralCount, questionStats, hideQuestionsTab, partyColor, questionRank, currentSalary, mandateEarnings, mandateExpensesRank, mandateExpensesTotalMembers } = props
-  const [activeTab, setActiveTab] = useState<Tab>('finances')
+  const { allExpenses, interests, totalQuestions, writtenCount, oralCount, questionStats, hideQuestionsTab, partyColor, questionRank, currentSalary, mandateEarnings, mandateExpensesRank, mandateExpensesTotalMembers, hansardRows, hansardRank, hansardDebateRank, hansardSittingsByMonth } = props
+  const [activeTab, setActiveTab] = useState<Tab>('questions')
   const [selectedYear, setSelectedYear] = useState<string>(allExpenses[0]?.financial_year ?? '')
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false)
   const yearDropdownRef = useRef<HTMLDivElement>(null)
@@ -172,6 +315,19 @@ export default function ActivityTabsClient(props: Props) {
   return (
     <div className={styles.financesCard}>
       <div className={styles.financesTabs} role="tablist" aria-label="Activity sections">
+        {(!hideQuestionsTab && totalQuestions > 0) || hansardRows.length > 0 ? (
+          <button
+            role="tab"
+            id="tab-participation"
+            aria-selected={activeTab === 'questions' || activeTab === 'speeches'}
+            aria-controls="panel-participation"
+            className={`${styles.financesTab} ${(activeTab === 'questions' || activeTab === 'speeches') ? styles.financesTabActive : ''}`}
+            onClick={() => setActiveTab('questions')}
+          >
+            <span className={styles.tabLabelDesktop}>Participation</span>
+            <span className={styles.tabLabelMobile} aria-hidden="true">Activity</span>
+          </button>
+        ) : null}
         <button
           role="tab"
           id="tab-finances"
@@ -180,7 +336,8 @@ export default function ActivityTabsClient(props: Props) {
           className={`${styles.financesTab} ${activeTab === 'finances' ? styles.financesTabActive : ''}`}
           onClick={() => setActiveTab('finances')}
         >
-          Finances
+          <span className={styles.tabLabelDesktop}>Finances</span>
+          <span className={styles.tabLabelMobile} aria-hidden="true">Finances</span>
         </button>
         <button
           role="tab"
@@ -193,49 +350,146 @@ export default function ActivityTabsClient(props: Props) {
           <span className={styles.tabLabelDesktop}>Register of Interests</span>
           <span className={styles.tabLabelMobile} aria-hidden="true">Interests</span>
         </button>
-        {!hideQuestionsTab && totalQuestions > 0 && (
-          <button
-            role="tab"
-            id="tab-questions"
-            aria-selected={activeTab === 'questions'}
-            aria-controls="panel-questions"
-            className={`${styles.financesTab} ${activeTab === 'questions' ? styles.financesTabActive : ''}`}
-            onClick={() => setActiveTab('questions')}
-          >
-            Questions
-          </button>
-        )}
       </div>
 
-      {activeTab === 'questions' && !hideQuestionsTab && (
-        <div id="panel-questions" role="tabpanel" aria-labelledby="tab-questions" className={styles.questionsPanel}>
-          <div className={styles.questionsCard}>
-            <div className={styles.questionsSummary}>
-              <div className={styles.questionsSummaryCell}>
-                <span className={styles.questionsSummaryLabel}>Total questions</span>
-                <span className={styles.questionsSummaryValue}>{totalQuestions.toLocaleString()}</span>
-                {questionRank && (() => {
-                  const { rank, totalEligible } = questionRank
-                  const pctile = totalEligible > 1 ? (rank - 1) / (totalEligible - 1) : 0
-                  const color = pctile <= 0.33 ? 'var(--forest)' : pctile <= 0.66 ? '#92400E' : 'var(--crimson)'
-                  return <span className={styles.questionsSummaryMeta} style={{ color }}>Ranked {rank}/{totalEligible}</span>
-                })()}
+      {(activeTab === 'questions' || activeTab === 'speeches') && (
+        <div id="panel-participation" role="tabpanel" aria-labelledby="tab-participation" className={styles.questionsPanel}>
+
+          {!hideQuestionsTab && totalQuestions > 0 && (
+            <>
+              <h3 className={styles.financesSectionHeading}>Questions to <em>Ministers</em></h3>
+              <p className={styles.salaryFootnote} style={{ fontSize: '15px', color: 'var(--ink-2)', fontStyle: 'normal', marginBottom: 0 }}>Written and oral questions formally submitted to ministers since mandate start.</p>
+              <div className="note-card" style={{ marginTop: 'var(--spacing-md)', marginBottom: 0 }}>
+                <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
+                  <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+                  <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+                </svg>
+                <p>Rankings exclude current ministers and presiding officers.</p>
               </div>
-              <div className={styles.questionsSummaryCell}>
-                <span className={styles.questionsSummaryLabel}>Written</span>
-                <span className={styles.questionsSummaryValue}>{writtenCount.toLocaleString()}</span>
-                <span className={styles.questionsSummaryMeta}>{pct(writtenCount, totalQuestions)}% of total</span>
+              <div className={styles.questionsCard} style={{ marginTop: 'var(--spacing-md)' }}>
+                <div className={styles.questionsSummary}>
+                  <div className={styles.questionsSummaryCell}>
+                    <span className={styles.questionsSummaryLabel}>Total questions</span>
+                    <span className={styles.questionsSummaryValue}>{totalQuestions.toLocaleString()}</span>
+                    {questionRank && (() => {
+                      const { rank, totalEligible } = questionRank
+                      const pctile = totalEligible > 1 ? (rank - 1) / (totalEligible - 1) : 0
+                      const color = pctile <= 0.33 ? 'var(--forest)' : pctile <= 0.66 ? '#92400E' : 'var(--crimson)'
+                      return <span className={styles.questionsSummaryMeta} style={{ color }}>Ranked {rank}/{totalEligible}</span>
+                    })()}
+                  </div>
+                  <div className={styles.questionsSummaryCell}>
+                    <span className={styles.questionsSummaryLabel}>Written</span>
+                    <span className={styles.questionsSummaryValue}>{writtenCount.toLocaleString()}</span>
+                    <span className={styles.questionsSummaryMeta}>{pct(writtenCount, totalQuestions)}% of total</span>
+                  </div>
+                  <div className={styles.questionsSummaryCell}>
+                    <span className={styles.questionsSummaryLabel}>Oral</span>
+                    <span className={styles.questionsSummaryValue}>{oralCount.toLocaleString()}</span>
+                    <span className={styles.questionsSummaryMeta}>{pct(oralCount, totalQuestions)}% of total</span>
+                  </div>
+                </div>
               </div>
-              <div className={styles.questionsSummaryCell}>
-                <span className={styles.questionsSummaryLabel}>Oral</span>
-                <span className={styles.questionsSummaryValue}>{oralCount.toLocaleString()}</span>
-                <span className={styles.questionsSummaryMeta}>{pct(oralCount, totalQuestions)}% of total</span>
-              </div>
-            </div>
-            <div className={styles.questionsChartArea}>
               <QuestionsChart questionStats={questionStats} partyColor={partyColor} />
-            </div>
-          </div>
+            </>
+          )}
+
+          {hansardRows.length > 0 && (() => {
+            const distinctSittings = new Set(hansardRows.map(r => r.reportDocId)).size
+            const distinctDebates = new Set(hansardRows.map(r => r.debateTitle)).size
+            const recentFive = hansardRows.slice(0, 5)
+            return (
+              <>
+                <h3 className={styles.financesSectionHeading} style={{ marginTop: (!hideQuestionsTab && totalQuestions > 0) ? 'var(--spacing-xl)' : undefined }}>Plenary <em>Participation</em></h3>
+                <p className={styles.salaryFootnote} style={{ fontSize: '15px', color: 'var(--ink-2)', fontStyle: 'normal', marginBottom: 0 }}>Sittings and debates this MLA has spoken in during plenary sessions since mandate start.</p>
+                <div className="note-card" style={{ marginTop: 'var(--spacing-md)', marginBottom: 0 }}>
+                  <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
+                    <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
+                    <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
+                  </svg>
+                  <p>Rankings exclude presiding officers only. Ministers are included as they participate in plenary debates in their capacity as MLAs.</p>
+                </div>
+                <div className={styles.questionsCard} style={{ marginTop: 'var(--spacing-md)' }}>
+                  <div className={styles.questionsSummary}>
+                    <div className={styles.questionsSummaryCell}>
+                      <span className={styles.questionsSummaryLabel}>Sittings</span>
+                      <span className={styles.questionsSummaryValue}>{distinctSittings.toLocaleString()}/{hansardSittingsByMonth.reduce((acc, row) => acc + Number(row.totalSittings), 0).toLocaleString()}</span>
+                      {hansardRank && (() => {
+                        const { rank, eligibleCount } = hansardRank
+                        const pctile = eligibleCount > 1 ? (rank - 1) / (eligibleCount - 1) : 0
+                        const color = pctile <= 0.33 ? 'var(--forest)' : pctile <= 0.66 ? '#92400E' : 'var(--crimson)'
+                        return <span className={styles.questionsSummaryMeta} style={{ color }}>Ranked {rank}/{eligibleCount}</span>
+                      })()}
+                      {!hansardRank && <span className={styles.questionsSummarySubtitle}>spoken in this mandate</span>}
+                    </div>
+                    <div className={styles.questionsSummaryCell}>
+                      <span className={styles.questionsSummaryLabel}>Debates Contributed To</span>
+                      <span className={styles.questionsSummaryValue}>{distinctDebates.toLocaleString()}</span>
+                      {hansardDebateRank && (() => {
+                        const { rank, eligibleCount } = hansardDebateRank
+                        const pctile = eligibleCount > 1 ? (rank - 1) / (eligibleCount - 1) : 0
+                        const color = pctile <= 0.33 ? 'var(--forest)' : pctile <= 0.66 ? '#92400E' : 'var(--crimson)'
+                        return <span className={styles.questionsSummaryMeta} style={{ color }}>Ranked {rank}/{eligibleCount}</span>
+                      })()}
+                      {!hansardDebateRank && <span className={styles.questionsSummarySubtitle}>times spoken in the chamber</span>}
+                    </div>
+                    {(() => {
+                      const monthMap = new Map<string, Set<string>>()
+                      for (const row of hansardRows) {
+                        const d = new Date(row.plenaryDate)
+                        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+                        if (!monthMap.has(key)) monthMap.set(key, new Set())
+                        monthMap.get(key)!.add(row.reportDocId)
+                      }
+                      let bestKey = ''
+                      let bestCount = 0
+                      for (const [key, ids] of monthMap) {
+                        if (ids.size > bestCount || (ids.size === bestCount && key > bestKey)) {
+                          bestKey = key
+                          bestCount = ids.size
+                        }
+                      }
+                      if (!bestKey) return null
+                      const [year, month] = bestKey.split('-').map(Number)
+                      const label = new Date(year, month - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+                      return (
+                        <div className={styles.questionsSummaryCell}>
+                          <span className={styles.questionsSummaryLabel}>Most Active Month</span>
+                          <span className={styles.questionsSummaryValue}>{label}</span>
+                          <span className={styles.questionsSummarySubtitle}>{bestCount} sittings spoken in</span>
+                        </div>
+                      )
+                    })()}
+                  </div>
+                </div>
+                <SpeechesChart hansardRows={hansardRows} hansardSittingsByMonth={hansardSittingsByMonth} partyColor={partyColor} />
+                <h3 className={styles.financesSectionHeading} style={{ marginTop: 'var(--spacing-xl)', marginBottom: 'var(--spacing-md)' }}>Recent <em>Activity</em></h3>
+
+                <div className={styles.speechDebateWrap}>
+                  <ul className={styles.speechDebateList}>
+                    {recentFive.map((row, i) => (
+                      <li key={i} className={styles.speechDebateRow}>
+                        <a
+                          href={`https://aims.niassembly.gov.uk/officialreport/report.aspx?&eveDate=${row.plenaryDate}&docID=${row.reportDocId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.speechDebateLink}
+                        >
+                          <span className={styles.speechDebateTitle}>{row.debateTitle}</span>
+                          <span className={styles.speechDebateDate}>
+                            {new Date(row.plenaryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            )
+          })()}
+
         </div>
       )}
 
@@ -243,9 +497,7 @@ export default function ActivityTabsClient(props: Props) {
         <div id="panel-finances" role="tabpanel" aria-labelledby="tab-finances" className={styles.financesPanel}>
           <div className={styles.salaryPanel}>
             <h3 className={styles.financesSectionHeading}>Salary &amp; <em>earnings</em></h3>
-            <p className={styles.salaryFootnote}>
-              * Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.
-            </p>
+            <p className={styles.salaryNotice}>Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</p>
             <div className={styles.salaryCards}>
               <div className={styles.salaryCard}>
                 <span className={styles.questionsSummaryLabel}>Current annual salary</span>
@@ -356,7 +608,10 @@ export default function ActivityTabsClient(props: Props) {
               )}
             </>
           ) : (
-            <p className={styles.interestsEmpty}>No expenses data available.</p>
+            <>
+              <h3 className={styles.financesSectionHeading} style={{ marginTop: 'var(--spacing-xl)', marginBottom: 'var(--s-4)' }}>Office <em>expenses</em></h3>
+              <p className={styles.interestsEmpty}>No expenses data available.</p>
+            </>
           )}
         </div>
       )}
