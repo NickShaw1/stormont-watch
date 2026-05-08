@@ -26,10 +26,10 @@ import PartyName from '@/components/PartyName'
 import styles from '../stats.module.css'
 
 export const metadata: Metadata = {
-  title: 'Voting — Stats',
+  title: 'Voting - Stats',
   description: 'How MLAs and parties vote. Attendance records, party cohesion, rebellion rates and cross-community trends since May 2022.',
   openGraph: {
-    title: 'Voting — Stormont Watch',
+    title: 'Voting - Stormont Watch',
     description: 'How MLAs and parties vote. Attendance records, party cohesion, rebellion rates and cross-community trends since May 2022.',
     images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },

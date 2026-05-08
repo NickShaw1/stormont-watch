@@ -22,10 +22,10 @@ import StatsBreadcrumb from '../StatsBreadcrumb'
 import styles from '../stats.module.css'
 
 export const metadata: Metadata = {
-  title: 'Activity — Stats',
+  title: 'Activity - Stats',
   description: 'Questions to ministers and chamber participation across the 2022–2027 Northern Ireland Assembly mandate.',
   openGraph: {
-    title: 'Activity — Stormont Watch',
+    title: 'Activity - Stormont Watch',
     description: 'Questions to ministers and chamber participation across the 2022–2027 Northern Ireland Assembly mandate.',
     images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },

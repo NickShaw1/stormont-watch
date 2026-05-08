@@ -18,6 +18,9 @@ import { eq, notInArray, sql } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 import { syncContactDetails } from './sync-contact-details'
 import { syncBills } from './sync-bills'
+import { syncHansardContributions } from './sync-hansard-contributions'
+import { syncQuestionStats } from './sync-question-stats'
+import { apiRoleToSalaryRole } from '../lib/salaries'
 
 const BASE = 'http://data.niassembly.gov.uk'
 const CUTOFF = '2022-05-01'
@@ -248,6 +251,56 @@ async function syncMandateAndRoles(db: Db) {
         updated++
       }
 
+      const MANDATE_START = '2022-05-05'
+      const AD_HOC_RE = /concurrent|ad hoc/i
+
+      for (const r of roles) {
+        const affiliationId = String(r?.AffiliationId ?? '')
+        const roleType = String(r?.RoleType ?? '')
+        const role = String(r?.Role ?? '')
+        const organisation = String(r?.Organisation ?? '')
+        const organisationId = String(r?.OrganisationId ?? '')
+        const startRaw = String(r?.AffiliationStart ?? '')
+        const endRaw = r?.AffiliationEnd ? String(r.AffiliationEnd) : null
+
+        if (!affiliationId || !startRaw) continue
+        const startDate = startRaw.slice(0, 10)
+        const endDate = endRaw ? endRaw.slice(0, 10) : null
+
+        if (startDate < MANDATE_START) {
+          const stillActiveAtMandateStart = !endDate || endDate >= MANDATE_START
+          if (!stillActiveAtMandateStart) continue
+        }
+
+        const effectiveStartDate = startDate < MANDATE_START ? MANDATE_START : startDate
+
+        if (roleType === 'Committee Role (incl Assembly Commission)' && AD_HOC_RE.test(organisation)) continue
+
+        const salaryRole = apiRoleToSalaryRole(roleType, role, organisation)
+        if (!salaryRole) continue
+
+        await db
+          .insert(schema.memberRoleHistory)
+          .values({
+            personId,
+            affiliationId,
+            roleType,
+            role,
+            organisation: organisation || null,
+            organisationId: organisationId || null,
+            startDate: effectiveStartDate,
+            endDate,
+            mandate: CURRENT_MANDATE,
+          })
+          .onConflictDoUpdate({
+            target: schema.memberRoleHistory.affiliationId,
+            set: {
+              endDate,
+              updatedAt: new Date(),
+            },
+          })
+      }
+
       processed++
       if (processed % 10 === 0) {
         console.log(`[syncMandateAndRoles] Progress: ${processed}/${allMembers.length} members processed`)
@@ -367,9 +420,10 @@ async function syncCommitteeChairs(db: Db) {
     console.log(`[syncCommitteeChairs] Found ${rawMatches.length} committee chair records in API response`)
 
     const knownMembers = await db
-      .select({ personId: schema.members.personId })
+      .select({ personId: schema.members.personId, fullName: schema.members.fullName })
       .from(schema.members)
     const knownMemberIds = new Set(knownMembers.map((m) => m.personId))
+    const memberNames = new Map(knownMembers.map((m) => [m.personId, m.fullName]))
 
     let count = 0
     let skipped = 0
@@ -389,7 +443,7 @@ async function syncCommitteeChairs(db: Db) {
         continue
       }
       if (!knownMemberIds.has(personId)) {
-        console.warn(`[syncCommitteeChairs] Skipping non-MLA committee chair ${personId}`)
+        console.warn(`[syncCommitteeChairs] Skipping non-MLA committee chair ${personId} (${memberNames.get(personId) ?? 'unknown'})`)
         skipped++
         continue
       }
@@ -612,6 +666,28 @@ async function syncDivisionsAndVotes(db: Db) {
       console.warn(`[syncDivisionsAndVotes] Division ${documentId} has no motion text — writing division without it`)
     }
 
+    const documentType = str(plenaryData?.PlenaryList?.Plenary?.DocumentType)
+    const isMotionAmendment = documentType === 'Motion Amendment'
+    let parentMotionText: string | null = null
+
+    if (isMotionAmendment) {
+      const dateStr = divisionDateFixed.toISOString().slice(0, 10)
+      const dayItems = await apiFetch<any>(
+        `/plenary.asmx/GetPlenaryItemsPlenaryDate_JSON?startDate=${dateStr}&endDate=${dateStr}`
+      )
+      const items = dayItems?.PlenaryList?.Plenary ?? []
+      const itemList = Array.isArray(items) ? items : [items]
+      const parentTitle = (title ?? '').replace(/\s*-\s*Amendment\s+\d+\s*$/i, '').trim()
+      const parent = itemList.find((i: any) =>
+        str(i?.PlenaryTypeID) === '1' &&
+        str(i?.Title).trim().toLowerCase() === parentTitle.toLowerCase()
+      )
+      parentMotionText = parent?.Text ?? null
+      if (!parentMotionText) {
+        console.warn(`[syncDivisionsAndVotes] Could not find parent motion for amendment division ${documentId} — title: "${title}"`)
+      }
+    }
+
     await db
       .insert(schema.divisions)
       .values({
@@ -633,6 +709,8 @@ async function syncDivisionsAndVotes(db: Db) {
         motionText: motionText || null,
         title,
         tabledBy,
+        isMotionAmendment,
+        parentMotionText,
         mandate: CURRENT_MANDATE,
       })
       // Update result fields on conflict. divisionType is included defensively —
@@ -648,6 +726,8 @@ async function syncDivisionsAndVotes(db: Db) {
           motionText: motionText || null,
           title,
           tabledBy,
+          isMotionAmendment,
+          parentMotionText,
           updatedAt: new Date(),
         },
       })
@@ -822,9 +902,11 @@ async function main() {
   await runSync('syncCommitteeChairs', () => syncCommitteeChairs(db))
   await runSync('syncRegisteredInterests', () => syncRegisteredInterests(db))
   await runSync('syncDivisionsAndVotes', () => syncDivisionsAndVotes(db))
-  await runSync('syncBills', () => syncBills(db))
+  await runSync('syncBills', () => syncBills(db, false, CUTOFF))
   await runSync('syncPlenaryItems', () => syncPlenaryItems(db))
   await runSync('syncContactDetails', () => syncContactDetails(db))
+  await runSync('syncHansardContributions', () => syncHansardContributions(db))
+  await runSync('syncQuestionStats', () => syncQuestionStats(db))
 
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   console.log('Sync summary:')

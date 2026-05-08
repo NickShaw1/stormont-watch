@@ -2198,6 +2198,25 @@ export async function getHansardBottomByMLA(limit: number, orderBy: 'sittings' |
   return rows
 }
 
+export async function getHansardAllByMLA() {
+  const rows = await db
+    .select({
+      personId: members.personId,
+      fullName: members.fullName,
+      party: members.party,
+      constituency: members.constituency,
+      imgUrl: members.imgUrl,
+      sittings: sql<number>`count(distinct ${hansardContributions.reportDocId})`.as('sittings'),
+      debates: sql<number>`count(distinct ${hansardContributions.debateTitle})`.as('debates'),
+    })
+    .from(members)
+    .leftJoin(hansardContributions, eq(hansardContributions.personId, members.personId))
+    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole)))
+    .groupBy(members.personId, members.fullName, members.party, members.constituency, members.imgUrl)
+    .orderBy(desc(sql`count(distinct ${hansardContributions.reportDocId})`))
+  return rows
+}
+
 export async function getHansardPartyAverages(): Promise<{ party: string; avgSittings: number; avgDebates: number }[]> {
   const memberTotals = db
     .select({

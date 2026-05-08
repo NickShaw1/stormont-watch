@@ -21,10 +21,10 @@ import StatsBreadcrumb from '../StatsBreadcrumb'
 import styles from '../stats.module.css'
 
 export const metadata: Metadata = {
-  title: 'Spending — Stats',
+  title: 'Spending - Stats',
   description: 'Salaries, office expenses and overall public cost of the Northern Ireland Assembly since May 2022.',
   openGraph: {
-    title: 'Spending — Stormont Watch',
+    title: 'Spending - Stormont Watch',
     description: 'Salaries, office expenses and overall public cost of the Northern Ireland Assembly since May 2022.',
     images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },

@@ -171,6 +171,22 @@ export default async function StatsPage() {
             </div>
             <span className={styles.hubCardArrow}>View questions ↗</span>
           </Link>
+          <Link href="/assembly/sittings" className={styles.hubCard}>
+            <div className={styles.hubCardInner}>
+              <span className={styles.hubCardEyebrow}>Parliamentary activity</span>
+              <span className={styles.hubCardTitle}>Sittings</span>
+              <span className={styles.hubCardDesc}>All current MLAs ranked by plenary sittings spoken in since the 2022 mandate.</span>
+            </div>
+            <span className={styles.hubCardArrow}>View sittings ↗</span>
+          </Link>
+          <Link href="/assembly/topics" className={styles.hubCard}>
+            <div className={styles.hubCardInner}>
+              <span className={styles.hubCardEyebrow}>Parliamentary activity</span>
+              <span className={styles.hubCardTitle}>Topics</span>
+              <span className={styles.hubCardDesc}>All current MLAs ranked by debate topics spoken on since the 2022 mandate.</span>
+            </div>
+            <span className={styles.hubCardArrow}>View topics ↗</span>
+          </Link>
         </div>
       </section>
 

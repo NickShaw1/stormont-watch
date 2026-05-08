@@ -92,7 +92,7 @@ function PartyCard({ title, rows, getValue }: { title: string; rows: PartyRow[];
 export default function StatsQuestionsSection({ top5, bottom5, byParty }: Props) {
   return (
     <>
-      <Link href="/assembly/questions" className={statsStyles.expensesRankingsCard} style={{ marginTop: 0 }}>
+      <Link href="/assembly/questions" className={statsStyles.expensesRankingsCard} style={{ marginTop: 0, marginBottom: 'var(--s-8)' }}>
         <span className={statsStyles.expensesRankingsCardLeft}>
           <svg className={statsStyles.expensesRankingsCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>

@@ -23,6 +23,8 @@ const STATIC_URLS: MetadataRoute.Sitemap = [
   { url: `${BASE}/assembly/overall-cost`, changeFrequency: 'monthly', priority: 0.7 },
   { url: `${BASE}/assembly/expenses`, changeFrequency: 'monthly', priority: 0.7 },
   { url: `${BASE}/assembly/questions`, changeFrequency: 'daily', priority: 0.7 },
+  { url: `${BASE}/assembly/sittings`, changeFrequency: 'daily', priority: 0.7 },
+  { url: `${BASE}/assembly/topics`, changeFrequency: 'daily', priority: 0.7 },
   { url: `${BASE}/assembly/legislation-guide`, changeFrequency: 'yearly', priority: 0.5 },
   { url: `${BASE}/assembly/former-mlas`, changeFrequency: 'monthly', priority: 0.5 },
   { url: `${BASE}/about`, changeFrequency: 'monthly', priority: 0.4 },
