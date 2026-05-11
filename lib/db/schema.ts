@@ -59,6 +59,7 @@ export const hansardReports = pgTable('hansard_reports', {
   reportDocId: text('report_doc_id').primaryKey(),
   plenaryDate: date('plenary_date').notNull(),
   sessionName: text('session_name'),
+  fullyProcessed: boolean('fully_processed').notNull().default(false),
   mandate: text('mandate').notNull().default('2022-2027'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })

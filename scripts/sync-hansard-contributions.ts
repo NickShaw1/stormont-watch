@@ -1,6 +1,7 @@
 import './load-env'
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
+import { eq } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 
 const BASE_URL = 'http://data.niassembly.gov.uk'
@@ -37,23 +38,13 @@ export async function syncHansardContributions(db: Db) {
     }
     console.log(`[syncHansardContributions] Fetched ${allReports.length} total reports`)
 
-    // Step 2 — Determine which reports to process
-    // For each report, we skip it only if it already has rows for ALL eligible members on that date.
-    // We do this by querying the distinct (report_doc_id, person_id) pairs already written,
-    // then comparing against eligible members per report at processing time.
-    const writtenRows = await db
-      .select({
-        reportDocId: schema.hansardContributions.reportDocId,
-        personId: schema.hansardContributions.personId,
-      })
-      .from(schema.hansardContributions)
+    // Step 2 — Load fully processed report IDs
+    const processedReportRows = await db
+      .select({ reportDocId: schema.hansardReports.reportDocId })
+      .from(schema.hansardReports)
+      .where(eq(schema.hansardReports.fullyProcessed, true))
 
-    // Build a map: reportDocId -> Set of personIds already written
-    const writtenByReport = new Map<string, Set<string>>()
-    for (const row of writtenRows) {
-      if (!writtenByReport.has(row.reportDocId)) writtenByReport.set(row.reportDocId, new Set())
-      writtenByReport.get(row.reportDocId)!.add(row.personId)
-    }
+    const processedReports = new Set(processedReportRows.map(r => r.reportDocId))
 
     // Filter to mandate cutoff and sort ascending
     const reportsToConsider = allReports
@@ -102,6 +93,11 @@ export async function syncHansardContributions(db: Db) {
         continue
       }
 
+      if (processedReports.has(reportDocId)) {
+        reportsSkipped++
+        continue
+      }
+
       // Determine eligible members for this plenary date
       const eligibleMembers = allMembers.filter(m => {
         if (!m.mandateStart) return false
@@ -113,16 +109,7 @@ export async function syncHansardContributions(db: Db) {
         return true
       })
 
-      // Skip this report only if all eligible members already have rows written for it
-      const alreadyWritten = writtenByReport.get(reportDocId)
-      if (alreadyWritten && eligibleMembers.every(m => alreadyWritten.has(m.personId))) {
-        reportsSkipped++
-        continue
-      }
-
       for (const member of eligibleMembers) {
-        // Skip this member+report combo if already written
-        if (alreadyWritten?.has(member.personId)) continue
 
         try {
           const res = await fetch(
@@ -178,6 +165,11 @@ export async function syncHansardContributions(db: Db) {
           membersSkipped++
         }
       }
+
+      await db
+        .update(schema.hansardReports)
+        .set({ fullyProcessed: true })
+        .where(eq(schema.hansardReports.reportDocId, reportDocId))
 
       reportsProcessed++
       if (reportsProcessed % 10 === 0) {
