@@ -70,14 +70,20 @@ export async function syncHansardContributions(db: Db) {
     console.log(`[syncHansardContributions] ${reportsToConsider.length} reports within mandate cutoff to evaluate`)
 
     // Step 3 — Fetch all members
-    const allMembers = await db
+    const allMembers = (await db
       .select({
         personId: schema.members.personId,
         mandateStart: schema.members.mandateStart,
         mandateEnd: schema.members.mandateEnd,
         assemblyRole: schema.members.assemblyRole,
+        confirmedSilent: schema.members.confirmedSilent,
       })
-      .from(schema.members)
+      .from(schema.members))
+      .filter(m =>
+        !m.confirmedSilent &&
+        !(m.assemblyRole && PRESIDING_ROLES.has(m.assemblyRole)) &&
+        !(m.mandateEnd && String(m.mandateEnd).slice(0, 10) < MANDATE_CUTOFF)
+      )
 
     console.log(`[syncHansardContributions] Loaded ${allMembers.length} members from database`)
 
@@ -179,7 +185,7 @@ export async function syncHansardContributions(db: Db) {
       }
     }
 
-    console.log(`[syncHansardContributions] Complete — ${rowsWritten} rows written, ${membersSkipped} members skipped, ${reportsProcessed} reports processed`)
+    console.log(`[syncHansardContributions] Complete — ${rowsWritten} rows written, ${membersSkipped} members skipped, ${reportsProcessed} reports processed, ${reportsSkipped} reports skipped`)
   } catch (err) {
     console.error('[syncHansardContributions] Sync error:', err)
   }

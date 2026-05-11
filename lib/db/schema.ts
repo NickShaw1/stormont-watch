@@ -14,6 +14,7 @@ export const members = pgTable('members', {
   assemblyRoleEnd: date('assembly_role_end'),
   email: text('email'),
   mandate: text('mandate').notNull().default('2022-2027'),
+  confirmedSilent: boolean('confirmed_silent').notNull().default(false),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
