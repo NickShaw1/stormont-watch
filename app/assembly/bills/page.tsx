@@ -91,7 +91,13 @@ const isCompleted = (b: typeof allBills[number]) =>
   const completed = allBills
     .filter(b => isCompleted(b))
     .map(b => toItem(b, 'completed'))
-    .sort((a, b) => new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime())
+    .sort((a, b) => {
+      if (!a.royalAssentDate && b.royalAssentDate) return -1
+      if (a.royalAssentDate && !b.royalAssentDate) return 1
+      const aDate = a.royalAssentDate ?? a.latestDate
+      const bDate = b.royalAssentDate ?? b.latestDate
+      return new Date(bDate).getTime() - new Date(aDate).getTime()
+    })
 
   const total = scheduled.length + inProgress.length + completed.length
 

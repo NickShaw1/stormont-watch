@@ -569,6 +569,7 @@ a:hover {
   /* max-width: 65ch; */
 }
 
+
 @media (max-width: 640px) {
   .note-card {
     align-items: flex-start;

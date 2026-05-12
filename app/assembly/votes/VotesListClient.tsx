@@ -278,14 +278,18 @@ export default function VotesListClient({ allItems }: Props) {
                           const ayePct = total > 0 ? (ayes / total) * 100 : 50
                           const noePct = total > 0 ? (noes / total) * 100 : 50
                           return (
-                            <Link key={item.key} href={item.href} className={styles.divOutcomeRow}>
+                            <Link key={item.key} href={item.href} className={`${styles.divOutcomeRow} div-outcome-row`}>
                               <span className={styles.divOutcomeLabel}>{label}</span>
 
                               {total > 0 && (
                                 <div className={styles.divOutcomeBar}>
                                   <div className={styles.divBarTrack}>
-                                    <div className={styles.divBarAye} style={{ width: `${ayePct}%` }} />
-                                    <div className={styles.divBarNo} style={{ width: `${noePct}%` }} />
+                                    <div className={styles.divBarAye} style={{ width: `${ayePct}%` }}>
+                                      {ayePct >= 15 && <span className={styles.divBarAyeLabel}>{ayes} Aye</span>}
+                                    </div>
+                                    <div className={styles.divBarNo} style={{ width: `${noePct}%` }}>
+                                      {noePct >= 15 && <span className={styles.divBarNoLabel}>{noes} No</span>}
+                                    </div>
                                   </div>
                                   <div className={styles.divCounts}>
                                     <span className={styles.divCountAye}>AYE {ayes}</span>

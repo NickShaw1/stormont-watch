@@ -16,6 +16,8 @@ function billSlug(billId: string): string {
 
 export default function BillProgressedRow({ bill }: { bill: BillProgressedThisWeek }) {
   const { main, session } = formatBillNum(bill.billId)
+  // billPassed is intentionally false: teal segments come from future-dated rows in fullHistory,
+  // not from inferred passage state. Inferring passed here would incorrectly force Royal Assent teal.
   const { stageIdx, scheduledIdx, percent, proceduralFlags } = computeBillProgress(
     bill.fullHistory.map(r => ({ stage: r.stage, plenaryDate: r.plenaryDate })),
     bill.royalAssentDate,

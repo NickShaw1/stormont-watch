@@ -290,9 +290,6 @@
   height: 0;
 }
 
-@media (max-width: 640px) {
-  .flexBreak { display: block; }
-}
 
 .srPill {
   font-size: 10px;
@@ -340,7 +337,7 @@
   font-size: 11px;
   color: var(--ink-3);
   letter-spacing: 0.03em;
-  margin-top: 4px;
+  margin-top: var(--s-2);
 }
 
 /* Vote bar column */
@@ -353,8 +350,8 @@
 
 .divBarTrack {
   display: flex;
-  height: 8px;
-  border-radius: 2px;
+  height: 18px;
+  border-radius: 6px;
   overflow: hidden;
   background: var(--paper-3);
 }
@@ -362,24 +359,39 @@
 .divBarAye {
   background: var(--forest);
   min-width: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  border-radius: 6px 0 0 6px;
 }
 
 .divBarNo {
   background: var(--crimson);
   min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  border-radius: 0 6px 6px 0;
 }
 
 .divCounts {
-  display: flex;
-  gap: var(--s-3);
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--ink-3);
-  letter-spacing: 0.04em;
+  display: none;
 }
 
 .divCountAye { color: var(--forest); }
 .divCountNo  { color: var(--crimson); }
+
+.divBarAyeLabel,
+.divBarNoLabel {
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  line-height: 1;
+}
 
 /* ── Grouped card ─────────────────────────────────────────────── */
 .divGrouped {
@@ -538,7 +550,7 @@
       "date main pill"
       "date bar  bar";
     gap: var(--s-2) var(--s-3);
-    padding: 16px 0;
+    padding: 24px 0;
   }
 
   .divDate  { grid-area: date; }
@@ -560,11 +572,34 @@
   .divGrouped .divDate { grid-area: unset; }
   .divGrouped .divMain { grid-area: unset; }
 
-  .divOutcomeBar {
-    width: 90px;
+  .divOutcomeRow {
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 4px;
   }
 
-  .divOutcomeLabel { font-size: 12px; }
+  .divOutcomeLabel {
+    font-size: 11px;
+    order: 1;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .divOutcomeRow > :global(.pill) {
+    order: 2;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .divOutcomeBar {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    padding-block: 4px;
+  }
 
   .divDay { font-size: 18px; }
 
@@ -574,7 +609,26 @@
 
   .divSub {
     flex-wrap: wrap;
-    row-gap: var(--s-1);
+    row-gap: var(--s-2);
   }
+}
+
+@media (max-width: 768px) {
+  .divOutcomeLabel {
+    font-size: 12px;
+  }
+
+  .divOutcomeRow :global(.pill) {
+    font-size: 10px;
+  }
+
+  .divOutcomeRow {
+    padding: 12px 12px;
+  }
+
+  .divOutcomeList {
+    margin-top: var(--s-3);
+  }
+
 }
 
