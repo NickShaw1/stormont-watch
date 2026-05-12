@@ -2120,14 +2120,20 @@ export async function getHansardSittingsByMonthForParty(party: string, mandateSt
 }
 
 export async function getHansardSiteStats() {
-  const rows = await db
-    .select({
-      totalSittings: sql<number>`count(distinct ${hansardContributions.reportDocId})`,
+  const [sittingsRow, contribRow] = await Promise.all([
+    db.select({ totalSittings: sql<number>`count(*)` })
+      .from(hansardReports)
+      .where(sql`${hansardReports.plenaryDate} >= '2022-05-01'`),
+    db.select({
       totalDebates: sql<number>`count(distinct ${hansardContributions.debateTitle})`,
       totalParticipations: sql<number>`count(*)`,
-    })
-    .from(hansardContributions)
-  return rows[0]
+    }).from(hansardContributions),
+  ])
+  return {
+    totalSittings: sittingsRow[0].totalSittings,
+    totalDebates: contribRow[0].totalDebates,
+    totalParticipations: contribRow[0].totalParticipations,
+  }
 }
 
 export async function getHansardSittingsByMonth(mandateStart: string) {
