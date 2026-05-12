@@ -252,7 +252,7 @@ export default function VotesListClient({ allItems }: Props) {
                 const day = d.getDate()
                 const monthYear = `${d.toLocaleString('en', { month: 'short' }).toUpperCase()} · ${d.getFullYear()}`
                 return (
-                  <div key={g.baseTitle} className={`${styles.divRow} ${styles.divGrouped}`}>
+                  <div key={g.mainItem.key} className={`${styles.divRow} ${styles.divGrouped}`}>
                     <div className={styles.divDate}>
                       <strong className={styles.divDay}>{day}</strong>
                       <span className={styles.divMonthYear}>{monthYear}</span>
