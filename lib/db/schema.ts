@@ -203,3 +203,15 @@ export const memberRoleHistory = pgTable('member_role_history', {
 })
 
 export type MemberRoleHistory = typeof memberRoleHistory.$inferSelect
+
+export const plenaryDiary = pgTable('plenary_diary', {
+  eventId: text('event_id').primaryKey(),
+  eventDate: date('event_date').notNull(),
+  eventType: text('event_type').notNull(),
+  organisationName: text('organisation_name'),
+  startTime: timestamp('start_time', { withTimezone: true }),
+  endTime: timestamp('end_time', { withTimezone: true }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+})
+
+export type PlenaryDiaryEvent = typeof plenaryDiary.$inferSelect

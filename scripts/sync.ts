@@ -1,5 +1,6 @@
 import './load-env'
 import { syncBills } from './sync-bills'
+import { syncPlenaryDiary } from './sync-plenary-diary'
 import { syncContactDetails } from './sync-contact-details'
 import { syncQuestionStats } from './sync-question-stats'
 import { syncHansardContributions } from './sync-hansard-contributions'
@@ -974,7 +975,6 @@ async function main() {
     await runSync('syncRegisteredInterests', () => syncRegisteredInterests(db))
     await runSync('syncQuestionStats', () => syncQuestionStats(db))
     await runSync('syncHansardContributions', () => syncHansardContributions(db))
-    await runSync('syncPlenaryItems', () => syncPlenaryItems(db))
   } else {
     // On non-Monday days, load member IDs from DB directly for syncNewDivisions
     console.log('Daily sync — loading member IDs from database...')
@@ -988,6 +988,7 @@ async function main() {
   }
 
   // Daily scripts — run every time
+  await runSync('syncPlenaryItems', () => syncPlenaryItems(db))
   await runSync('syncHansardReports', () => syncHansardReports(db))
   await runSync('syncMinisters', () => syncMinisters(db))
   await runSync('syncCommitteeChairs', () => syncCommitteeChairs(db))
@@ -1008,6 +1009,7 @@ async function main() {
     await runSync('syncNewDivisions:range', () => syncNewDivisions(db, knownMemberIds, currentMemberIds, fromFlag, toFlag))
   }
   await runSync('syncBills', () => syncBills(db, false, isBackfill2022 ? '2022-05-01' : undefined))
+  await runSync('syncPlenaryDiary', () => syncPlenaryDiary(db))
 
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   console.log('Sync summary:')

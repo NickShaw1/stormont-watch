@@ -13,7 +13,7 @@ import {
   getActiveBillsCount,
   getDivisionsPerMonth,
   getBillsPassedPerMonth,
-  getThisWeekPlenaryItems,
+  getWeeklyDiary,
   getAllMlasByConstituency,
   getSittingDays,
   getOverallAgreementRate,
@@ -49,8 +49,15 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const now = new Date()
+  const weekStartDate = new Date(now)
+  const todayDay = now.getDay()
+  if (todayDay === 6) weekStartDate.setDate(now.getDate() + 2)       // Saturday → next Monday
+  else if (todayDay === 0) weekStartDate.setDate(now.getDate() + 1)  // Sunday → next Monday
+  else weekStartDate.setDate(now.getDate() + (1 - todayDay))         // Mon–Fri → this Monday
+  const weekStart = weekStartDate.toISOString().slice(0, 10)
+
   const [stats, avgAttendance, leastEngaged, mostEngaged, latestDivisions, inProgressBills,
-    inProgressBillsCount, divisionsPerMonth, billsPassedPerMonth, thisWeekAgenda, mlasByConstituency,
+    inProgressBillsCount, divisionsPerMonth, billsPassedPerMonth, weeklyDiary, mlasByConstituency,
     sittingDays, overallAgreementRate, totalExpensesData, questionTotalsRaw] =
     await Promise.all([
       getHomepageStats(),
@@ -62,7 +69,7 @@ export default async function HomePage() {
       getActiveBillsCount(),
       getDivisionsPerMonth(),
       getBillsPassedPerMonth(),
-      getThisWeekPlenaryItems(),
+      getWeeklyDiary(weekStart),
       getAllMlasByConstituency(),
       getSittingDays(),
       getOverallAgreementRate(),
@@ -154,7 +161,7 @@ export default async function HomePage() {
                 </div>
               </div>
             </div>
-            <Link href="/assembly/votes" className={styles.heroBrowseBtn}>Browse all votes →</Link>
+            <Link href="/assembly/votes" className={styles.heroBrowseBtn}>Browse all votes <span aria-hidden="true">→</span></Link>
           </div>
         </div>
         <p className={styles.heroCredit}>
@@ -222,27 +229,45 @@ export default async function HomePage() {
         ) : <div className={`${styles.kfig} ${styles.kfigMlaCard}`} />}
       </div>
 
-      {/* Expenses promo */}
+      {/* Explore Statistics hub */}
       <section className={styles.section}>
-        <div className={`${styles.sectionHead} ${styles.sectionHeadWithSubtitle}`}>
+        <div className={styles.sectionHead} style={{ marginBottom: 'var(--s-2)' }}>
           <div>
-            <span className={styles.sectionEyebrow}>Public spending</span>
-            <h2 className={styles.sectionTitle}>Expenses league table</h2>
-            <p className={styles.sectionSubtitle}>Expense claims for each MLA across all published financial years.</p>
+            <span className={styles.sectionEyebrow}>Statistics</span>
+            <h2 className={styles.sectionTitle}>Explore Statistics</h2>
           </div>
+          <Link href="/assembly/stats" className={styles.viewAll}>All stats <span aria-hidden="true">↗</span></Link>
         </div>
-        <Link href="/assembly/expenses" className={styles.expensesCard}>
-          <span className={styles.expensesCardLeft}>
-            <svg className={styles.expensesCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
-              <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
-              <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
-            </svg>
-            <span className={styles.expensesCardText}>View full MLA expenses rankings</span>
-          </span>
-          <span className={styles.expensesCardArrow} aria-hidden="true">↗</span>
-        </Link>
+        <p className={styles.sectionSubtitle} style={{ marginBottom: 'var(--s-4)' }}>Voting, spending and parliamentary activity across the 2022 to 2027 mandate.</p>
+        <div className={styles.hubGrid}>
+          <Link href="/assembly/stats/spending" className={styles.hubCard}>
+            <div className={styles.hubCardInner}>
+              <span className={styles.hubCardEyebrow}>Public spending</span>
+              <span className={styles.hubCardTitle}>Spending</span>
+              <span className={styles.hubCardDesc}>Salaries, office expenses and overall public cost of the Assembly since May 2022.</span>
+            </div>
+            <span className={styles.hubCardArrow} aria-hidden="true">View spending ↗</span>
+          </Link>
+          <Link href="/assembly/stats/activity" className={styles.hubCard}>
+            <div className={styles.hubCardInner}>
+              <span className={styles.hubCardEyebrow}>Parliamentary activity</span>
+              <span className={styles.hubCardTitle}>Activity</span>
+              <span className={styles.hubCardDesc}>Questions to ministers and chamber participation across the 2022–2027 mandate.</span>
+            </div>
+            <span className={styles.hubCardArrow} aria-hidden="true">View activity ↗</span>
+          </Link>
+          <Link href="/assembly/stats/voting" className={styles.hubCard}>
+            <div className={styles.hubCardInner}>
+              <span className={styles.hubCardEyebrow}>Voting and attendance</span>
+              <span className={styles.hubCardTitle}>Voting</span>
+              <span className={styles.hubCardDesc}>How MLAs and parties vote. Attendance records, party cohesion, rebellion rates and cross-community trends since May 2022.</span>
+            </div>
+            <span className={styles.hubCardArrow} aria-hidden="true">View voting ↗</span>
+          </Link>
+        </div>
       </section>
+
+      <hr className={`section-rule ${styles.mobileRule}`} />
 
       {/* Find your MLAs */}
       <section className={styles.section}>
@@ -255,8 +280,10 @@ export default async function HomePage() {
         <ConstituencySelector mlasByConstituency={mlasByConstituency} />
       </section>
 
+      <hr className={`section-rule ${styles.mobileRule}`} />
+
       {/* This week strip */}
-      <section className={styles.section}>
+      <section className={`${styles.section} ${styles.agendaSection}`}>
         <div className={styles.sectionHead}>
           <div>
             <span className={styles.sectionEyebrow}>Assembly activity</span>
@@ -283,47 +310,53 @@ export default async function HomePage() {
         </div>
 
         {(() => {
-          const monday = new Date()
-          const day = monday.getDay()
-          monday.setDate(monday.getDate() + (day === 0 ? -6 : 1 - day))
-          const mondayLabel = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(monday)
+          const mondayLabel = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${weekStart}T12:00:00Z`))
           const BILL_ID_RE = /\s*\(NIA Bill \d+\/\d{2}-\d{2,4}\)$/
 
-          if (thisWeekAgenda.length === 0) {
+          const weekdays = weeklyDiary.filter(d => d.weekday !== 'Saturday' && d.weekday !== 'Sunday')
+          const hasContent = (d: typeof weekdays[0]) => d.plenary !== null || d.agenda.length > 0 || d.billStages.length > 0 || d.committees.length > 0
+          const pastDays = weekdays.filter(d => d.isPast)
+          const futureDays = weekdays.filter(d => !d.isPast && !d.isToday)
+          const todayDay = weekdays.find(d => d.isToday)
+
+          const renderDay = (day: typeof weekdays[0]) => {
+            const dateLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'short' }).format(new Date(`${day.date}T12:00:00Z`))
+            const startTime = day.plenary?.startTime
+              ? new Date(day.plenary.startTime).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/London' })
+              : null
+            const dayHasContent = hasContent(day)
+
             return (
-              <>
-                <div className={styles.agendaHeader}>
-                  <span>On the <em>floor</em></span>
-                  <span><span className={styles.agendaWc}>Week commencing </span><span className={styles.agendaWcShort}>w/c </span>{mondayLabel}</span>
+              <div key={day.date} className={`${styles.agendaDayGroup}${day.isToday ? ` ${styles.agendaDayToday}` : ''}`}>
+                <div className={styles.agendaDayLabel}>
+                  <span className={styles.agendaDayDot} aria-hidden="true">•</span>{dateLabel}
                 </div>
-                <p className={styles.agendaEmpty}>No plenary business scheduled this week.</p>
-              </>
-            )
-          }
 
-          const byDate = thisWeekAgenda.reduce<Record<string, typeof thisWeekAgenda>>((acc, item) => {
-            const d = item.plenary_date.slice(0, 10)
-            ;(acc[d] ??= []).push(item)
-            return acc
-          }, {})
+                {day.plenary !== null && (day.agenda.length > 0 || day.billStages.length > 0) ? (
+                  <div className={styles.agendaSectionRow}>
+                    <div className={styles.agendaSectionLabel}>Assembly business</div>
+                    <div className={styles.agendaSittingLabel}>
+                      {day.isPast ? 'Assembly sat' : 'Assembly sitting'}{startTime ? ` · ${startTime}` : ''}
+                    </div>
+                  </div>
+                ) : day.plenary !== null ? (
+                  <div className={styles.agendaSittingLabel}>
+                    {day.isPast ? 'Assembly sat' : 'Assembly sitting'}{startTime ? ` · ${startTime}` : ''}
+                  </div>
+                ) : null}
 
-          return (
-            <>
-              <div className={styles.agendaHeader}>
-                <span>On the <em>floor</em></span>
-                <span><span className={styles.agendaWc}>Week commencing </span><span className={styles.agendaWcShort}>w/c </span>{mondayLabel}</span>
-              </div>
-              {Object.entries(byDate).map(([date, items]) => {
-                const label = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00Z`))
-                return (
-                  <div key={date} className={styles.agendaDay}>
-                    <div className={styles.agendaDayLabel}>{label}</div>
-                    {items.map(item => {
+                {!dayHasContent && (
+                  <p className={styles.agendaEmpty}>No business scheduled</p>
+                )}
+
+                {(day.agenda.length > 0 || day.billStages.length > 0) && (
+                  <div className={styles.agendaDay}>
+                    {day.agenda.map(item => {
                       const colonIdx = item.title.indexOf(':')
                       const typeLabel = colonIdx > -1
                         ? item.title.slice(0, colonIdx).trim()
                         : item.title.includes(' - Amendment') ? 'Amendment'
-                        : item.plenary_type_id === '5' ? 'Debate' : 'Motion'
+                        : item.plenaryTypeId === '5' ? 'Debate' : 'Motion'
                       const rawTitle = colonIdx > -1 ? item.title.slice(colonIdx + 1).trim() : item.title
                       const billIdMatch = rawTitle.match(/\(NIA Bill (\d+\/\d{2}-\d{2,4})\)$/)
                       const billId = billIdMatch ? `NIA Bill ${billIdMatch[1]}` : null
@@ -331,7 +364,7 @@ export default async function HomePage() {
                       const slug = billId ? billId.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-') : null
                       const isProcedural = typeLabel === 'Motion' || typeLabel === 'Debate'
                       return (
-                        <div key={item.document_id} className={styles.agendaItem}>
+                        <div key={item.documentId} className={styles.agendaItem}>
                           {slug ? (
                             <Link href={`/assembly/bills/${slug}`} className={styles.agendaTitle}>{displayTitle}</Link>
                           ) : (
@@ -341,13 +374,56 @@ export default async function HomePage() {
                         </div>
                       )
                     })}
+
+                    {day.billStages.map(bs => {
+                      const slug = bs.billId.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
+                      return (
+                        <div key={`${bs.billId}-${bs.stage}`} className={styles.agendaItem}>
+                          <Link href={`/assembly/bills/${slug}`} className={styles.agendaTitle}>{bs.shortTitle}</Link>
+                          <span className={styles.agendaType}>{bs.stage}</span>
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
+                )}
+
+                {day.committees.length > 0 && (
+                  <>
+                    <div className={styles.agendaSectionLabel} style={{ marginTop: 'var(--s-5)' }}>Committee meetings</div>
+                    <div className={styles.agendaDay}>
+                      {day.committees.map((c, i) => {
+                        const time = c.startTime
+                          ? new Date(c.startTime).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/London' })
+                          : null
+                        return (
+                          <div key={i} className={styles.agendaItem}>
+                            <span className={styles.agendaTitle}>{c.organisationName}</span>
+                            {time && <span style={{ color: 'var(--ink-3)', fontSize: '13px' }}>{time}</span>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            )
+          }
+
+          return (
+            <>
+              <div className={styles.agendaHeader}>
+                <span>On the <em>floor</em></span>
+                <span><span className={styles.agendaWc}>Week commencing </span><span className={styles.agendaWcShort}>w/c </span>{mondayLabel}</span>
+              </div>
+              {pastDays.map(renderDay)}
+              {todayDay && renderDay(todayDay)}
+              {futureDays.map(renderDay)}
             </>
           )
         })()}
       </section>
+
+      <hr className={`section-rule ${styles.mobileRule}`} />
 
       {/* Latest votes + Bills in progress */}
       <div className={styles.twoCol}>
@@ -357,14 +433,14 @@ export default async function HomePage() {
             <span className={styles.sectionEyebrow}>Assembly floor</span>
             <h2 className={styles.sectionTitle}>Recent divisions</h2>
           </div>
-          <Link href="/assembly/votes" className={styles.viewAll}>All divisions ↗</Link>
+          <Link href="/assembly/votes" className={styles.viewAll}>All divisions <span aria-hidden="true">↗</span></Link>
         </div>
         <div className={`${styles.sectionHead} ${styles.sectionHeadBills}`}>
           <div>
             <span className={styles.sectionEyebrow}>Legislation</span>
             <h2 className={styles.sectionTitle}>Active legislation</h2>
           </div>
-          <Link href="/assembly/bills" className={styles.viewAll}>All bills ↗</Link>
+          <Link href="/assembly/bills" className={styles.viewAll}>All bills <span aria-hidden="true">↗</span></Link>
         </div>
 
         {/* Paired rows — div + bill share the same grid row so border lines align */}
@@ -435,27 +511,31 @@ export default async function HomePage() {
         })}
       </div>
 
-      {/* Overall cost promo */}
+      <hr className={`section-rule ${styles.mobileRule}`} />
+
+      {/* Expenses promo */}
       <section className={styles.section}>
         <div className={`${styles.sectionHead} ${styles.sectionHeadWithSubtitle}`}>
           <div>
             <span className={styles.sectionEyebrow}>Public spending</span>
-            <h2 className={styles.sectionTitle}>Overall cost</h2>
-            <p className={styles.sectionSubtitle}>Estimated salary plus claimed expenses for each MLA since May 2022.</p>
+            <h2 className={styles.sectionTitle}>Expenses league table</h2>
+            <p className={styles.sectionSubtitle}>Expense claims for each MLA across all published financial years.</p>
           </div>
         </div>
-        <Link href="/assembly/overall-cost" className={styles.expensesCard}>
+        <Link href="/assembly/expenses" className={styles.expensesCard}>
           <span className={styles.expensesCardLeft}>
             <svg className={styles.expensesCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
               <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
               <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
             </svg>
-            <span className={styles.expensesCardText}>View overall cost rankings <span className={styles.expensesCardTextSub}>(salary + expenses)</span></span>
+            <span className={styles.expensesCardText}>View full MLA expenses rankings</span>
           </span>
           <span className={styles.expensesCardArrow} aria-hidden="true">↗</span>
         </Link>
       </section>
+
+      <hr className={`section-rule ${styles.mobileRule}`} />
 
       {/* Did you know */}
       <section className={styles.section}>

@@ -164,15 +164,18 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
       const plenaryDate = new Date(`${dateStr}T12:00:00.000Z`)
 
       // 7. --force-titles: overwrite title fields when explicitly requested
+      const isAccelerated = billData.IsAcceleratedPassage === 'true'
       const titleSet = forceTitles ? {
         shortTitle: billData.ShortTitle?.trim() ?? billId,
         longTitle: billData.LongTitle?.trim() ?? null,
         billType: billData.BillType?.trim() ?? null,
+        isAccelerated,
         currentStage: stage,
         latestDate: plenaryDate,
         updatedAt: new Date(),
       } : {
         // Title fields written on INSERT only — never clobbered by a later lower-priority item
+        isAccelerated,
         currentStage: stage,
         latestDate: plenaryDate,
         updatedAt: new Date(),
@@ -183,7 +186,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
         shortTitle: billData.ShortTitle?.trim() ?? billId,
         longTitle: billData.LongTitle?.trim() ?? null,
         billType: billData.BillType?.trim() ?? null,
-        isAccelerated: billData.IsAcceleratedPassage === 'true',
+        isAccelerated,
         currentStage: stage,
         latestDate: plenaryDate,
         mandate: CURRENT_MANDATE,

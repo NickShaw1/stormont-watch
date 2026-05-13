@@ -1,6 +1,6 @@
 import { eq, desc, sql, and, count, countDistinct, isNotNull, isNull, gte, lte, asc } from 'drizzle-orm'
 import { db } from './client'
-import { members, divisions, votes, hansardReports, ministers, committeeChairs, expenses, registeredInterests, bills, billStages, questionStats, memberRoleHistory, hansardContributions } from './schema'
+import { members, divisions, votes, hansardReports, ministers, committeeChairs, expenses, registeredInterests, bills, billStages, questionStats, memberRoleHistory, hansardContributions, plenaryDiary } from './schema'
 import { stripHonorifics } from '@/lib/utils/formatNames'
 import { getSurname } from '@/lib/format'
 
@@ -418,6 +418,32 @@ export async function getMostRebelliousMla(): Promise<{
     rebellionCount: Number(r.rebellion_count),
     imgUrl: mlaImg(r.person_id),
   }
+}
+
+export async function getPlenaryDiaryToday() {
+  const today = new Date().toISOString().slice(0, 10)
+  return db
+    .select()
+    .from(plenaryDiary)
+    .where(eq(plenaryDiary.eventDate, today))
+    .orderBy(asc(plenaryDiary.startTime))
+}
+
+export async function getPlenaryDiaryThisWeek() {
+  const now = new Date()
+  const day = now.getDay()
+  const diffToMonday = day === 0 ? -6 : 1 - day
+  const monday = new Date(now)
+  monday.setDate(now.getDate() + diffToMonday)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  const startDate = monday.toISOString().slice(0, 10)
+  const endDate = sunday.toISOString().slice(0, 10)
+  return db
+    .select()
+    .from(plenaryDiary)
+    .where(and(gte(plenaryDiary.eventDate, startDate), lte(plenaryDiary.eventDate, endDate)))
+    .orderBy(asc(plenaryDiary.eventDate), asc(plenaryDiary.startTime))
 }
 
 export async function getMostCrossCommunityAgreement(): Promise<typeof divisions.$inferSelect | null> {
@@ -1437,6 +1463,118 @@ export async function getThisWeekPlenaryItems(): Promise<{ document_id: string; 
   merged.sort((a, b) => a.plenary_date.localeCompare(b.plenary_date) || a.title.localeCompare(b.title))
 
   return merged
+}
+
+export type WeeklyDiaryDay = {
+  date: string
+  weekday: string
+  isToday: boolean
+  isPast: boolean
+  plenary: { startTime: string | null; endTime: string | null } | null
+  agenda: { documentId: string; title: string; plenaryType: string; plenaryTypeId: string }[]
+  billStages: { billId: string; shortTitle: string; stage: string }[]
+  committees: { organisationName: string; startTime: string | null; endTime: string | null }[]
+}
+
+export async function getWeeklyDiary(weekStart: string): Promise<WeeklyDiaryDay[]> {
+  const monday = new Date(`${weekStart}T12:00:00Z`)
+  const sunday = new Date(monday)
+  sunday.setUTCDate(monday.getUTCDate() + 6)
+  const weekEnd = sunday.toISOString().slice(0, 10)
+  const todayStr = new Date().toISOString().slice(0, 10)
+
+  const [diaryRows, itemRows, stageRows] = await Promise.all([
+    db.execute(sql`
+      SELECT event_id, event_date::text, event_type, organisation_name,
+             start_time, end_time
+      FROM plenary_diary
+      WHERE event_date >= ${weekStart}::date
+        AND event_date <= ${weekEnd}::date
+      ORDER BY event_date, start_time
+    `),
+    db.execute(sql`
+      SELECT document_id, title, plenary_date::text, plenary_type, plenary_type_id
+      FROM plenary_items
+      WHERE plenary_date >= ${weekStart}::date
+        AND plenary_date <= ${weekEnd}::date
+        AND plenary_type_id != '2'
+      ORDER BY plenary_date, title
+    `),
+    db.execute(sql`
+      SELECT DISTINCT ON (bs.bill_id, bs.stage, bs.plenary_date::date)
+        bs.bill_id,
+        b.short_title,
+        bs.stage,
+        bs.plenary_date::date::text AS plenary_date
+      FROM bill_stages bs
+      JOIN bills b ON bs.bill_id = b.bill_id
+      WHERE bs.plenary_date::date >= ${weekStart}::date
+        AND bs.plenary_date::date <= ${weekEnd}::date
+      ORDER BY bs.bill_id, bs.stage, bs.plenary_date::date, bs.plenary_date DESC
+    `),
+  ])
+
+  type DiaryRow = { event_id: string; event_date: string; event_type: string; organisation_name: string | null; start_time: string | null; end_time: string | null }
+  type ItemRow = { document_id: string; title: string; plenary_date: string; plenary_type: string; plenary_type_id: string }
+  type StageRow = { bill_id: string; short_title: string; stage: string; plenary_date: string }
+
+  const diary = diaryRows.rows as DiaryRow[]
+  const items = itemRows.rows as ItemRow[]
+  const stages = stageRows.rows as StageRow[]
+
+  const days: WeeklyDiaryDay[] = []
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday)
+    d.setUTCDate(monday.getUTCDate() + i)
+    const dateStr = d.toISOString().slice(0, 10)
+    const weekday = d.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' })
+
+    const dayDiary = diary.filter(r => r.event_date.slice(0, 10) === dateStr)
+
+    const plenaryEvent = dayDiary.find(r => r.event_type === 'plenary') ?? null
+    const plenary = plenaryEvent
+      ? { startTime: plenaryEvent.start_time, endTime: plenaryEvent.end_time }
+      : null
+
+    const committees = dayDiary
+      .filter(r => r.event_type === 'committee' && r.organisation_name)
+      .map(r => ({ organisationName: r.organisation_name!, startTime: r.start_time, endTime: r.end_time }))
+
+    const agenda = items
+      .filter(r => r.plenary_date.slice(0, 10) === dateStr)
+      .map(r => ({ documentId: r.document_id, title: r.title, plenaryType: r.plenary_type, plenaryTypeId: r.plenary_type_id }))
+
+    // Bill stages — dedupe by billId+stage, skip if already represented in agenda (prefer plenary_items)
+    const agendaBillKeys = new Set(
+      agenda
+        .map(r => { const m = r.title.match(/\(NIA Bill (\S+)\)$/); return m ? `${m[1]}||${r.title.split(':')[0]?.trim()}` : null })
+        .filter(Boolean) as string[]
+    )
+    const seenBillStage = new Set<string>()
+    const dayBillStages = stages
+      .filter(r => r.plenary_date.slice(0, 10) === dateStr)
+      .filter(r => {
+        const key = `${r.bill_id}||${r.stage}`
+        if (seenBillStage.has(key)) return false
+        seenBillStage.add(key)
+        return !agendaBillKeys.has(key)
+      })
+      .map(r => ({ billId: r.bill_id, shortTitle: r.short_title, stage: r.stage }))
+
+    days.push({
+      date: dateStr,
+      weekday,
+      isToday: dateStr === todayStr,
+      isPast: dateStr < todayStr,
+      plenary,
+      agenda,
+      billStages: dayBillStages,
+      committees,
+    })
+  }
+
+  return days
 }
 
 export async function getInProgressBills(limit = 5) {
