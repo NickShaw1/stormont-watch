@@ -322,7 +322,7 @@ export default async function HomePage() {
           const renderDay = (day: typeof weekdays[0]) => {
             const dateLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'short' }).format(new Date(`${day.date}T12:00:00Z`))
             const startTime = day.plenary?.startTime
-              ? new Date(day.plenary.startTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Europe/London' })
+              ? new Date(day.plenary.startTime.replace(' ', 'T').replace('+00', '+00:00')).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/London' })
               : null
             const dayHasContent = hasContent(day)
 
@@ -393,7 +393,7 @@ export default async function HomePage() {
                     <div className={styles.agendaDay}>
                       {day.committees.map((c, i) => {
                         const time = c.startTime
-                          ? new Date(c.startTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Europe/London' })
+                          ? new Date(c.startTime.replace(' ', 'T').replace('+00', '+00:00')).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/London' })
                           : null
                         return (
                           <div key={i} className={styles.agendaItem}>
