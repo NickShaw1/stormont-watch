@@ -28,6 +28,18 @@ import ConstituencySelector from '@/app/components/ConstituencySelector'
 import BillStagePill from '@/app/components/BillStagePill'
 import styles from './home.module.css'
 
+function formatLondonTime(input: string): string {
+  const date = new Date(input.replace(' ', 'T').replace(/\+00$/, '+00:00'))
+  const parts = new Intl.DateTimeFormat('en-US', {
+    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/London',
+  }).formatToParts(date)
+  const h = parseInt(parts.find(p => p.type === 'hour')?.value ?? '0', 10)
+  const m = parts.find(p => p.type === 'minute')?.value ?? '00'
+  const period = h < 12 ? 'AM' : 'PM'
+  const hour12 = h % 12 || 12
+  return `${hour12}:${m} ${period}`
+}
+
 export const metadata: Metadata = {
   title: 'Stormont Watch',
   description: 'Stormont Watch tracks every vote, bill and expense in the Northern Ireland Assembly. See how your MLA votes, explore the full voting record and follow legislation since the 2022 mandate.',
@@ -322,7 +334,7 @@ export default async function HomePage() {
           const renderDay = (day: typeof weekdays[0]) => {
             const dateLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'short' }).format(new Date(`${day.date}T12:00:00Z`))
             const startTime = day.plenary?.startTime
-              ? new Date(day.plenary.startTime.replace(' ', 'T').replace('+00', '+00:00')).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/London' })
+              ? formatLondonTime(day.plenary.startTime)
               : null
             const dayHasContent = hasContent(day)
 
@@ -393,7 +405,7 @@ export default async function HomePage() {
                     <div className={styles.agendaDay}>
                       {day.committees.map((c, i) => {
                         const time = c.startTime
-                          ? new Date(c.startTime.replace(' ', 'T').replace('+00', '+00:00')).toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/London' })
+                          ? formatLondonTime(c.startTime)
                           : null
                         return (
                           <div key={i} className={styles.agendaItem}>
