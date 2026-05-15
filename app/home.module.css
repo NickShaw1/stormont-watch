@@ -598,6 +598,13 @@ a.agendaTitle:hover {
   color: var(--teal);
 }
 
+.agendaTime {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
 .agendaItem:has(a:hover) {
   background: var(--paper-2);
 }

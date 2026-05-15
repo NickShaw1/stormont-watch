@@ -410,7 +410,7 @@ export default async function HomePage() {
                         return (
                           <div key={i} className={styles.agendaItem}>
                             <span className={styles.agendaTitle}>{c.organisationName}</span>
-                            {time && <span style={{ color: 'var(--ink-3)', fontSize: '13px' }}>{time}</span>}
+                            {time && <span className={styles.agendaTime}>{time}</span>}
                           </div>
                         )
                       })}

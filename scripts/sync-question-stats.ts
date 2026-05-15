@@ -26,6 +26,7 @@ export async function syncQuestionStats(db: Db) {
 
   const cutoffPreview = (() => {
     const d = new Date()
+    d.setDate(1)
     d.setMonth(d.getMonth() - 6)
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
   })()
@@ -49,6 +50,7 @@ export async function syncQuestionStats(db: Db) {
 
       // Filter to last 6 months only — older months are already correct
       const sixMonthsAgo = new Date()
+      sixMonthsAgo.setDate(1)
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
       const cutoff = `${sixMonthsAgo.getFullYear()}-${String(sixMonthsAgo.getMonth() + 1).padStart(2, '0')}-01`
 

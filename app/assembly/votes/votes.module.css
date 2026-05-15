@@ -385,12 +385,12 @@
 .divBarAyeLabel,
 .divBarNoLabel {
   font-size: 12px;
-  font-weight: 500;
+  line-height: 18px;
+  font-weight: 400;
   font-family: var(--font-sans);
   color: rgba(255, 255, 255, 0.85);
   white-space: nowrap;
   overflow: hidden;
-  line-height: 1;
 }
 
 /* ── Grouped card ─────────────────────────────────────────────── */

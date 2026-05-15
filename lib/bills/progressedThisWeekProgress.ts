@@ -28,6 +28,7 @@ const PROCEDURAL = [
 const PRECEDENCE: Record<BillEventType, number> = { voted: 2, passed: 1 }
 
 export function deriveHeadlineEvent(events: BillEvent[]): BillEvent {
+  if (events.length === 0) throw new Error('deriveHeadlineEvent called with empty array')
   return events.reduce((best, e) => {
     const bp = PRECEDENCE[best.eventType]
     const ep = PRECEDENCE[e.eventType]

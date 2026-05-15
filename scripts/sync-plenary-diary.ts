@@ -1,7 +1,7 @@
 import './load-env'
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
-import { and, notInArray, gt, lte } from 'drizzle-orm'
+import { and, notInArray, gte, lte } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 
 const BASE = 'http://data.niassembly.gov.uk'
@@ -72,7 +72,7 @@ export async function syncPlenaryDiary(db: Db): Promise<void> {
   const existingRows = await db
     .select({ eventId: schema.plenaryDiary.eventId })
     .from(schema.plenaryDiary)
-    .where(gt(schema.plenaryDiary.eventDate, todayStr))
+    .where(gte(schema.plenaryDiary.eventDate, todayStr))
   const existingIds = new Set(existingRows.map(r => r.eventId))
 
   let written = 0
@@ -141,7 +141,7 @@ export async function syncPlenaryDiary(db: Db): Promise<void> {
       .delete(schema.plenaryDiary)
       .where(
         and(
-          gt(schema.plenaryDiary.eventDate, startDate),
+          gte(schema.plenaryDiary.eventDate, startDate),
           lte(schema.plenaryDiary.eventDate, endDate),
           notInArray(schema.plenaryDiary.eventId, seenEventIds)
         )

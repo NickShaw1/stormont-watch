@@ -60,7 +60,7 @@ export function parseStageName(title: string | null | undefined): string {
 export function formatMonthGroup(dateStr: string): string {
   const d = new Date(dateStr)
   if (isNaN(d.getTime())) return ''
-  return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+  return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' })
 }
 
 /**
@@ -69,7 +69,7 @@ export function formatMonthGroup(dateStr: string): string {
 export function monthKey(dateStr: string): string {
   const d = new Date(dateStr)
   if (isNaN(d.getTime())) return ''
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
 }
 
 const PARTY_ABBREVIATIONS: Record<string, string> = {
