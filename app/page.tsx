@@ -63,6 +63,7 @@ export default async function HomePage() {
   const now = new Date()
   const weekStartDate = new Date(now)
   const todayDay = now.getDay()
+  const isWeekend = todayDay === 6 || todayDay === 0
   if (todayDay === 6) weekStartDate.setDate(now.getDate() + 2)       // Saturday → next Monday
   else if (todayDay === 0) weekStartDate.setDate(now.getDate() + 1)  // Sunday → next Monday
   else weekStartDate.setDate(now.getDate() + (1 - todayDay))         // Mon–Fri → this Monday
@@ -352,13 +353,20 @@ export default async function HomePage() {
                     </div>
                   </div>
                 ) : day.plenary !== null ? (
-                  <div className={styles.agendaSittingLabel}>
-                    {day.isPast ? 'Assembly sat' : 'Assembly sitting'}{startTime ? ` · ${startTime}` : ''}
+                  <div className={styles.agendaSectionRow}>
+                    <div className={styles.agendaSectionLabel}>Assembly business</div>
+                    <div className={styles.agendaSittingLabel}>
+                      {day.isPast ? 'Assembly sat' : 'Assembly sitting'}{startTime ? ` · ${startTime}` : ''}
+                    </div>
                   </div>
                 ) : null}
 
                 {!dayHasContent && (
                   <p className={styles.agendaEmpty}>No business scheduled</p>
+                )}
+
+                {day.plenary !== null && day.agenda.length === 0 && day.billStages.length === 0 && (
+                  <p className={styles.agendaEmpty}>Agenda details not available</p>
                 )}
 
                 {(day.agenda.length > 0 || day.billStages.length > 0) && (
@@ -424,7 +432,7 @@ export default async function HomePage() {
           return (
             <>
               <div className={styles.agendaHeader}>
-                <span>On the <em>floor</em></span>
+                <span>On the <em>floor</em>{isWeekend && <><span style={{ color: 'var(--ink)', margin: '0 0.35em' }}>·</span><em style={{ fontStyle: 'italic', color: 'var(--teal)' }}>coming week</em></>}</span>
                 <span><span className={styles.agendaWc}>Week commencing </span><span className={styles.agendaWcShort}>w/c </span>{mondayLabel}</span>
               </div>
               {pastDays.map(renderDay)}

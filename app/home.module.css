@@ -462,8 +462,8 @@
 }
 
 .agendaHeader em {
-  font-style: italic;
-  color: var(--teal);
+  font-style: normal;
+  color: var(--ink);
 }
 
 .agendaEmpty {
