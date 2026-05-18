@@ -1548,14 +1548,19 @@ export async function getWeeklyDiary(weekStart: string): Promise<WeeklyDiaryDay[
     // Bill stages — dedupe by billId+stage, skip if already represented in agenda (prefer plenary_items)
     const agendaBillKeys = new Set(
       agenda
-        .map(r => { const m = r.title.match(/\(NIA Bill (\S+)\)$/); return m ? `${m[1]}||${r.title.split(':')[0]?.trim()}` : null })
+        .map(r => { const m = r.title.match(/\((NIA Bill \S+?)\)?$/); return m ? `${m[1]}||${r.title.split(':')[0]?.trim()}` : null })
         .filter(Boolean) as string[]
     )
+    if (dateStr === '2026-05-19') {
+      console.log('[DEBUG 2026-05-19] agenda titles:', agenda.map(r => r.title))
+      console.log('[DEBUG 2026-05-19] agendaBillKeys:', [...agendaBillKeys])
+    }
     const seenBillStage = new Set<string>()
     const dayBillStages = stages
       .filter(r => r.plenary_date.slice(0, 10) === dateStr)
       .filter(r => {
         const key = `${r.bill_id}||${r.stage}`
+        if (dateStr === '2026-05-19') console.log('[DEBUG 2026-05-19] billStage key:', key, '| blocked:', agendaBillKeys.has(key))
         if (seenBillStage.has(key)) return false
         seenBillStage.add(key)
         return !agendaBillKeys.has(key)

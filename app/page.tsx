@@ -324,7 +324,7 @@ export default async function HomePage() {
 
         {(() => {
           const mondayLabel = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${weekStart}T12:00:00Z`))
-          const BILL_ID_RE = /\s*\(NIA Bill \d+\/\d{2}-\d{2,4}\)$/
+          const BILL_ID_RE = /\s*\(NIA Bill [^)]*\)?$/
 
           const weekdays = weeklyDiary.filter(d => d.weekday !== 'Saturday' && d.weekday !== 'Sunday')
           const hasContent = (d: typeof weekdays[0]) => d.plenary !== null || d.agenda.length > 0 || d.billStages.length > 0 || d.committees.length > 0
@@ -344,6 +344,8 @@ export default async function HomePage() {
                 <div className={styles.agendaDayLabel}>
                   <span className={styles.agendaDayDot} aria-hidden="true">•</span>{dateLabel}
                 </div>
+
+                <div className={styles.agendaDayCard}>
 
                 {day.plenary !== null && (day.agenda.length > 0 || day.billStages.length > 0) ? (
                   <div className={styles.agendaSectionRow}>
@@ -409,7 +411,9 @@ export default async function HomePage() {
 
                 {day.committees.length > 0 && (
                   <>
-                    <div className={styles.agendaSectionLabel} style={{ marginTop: 'var(--s-5)' }}>Committee meetings</div>
+                    <div className={styles.agendaSectionRow}>
+                      <div className={styles.agendaSectionLabel}>Committee meetings</div>
+                    </div>
                     <div className={styles.agendaDay}>
                       {day.committees.map((c, i) => {
                         const time = c.startTime
@@ -425,6 +429,8 @@ export default async function HomePage() {
                     </div>
                   </>
                 )}
+
+                </div>
               </div>
             )
           }
@@ -432,7 +438,7 @@ export default async function HomePage() {
           return (
             <>
               <div className={styles.agendaHeader}>
-                <span>On the <em>floor</em>{isWeekend && <><span style={{ color: 'var(--ink)', margin: '0 0.35em' }}>·</span><em style={{ fontStyle: 'italic', color: 'var(--teal)' }}>coming week</em></>}</span>
+                <span>On the <em style={{ color: 'var(--teal)', fontStyle: 'italic' }}>floor</em>{isWeekend && <><span style={{ color: 'var(--ink)', margin: '0 0.35em' }}>·</span><em style={{ fontStyle: 'italic', color: 'var(--teal)' }}>coming week</em></>}</span>
                 <span><span className={styles.agendaWc}>Week commencing </span><span className={styles.agendaWcShort}>w/c </span>{mondayLabel}</span>
               </div>
               {pastDays.map(renderDay)}
