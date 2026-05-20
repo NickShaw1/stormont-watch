@@ -130,6 +130,7 @@ export async function getDivisionWithVotes(documentId: string) {
       personId: members.personId,
       fullName: members.fullName,
       party: members.party,
+      memberDesignation: members.designation,
     })
     .from(votes)
     .innerJoin(members, eq(votes.personId, members.personId))

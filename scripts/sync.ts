@@ -758,11 +758,18 @@ async function syncCurrentMemberRoles(db: Db) {
           !r.AffiliationEnd
       )
 
+      const designationRole = roles.find(
+        (r: any) =>
+          r.RoleType === 'Political Designation Role' &&
+          !r.AffiliationEnd
+      )
+
       const mandateStart = currentMandateMlaRole?.AffiliationStart?.slice(0, 10) ?? null
       const mandateEnd = currentMandateMlaRole?.AffiliationEnd?.slice(0, 10) ?? null
       const assemblyRole = specialRole?.Role ?? null
       const assemblyRoleStart = specialRole?.AffiliationStart?.slice(0, 10) ?? null
       const assemblyRoleEnd = specialRole?.AffiliationEnd?.slice(0, 10) ?? null
+      const designation = designationRole?.Role ?? null
 
       await db
         .update(schema.members)
@@ -772,6 +779,7 @@ async function syncCurrentMemberRoles(db: Db) {
           assemblyRole,
           assemblyRoleStart: assemblyRoleStart ?? null,
           assemblyRoleEnd: assemblyRoleEnd ?? null,
+          designation,
           updatedAt: new Date(),
         })
         .where(eq(schema.members.personId, personId))

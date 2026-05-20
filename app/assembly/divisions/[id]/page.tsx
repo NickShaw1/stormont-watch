@@ -101,19 +101,16 @@ export default async function DivisionDetailPage({ params }: Props) {
     (division.nationalistAyes ?? 0) + (division.unionistAyes ?? 0) +
     (division.nationalistNoes ?? 0) + (division.unionistNoes ?? 0) > 0
 
-  const UNIONIST_PARTIES = new Set(['Democratic Unionist Party', 'Ulster Unionist Party', 'Traditional Unionist Voice'])
-  const NATIONALIST_PARTIES = new Set(['Sinn Féin', 'Social Democratic and Labour Party'])
-
   const noShowByDesignation = {
-    Unionist: noShows.filter((v) => UNIONIST_PARTIES.has(v.party ?? '')).length,
-    Nationalist: noShows.filter((v) => NATIONALIST_PARTIES.has(v.party ?? '')).length,
-    Other: noShows.filter((v) => !UNIONIST_PARTIES.has(v.party ?? '') && !NATIONALIST_PARTIES.has(v.party ?? '')).length,
+    Unionist: noShows.filter((v) => (v.memberDesignation ?? v.designation) === 'Unionist').length,
+    Nationalist: noShows.filter((v) => (v.memberDesignation ?? v.designation) === 'Nationalist').length,
+    Other: noShows.filter((v) => (v.memberDesignation ?? v.designation) === 'Other' || !(v.memberDesignation ?? v.designation)).length,
   }
 
   const abstainByDesignation = {
-    Unionist: abstains.filter((v) => UNIONIST_PARTIES.has(v.party ?? '')).length,
-    Nationalist: abstains.filter((v) => NATIONALIST_PARTIES.has(v.party ?? '')).length,
-    Other: abstains.filter((v) => !UNIONIST_PARTIES.has(v.party ?? '') && !NATIONALIST_PARTIES.has(v.party ?? '')).length,
+    Unionist: abstains.filter((v) => (v.memberDesignation ?? v.designation) === 'Unionist').length,
+    Nationalist: abstains.filter((v) => (v.memberDesignation ?? v.designation) === 'Nationalist').length,
+    Other: abstains.filter((v) => (v.memberDesignation ?? v.designation) === 'Other' || !(v.memberDesignation ?? v.designation)).length,
   }
 
   const hasDesignationNoShow = noShows.length > 0

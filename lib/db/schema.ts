@@ -15,6 +15,7 @@ export const members = pgTable('members', {
   email: text('email'),
   mandate: text('mandate').notNull().default('2022-2027'),
   confirmedSilent: boolean('confirmed_silent').notNull().default(false),
+  designation: text('designation'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 

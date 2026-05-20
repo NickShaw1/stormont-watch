@@ -185,14 +185,14 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
         <div className={styles.overviewCard}>
           <span className={styles.overviewLabel}>Highest agreement month</span>
           <span className={styles.overviewValue}>{peakMonth?.agreement_pct ?? '—'}%</span>
-          <span className={styles.overviewMeta}>{peakLabel} ({peakMonth?.total_divisions} divisions)</span>
+          <span className={styles.overviewMeta}>{peakLabel} ({peakMonth?.agreed_divisions}/{peakMonth?.total_divisions} divisions agreed)</span>
         </div>
         <div className={styles.overviewCard}>
           <span className={styles.overviewLabel}>Most recent month</span>
           <span className={styles.overviewValue} style={{ color: getAgreementColor(latestWithData?.agreement_pct ?? null) }}>
             {latestWithData?.agreement_pct ?? '—'}%
           </span>
-          <span className={styles.overviewMeta}>{latestLabel} ({latestWithData?.total_divisions} divisions)</span>
+          <span className={styles.overviewMeta}>{latestLabel} ({latestWithData?.agreed_divisions}/{latestWithData?.total_divisions} divisions agreed)</span>
         </div>
       </div>
 
@@ -210,7 +210,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
           <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
           <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
         </svg>
-        <p>Percentage of divisions in each month where the majority of unionist and nationalist MLAs voted the same way (both majority Aye or both majority No). Smaller points indicate months with fewer than 3 divisions, which are less statistically reliable.</p>
+        <p>Percentage of divisions in each month where more unionist MLAs voted Aye than No, and more nationalist MLAs voted Aye than No (or both majority No). Abstentions and no-shows are excluded from the comparison, so a bloc with many abstentions may still register a majority direction from a small number of directional votes. Smaller points indicate months with fewer than 3 divisions, which are less statistically reliable.</p>
       </div>
 
       <h3 className={styles.chartTitle}>Bloc voting agreement by month</h3>
