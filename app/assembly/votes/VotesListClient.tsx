@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import Link from 'next/link'
 import { formatMonthGroup, monthKey } from '@/lib/format'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'

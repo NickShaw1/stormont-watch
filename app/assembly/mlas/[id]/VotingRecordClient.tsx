@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import Link from 'next/link'
 import { isPassed } from '@/lib/bills'
 import { formatDate } from '@/lib/format'

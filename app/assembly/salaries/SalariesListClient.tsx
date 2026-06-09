@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
@@ -139,7 +139,7 @@ export default function SalariesListClient({ bySalary, byEarnings }: Props) {
             </tr>
           </thead>
           <tbody>
-            {visible.map((row, i) => {
+            {visible.map((row) => {
               const val = sortMode === 'salary' ? row.currentSalary : row.mandateEarnings
               const barPct = maxVal > 0 ? Math.round(val / maxVal * 100) : 0
               const globalI = filtered.indexOf(row)
