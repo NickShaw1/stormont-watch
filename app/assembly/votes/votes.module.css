@@ -1,6 +1,5 @@
 /* ── Page header ──────────────────────────────────────────────── */
 .pageHeader {
-  padding-block: var(--s-12) var(--s-4);
   border-bottom: 1px solid var(--rule);
   margin-bottom: var(--s-10);
 }
@@ -130,7 +129,7 @@
 
 /* ── Search ───────────────────────────────────────────────────── */
 .searchWrap {
-  margin-bottom: var(--s-10);
+  margin-bottom: var(--s-5);
 }
 
 .search {
@@ -163,7 +162,8 @@
   font-size: 13px;
   font-family: var(--font-sans);
   color: var(--ink-3);
-  margin-bottom: var(--s-5);
+  margin-bottom: 0;
+  padding-bottom: var(--s-10);
 }
 
 /* ── Month heading ────────────────────────────────────────────── */
@@ -485,10 +485,6 @@
 
 /* ── Mobile ───────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .pageHeader {
-    padding-block: var(--s-8) var(--s-6);
-  }
-
   .pageHeader h1 {
     font-size: 44px;
     letter-spacing: -0.045em;

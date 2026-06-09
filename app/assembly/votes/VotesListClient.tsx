@@ -66,6 +66,7 @@ export interface VoteItem {
   subject: string
   latestDate: string
   passed: boolean | null
+  outcome?: string | null
   motionText?: string | null
   isCrossCommunity?: boolean
   isBill?: boolean
@@ -78,15 +79,12 @@ interface Props {
   allItems: VoteItem[]
 }
 
-const ITEMS_PER_PAGE = 30
-
 export default function VotesListClient({ allItems }: Props) {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [yearFilter, setYearFilter] = useState('ALL')
   const [resultFilter, setResultFilter] = useState<'ALL' | 'PASSED' | 'FAILED'>('ALL')
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'BILLS' | 'MOTIONS' | 'REGULATIONS'>('ALL')
-  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
 
   const years = Array.from(new Set(allItems.map(i => i.latestDate.slice(0, 4)))).sort((a, b) => b.localeCompare(a))
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -100,9 +98,6 @@ export default function VotesListClient({ allItems }: Props) {
 
   const q = debouncedQuery.toLowerCase().trim()
 
-  useEffect(() => {
-    setVisibleCount(ITEMS_PER_PAGE)
-  }, [yearFilter, resultFilter, typeFilter, debouncedQuery])
 
   const filteredItems = allItems
     .filter(item => yearFilter === 'ALL' || item.latestDate.slice(0, 4) === yearFilter)
@@ -121,9 +116,6 @@ export default function VotesListClient({ allItems }: Props) {
     })
     .filter(item => !q || formatDivisionSubject(item.rawTitle ?? item.subject).title.toLowerCase().includes(q))
 
-  const visibleItems = filteredItems.slice(0, visibleCount)
-  const hasMore = visibleCount < filteredItems.length
-
   const totalByMonth = new Map<string, number>()
   for (const item of filteredItems) {
     const key = monthKey(item.latestDate)
@@ -131,7 +123,7 @@ export default function VotesListClient({ allItems }: Props) {
   }
 
   const byMonth = new Map<string, VoteItem[]>()
-  for (const item of visibleItems) {
+  for (const item of filteredItems) {
     const key = monthKey(item.latestDate)
     const group = byMonth.get(key) ?? []
     group.push(item)
@@ -237,9 +229,9 @@ export default function VotesListClient({ allItems }: Props) {
         <p className={styles.emptyState}>No divisions match your search.</p>
       )}
 
-      {monthGroups.map((group) => (
+      {monthGroups.map((group, gi) => (
         <React.Fragment key={group.label}>
-          <hr className={styles.monthRule} />
+          {gi > 0 && <hr className={styles.monthRule} />}
           <section className={styles.monthSection} aria-label={`${group.label} — ${group.totalCount} division${group.totalCount !== 1 ? 's' : ''}`}>
             <h2 className={styles.monthHeading}>
               {group.label}
@@ -268,10 +260,15 @@ export default function VotesListClient({ allItems }: Props) {
                         </div>
                       )}
                       <div className={styles.divOutcomeList}>
-                        {divItems.map((item) => {
+                        {(() => {
+                          const anyAmendmentPassed = divItems.some(
+                            i => getAmendmentNumber(i.rawTitle ?? i.subject) !== null && i.passed === true
+                          )
+                          return divItems.map((item) => {
                           const amendNum = getAmendmentNumber(item.rawTitle ?? item.subject)
                           const { subtitle: itemSubtitle } = formatDivisionSubject(item.rawTitle ?? item.subject)
-                          const label = amendNum !== null ? `Amendment ${amendNum}` : (itemSubtitle ?? 'Motion')
+                          const isAsAmended = amendNum === null && (anyAmendmentPassed || /as amended/i.test(item.outcome ?? ''))
+                          const label = amendNum !== null ? `Amendment ${amendNum}` : (isAsAmended ? 'Motion (as amended)' : (itemSubtitle ?? 'Motion'))
                           const ayes = item.totalAyes ?? 0
                           const noes = item.totalNoes ?? 0
                           const total = ayes + noes
@@ -301,7 +298,8 @@ export default function VotesListClient({ allItems }: Props) {
                               {item.passed === false && <span className="pill fail">Failed</span>}
                             </Link>
                           )
-                        })}
+                        })
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -312,14 +310,6 @@ export default function VotesListClient({ allItems }: Props) {
         </React.Fragment>
       ))}
 
-      {hasMore && (
-        <button
-          className={styles.loadMore}
-          onClick={() => setVisibleCount(c => c + 50)}
-        >
-          Load more ({filteredItems.length - visibleCount} remaining)
-        </button>
-      )}
     </div>
   )
 }

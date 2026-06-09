@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { eq } from 'drizzle-orm'
-import { getDivisionWithVotes, getHansardReportId, getAllDivisionsFromDb } from '@/lib/db/queries'
+import { getDivisionWithVotes, getHansardReportId, getAllDivisionsFromDb, getAmendmentMotionTexts } from '@/lib/db/queries'
 
 export async function generateStaticParams() {
   const divisions = await getAllDivisionsFromDb()
@@ -79,6 +79,12 @@ export default async function DivisionDetailPage({ params }: Props) {
     : null
 
   const plenaryDateStr = new Date(division.divisionDate).toISOString().slice(0, 10)
+
+  // For non-amendment divisions, look for sibling amendment divisions that passed
+  const amendmentTexts = !division.isMotionAmendment && division.title
+    ? await getAmendmentMotionTexts(division.title, plenaryDateStr)
+    : []
+
   const reportDocId = await getHansardReportId(plenaryDateStr)
   const officialReportUrl = reportDocId
     ? `https://aims.niassembly.gov.uk/officialreport/report.aspx?&eveDate=${plenaryDateStr.replace(/-/g, '/')}&docID=${reportDocId}`
@@ -216,6 +222,38 @@ export default async function DivisionDetailPage({ params }: Props) {
                   <div className={`${styles.motionColumn} ${styles.motionColumnAmended}`}>
                     <h3 className={styles.motionSubheading}>Amendment text</h3>
                     <p className={styles.motionText}>{division.motionText}</p>
+                  </div>
+                </div>
+              ) : amendmentTexts.length > 0 ? (
+                <div className={styles.motionColumns}>
+                  <div className={`${styles.motionColumn} ${styles.motionColumnOriginal}`}>
+                    <h3 className={styles.motionSubheading}>Original motion</h3>
+                    <p className={styles.motionText}>{division.motionText}</p>
+                  </div>
+                  <div className={`${styles.motionColumn} ${styles.motionColumnAmended}`}>
+                    <h3 className={styles.motionSubheading}>
+                      {amendmentTexts.length === 1 ? 'Amendment text (passed)' : 'Amendments passed'}
+                    </h3>
+                    {amendmentTexts.map((a) => (
+                      <p key={a.title} className={styles.motionText}>{a.motion_text}</p>
+                    ))}
+                  </div>
+                </div>
+              ) : /as amended/i.test(division.outcome ?? '') && !isMotionAmendment ? (
+                <div className={styles.motionColumns}>
+                  <div className={`${styles.motionColumn} ${styles.motionColumnOriginal}`}>
+                    <h3 className={styles.motionSubheading}>Original motion</h3>
+                    <p className={styles.motionText}>{division.motionText}</p>
+                  </div>
+                  <div className={`${styles.motionColumn} ${styles.motionColumnAmended}`}>
+                    <h3 className={styles.motionSubheading}>Amendment text (passed)</h3>
+                    <p className={styles.amendmentNote}>
+                      The amendment was agreed without a formal division. The amended text is not available in the current data -{' '}
+                      {officialReportUrl
+                        ? <a href={officialReportUrl} target="_blank" rel="noopener noreferrer">see the Official Report</a>
+                        : 'see the Official Report'
+                      }{' '}for the full text.
+                    </p>
                   </div>
                 </div>
               ) : (

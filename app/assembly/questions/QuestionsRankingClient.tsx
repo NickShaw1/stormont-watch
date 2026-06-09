@@ -22,7 +22,7 @@ interface Props {
   totalMlaCount: number
 }
 
-const PAGE_SIZE = 25
+
 
 const PARTIES = [
   'Democratic Unionist Party',
@@ -41,35 +41,18 @@ function partyLabel(party: string): string {
 
 export default function QuestionsRankingClient({ rows, totalMlaCount }: Props) {
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
-  const [isMobile, setIsMobile] = useState(false)
-  const firstNewRef = useRef<HTMLTableRowElement | null>(null)
   const router = useRouter()
-
-  useEffect(() => { setIsMobile(window.matchMedia('(max-width: 640px)').matches) }, [])
 
   const filtered = partyFilter === 'ALL'
     ? rows
     : rows.filter(r => r.party === partyFilter)
 
-  const visible = isMobile ? filtered : filtered.slice(0, visibleCount)
-  const hasMore = !isMobile && visibleCount < filtered.length
+  const visible = filtered
   const maxTotal = rows[0]?.total ?? 1
 
   function handlePartyFilter(party: string) {
     setPartyFilter(party)
-    setVisibleCount(PAGE_SIZE)
   }
-
-  const handleLoadMore = useCallback(() => {
-    setVisibleCount(c => c + 50)
-    requestAnimationFrame(() => {
-      if (firstNewRef.current) {
-        firstNewRef.current.scrollIntoView({ block: 'start' })
-        firstNewRef.current.focus({ preventScroll: true })
-      }
-    })
-  }, [])
 
   const displayCount = partyFilter === 'ALL' ? totalMlaCount : filtered.length
 
@@ -134,15 +117,12 @@ export default function QuestionsRankingClient({ rows, totalMlaCount }: Props) {
             {visible.map((row, i) => {
               const barPct = maxTotal > 0 ? Math.round(row.total / maxTotal * 100) : 0
               const globalRank = i + 1
-              const isFirstNew = i === visibleCount - PAGE_SIZE && i > 0
               const isTop = i === 0
 
               return (
                 <tr
                   key={row.personId}
                   className={`${styles.tableRow} ${isTop ? styles.rowGold : ''}`}
-                  ref={isFirstNew ? firstNewRef : undefined}
-                  tabIndex={isFirstNew ? -1 : undefined}
                   onClick={() => router.push(`/assembly/mlas/${row.personId}`)}
                   style={{ cursor: 'pointer' }}
                 >
@@ -206,15 +186,6 @@ export default function QuestionsRankingClient({ rows, totalMlaCount }: Props) {
         </table>
       </div>
 
-      {hasMore && (
-        <button
-          className={styles.loadMore}
-          onClick={handleLoadMore}
-          aria-label="Load more MLAs"
-        >
-          Load more ({filtered.length - visibleCount} remaining)
-        </button>
-      )}
     </>
   )
 }

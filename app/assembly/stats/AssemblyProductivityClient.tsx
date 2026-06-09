@@ -1,17 +1,21 @@
 'use client'
 import styles from './stats.module.css'
+import AllPartyAttendanceChart from './AllPartyAttendanceChart'
 
 interface MonthRow { month: string; total_divisions: number }
 interface YearRow { year: number; total: number; passed: number; pass_rate: number }
+interface PartyTrendRow { party: string; month: string; attendancePct: number; memberCount: number }
 
 export default function AssemblyProductivityClient({
   monthData,
   yearData,
   sittingDays,
+  partyAttendanceTrends,
 }: {
   monthData: MonthRow[]
   yearData: YearRow[]
   sittingDays: number
+  partyAttendanceTrends: PartyTrendRow[]
 }) {
   const parsed = monthData.map(r => ({ ...r, total_divisions: Number(r.total_divisions) }))
   const currentMonth = new Date().toISOString().slice(0, 7)
@@ -70,6 +74,10 @@ export default function AssemblyProductivityClient({
           <span className={styles.overviewMeta}>since Assembly resumed, excluding months with no sittings</span>
         </div>
       </div>
+
+      <h3 className={styles.chartTitle}>Party Division Attendance</h3>
+      <p className={styles.trendNote} style={{ marginBottom: '1rem' }}>How each party&apos;s division attendance has tracked month by month since May 2022.</p>
+      <AllPartyAttendanceChart data={partyAttendanceTrends} />
 
       <h3 className={styles.chartTitle}>Divisions per month</h3>
       <p className={styles.trendNote} style={{ marginBottom: '1rem' }}>Number of votes held each month over the last 24 months.</p>

@@ -14,6 +14,7 @@ import {
   getHansardPartyAverages,
   getHansardThisMonth,
   getHansardSiteStats,
+  getAllPartyAttendanceTrends,
 } from '@/lib/db/queries'
 import StatsQuestionsSection from '../StatsQuestionsSection'
 import StatsChamberSection from '../StatsChamberSection'
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
 }
 
 export default async function ActivityPage() {
-  const [leaderboard, allCurrentMembers, ministerRows, questionTotalsRaw, divisionsPerMonth, passRateByYear, sittingDays, hansardTopBySittings, hansardBottomBySittings, hansardTopByTopics, hansardBottomByTopics, hansardPartyAverages, hansardThisMonth, hansardSiteStats] = await Promise.all([
+  const [leaderboard, allCurrentMembers, ministerRows, questionTotalsRaw, divisionsPerMonth, passRateByYear, sittingDays, hansardTopBySittings, hansardBottomBySittings, hansardTopByTopics, hansardBottomByTopics, hansardPartyAverages, hansardThisMonth, hansardSiteStats, partyAttendanceTrends] = await Promise.all([
     getMlaLeaderboard(),
     getAllMembers(),
     getAllMinisters(),
@@ -48,6 +49,7 @@ export default async function ActivityPage() {
     getHansardPartyAverages(),
     getHansardThisMonth(),
     getHansardSiteStats(),
+    getAllPartyAttendanceTrends(),
   ])
 
   // Question rankings
@@ -138,7 +140,7 @@ export default async function ActivityPage() {
           <div className={styles.sectionRule}></div>
           <p className={styles.sectionDesc}>How active the Assembly has been since May 2022.</p>
         </div>
-        <AssemblyProductivityClient monthData={divisionsPerMonth} yearData={passRateByYear} sittingDays={sittingDays} />
+        <AssemblyProductivityClient monthData={divisionsPerMonth} yearData={passRateByYear} sittingDays={sittingDays} partyAttendanceTrends={partyAttendanceTrends} />
       </section>
     </div>
   )

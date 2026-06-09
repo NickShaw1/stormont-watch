@@ -24,7 +24,7 @@ interface Props {
   rows: CostRow[]
 }
 
-const PAGE_SIZE = 25
+
 
 const PARTIES = [
   'Democratic Unionist Party',
@@ -47,29 +47,15 @@ function partyLabel(party: string) {
 
 export default function OverallCostListClient({ rows }: Props) {
   const [partyFilter, setPartyFilter] = useState('ALL')
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
-  const firstNewRef = useRef<HTMLTableRowElement | null>(null)
   const router = useRouter()
 
   const filtered = partyFilter === 'ALL' ? rows : rows.filter(r => r.party === partyFilter)
-  const visible = filtered.slice(0, visibleCount)
-  const hasMore = visibleCount < filtered.length
+  const visible = filtered
   const maxVal = rows[0]?.totalCost ?? 1
 
   function handlePartyFilter(party: string) {
     setPartyFilter(party)
-    setVisibleCount(PAGE_SIZE)
   }
-
-  const handleLoadMore = useCallback(() => {
-    setVisibleCount(c => c + 50)
-    requestAnimationFrame(() => {
-      if (firstNewRef.current) {
-        firstNewRef.current.scrollIntoView({ block: 'start' })
-        firstNewRef.current.focus({ preventScroll: true })
-      }
-    })
-  }, [])
 
   return (
     <>
@@ -123,15 +109,12 @@ export default function OverallCostListClient({ rows }: Props) {
           <tbody>
             {visible.map((row, i) => {
               const barPct = maxVal > 0 ? Math.round(row.totalCost / maxVal * 100) : 0
-              const isFirstNew = i === visibleCount - PAGE_SIZE && i > 0
               const isTop = i === 0
 
               return (
                 <tr
                   key={row.personId}
                   className={`${styles.tableRow} ${isTop ? styles.rowGold : ''}`}
-                  ref={isFirstNew ? firstNewRef : undefined}
-                  tabIndex={isFirstNew ? -1 : undefined}
                   onClick={() => router.push(`/assembly/mlas/${row.personId}`)}
                   style={{ cursor: 'pointer' }}
                 >
@@ -192,11 +175,6 @@ export default function OverallCostListClient({ rows }: Props) {
         </table>
       </div>
 
-      {hasMore && (
-        <button className={styles.loadMore} onClick={handleLoadMore} aria-label="Load more MLAs">
-          Load more ({filtered.length - visibleCount} remaining)
-        </button>
-      )}
     </>
   )
 }

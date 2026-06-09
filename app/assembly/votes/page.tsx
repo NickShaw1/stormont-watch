@@ -29,6 +29,7 @@ export default async function VotesPage() {
     subject: d.subject ?? '',
     latestDate: d.divisionDate.toISOString(),
     passed: isPassed(d.outcome ?? null),
+    outcome: d.outcome ?? null,
     motionText: d.motionText ?? null,
     isStatutory: /^The draft /i.test(d.title ?? '') || /^Prayer of Annulment:/i.test(d.title ?? '') || /^Applicability Motion/i.test(d.title ?? ''),
     isBill: !(/^The draft /i.test(d.title ?? '') || /^Prayer of Annulment:/i.test(d.title ?? '') || /^Applicability Motion/i.test(d.title ?? '')) && (/NIA Bill/i.test(d.subject ?? '') || /(?:First|Second|Committee|Consideration|Further Consideration|Final) Stage:/i.test(d.subject ?? '')),

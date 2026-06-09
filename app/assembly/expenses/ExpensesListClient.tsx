@@ -26,7 +26,7 @@ interface Props {
   latestYear: string | null
 }
 
-const PAGE_SIZE = 25
+
 
 const PARTIES = [
   'Democratic Unionist Party',
@@ -84,8 +84,6 @@ export default function ExpensesListClient({ rows, years }: Props) {
   const [selectedYear, setSelectedYear] = useState<string>(OVERALL)
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false)
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
-  const firstNewRef = useRef<HTMLTableRowElement | null>(null)
   const yearDropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -112,30 +110,17 @@ export default function ExpensesListClient({ rows, years }: Props) {
     ? yearRows
     : yearRows.filter(r => r.party === partyFilter)
 
-  const visible = filtered.slice(0, visibleCount)
-  const hasMore = visibleCount < filtered.length
+  const visible = filtered
   const maxTotal = yearRows[0] ? parseFloat(yearRows[0].total ?? '0') : 1
 
   function handleYearChange(year: string) {
     setSelectedYear(year)
     setPartyFilter('ALL')
-    setVisibleCount(PAGE_SIZE)
   }
 
   function handlePartyFilter(party: string) {
     setPartyFilter(party)
-    setVisibleCount(PAGE_SIZE)
   }
-
-  const handleLoadMore = useCallback(() => {
-    setVisibleCount(c => c + 50)
-    requestAnimationFrame(() => {
-      if (firstNewRef.current) {
-        firstNewRef.current.scrollIntoView({ block: 'start' })
-        firstNewRef.current.focus({ preventScroll: true })
-      }
-    })
-  }, [])
 
   return (
     <>
@@ -261,15 +246,12 @@ export default function ExpensesListClient({ rows, years }: Props) {
               const total = parseFloat(row.total ?? '0')
               const barPct = maxTotal > 0 ? Math.round(total / maxTotal * 100) : 0
               const globalRank = i + 1
-              const isFirstNew = i === visibleCount - PAGE_SIZE && i > 0
               const isTop = i === 0
 
               return (
                 <tr
                   key={row.personId}
                   className={`${styles.tableRow} ${isTop ? styles.rowGold : ''}`}
-                  ref={isFirstNew ? firstNewRef : undefined}
-                  tabIndex={isFirstNew ? -1 : undefined}
                   onClick={() => router.push(`/assembly/mlas/${row.personId}`)}
                   style={{ cursor: 'pointer' }}
                 >
@@ -337,15 +319,6 @@ export default function ExpensesListClient({ rows, years }: Props) {
         </table>
       </div>
 
-      {hasMore && (
-        <button
-          className={styles.loadMore}
-          onClick={handleLoadMore}
-          aria-label="Load more MLAs"
-        >
-          Load more ({filtered.length - visibleCount} remaining)
-        </button>
-      )}
     </>
   )
 }

@@ -114,6 +114,23 @@ export async function getMemberVotingHistory(personId: string) {
     .orderBy(desc(divisions.divisionDate))
 }
 
+export async function getAmendmentMotionTexts(baseTitle: string, divisionDateStr: string) {
+  const result = await db.execute(sql`
+    SELECT motion_text, title, outcome
+    FROM divisions
+    WHERE title LIKE ${baseTitle + ' - Amendment %'}
+      AND division_date::date = ${divisionDateStr}::date
+      AND (
+        outcome ILIKE '%carried%'
+        OR outcome ILIKE '%passed%'
+        OR outcome ILIKE '%agreed%'
+      )
+    ORDER BY title ASC
+  `)
+  return (result.rows as { motion_text: string | null; title: string; outcome: string | null }[])
+    .filter(r => r.motion_text)
+}
+
 export async function getDivisionWithVotes(documentId: string) {
   const division = await db
     .select()
@@ -2451,6 +2468,37 @@ export async function getPartyAttendanceAll(): Promise<{ party: string; attendan
   type Row = { party: string; attendance_pct: unknown; member_count: unknown }
   return (result.rows as unknown as Row[]).map((r) => ({
     party: r.party,
+    attendancePct: Number(r.attendance_pct),
+    memberCount: Number(r.member_count),
+  }))
+}
+
+export async function getAllPartyAttendanceTrends(): Promise<{ party: string; month: string; attendancePct: number; memberCount: number }[]> {
+  const result = await db.execute(sql`
+    SELECT
+      m.party,
+      TO_CHAR(DATE_TRUNC('month', d.division_date), 'Mon YYYY') as month,
+      DATE_TRUNC('month', d.division_date) as month_date,
+      COUNT(DISTINCT m.person_id) as member_count,
+      ROUND(
+        COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) * 100.0 /
+        NULLIF(COUNT(*), 0), 1
+      ) as attendance_pct
+    FROM votes v
+    JOIN members m ON m.person_id = v.person_id
+    JOIN divisions d ON d.document_id = v.document_id
+    WHERE m.mandate = ${CURRENT_MANDATE}
+    AND m.party IS NOT NULL
+    AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
+    AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
+    AND (m.assembly_role_start IS NULL OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date)))
+    GROUP BY m.party, DATE_TRUNC('month', d.division_date)
+    ORDER BY month_date ASC
+  `)
+  type Row = { party: string; month: string; attendance_pct: unknown; member_count: unknown }
+  return (result.rows as unknown as Row[]).map((r) => ({
+    party: r.party,
+    month: r.month,
     attendancePct: Number(r.attendance_pct),
     memberCount: Number(r.member_count),
   }))

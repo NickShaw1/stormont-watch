@@ -34,19 +34,11 @@ const FILTERS: { key: Filter; label: string }[] = [
 ]
 
 
-const ITEMS_PER_PAGE = 25
-
 export default function VotingRecordClient({ votes, memberName, noExpensesTab }: Props) {
   const [filter, setFilter] = useState<Filter>('ALL')
-  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
   const filteredVotes = filter === 'ALL' ? votes : votes.filter((v) => v.vote === filter)
 
-  useEffect(() => {
-    setVisibleCount(ITEMS_PER_PAGE)
-  }, [filter])
-
-  const visibleVotes = filteredVotes.slice(0, visibleCount)
-  const hasMore = visibleCount < filteredVotes.length
+  const visibleVotes = filteredVotes
 
   const counts: Record<Filter, number> = {
     ALL:       votes.length,
@@ -256,14 +248,6 @@ export default function VotingRecordClient({ votes, memberName, noExpensesTab }:
         </div>
       </div>
 
-      {hasMore && (
-        <button
-          className={styles.loadMore}
-          onClick={() => setVisibleCount(c => c + 50)}
-        >
-          Load more ({filteredVotes.length - visibleCount} remaining)
-        </button>
-      )}
     </section>
   )
 }

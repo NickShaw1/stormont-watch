@@ -1128,6 +1128,17 @@
   align-items: center;
 }
 
+.trendLegendCompact {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  align-items: center;
+}
+
 .trendLegendItem {
   display: flex;
   align-items: center;
@@ -1553,6 +1564,12 @@
 
   .trendLegend {
     font-size: 1.0625rem;
+    gap: 10px;
+  }
+
+  .trendLegendCompact {
+    font-size: 0.8125rem;
+    gap: 8px;
   }
 
   .expensesMeta {
