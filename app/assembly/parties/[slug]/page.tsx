@@ -38,7 +38,7 @@ const PARTY_DESCRIPTIONS: Record<string, string> = {
   'Social Democratic and Labour Party': 'The Social Democratic and Labour Party is an Irish nationalist and social democratic political party in Northern Ireland. Founded in 1970, the SDLP played a pivotal role in the peace process and was instrumental in negotiating the Good Friday Agreement, with former leader John Hume awarded the Nobel Peace Prize in 1998.',
   'People Before Profit Alliance': 'People Before Profit is a left-wing socialist and anti-austerity political party operating across Ireland. The party advocates for radical economic reform, public ownership of key industries, and opposition to austerity measures.',
   'Traditional Unionist Voice': 'Traditional Unionist Voice is a unionist political party in Northern Ireland founded in 2007 by Jim Allister, who remains its leader. The party was established in opposition to the St Andrews Agreement and takes a hardline unionist position.',
-  'Independent': 'Claire Sugden is currently the only independent MLA in the Northern Ireland Assembly.',
+  'Independent': 'Doug Beattie and Claire Sugden are currently the only independent MLAs in the Northern Ireland Assembly.',
 }
 
 export async function generateStaticParams() {
