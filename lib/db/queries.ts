@@ -1387,7 +1387,7 @@ export async function getBillsProgressedThisWeek(): Promise<{
     JOIN bills b ON bs.bill_id = b.bill_id
     LEFT JOIN divisions d ON bs.division_id = d.document_id
     WHERE bs.plenary_date >= date_trunc('week', NOW() AT TIME ZONE 'UTC')
-      AND bs.plenary_date <= NOW() - INTERVAL '1 day'
+      AND bs.plenary_date < CURRENT_DATE AT TIME ZONE 'UTC'
     ORDER BY bs.bill_id, bs.stage, bs.plenary_date,
              (bs.item_title IS NULL) DESC,
              bs.document_id ASC
