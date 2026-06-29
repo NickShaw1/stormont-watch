@@ -284,7 +284,8 @@ function SpeechesChart({ hansardRows, hansardSittingsByMonth, partyColor }: {
 
 export default function ActivityTabsClient(props: Props) {
   const { allExpenses, interests, totalQuestions, writtenCount, oralCount, questionStats, hideQuestionsTab, partyColor, questionRank, currentSalary, mandateEarnings, mandateExpensesRank, mandateExpensesTotalMembers, hansardRows, hansardRank, hansardDebateRank, hansardSittingsByMonth } = props
-  const [activeTab, setActiveTab] = useState<Tab>('questions')
+  const participationVisible = (!hideQuestionsTab && totalQuestions > 0) || hansardRows.length > 0
+  const [activeTab, setActiveTab] = useState<Tab>(participationVisible ? 'questions' : 'finances')
   const [selectedYear, setSelectedYear] = useState<string>(allExpenses[0]?.financial_year ?? '')
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false)
   const yearDropdownRef = useRef<HTMLDivElement>(null)
