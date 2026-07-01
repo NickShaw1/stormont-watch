@@ -366,7 +366,7 @@ export default function ActivityTabsClient(props: Props) {
                   <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
                   <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
                 </svg>
-                <p>Rankings exclude current ministers and presiding officers.</p>
+                <p>Rankings exclude current ministers and the Speaker.</p>
               </div>
               <div className={styles.questionsCard} style={{ marginTop: 'var(--spacing-md)' }}>
                 <div className={styles.questionsSummary}>

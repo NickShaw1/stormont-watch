@@ -53,7 +53,7 @@ export default async function QuestionsPage() {
           </ol>
         </nav>
         <h1>MLA questions</h1>
-        <p className="lede">Questions tabled by every <strong>current MLA</strong> since the 2022 mandate. Excludes presiding officers. Data sourced from the NI Assembly.</p>
+        <p className="lede">Questions tabled by every <strong>current MLA</strong> since the 2022 mandate. Excludes current ministers and the Speaker. Data sourced from the NI Assembly.</p>
       </header>
 
       <QuestionsRankingClient rows={rows} totalMlaCount={rows.length} />

@@ -8,6 +8,9 @@ out/
 # Cloudflare Pages build output
 .vercel/
 
+# Wrangler / Miniflare local state
+.wrangler/
+
 # Environment variables
 .env
 .env.local
