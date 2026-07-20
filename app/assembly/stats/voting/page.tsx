@@ -14,11 +14,14 @@ import {
   getPartyAttendanceAll,
   getAllMandateMembers,
   getPartyAlignmentWithBigTwo,
+  getBigTwoAgreement,
+  getBlocAgreement,
 } from '@/lib/db/queries'
 import StatsRankingTabs from '../StatsRankingTabs'
 import CrossCommunityTrendsClient from '../CrossCommunityTrendsClient'
 import PartyAttendanceChart from '../PartyAttendanceChart'
 import PartyAlignmentTable from '../PartyAlignmentTable'
+import AgreementCard from '../AgreementCard'
 import StatsBreadcrumb from '../StatsBreadcrumb'
 import MlaPhoto from '@/components/MlaPhoto'
 import { formatMemberName, partyBorderColor, abbreviateParty } from '@/lib/format'
@@ -37,7 +40,7 @@ export const metadata: Metadata = {
 }
 
 export default async function VotingPage() {
-  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, crossCommunityTrends, overallAgreementRate, partyAttendance, allMandateMembers, partyAlignment] = await Promise.all([
+  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, crossCommunityTrends, overallAgreementRate, partyAttendance, allMandateMembers, partyAlignment, bigTwoAgreement, blocAgreement] = await Promise.all([
     getMlaLeaderboard(),
     getAssemblyStats(),
     getAverageAttendance(),
@@ -49,6 +52,8 @@ export default async function VotingPage() {
     getPartyAttendanceAll(),
     getAllMandateMembers(),
     getPartyAlignmentWithBigTwo(),
+    getBigTwoAgreement(),
+    getBlocAgreement(),
   ])
 
   void assemblyStats
@@ -195,6 +200,49 @@ export default async function VotingPage() {
             <div className={styles.patternsGrid}>
               <PartyAlignmentTable data={partyAlignment.rows} />
             </div>
+          </div>
+        )}
+
+        {bigTwoAgreement.totalDivisions > 0 && (
+          <div style={{ marginTop: 'var(--s-10)' }}>
+            <h3 className={styles.chartTitle} style={{ marginTop: 0 }}>How often Sinn Féin and the DUP agree</h3>
+            <p className={styles.sectionDesc} style={{ marginBottom: 'var(--spacing-md)' }}>
+              For each of the {bigTwoAgreement.totalDivisions}{' '}divisions since May 2022, each party&apos;s majority position is whichever of Aye, No, Abstain, or No Show was recorded by the most of its MLAs. Both current and former mandate MLAs are included. Sinn Féin and the DUP recorded the same position {bigTwoAgreement.agreed} times.
+            </p>
+            <AgreementCard
+              title="Agreement between Sinn Féin and the DUP"
+              agreePct={bigTwoAgreement.agreePct}
+              agreed={bigTwoAgreement.agreed}
+              totalDivisions={bigTwoAgreement.totalDivisions}
+              items={[
+                { label: 'Both Aye', value: bigTwoAgreement.bothAye },
+                { label: 'Both No', value: bigTwoAgreement.bothNo },
+                { label: 'Both Abstain', value: bigTwoAgreement.bothAbstain },
+                { label: 'Both No Show', value: bigTwoAgreement.bothNoShow },
+                { label: 'Did not agree', value: bigTwoAgreement.disagreed },
+              ]}
+            />
+          </div>
+        )}
+
+        {blocAgreement.totalDivisions > 0 && (
+          <div style={{ marginTop: 'var(--s-10)' }}>
+            <h3 className={styles.chartTitle} style={{ marginTop: 0 }}>How often the unionist and nationalist blocs agree</h3>
+            <p className={styles.sectionDesc} style={{ marginBottom: 'var(--spacing-md)' }}>
+              For each of the {blocAgreement.totalDivisions}{' '}divisions since May 2022, a bloc&apos;s position is the side taken by more than half of that bloc&apos;s MLAs who voted. This is measured differently to the party figures above: it groups MLAs by designation rather than party, excludes MLAs who designate as neither unionist nor nationalist, and counts only Aye and No votes, so abstentions and absences are left out. The two blocs took the same side {blocAgreement.agreed} times.
+            </p>
+            <AgreementCard
+              title="Agreement between unionist and nationalist blocs"
+              barColor="#6366F1"
+              agreePct={blocAgreement.agreePct}
+              agreed={blocAgreement.agreed}
+              totalDivisions={blocAgreement.totalDivisions}
+              items={[
+                { label: 'Both Aye', value: blocAgreement.bothAye },
+                { label: 'Both No', value: blocAgreement.bothNo },
+                { label: 'Did not agree', value: blocAgreement.disagreed },
+              ]}
+            />
           </div>
         )}
       </section>

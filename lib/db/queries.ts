@@ -2592,6 +2592,140 @@ export async function getPartyAlignmentWithBigTwo(): Promise<{ rows: PartyAlignm
   }
 }
 
+export type BigTwoAgreement = {
+  agreed: number
+  disagreed: number
+  bothAye: number
+  bothNo: number
+  bothAbstain: number
+  bothNoShow: number
+  totalDivisions: number
+  agreePct: number
+}
+
+/**
+ * How often Sinn Féin and the DUP recorded the same majority position.
+ * Uses the same party-majority logic as getPartyAlignmentWithBigTwo, so the
+ * figures sit alongside the smaller-party alignment table on the voting page.
+ */
+export async function getBigTwoAgreement(): Promise<BigTwoAgreement> {
+  const result = await db.execute(sql`
+    WITH party_votes AS (
+      SELECT
+        v.document_id,
+        m.party,
+        COUNT(*) FILTER (WHERE v.vote = 'AYE') AS ayes,
+        COUNT(*) FILTER (WHERE v.vote = 'NO') AS noes,
+        COUNT(*) FILTER (WHERE v.vote = 'ABSTAINED') AS abstains,
+        COUNT(*) FILTER (WHERE v.vote = 'NO_SHOW') AS noshows
+      FROM votes v
+      JOIN members m ON m.person_id = v.person_id
+      WHERE m.mandate = ${CURRENT_MANDATE}
+        AND m.party IS NOT NULL
+        AND v.mandate = ${CURRENT_MANDATE}
+      GROUP BY v.document_id, m.party
+    ),
+    division_majorities AS (
+      SELECT
+        document_id,
+        party,
+        CASE
+          WHEN ayes > noes AND ayes > abstains AND ayes > noshows THEN 'AYE'
+          WHEN noes > ayes AND noes > abstains AND noes > noshows THEN 'NO'
+          WHEN abstains > ayes AND abstains > noes AND abstains > noshows THEN 'ABSTAINED'
+          WHEN noshows > ayes AND noshows > noes AND noshows > abstains THEN 'NO_SHOW'
+          ELSE NULL
+        END AS majority_vote
+      FROM party_votes
+    ),
+    sf AS (
+      SELECT document_id, majority_vote AS sf_vote
+      FROM division_majorities
+      WHERE party = 'Sinn Féin' AND majority_vote IS NOT NULL
+    ),
+    dup AS (
+      SELECT document_id, majority_vote AS dup_vote
+      FROM division_majorities
+      WHERE party = 'Democratic Unionist Party' AND majority_vote IS NOT NULL
+    )
+    SELECT
+      (SELECT COUNT(DISTINCT document_id) FROM divisions WHERE mandate = ${CURRENT_MANDATE}) AS total_divisions,
+      COUNT(*) FILTER (WHERE sf.sf_vote = dup.dup_vote) AS agreed,
+      COUNT(*) FILTER (WHERE sf.sf_vote <> dup.dup_vote) AS disagreed,
+      COUNT(*) FILTER (WHERE sf.sf_vote = 'AYE' AND dup.dup_vote = 'AYE') AS both_aye,
+      COUNT(*) FILTER (WHERE sf.sf_vote = 'NO' AND dup.dup_vote = 'NO') AS both_no,
+      COUNT(*) FILTER (WHERE sf.sf_vote = 'ABSTAINED' AND dup.dup_vote = 'ABSTAINED') AS both_abstain,
+      COUNT(*) FILTER (WHERE sf.sf_vote = 'NO_SHOW' AND dup.dup_vote = 'NO_SHOW') AS both_noshow
+    FROM sf
+    JOIN dup ON dup.document_id = sf.document_id
+  `)
+
+  const r = (result.rows as unknown as Record<string, unknown>[])[0]
+  const totalDivisions = r ? Number(r.total_divisions) : 0
+  const agreed = r ? Number(r.agreed) : 0
+
+  return {
+    agreed,
+    disagreed: r ? Number(r.disagreed) : 0,
+    bothAye: r ? Number(r.both_aye) : 0,
+    bothNo: r ? Number(r.both_no) : 0,
+    bothAbstain: r ? Number(r.both_abstain) : 0,
+    bothNoShow: r ? Number(r.both_noshow) : 0,
+    totalDivisions,
+    agreePct: totalDivisions > 0 ? Math.round((agreed / totalDivisions) * 1000) / 10 : 0,
+  }
+}
+
+export type BlocAgreement = {
+  agreed: number
+  disagreed: number
+  bothAye: number
+  bothNo: number
+  totalDivisions: number
+  agreePct: number
+}
+
+/**
+ * How often the unionist-designated and nationalist-designated blocs took the
+ * same side. Uses the same rule as getOverallAgreementRate: a bloc's position is
+ * the side taken by more than half of that bloc's MLAs who cast an Aye or No,
+ * so abstentions and absences are excluded. Sits beside the party-level figures
+ * on the voting page, which use a different (four-position) method.
+ */
+export async function getBlocAgreement(): Promise<BlocAgreement> {
+  const result = await db.execute(sql`
+    WITH positions AS (
+      SELECT
+        nationalist_ayes > (nationalist_noes + nationalist_ayes) * 0.5 AS nat_aye,
+        nationalist_noes > (nationalist_noes + nationalist_ayes) * 0.5 AS nat_no,
+        unionist_ayes > (unionist_noes + unionist_ayes) * 0.5 AS uni_aye,
+        unionist_noes > (unionist_noes + unionist_ayes) * 0.5 AS uni_no
+      FROM divisions
+      WHERE mandate = ${CURRENT_MANDATE}
+    )
+    SELECT
+      COUNT(*) AS total_divisions,
+      COUNT(*) FILTER (WHERE nat_aye AND uni_aye) AS both_aye,
+      COUNT(*) FILTER (WHERE nat_no AND uni_no) AS both_no
+    FROM positions
+  `)
+
+  const r = (result.rows as unknown as Record<string, unknown>[])[0]
+  const totalDivisions = r ? Number(r.total_divisions) : 0
+  const bothAye = r ? Number(r.both_aye) : 0
+  const bothNo = r ? Number(r.both_no) : 0
+  const agreed = bothAye + bothNo
+
+  return {
+    agreed,
+    disagreed: totalDivisions - agreed,
+    bothAye,
+    bothNo,
+    totalDivisions,
+    agreePct: totalDivisions > 0 ? Math.round((agreed / totalDivisions) * 1000) / 10 : 0,
+  }
+}
+
 export async function getAllMemberRoleHistories() {
   const rows = await db
     .select({
