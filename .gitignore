@@ -50,6 +50,9 @@ drizzle/meta/
 .claude/
 .playwright-mcp/
 
+# Docs (local only)
+docs/
+
 # Misc
 *.pem
 
