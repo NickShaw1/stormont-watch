@@ -1,9 +1,12 @@
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { mandateById, CURRENT_MANDATE, mandateHasBegun } from '@/lib/constants/mandates'
 import { MandateProvider } from '@/components/MandateContext'
 
-export default async function ArchiveLayout({ children, params }: LayoutProps<'/archive/[mandate]'>) {
+// Explicit prop type (not the Next-generated `LayoutProps`, which only exists after a build
+// generates .next/types — CI runs `tsc` before the build, so the generated type isn't there).
+export default async function ArchiveLayout({ children, params }: { children: ReactNode; params: Promise<{ mandate: string }> }) {
   const { mandate: id } = await params
   const mandate = mandateById(id)
   // Archives are non-current mandates that have already begun. A future mandate (present in
