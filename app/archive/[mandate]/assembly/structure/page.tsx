@@ -1,12 +1,13 @@
 export const dynamic = 'force-static'
+export const dynamicParams = false
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { ARCHIVED_MANDATES, mandateById } from '@/lib/constants/mandates'
+import { ALL_ARCHIVE_MANDATES, mandateById } from '@/lib/constants/mandates'
 import StructurePageBody from '@/app/assembly/structure/StructurePageBody'
 
 export function generateStaticParams() {
-  return ARCHIVED_MANDATES.map((m) => ({ mandate: m.id }))
+  return ALL_ARCHIVE_MANDATES.map((m) => ({ mandate: m.id }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ mandate: string }> }): Promise<Metadata> {

@@ -1,14 +1,15 @@
 export const dynamic = 'force-static'
+export const dynamicParams = false
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { ARCHIVED_MANDATES, mandateById } from '@/lib/constants/mandates'
+import { ALL_ARCHIVE_MANDATES, mandateById } from '@/lib/constants/mandates'
 import { getAllPartiesWithStats } from '@/lib/db/queries'
 import PartyDetailPageBody from '@/app/assembly/parties/[slug]/PartyDetailPageBody'
 
 export async function generateStaticParams() {
   const out: { mandate: string; slug: string }[] = []
-  for (const m of ARCHIVED_MANDATES) {
+  for (const m of ALL_ARCHIVE_MANDATES) {
     const parties = await getAllPartiesWithStats(m.id)
     for (const p of parties) out.push({ mandate: m.id, slug: p.slug })
   }

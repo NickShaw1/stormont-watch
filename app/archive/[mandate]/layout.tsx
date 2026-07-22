@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { mandateById, CURRENT_MANDATE, mandateHasBegun } from '@/lib/constants/mandates'
+import { mandateById, CURRENT_MANDATE } from '@/lib/constants/mandates'
 import { MandateProvider } from '@/components/MandateContext'
 
 // Explicit prop type (not the Next-generated `LayoutProps`, which only exists after a build
@@ -9,9 +9,10 @@ import { MandateProvider } from '@/components/MandateContext'
 export default async function ArchiveLayout({ children, params }: { children: ReactNode; params: Promise<{ mandate: string }> }) {
   const { mandate: id } = await params
   const mandate = mandateById(id)
-  // Archives are non-current mandates that have already begun. A future mandate (present in
-  // config ahead of the transition) 404s here so it can't be reached by direct URL.
-  if (!mandate || mandate.id === CURRENT_MANDATE.id || !mandateHasBegun(mandate)) notFound()
+  // Only non-current mandates are archives. Future mandates are prerendered (as sparse pages)
+  // so the static build has assets for these routes, but hidden from the switcher + sitemap
+  // (which use the begun-filtered ARCHIVED_MANDATES) so users don't navigate to them.
+  if (!mandate || mandate.id === CURRENT_MANDATE.id) notFound()
 
   return (
     <MandateProvider mandate={mandate} basePath={`/archive/${id}`}>
