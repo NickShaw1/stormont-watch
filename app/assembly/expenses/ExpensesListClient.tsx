@@ -97,7 +97,7 @@ export default function ExpensesListClient({ rows, years }: Props) {
     : rows.filter(r => r.financialYear === selectedYear)
 
   const periodLabel = selectedYear === OVERALL
-    ? `All years (${years[years.length - 1]}–${years[0]})`
+    ? (years.length ? `All years (${years[years.length - 1]}–${years[0]})` : 'All years')
     : yearRows[0]?.period ?? selectedYear
 
   const filtered = partyFilter === 'ALL'

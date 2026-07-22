@@ -5,7 +5,7 @@ import { and, eq, notInArray } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 
 const BASE = 'http://data.niassembly.gov.uk'
-import { CURRENT_MANDATE } from '../lib/constants/mandates'
+import { mandateForToday } from '../lib/constants/mandates'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -71,7 +71,7 @@ async function syncMinisters(db: Db) {
           personId,
           department,
           roleTitle: roleName ?? null,
-          mandate: CURRENT_MANDATE.id,
+          mandate: mandateForToday().id,
         })
         .onConflictDoUpdate({
           target: [schema.ministers.personId, schema.ministers.mandate],
@@ -84,11 +84,11 @@ async function syncMinisters(db: Db) {
       insertedIds.push(personId)
       count++
     }
-    // Remove any current-mandate ministers no longer in the API response. Scoped so
-    // past-mandate ministers remain as an archive.
+    // Remove any current-mandate ministers no longer in the API response. Scoped via
+    // mandateForToday().id so past-mandate ministers remain as an archive.
     if (insertedIds.length > 0) {
       await db.delete(schema.ministers).where(
-        and(notInArray(schema.ministers.personId, insertedIds), eq(schema.ministers.mandate, CURRENT_MANDATE.id))
+        and(notInArray(schema.ministers.personId, insertedIds), eq(schema.ministers.mandate, mandateForToday().id))
       )
     }
     console.log(`[syncMinisters] Complete — ${count} written, ${skipped} skipped`)
@@ -161,7 +161,7 @@ async function syncCommitteeChairs(db: Db) {
         .values({
           personId,
           committeeName: committee,
-          mandate: CURRENT_MANDATE.id,
+          mandate: mandateForToday().id,
         })
         .onConflictDoUpdate({
           target: [schema.committeeChairs.personId, schema.committeeChairs.mandate],
@@ -173,11 +173,11 @@ async function syncCommitteeChairs(db: Db) {
       insertedIds.push(personId)
       count++
     }
-    // Remove any current-mandate chairs no longer in the API response. Scoped so
-    // past-mandate chairs remain as an archive.
+    // Remove any current-mandate chairs no longer in the API response. Scoped via
+    // mandateForToday().id so past-mandate chairs remain as an archive.
     if (insertedIds.length > 0) {
       await db.delete(schema.committeeChairs).where(
-        and(notInArray(schema.committeeChairs.personId, insertedIds), eq(schema.committeeChairs.mandate, CURRENT_MANDATE.id))
+        and(notInArray(schema.committeeChairs.personId, insertedIds), eq(schema.committeeChairs.mandate, mandateForToday().id))
       )
     }
     console.log(`[syncCommitteeChairs] Complete — ${count} written, ${skipped} skipped`)

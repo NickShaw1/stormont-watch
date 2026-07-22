@@ -82,7 +82,7 @@ function PartyBarChart({ title, rows, getValue }: {
   getValue: (r: PartyAvgRow) => number
 }) {
   const sorted = [...rows].sort((a, b) => getValue(b) - getValue(a))
-  const max = getValue(sorted[0]) || 1
+  const max = (sorted.length ? getValue(sorted[0]) : 0) || 1
   return (
     <div>
       <h3 className={styles.chartTitle} style={{ margin: 0 }}>{title}</h3>

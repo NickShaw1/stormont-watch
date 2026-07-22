@@ -5,16 +5,14 @@ import styles from './parties.module.css'
 import type { Mandate } from '@/lib/constants/mandates'
 
 /**
- * Shared body for the Parties page — rendered by both the live route (current mandate,
- * basePath '') and the archive route (`/archive/<id>`). `mandate` drives the queries;
- * `basePath` prefixes internal links (threaded to PartiesClient).
+ * Shared body for the Parties page — rendered by both the live route (current mandate)
+ * and the archive route (`/archive/<id>`). `mandate` drives the queries; internal links
+ * are built by PartiesClient from mandate context.
  */
 export default async function PartiesPageBody({
   mandate,
-  basePath,
 }: {
   mandate: Mandate
-  basePath: string
 }) {
   const parties = await getAllPartiesWithStats(mandate.id)
 

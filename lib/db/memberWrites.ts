@@ -2,7 +2,7 @@ import { sql, eq, and } from 'drizzle-orm'
 import type { NeonHttpDatabase } from 'drizzle-orm/neon-http'
 import * as schema from './schema'
 import { people, memberTerms } from './schema'
-import { CURRENT_MANDATE } from '../constants/mandates'
+import { mandateForToday } from '../constants/mandates'
 
 type Db = NeonHttpDatabase<typeof schema>
 
@@ -47,7 +47,7 @@ export async function upsertMemberSnapshot(db: Db, m: MemberSnapshot): Promise<v
     .insert(memberTerms)
     .values({
       personId: m.personId,
-      mandate: CURRENT_MANDATE.id,
+      mandate: mandateForToday().id,
       party: m.party,
       constituency: m.constituency,
       isCurrent: m.isCurrent,
@@ -91,5 +91,5 @@ export async function updateMemberTermRoles(
       ...(r.designation !== undefined ? { designation: r.designation } : {}),
       updatedAt: new Date(),
     })
-    .where(and(eq(memberTerms.personId, personId), eq(memberTerms.mandate, CURRENT_MANDATE.id)))
+    .where(and(eq(memberTerms.personId, personId), eq(memberTerms.mandate, mandateForToday().id)))
 }

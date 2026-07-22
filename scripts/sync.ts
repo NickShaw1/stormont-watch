@@ -13,7 +13,7 @@ import { upsertMemberSnapshot, updateMemberTermRoles } from '../lib/db/memberWri
 
 const BASE = 'http://data.niassembly.gov.uk'
 const CUTOFF = '2022-05-01'
-import { CURRENT_MANDATE, mandateIdForDate, dateToMandate } from '../lib/constants/mandates'
+import { mandateIdForDate, dateToMandate, mandateForToday } from '../lib/constants/mandates'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -74,14 +74,15 @@ async function syncMembers(db: Db): Promise<{ knownMemberIds: Set<string>; curre
     currentRaw.map((m: any) => str(m?.PersonID ?? m?.PersonId)).filter(Boolean)
   )
 
-  // Fix 1: Load members already tracked in the CURRENT mandate so we don't re-import
-  // historical MLAs from past mandates. Scoped to CURRENT_MANDATE.id specifically so that
-  // at a mandate boundary (e.g. May 2027) past-mandate members are NOT treated as "existing"
-  // and re-imported into the new term — the members view spans every mandate.
+  // Fix 1: Load members already tracked in today's mandate so we don't re-import historical
+  // MLAs from past mandates. Scoped via mandateForToday().id (not CURRENT_MANDATE.id) so that
+  // at a mandate boundary (e.g. May 2027) this is correct from the actual calendar date, even
+  // on a cron run before the isCurrent-flip PR is deployed — past-mandate members are NOT
+  // treated as "existing" and re-imported into the new term — the members view spans every mandate.
   const existingMembers = await db
     .select({ personId: schema.members.personId })
     .from(schema.members)
-    .where(eq(schema.members.mandate, CURRENT_MANDATE.id))
+    .where(eq(schema.members.mandate, mandateForToday().id))
   const existingIds = new Set(existingMembers.map(m => m.personId))
 
   const seen = new Set<string>()
@@ -257,7 +258,7 @@ async function syncMinisters(db: Db) {
           personId,
           department,
           roleTitle: roleName ?? null,
-          mandate: CURRENT_MANDATE.id,
+          mandate: mandateForToday().id,
         })
         .onConflictDoUpdate({
           target: [schema.ministers.personId, schema.ministers.mandate],
@@ -270,11 +271,12 @@ async function syncMinisters(db: Db) {
       insertedIds.push(personId)
       count++
     }
-    // Remove any current-mandate ministers no longer in the API response. Scoped to the
-    // current mandate so past-mandate ministers remain as an archive.
+    // Remove any current-mandate ministers no longer in the API response. Scoped via
+    // mandateForToday().id (the calendar date, not the isCurrent flag) so past-mandate
+    // ministers remain as an archive even if this runs before the isCurrent-flip deploy.
     if (insertedIds.length > 0) {
       await db.delete(schema.ministers).where(
-        and(notInArray(schema.ministers.personId, insertedIds), eq(schema.ministers.mandate, CURRENT_MANDATE.id))
+        and(notInArray(schema.ministers.personId, insertedIds), eq(schema.ministers.mandate, mandateForToday().id))
       )
     }
     console.log(`[syncMinisters] Complete — ${count} written, ${skipped} skipped`)
@@ -351,7 +353,7 @@ async function syncCommitteeChairs(db: Db) {
         .values({
           personId,
           committeeName: committee,
-          mandate: CURRENT_MANDATE.id,
+          mandate: mandateForToday().id,
         })
         .onConflictDoUpdate({
           target: [schema.committeeChairs.personId, schema.committeeChairs.mandate],
@@ -363,11 +365,12 @@ async function syncCommitteeChairs(db: Db) {
       insertedIds.push(personId)
       count++
     }
-    // Remove any current-mandate chairs no longer in the API response. Scoped to the
-    // current mandate so past-mandate chairs remain as an archive.
+    // Remove any current-mandate chairs no longer in the API response. Scoped via
+    // mandateForToday().id (the calendar date, not the isCurrent flag) so past-mandate
+    // chairs remain as an archive even if this runs before the isCurrent-flip deploy.
     if (insertedIds.length > 0) {
       await db.delete(schema.committeeChairs).where(
-        and(notInArray(schema.committeeChairs.personId, insertedIds), eq(schema.committeeChairs.mandate, CURRENT_MANDATE.id))
+        and(notInArray(schema.committeeChairs.personId, insertedIds), eq(schema.committeeChairs.mandate, mandateForToday().id))
       )
     }
     console.log(`[syncCommitteeChairs] Complete — ${count} written, ${skipped} skipped`)
@@ -680,7 +683,7 @@ async function syncRegisteredInterests(db: Db) {
           registerEntryStartDate: interest?.RegisterEntryStartDate
             ? new Date(interest.RegisterEntryStartDate)
             : null,
-          mandate: CURRENT_MANDATE.id,
+          mandate: mandateForToday().id,
         })
         .onConflictDoUpdate({
           target: [
@@ -697,13 +700,14 @@ async function syncRegisteredInterests(db: Db) {
       count++
     }
 
-    // Remove any current-mandate interests no longer in the API response. Scoped to the
-    // current mandate so past-mandate interests remain as an archive.
+    // Remove any current-mandate interests no longer in the API response. Scoped via
+    // mandateForToday().id (the calendar date, not the isCurrent flag) so past-mandate
+    // interests remain as an archive even if this runs before the isCurrent-flip deploy.
     if (insertedIds.length > 0) {
       await db
         .delete(schema.registeredInterests)
         .where(
-          and(notInArray(schema.registeredInterests.id, insertedIds), eq(schema.registeredInterests.mandate, CURRENT_MANDATE.id))
+          and(notInArray(schema.registeredInterests.id, insertedIds), eq(schema.registeredInterests.mandate, mandateForToday().id))
         )
     }
 
@@ -716,6 +720,10 @@ async function syncRegisteredInterests(db: Db) {
 
 async function syncCurrentMemberRoles(db: Db) {
   console.log('[syncCurrentMemberRoles] Fetching roles for current members and recently departed members with missing mandate_end...')
+
+  // Derived from today's date, not the isCurrent flag, so this is correct on a cron run even
+  // before the isCurrent-flip PR for a new mandate has been deployed.
+  const todaysMandate = mandateForToday()
 
   const membersToSync = await db
     .select({ personId: schema.members.personId })
@@ -760,8 +768,8 @@ async function syncCurrentMemberRoles(db: Db) {
           r.RoleType === 'Assembly Membership Role' &&
           r.Role === 'MLA' &&
           // Members are returned at the election, which is on or before the first sitting
-          // (CURRENT_MANDATE.start); use electionDate so an election-day affiliation isn't missed.
-          r.AffiliationStart >= CURRENT_MANDATE.electionDate
+          // (todaysMandate.start); use electionDate so an election-day affiliation isn't missed.
+          r.AffiliationStart >= todaysMandate.electionDate
         )
         .sort((a: any, b: any) =>
           new Date(b.AffiliationStart).getTime() - new Date(a.AffiliationStart).getTime()
@@ -797,7 +805,7 @@ async function syncCurrentMemberRoles(db: Db) {
       })
       updated++
 
-      const MANDATE_START = CURRENT_MANDATE.start
+      const MANDATE_START = todaysMandate.start
       const AD_HOC_RE = /concurrent|ad hoc/i
 
       for (const r of roles) {

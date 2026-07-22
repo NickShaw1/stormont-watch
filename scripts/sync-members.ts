@@ -7,7 +7,7 @@ import { apiRoleToSalaryRole } from '../lib/salaries'
 import { upsertMemberSnapshot, updateMemberTermRoles } from '../lib/db/memberWrites'
 
 const BASE = 'http://data.niassembly.gov.uk'
-import { CURRENT_MANDATE, mandateIdForDate } from '../lib/constants/mandates'
+import { mandateIdForDate, mandateForToday } from '../lib/constants/mandates'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -58,15 +58,15 @@ async function syncMembers(db: Db) {
     currentRaw.map((m: any) => str(m?.PersonID ?? m?.PersonId)).filter(Boolean)
   )
 
-  // Only touch members currently sitting OR already tracked in the CURRENT mandate.
+  // Only touch members currently sitting OR already tracked in today's mandate.
   // GetAllMembers returns every all-time MLA; writing a current-mandate term for each
   // (as this script once did) imports historical members from past mandates into the
-  // live term. Scoping to CURRENT_MANDATE.id keeps this manual resync mandate-safe and
-  // matches the guard in the nightly sync.
+  // live term. Scoping via mandateForToday().id (not CURRENT_MANDATE.id) keeps this manual
+  // resync mandate-safe from the actual calendar date, matching the guard in the nightly sync.
   const existingMembers = await db
     .select({ personId: schema.members.personId })
     .from(schema.members)
-    .where(eq(schema.members.mandate, CURRENT_MANDATE.id))
+    .where(eq(schema.members.mandate, mandateForToday().id))
   const existingIds = new Set(existingMembers.map((m) => m.personId))
 
   const seen = new Set<string>()
@@ -117,6 +117,10 @@ async function syncMembers(db: Db) {
 async function syncMandateAndRoles(db: Db) {
   console.log('[syncMandateAndRoles] Fetching all members from database...')
 
+  // Derived from today's date, not the isCurrent flag, so this is correct on a manual run even
+  // before the isCurrent-flip PR for a new mandate has been deployed.
+  const todaysMandate = mandateForToday()
+
   const allMembers = await db
     .select({ personId: schema.members.personId })
     .from(schema.members)
@@ -154,8 +158,8 @@ async function syncMandateAndRoles(db: Db) {
           r.RoleType === 'Assembly Membership Role' &&
           r.Role === 'MLA' &&
           // Members are returned at the election, which is on or before the first sitting
-          // (CURRENT_MANDATE.start); use electionDate so an election-day affiliation isn't missed.
-          r.AffiliationStart >= CURRENT_MANDATE.electionDate
+          // (todaysMandate.start); use electionDate so an election-day affiliation isn't missed.
+          r.AffiliationStart >= todaysMandate.electionDate
         )
         .sort((a: any, b: any) =>
           new Date(b.AffiliationStart).getTime() - new Date(a.AffiliationStart).getTime()
@@ -193,7 +197,7 @@ async function syncMandateAndRoles(db: Db) {
         updated++
       }
 
-      const MANDATE_START = CURRENT_MANDATE.start
+      const MANDATE_START = todaysMandate.start
       const AD_HOC_RE = /concurrent|ad hoc/i
 
       for (const r of roles) {

@@ -16,5 +16,5 @@ export const metadata: Metadata = {
 }
 
 export default function StructurePage() {
-  return <StructurePageBody mandate={CURRENT_MANDATE} basePath="" />
+  return <StructurePageBody mandate={CURRENT_MANDATE} />
 }

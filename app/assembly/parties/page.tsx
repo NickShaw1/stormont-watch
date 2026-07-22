@@ -17,5 +17,5 @@ export const metadata: Metadata = {
 }
 
 export default function PartiesPage() {
-  return <PartiesPageBody mandate={CURRENT_MANDATE} basePath="" />
+  return <PartiesPageBody mandate={CURRENT_MANDATE} />
 }

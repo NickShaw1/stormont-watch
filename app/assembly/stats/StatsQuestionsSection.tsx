@@ -57,7 +57,7 @@ function MlaCard({ title, rows, basePath }: { title: string; rows: MlaRow[]; bas
 
 function PartyCard({ title, rows, getValue }: { title: string; rows: PartyRow[]; getValue: (r: PartyRow) => number }) {
   const sorted = [...rows].sort((a, b) => getValue(b) - getValue(a))
-  const max = getValue(sorted[0]) || 1
+  const max = (sorted.length ? getValue(sorted[0]) : 0) || 1
   return (
     <div className={styles.card}>
       <h3 className={styles.cardTitle}>{title}</h3>

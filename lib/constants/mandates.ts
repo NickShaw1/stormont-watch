@@ -36,8 +36,9 @@ export const MANDATES: Mandate[] = [
     isCurrent: true,
   },
   {
-    // The next term. Present so it can be browsed as an archive; becomes `isCurrent`
-    // (and 2022-2027's `end` gets set) at the boundary — that flip is the whole switch.
+    // The next term, added ahead of time so sync scripts can attribute data to it the moment
+    // it starts and so it's ready to flip to `isCurrent` at the boundary. See the PIVOT
+    // RUNBOOK below for everything that flip actually involves — it is not just this flag.
     id: '2027-2032',
     label: '2027–2032',
     startLabel: 'May 2027',
@@ -47,6 +48,64 @@ export const MANDATES: Mandate[] = [
     isCurrent: false,
   },
 ]
+
+// ============================================================================================
+// PIVOT RUNBOOK — moving the live site from 2022-2027 to 2027-2032 (do this on or after
+// 2027-05-08, once real Assembly data for the new mandate exists to sync in)
+// ============================================================================================
+//
+// The site is fully static (built once from the DB, redeployed on every sync — no route ever
+// queries the DB at request time). "Pivoting" the mandate means: the live /assembly/** routes
+// switch from serving 2022-2027 data to 2027-2032 data, and 2022-2027 gets frozen and moved to
+// a new /archive/2022-2027/** route so its exact numbers stay browsable forever, unaffected by
+// anything that happens to 2027-2032 afterwards. None of this touches DB rows — every mandate's
+// rows already sit in the DB tagged by `mandate` column, written via mandateIdForDate(date) for
+// dated records (divisions, votes, bills, hansard) or mandateForToday().id for "current roster"
+// snapshot writes with no per-record date (ministers, chairs, interests, member terms) — never
+// a hardcoded id, and never deleted/rewritten once written for a past mandate. Because both
+// derive from the actual calendar date rather than the isCurrent flag below, new-term data is
+// already attributed correctly by the nightly cron even on days before step 1 is deployed — no
+// need to pause the sync cron around the boundary. This is purely a routing + static-rebuild step.
+//
+// Steps, in order, in a single PR:
+//
+//   1. In MANDATES above: set 2022-2027's `end` to its final day, flip `isCurrent: false` on
+//      2022-2027 and `isCurrent: true` on 2027-2032. CURRENT_MANDATE now resolves to 2027-2032,
+//      so every existing /assembly/** live route (which imports CURRENT_MANDATE directly, no
+//      code change needed) starts querying and rendering 2027-2032 data on the next build.
+//
+//   2. Freeze 2022-2027 as an archive: copy the ENTIRE app/archive/2027-2032/ folder tree
+//      (layout.tsx + all ~20 page.tsx files, including the nested [id]/[slug] routes) to a new
+//      app/archive/2022-2027/ folder, then find-replace the hardcoded '2027-2032' id string
+//      with '2022-2027' in every copied file (each file does `mandateById('2027-2032')!` —
+//      that's the only per-file edit needed). This is what makes /archive/2022-2027 real: it
+//      queries the DB at build time scoped to mandate = '2022-2027' and bakes the result into
+//      static HTML — a permanent snapshot, since those DB rows never change again.
+//
+//   3. Delete the OLD app/archive/2027-2032/ folder. It's about to be wrong in two ways: (a)
+//      2027-2032 is now the live mandate, served at the bare /assembly/** paths, not under
+//      /archive/; (b) leaving it in place would 404-loop or duplicate content. (ARCHIVED_
+//      MANDATES will stop listing 2027-2032 once isCurrent flips, so nothing links to
+//      /archive/2027-2032 anymore anyway — deleting the folder just removes the dead route.)
+//
+//   4. Run a full sync (npm run sync / sync-full) against the live 2027-2032 Assembly data,
+//      then rebuild + redeploy. Confirm: /assembly/** shows 2027-2032 content; the mandate
+//      switcher lists "2022–2027 · archive" linking to /archive/2022-2027 with the exact
+//      frozen data; /archive/2022-2027 has no dependency on anything written for 2027-2032
+//      afterwards (separate DB rows, separate static build output — no bleed either direction).
+//
+//   5. Optional cleanup: four one-off analysis/import scripts hardcode '2022-2027'
+//      (mandate-cost-breakdown.mjs, import-expenses.py, import-historical-expenses.ts,
+//      backfill-parent-motion-text.ts). None run automatically (not part of `npm run sync`),
+//      so they're not a pivot blocker — just don't reuse them for 2027-2032 figures without
+//      updating the hardcoded id first.
+//
+// The transition AFTER this one (2032-2037) follows the same shape: flip MANDATES, copy
+// whichever folder is currently the live mandate's archive-in-waiting... except at that point
+// there won't be one yet, so instead copy app/archive/2022-2027/ (or literally any existing
+// archive folder) as a template, find-replace its id to '2032-2037', and repeat steps 2-5
+// above with 2027-2032 as the outgoing mandate being archived.
+// ============================================================================================
 
 /** The mandate the live site shows (the one flagged current, else the latest). */
 export const CURRENT_MANDATE: Mandate =
@@ -67,36 +126,14 @@ export function mandateHasBegun(m: Mandate, todayIso: string = TODAY_ISO): boole
 }
 
 /**
- * ALL non-current mandates, regardless of whether they've begun. Use ONLY for the archive
- * routes' `generateStaticParams`.
- *
- * Cloudflare's `next-on-pages` adapter requires every route with `dynamicParams = false` to
- * prerender at least one static path — a route with zero prerendered paths gets treated as a
- * function with no static output and rejected ("not configured to run with the Edge Runtime").
- * A not-yet-begun mandate has no data, so its pages can't render real content, but they must
- * still appear here so the route always has ≥1 static path. Each archive page guards on
- * `mandateHasBegun` and calls `notFound()` for a mandate that hasn't started yet, so that
- * prerendered path becomes a static 404 — never a data render against an empty mandate, never
- * a live DB call, never a runtime function.
- */
-export const ALL_ARCHIVE_MANDATES: Mandate[] = MANDATES.filter((m) => m.id !== CURRENT_MANDATE.id)
-
-/**
  * Non-current mandates that have already begun — genuine past terms, browsable as archives.
  * Future mandates (not yet started) are excluded until their start date, so a term added to
  * MANDATES ahead of time does not surface as an empty archive. Use this for user-facing lists
- * (switcher, sitemap) — never for `generateStaticParams` (see ALL_ARCHIVE_MANDATES).
+ * (switcher, sitemap).
  */
-export const ARCHIVED_MANDATES: Mandate[] = ALL_ARCHIVE_MANDATES.filter((m) => mandateHasBegun(m))
-
-/**
- * Sentinel `id`/`slug` param for the one placeholder path prerendered under a not-yet-begun
- * mandate's nested `[id]`/`[slug]` archive routes (bills, divisions, MLAs, parties) — routes
- * that can't otherwise guarantee a real path since the mandate has no data yet. Never a real
- * API id or slug (those are numeric ids or `nia-bill-…`/party-name slugs), so it can't collide.
- * The page for this param calls `notFound()` immediately, without querying the DB.
- */
-export const ARCHIVE_PLACEHOLDER_PARAM = '_pending'
+export const ARCHIVED_MANDATES: Mandate[] = MANDATES.filter(
+  (m) => m.id !== CURRENT_MANDATE.id && mandateHasBegun(m),
+)
 
 /** Look up a mandate by id. */
 export function mandateById(id: string): Mandate | undefined {
@@ -132,4 +169,17 @@ export function mandateIdForDate(date: string | Date): string {
   const m = dateToMandate(date)
   if (!m) throw new Error(`No mandate covers date "${date}" — add it to MANDATES in lib/constants/mandates.ts`)
   return m.id
+}
+
+/**
+ * The mandate covering today's actual date — for sync writes with no natural per-record date
+ * (ministers, committee chairs, registered interests, member-term snapshots are "current
+ * roster" API snapshots, not dated events, so there's nothing to run mandateIdForDate on).
+ * Unlike CURRENT_MANDATE (a manually flipped display flag), this is correct the moment a new
+ * mandate's start date arrives, regardless of whether the isCurrent-flip PR has been deployed
+ * yet — closing the race where a cron run before that deploy could misattribute new-term data
+ * into the outgoing mandate and then delete it via the "not in the fresh roster" cleanup.
+ */
+export function mandateForToday(todayIso: string = TODAY_ISO): Mandate {
+  return dateToMandate(todayIso) ?? CURRENT_MANDATE
 }

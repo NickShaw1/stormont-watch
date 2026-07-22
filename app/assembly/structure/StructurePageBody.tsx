@@ -42,15 +42,13 @@ function officialLinksFor(mandateId: string): Record<string, string> {
 
 /**
  * Shared body for the Assembly structure page — rendered by both the live route (current
- * mandate, basePath '') and the archive route (`/archive/<id>`). `mandate` drives the
- * queries; `basePath` prefixes internal links (threaded to StructureClient).
+ * mandate) and the archive route (`/archive/<id>`). `mandate` drives the queries; internal
+ * links are built by StructureClient from mandate context.
  */
 export default async function StructurePageBody({
   mandate,
-  basePath,
 }: {
   mandate: Mandate
-  basePath: string
 }) {
   const [ministers, chairs, presidingOfficers] = await Promise.all([
     getAllMinisters(mandate.id),

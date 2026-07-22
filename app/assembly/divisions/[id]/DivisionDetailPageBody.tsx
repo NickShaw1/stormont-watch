@@ -5,7 +5,7 @@ import { getDivisionWithVotes, getHansardReportId, getAmendmentMotionTexts } fro
 import { db } from '@/lib/db/client'
 import * as schema from '@/lib/db/schema'
 import { isPassed } from '@/lib/bills'
-import { formatDate, parseBillSlug, parseStageName } from '@/lib/format'
+import { formatDate } from '@/lib/format'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import { formatTabledBy } from '@/lib/utils/formatNames'
 import type { Mandate } from '@/lib/constants/mandates'
