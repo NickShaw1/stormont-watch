@@ -3,13 +3,13 @@ export const dynamicParams = false
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { ALL_ARCHIVE_MANDATES, mandateById } from '@/lib/constants/mandates'
+import { ARCHIVED_MANDATES, mandateById } from '@/lib/constants/mandates'
 import { getAllDivisionsFromDb } from '@/lib/db/queries'
 import DivisionDetailPageBody from '@/app/assembly/divisions/[id]/DivisionDetailPageBody'
 
 export async function generateStaticParams() {
   const out: { mandate: string; id: string }[] = []
-  for (const m of ALL_ARCHIVE_MANDATES) {
+  for (const m of ARCHIVED_MANDATES) {
     const divisions = await getAllDivisionsFromDb(m.id)
     for (const d of divisions) out.push({ mandate: m.id, id: d.documentId })
   }

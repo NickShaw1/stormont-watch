@@ -3,11 +3,11 @@ export const dynamicParams = false
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { ALL_ARCHIVE_MANDATES, mandateById } from '@/lib/constants/mandates'
+import { ARCHIVED_MANDATES, mandateById } from '@/lib/constants/mandates'
 import FormerMlasPageBody from '@/app/assembly/former-mlas/FormerMlasPageBody'
 
 export function generateStaticParams() {
-  return ALL_ARCHIVE_MANDATES.map((m) => ({ mandate: m.id }))
+  return ARCHIVED_MANDATES.map((m) => ({ mandate: m.id }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ mandate: string }> }): Promise<Metadata> {

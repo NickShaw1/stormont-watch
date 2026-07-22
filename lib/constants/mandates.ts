@@ -67,21 +67,20 @@ export function mandateHasBegun(m: Mandate, todayIso: string = TODAY_ISO): boole
 }
 
 /**
- * ALL non-current mandates (regardless of whether they've begun). Used ONLY for build-time
- * `generateStaticParams` on the archive routes, so those `[mandate]` routes always prerender
- * at least one path. A not-yet-begun mandate prerenders as a 404 (the archive layout 404s it),
- * which keeps Cloudflare's `next-on-pages` adapter happy — it rejects a dynamic route that has
- * zero prerendered params. NOT for user-facing lists.
- */
-export const ALL_ARCHIVE_MANDATES: Mandate[] = MANDATES.filter((m) => m.id !== CURRENT_MANDATE.id)
-
-/**
  * Non-current mandates that have already begun — genuine past terms, browsable as archives.
  * Future mandates (not yet started) are excluded until their start date, so a term added to
- * MANDATES ahead of time does not surface as an empty archive. Use this for user-facing lists
- * (switcher, sitemap).
+ * MANDATES ahead of time does not surface as an empty archive.
+ *
+ * This is the ONLY archive list: it drives both user-facing navigation (switcher, sitemap)
+ * AND the archive routes' `generateStaticParams`. While it is empty (no past mandate yet), the
+ * archive `[mandate]` routes prerender zero paths; combined with `export const dynamicParams =
+ * false` on every archive route, that makes them purely static (no on-demand Node function), so
+ * they serve only 404s and Cloudflare's `next-on-pages` adapter has nothing to reject. When a
+ * mandate ends and the next begins, this list fills and the real archive pages prerender.
  */
-export const ARCHIVED_MANDATES: Mandate[] = ALL_ARCHIVE_MANDATES.filter((m) => mandateHasBegun(m))
+export const ARCHIVED_MANDATES: Mandate[] = MANDATES.filter(
+  (m) => m.id !== CURRENT_MANDATE.id && mandateHasBegun(m)
+)
 
 /** Look up a mandate by id. */
 export function mandateById(id: string): Mandate | undefined {
