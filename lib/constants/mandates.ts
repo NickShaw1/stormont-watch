@@ -141,6 +141,18 @@ export function mandateById(id: string): Mandate | undefined {
 }
 
 /**
+ * Sentinel `id`/`slug` param for the one placeholder path prerendered under a not-yet-begun
+ * mandate's nested `[id]`/`[slug]` archive routes (bills, divisions, MLAs, parties) when there's
+ * zero real data to generate paths from yet. Cloudflare's next-on-pages adapter rejects a
+ * dynamicParams=false route with zero generated static paths — and that failure poisons the
+ * whole build, not just the empty route — so each such route falls back to this single
+ * placeholder path instead of an empty array. Never a real API id or slug (those are numeric
+ * ids or `nia-bill-…`/party-name slugs), so it can't collide. The page for this param calls
+ * `notFound()` immediately, without querying the DB.
+ */
+export const ARCHIVE_PLACEHOLDER_PARAM = '_pending'
+
+/**
  * Adjective for a mandate's in-chamber members: "current" while the mandate is live,
  * "sitting" once it is archived (a past mandate has no members "current" today). Use this
  * ONLY where a stat is genuinely scoped to sitting members (is_current) so the distinction
