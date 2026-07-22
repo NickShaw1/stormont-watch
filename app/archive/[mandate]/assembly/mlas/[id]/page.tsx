@@ -3,13 +3,19 @@ export const dynamicParams = false
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { ARCHIVED_MANDATES, mandateById } from '@/lib/constants/mandates'
+import { ALL_ARCHIVE_MANDATES, ARCHIVE_PLACEHOLDER_PARAM, mandateById, mandateHasBegun } from '@/lib/constants/mandates'
 import { getAllMembersIncludingFormer } from '@/lib/db/queries'
 import MlaDetailPageBody from '@/app/assembly/mlas/[id]/MlaDetailPageBody'
 
 export async function generateStaticParams() {
   const out: { mandate: string; id: string }[] = []
-  for (const m of ARCHIVED_MANDATES) {
+  for (const m of ALL_ARCHIVE_MANDATES) {
+    // Not-yet-begun mandate has no members yet — one placeholder path so this route still
+    // has ≥1 static param (the page body's mandateHasBegun guard 404s it regardless of id).
+    if (!mandateHasBegun(m)) {
+      out.push({ mandate: m.id, id: ARCHIVE_PLACEHOLDER_PARAM })
+      continue
+    }
     const members = await getAllMembersIncludingFormer(m.id)
     for (const mem of members) out.push({ mandate: m.id, id: mem.personId })
   }
@@ -28,6 +34,6 @@ export async function generateMetadata({ params }: { params: Promise<{ mandate: 
 export default async function ArchiveMlaDetailPage({ params }: { params: Promise<{ mandate: string; id: string }> }) {
   const { mandate: id, id: personId } = await params
   const mandate = mandateById(id)
-  if (!mandate) notFound()
+  if (!mandate || !mandateHasBegun(mandate)) notFound()
   return <MlaDetailPageBody id={personId} mandate={mandate} basePath={`/archive/${id}`} />
 }

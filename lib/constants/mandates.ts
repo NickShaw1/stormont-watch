@@ -67,20 +67,36 @@ export function mandateHasBegun(m: Mandate, todayIso: string = TODAY_ISO): boole
 }
 
 /**
+ * ALL non-current mandates, regardless of whether they've begun. Use ONLY for the archive
+ * routes' `generateStaticParams`.
+ *
+ * Cloudflare's `next-on-pages` adapter requires every route with `dynamicParams = false` to
+ * prerender at least one static path — a route with zero prerendered paths gets treated as a
+ * function with no static output and rejected ("not configured to run with the Edge Runtime").
+ * A not-yet-begun mandate has no data, so its pages can't render real content, but they must
+ * still appear here so the route always has ≥1 static path. Each archive page guards on
+ * `mandateHasBegun` and calls `notFound()` for a mandate that hasn't started yet, so that
+ * prerendered path becomes a static 404 — never a data render against an empty mandate, never
+ * a live DB call, never a runtime function.
+ */
+export const ALL_ARCHIVE_MANDATES: Mandate[] = MANDATES.filter((m) => m.id !== CURRENT_MANDATE.id)
+
+/**
  * Non-current mandates that have already begun — genuine past terms, browsable as archives.
  * Future mandates (not yet started) are excluded until their start date, so a term added to
- * MANDATES ahead of time does not surface as an empty archive.
- *
- * This is the ONLY archive list: it drives both user-facing navigation (switcher, sitemap)
- * AND the archive routes' `generateStaticParams`. While it is empty (no past mandate yet), the
- * archive `[mandate]` routes prerender zero paths; combined with `export const dynamicParams =
- * false` on every archive route, that makes them purely static (no on-demand Node function), so
- * they serve only 404s and Cloudflare's `next-on-pages` adapter has nothing to reject. When a
- * mandate ends and the next begins, this list fills and the real archive pages prerender.
+ * MANDATES ahead of time does not surface as an empty archive. Use this for user-facing lists
+ * (switcher, sitemap) — never for `generateStaticParams` (see ALL_ARCHIVE_MANDATES).
  */
-export const ARCHIVED_MANDATES: Mandate[] = MANDATES.filter(
-  (m) => m.id !== CURRENT_MANDATE.id && mandateHasBegun(m)
-)
+export const ARCHIVED_MANDATES: Mandate[] = ALL_ARCHIVE_MANDATES.filter((m) => mandateHasBegun(m))
+
+/**
+ * Sentinel `id`/`slug` param for the one placeholder path prerendered under a not-yet-begun
+ * mandate's nested `[id]`/`[slug]` archive routes (bills, divisions, MLAs, parties) — routes
+ * that can't otherwise guarantee a real path since the mandate has no data yet. Never a real
+ * API id or slug (those are numeric ids or `nia-bill-…`/party-name slugs), so it can't collide.
+ * The page for this param calls `notFound()` immediately, without querying the DB.
+ */
+export const ARCHIVE_PLACEHOLDER_PARAM = '_pending'
 
 /** Look up a mandate by id. */
 export function mandateById(id: string): Mandate | undefined {
