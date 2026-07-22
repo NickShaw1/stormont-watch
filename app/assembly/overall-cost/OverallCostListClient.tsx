@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
-import { formatMemberName, abbreviateParty, partyBorderColor, partyFilterActiveStyle, formatConstituency } from '@/lib/format'
+import { formatMemberName, abbreviateParty, partyBorderColor, partyFilterActiveStyle, formatConstituency, orderedParties } from '@/lib/format'
+import { useMandate } from '@/components/MandateContext'
+import { sittingAdjective } from '@/lib/constants/mandates'
 import styles from '../expenses/expenses.module.css'
 
 export interface CostRow {
@@ -26,16 +28,6 @@ interface Props {
 
 
 
-const PARTIES = [
-  'Democratic Unionist Party',
-  'Sinn Féin',
-  'Ulster Unionist Party',
-  'Alliance Party',
-  'Social Democratic and Labour Party',
-  'Traditional Unionist Voice',
-  'People Before Profit Alliance',
-  'Independent',
-]
 
 function gbp(val: number) {
   return `£${Math.round(val).toLocaleString('en-GB')}`
@@ -46,6 +38,8 @@ function partyLabel(party: string) {
 }
 
 export default function OverallCostListClient({ rows }: Props) {
+  const PARTIES = orderedParties(rows)
+  const { mandate, basePath } = useMandate()
   const [partyFilter, setPartyFilter] = useState('ALL')
   const router = useRouter()
 
@@ -85,7 +79,7 @@ export default function OverallCostListClient({ rows }: Props) {
       </div>
 
       <p className={styles.resultCount} aria-live="polite" aria-atomic="true">
-        <strong>{filtered.length}</strong> {partyFilter === 'ALL' ? 'current' : partyLabel(partyFilter)} MLA{filtered.length !== 1 ? 's' : ''}
+        <strong>{filtered.length}</strong> {partyFilter === 'ALL' ? sittingAdjective(mandate) : partyLabel(partyFilter)} MLA{filtered.length !== 1 ? 's' : ''}
       </p>
 
       <div className={styles.tableWrap}>
@@ -115,7 +109,7 @@ export default function OverallCostListClient({ rows }: Props) {
                 <tr
                   key={row.personId}
                   className={`${styles.tableRow} ${isTop ? styles.rowGold : ''}`}
-                  onClick={() => router.push(`/assembly/mlas/${row.personId}`)}
+                  onClick={() => router.push(`${basePath}/assembly/mlas/${row.personId}`)}
                   style={{ cursor: 'pointer' }}
                 >
                   <th scope="row" className={styles.tdRank} aria-label={`Rank ${i + 1}`}>{i + 1}</th>
@@ -130,7 +124,7 @@ export default function OverallCostListClient({ rows }: Props) {
                       </span>
                       <div style={{ minWidth: 0 }}>
                         <Link
-                          href={`/assembly/mlas/${row.personId}`}
+                          href={`${basePath}/assembly/mlas/${row.personId}`}
                           className={styles.mlaName}
                           aria-label={`${formatMemberName(row.fullName)}${row.party ? `, ${row.party}` : ''}`}
                         >

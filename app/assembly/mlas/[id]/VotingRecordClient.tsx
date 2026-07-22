@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { isPassed } from '@/lib/bills'
 import { formatDate } from '@/lib/format'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
+import { useMandate } from '@/components/MandateContext'
 import styles from './mlaDetail.module.css'
 
 type VoteRow = {
@@ -35,6 +36,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 
 
 export default function VotingRecordClient({ votes, memberName, noExpensesTab }: Props) {
+  const { basePath } = useMandate()
   const [filter, setFilter] = useState<Filter>('ALL')
   const filteredVotes = filter === 'ALL' ? votes : votes.filter((v) => v.vote === filter)
 
@@ -163,7 +165,7 @@ export default function VotingRecordClient({ votes, memberName, noExpensesTab }:
                   >
                     <td className={styles.subjectCell}>
                       <Link
-                        href={`/assembly/divisions/${h.documentId}`}
+                        href={`${basePath}/assembly/divisions/${h.documentId}`}
                         aria-label={`View division: ${title}`}
                       >
                         <span className={styles.subjectTitle}>{title}</span>
@@ -216,7 +218,7 @@ export default function VotingRecordClient({ votes, memberName, noExpensesTab }:
             return (
               <Link
                 key={`mobile-${filter}-${h.documentId}`}
-                href={`/assembly/divisions/${h.documentId}`}
+                href={`${basePath}/assembly/divisions/${h.documentId}`}
                 className={styles.mobileCard}
               >
                 <div className={styles.mobileTitle}>{title}</div>

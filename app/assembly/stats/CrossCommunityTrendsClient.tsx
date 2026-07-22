@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react'
 import type { TooltipItem } from 'chart.js'
 import styles from './stats.module.css'
+import { useMandate } from '@/components/MandateContext'
 
 interface Row {
   month: string
@@ -11,6 +12,7 @@ interface Row {
 }
 
 export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
+  const { mandate } = useMandate()
   const c1 = useRef<HTMLCanvasElement>(null)
   const c2 = useRef<HTMLCanvasElement>(null)
   const chart1 = useRef<{ destroy: () => void } | null>(null)
@@ -179,8 +181,8 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
       <div className={styles.overviewGridThree}>
         <div className={styles.overviewCard}>
           <span className={styles.overviewLabel}>Period</span>
-          <span className={styles.overviewValue}>24</span>
-          <span className={styles.overviewMeta}>months rolling</span>
+          <span className={styles.overviewValue}>{data.length}</span>
+          <span className={styles.overviewMeta}>months since {mandate.startLabel}</span>
         </div>
         <div className={styles.overviewCard}>
           <span className={styles.overviewLabel}>Highest agreement month</span>
@@ -202,7 +204,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
         <span className={styles.trendLegendItem}><span className={styles.trendDotSm} />Fewer than 3 divisions</span>
       </div>
       <div style={{ position: 'relative', width: '100%', height: '260px', marginBottom: '0.5rem' }}>
-        <canvas ref={c1} role="img" aria-label="Line chart showing monthly unionist nationalist agreement rate over the last 24 months" />
+        <canvas ref={c1} role="img" aria-label={`Line chart showing monthly unionist nationalist agreement rate since ${mandate.startLabel}`} />
       </div>
       <div className="note-card">
         <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -220,7 +222,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
         <span className={styles.trendLegendItem}><span className={styles.trendDotAgreed} />Both blocs voted same way</span>
       </div>
       <div style={{ position: 'relative', width: '100%', height: '240px' }}>
-        <canvas ref={c2} role="img" aria-label="Grouped bar chart showing total divisions versus cross-community agreed divisions per month over the last 24 months" />
+        <canvas ref={c2} role="img" aria-label={`Grouped bar chart showing total divisions versus cross-community agreed divisions per month since ${mandate.startLabel}`} />
       </div>
     </div>
   )

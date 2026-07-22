@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { formatMemberName, getSurname, abbreviateParty } from '@/lib/format'
 import PartyName from '@/components/PartyName'
+import { useMandate } from '@/components/MandateContext'
 import divStyles from './divisionDetail.module.css'
 import styles from './rollCall.module.css'
 
@@ -45,6 +46,7 @@ function RollColumn({
   members: Vote[]
   showVoteLabel?: boolean
 }) {
+  const { basePath } = useMandate()
   const sorted = [...members].sort((a, b) =>
     getSurname(a.fullName).localeCompare(getSurname(b.fullName))
   )
@@ -62,7 +64,7 @@ function RollColumn({
           <ul className={divStyles.nameList} role="list">
             {items.map((v) => (
               <li key={`${v.personId}-${v.vote}`} className={divStyles.nameItem}>
-                <Link href={`/assembly/mlas/${v.personId}`}>{formatMemberName(v.fullName)}</Link>
+                <Link href={`${basePath}/assembly/mlas/${v.personId}`}>{formatMemberName(v.fullName)}</Link>
                 {showVoteLabel && (
                   <span className={`vote-pill ${v.vote === 'NO_SHOW' ? 'vote-noshow' : 'vote-abstain'}`}>
                     {v.vote === 'NO_SHOW' ? 'No Show' : 'Abstain'}
@@ -78,6 +80,7 @@ function RollColumn({
 }
 
 export default function RollCallClient({ votes }: { votes: Vote[] }) {
+  const { basePath } = useMandate()
   const sortedVotes = [...votes].sort((a, b) =>
     getSurname(a.fullName).localeCompare(getSurname(b.fullName))
   )
@@ -146,7 +149,7 @@ export default function RollCallClient({ votes }: { votes: Vote[] }) {
             </div>
             {items.map((v) => (
               <div key={`${v.personId}-${v.vote}`} className={styles.rollCallMobileRow}>
-                <Link href={`/assembly/mlas/${v.personId}`} className={styles.rollCallName}>
+                <Link href={`${basePath}/assembly/mlas/${v.personId}`} className={styles.rollCallName}>
                   {formatMemberName(v.fullName)}
                 </Link>
                 <span className={`${styles.votePill} ${votePillClass(v.vote)}`}>

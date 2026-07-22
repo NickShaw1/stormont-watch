@@ -6,6 +6,7 @@ import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import { partyBorderColor, abbreviateParty, formatMemberName, formatConstituency } from '@/lib/format'
 import styles from './partyDetail.module.css'
+import { useMandate } from '@/components/MandateContext'
 
 const EXEC_ORDER: Record<string, number> = {
   'First Minister': 0,
@@ -79,7 +80,7 @@ function QuestionsYearChart({ questionStats, partyColor }: { questionStats: Ques
     const years = [...yearTotals.keys()].sort()
     const data = years.map(y => yearTotals.get(y) ?? 0)
 
-    let chart: import('chart.js').Chart | null = null
+    let chart: { destroy: () => void } | null = null
     import('chart.js/auto').then(({ default: Chart }) => {
       if (!canvasRef.current) return
       const existing = Chart.getChart(canvasRef.current)
@@ -114,6 +115,7 @@ function QuestionsYearChart({ questionStats, partyColor }: { questionStats: Ques
 export default function PartyDetailClient({ party, mlas, ministers, chairs, borderColor, description, statsContent, expensesContent, chamberContent, totalQuestions = 0, writtenCount = 0, oralCount = 0, questionStats = [] }: FullProps) {
   const [activeTab, setActiveTab] = useState<Tab>('stats')
   const router = useRouter()
+  const { mandate, basePath } = useMandate()
 
   const execMinisters = ministers.filter((m) => m.department === 'The Executive Office')
   const deptMinisters = ministers.filter((m) => m.department !== 'The Executive Office')
@@ -214,7 +216,7 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
                   <div className={styles.questionsSummaryCell}>
                     <span className={styles.questionsSummaryLabel}>Total questions</span>
                     <span className={styles.questionsSummaryValue}>{totalQuestions.toLocaleString()}</span>
-                    <span className={styles.questionsSummaryMeta}>Since 2022</span>
+                    <span className={styles.questionsSummaryMeta}>Since {mandate.start.slice(0, 4)}</span>
                   </div>
                   <div className={styles.questionsSummaryCell}>
                     <span className={styles.questionsSummaryLabel}>Written</span>
@@ -230,7 +232,7 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
               </div>
               <div className={styles.statsSection} style={{ marginTop: '2rem' }}>
                 <h3 className={styles.expensesSectionHeading} style={{ marginBottom: 'var(--s-2)' }}>Questions <em>by Year</em></h3>
-                <p style={{ fontSize: '15px', color: 'var(--ink-2)', margin: '0.25rem 0 0.75rem' }}>Total written and oral questions submitted to ministers each year since the mandate began in May 2022.</p>
+                <p style={{ fontSize: '15px', color: 'var(--ink-2)', margin: '0.25rem 0 0.75rem' }}>Total written and oral questions submitted to ministers each year since the mandate began in {mandate.startLabel}.</p>
                 <QuestionsYearChart questionStats={questionStats} partyColor={borderColor} />
               </div>
             </div>
@@ -258,7 +260,7 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
                       return (
                         <tr
                           key={mla.personId}
-                          onClick={() => router.push(`/assembly/mlas/${mla.personId}`)}
+                          onClick={() => router.push(`${basePath}/assembly/mlas/${mla.personId}`)}
                           style={{ cursor: 'pointer' }}
                         >
                           <td className={styles.qTdRank}>{i + 1}</td>
@@ -266,7 +268,7 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
                             <div className={styles.qMlaCell}>
                               <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={36} decorative square />
                               <div className={styles.qMlaInfo}>
-                                <Link href={`/assembly/mlas/${mla.personId}`} className={styles.qMlaName}>
+                                <Link href={`${basePath}/assembly/mlas/${mla.personId}`} className={styles.qMlaName}>
                                   {formatMemberName(mla.fullName)}
                                 </Link>
                               </div>
@@ -307,7 +309,7 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
             {sortedExec.map((m) => (
               <Link
                 key={m.personId}
-                href={`/assembly/mlas/${m.personId}`}
+                href={`${basePath}/assembly/mlas/${m.personId}`}
                 className={styles.execCard}
                 style={{ '--party-c': partyBorderColor(party) } as React.CSSProperties}
               >
@@ -337,7 +339,7 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
                 <div className={styles.deptBlockHead}>
                   <span className={styles.deptName}>{m.department ?? ''}</span>
                 </div>
-                <Link href={`/assembly/mlas/${m.personId}`} className={styles.deptItem}>
+                <Link href={`${basePath}/assembly/mlas/${m.personId}`} className={styles.deptItem}>
                   <div className={styles.deptPhoto}>
                     <MlaPhoto name={m.fullName} imgUrl={m.imgUrl ?? ''} size={56} decorative square />
                   </div>
@@ -364,7 +366,7 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
                 <div className={styles.deptBlockHead}>
                   <span className={styles.deptName}>{c.committeeName}</span>
                 </div>
-                <Link href={`/assembly/mlas/${c.personId}`} className={styles.deptItem}>
+                <Link href={`${basePath}/assembly/mlas/${c.personId}`} className={styles.deptItem}>
                   <div className={styles.deptPhoto}>
                     <MlaPhoto name={c.fullName} imgUrl={c.imgUrl ?? ''} size={56} decorative square />
                   </div>
@@ -395,7 +397,7 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
                   <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={64} decorative square />
                 </div>
                 <Link
-                  href={`/assembly/mlas/${mla.personId}`}
+                  href={`${basePath}/assembly/mlas/${mla.personId}`}
                   className={styles.mlaName}
                   aria-label={`View profile for ${formatMemberName(mla.fullName)}`}
                 >

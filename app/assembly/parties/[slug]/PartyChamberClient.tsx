@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import styles from './partyDetail.module.css'
 import { formatMemberName, formatConstituency } from '@/lib/format'
 import MlaPhoto from '@/components/MlaPhoto'
+import { useMandate } from '@/components/MandateContext'
+import { sittingAdjective } from '@/lib/constants/mandates'
 
 interface Props {
   hansardStats: { personId: string; fullName: string; constituency: string | null; imgUrl: string | null; sittings: number; debates: number }[]
@@ -19,6 +21,7 @@ interface Props {
 export default function PartyChamberClient({ hansardStats, hansardPartyRank, hansardPartyDebateRank, hansardSittingsByMonth, partyColor, party }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const router = useRouter()
+  const { mandate, basePath } = useMandate()
   const [sortBy, setSortBy] = useState<'sittings' | 'debates'>('sittings')
 
   const parsedStats = useMemo(() =>
@@ -85,7 +88,7 @@ export default function PartyChamberClient({ hansardStats, hansardPartyRank, han
       return mlaCount > 0 ? Math.round((sittings / mlaCount) * 10) / 10 : 0
     })
 
-    let chart: import('chart.js').Chart | null = null
+    let chart: { destroy: () => void } | null = null
 
     import('chart.js/auto').then(({ default: Chart }) => {
       if (!canvasRef.current) return
@@ -164,7 +167,7 @@ export default function PartyChamberClient({ hansardStats, hansardPartyRank, han
             {topBySittings && (
               <>
                 <div className={styles.statMlaArrow} style={{ color: 'var(--forest)' }}>↑ Most</div>
-                <Link href={`/assembly/mlas/${topBySittings.personId}`} className={styles.statMlaRow}>
+                <Link href={`${basePath}/assembly/mlas/${topBySittings.personId}`} className={styles.statMlaRow}>
                   <div className={styles.statMlaPhoto}>
                     <MlaPhoto name={topBySittings.fullName} imgUrl={topBySittings.imgUrl ?? ''} size={40} decorative square />
                   </div>
@@ -185,7 +188,7 @@ export default function PartyChamberClient({ hansardStats, hansardPartyRank, han
               <>
                 <div className={styles.statMlaSep} />
                 <div className={styles.statMlaArrow} style={{ color: 'var(--crimson)' }}>↓ Fewest</div>
-                <Link href={`/assembly/mlas/${fewestBySittings.personId}`} className={styles.statMlaRow}>
+                <Link href={`${basePath}/assembly/mlas/${fewestBySittings.personId}`} className={styles.statMlaRow}>
                   <div className={styles.statMlaPhoto}>
                     <MlaPhoto name={fewestBySittings.fullName} imgUrl={fewestBySittings.imgUrl ?? ''} size={40} decorative square />
                   </div>
@@ -210,7 +213,7 @@ export default function PartyChamberClient({ hansardStats, hansardPartyRank, han
             {topByDebates && (
               <>
                 <div className={styles.statMlaArrow} style={{ color: 'var(--forest)' }}>↑ Most</div>
-                <Link href={`/assembly/mlas/${topByDebates.personId}`} className={styles.statMlaRow}>
+                <Link href={`${basePath}/assembly/mlas/${topByDebates.personId}`} className={styles.statMlaRow}>
                   <div className={styles.statMlaPhoto}>
                     <MlaPhoto name={topByDebates.fullName} imgUrl={topByDebates.imgUrl ?? ''} size={40} decorative square />
                   </div>
@@ -231,7 +234,7 @@ export default function PartyChamberClient({ hansardStats, hansardPartyRank, han
               <>
                 <div className={styles.statMlaSep} />
                 <div className={styles.statMlaArrow} style={{ color: 'var(--crimson)' }}>↓ Fewest</div>
-                <Link href={`/assembly/mlas/${fewestByDebates.personId}`} className={styles.statMlaRow}>
+                <Link href={`${basePath}/assembly/mlas/${fewestByDebates.personId}`} className={styles.statMlaRow}>
                   <div className={styles.statMlaPhoto}>
                     <MlaPhoto name={fewestByDebates.fullName} imgUrl={fewestByDebates.imgUrl ?? ''} size={40} decorative square />
                   </div>
@@ -256,7 +259,7 @@ export default function PartyChamberClient({ hansardStats, hansardPartyRank, han
       <div className={styles.statsSection} style={{ marginTop: '2rem' }}>
         <h3 className={styles.expensesSectionHeading} style={{ marginBottom: 'var(--s-2)' }}>Average Sittings <em>per MLA by Month</em></h3>
         <p style={{ fontSize: '15px', color: 'var(--ink-2)', margin: '0.25rem 0 0.75rem' }}>
-          The average number of plenary sittings spoken in across all {party} MLAs, per month since May 2022.
+          The average number of plenary sittings spoken in across all {party} MLAs, per month over the last 12 months.
         </p>
         <div style={{ height: 180, marginTop: '1rem' }}>
           <canvas ref={canvasRef} />
@@ -268,7 +271,7 @@ export default function PartyChamberClient({ hansardStats, hansardPartyRank, han
         <div style={{ marginTop: '2rem', paddingTop: 'var(--s-2)' }}>
           <h3 className={styles.expensesSectionHeading}>MLA Chamber <em>Activity</em></h3>
           <p style={{ fontSize: '15px', color: 'var(--ink-2)', marginBottom: '1rem' }}>
-            Each <strong>current MLA&apos;s</strong> plenary sittings spoken in and topics contributed to since the mandate began in May 2022.
+            Each <strong>{sittingAdjective(mandate)} MLA&apos;s</strong> plenary sittings spoken in and topics contributed to over the last 12 months.
           </p>
           <div className="note-card" style={{ marginBottom: '1rem' }}>
             <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -315,7 +318,7 @@ export default function PartyChamberClient({ hansardStats, hansardPartyRank, han
                   return (
                     <tr
                       key={mla.personId}
-                      onClick={() => router.push(`/assembly/mlas/${mla.personId}`)}
+                      onClick={() => router.push(`${basePath}/assembly/mlas/${mla.personId}`)}
                       style={{ cursor: 'pointer' }}
                     >
                       <td className={styles.qTdRank}>{i + 1}</td>
@@ -323,7 +326,7 @@ export default function PartyChamberClient({ hansardStats, hansardPartyRank, han
                         <div className={styles.qMlaCell}>
                           <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={36} decorative square />
                           <div className={styles.qMlaInfo}>
-                            <Link href={`/assembly/mlas/${mla.personId}`} className={styles.qMlaName}>
+                            <Link href={`${basePath}/assembly/mlas/${mla.personId}`} className={styles.qMlaName}>
                               {formatMemberName(mla.fullName)}
                             </Link>
                           </div>

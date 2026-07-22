@@ -4,9 +4,10 @@ import { drizzle } from 'drizzle-orm/neon-http'
 import { eq } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 import { apiRoleToSalaryRole } from '../lib/salaries'
+import { upsertMemberSnapshot, updateMemberTermRoles } from '../lib/db/memberWrites'
 
 const BASE = 'http://data.niassembly.gov.uk'
-const CURRENT_MANDATE = '2022-2027'
+import { CURRENT_MANDATE, mandateIdForDate } from '../lib/constants/mandates'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -56,13 +57,31 @@ async function syncMembers(db: Db) {
   const currentIds = new Set(
     currentRaw.map((m: any) => str(m?.PersonID ?? m?.PersonId)).filter(Boolean)
   )
+
+  // Only touch members currently sitting OR already tracked in the CURRENT mandate.
+  // GetAllMembers returns every all-time MLA; writing a current-mandate term for each
+  // (as this script once did) imports historical members from past mandates into the
+  // live term. Scoping to CURRENT_MANDATE.id keeps this manual resync mandate-safe and
+  // matches the guard in the nightly sync.
+  const existingMembers = await db
+    .select({ personId: schema.members.personId })
+    .from(schema.members)
+    .where(eq(schema.members.mandate, CURRENT_MANDATE.id))
+  const existingIds = new Set(existingMembers.map((m) => m.personId))
+
   const seen = new Set<string>()
-  const raw = [...currentRaw, ...allRaw].filter((m: any) => {
+  const dedup = [...currentRaw, ...allRaw].filter((m: any) => {
     const id = str(m?.PersonID ?? m?.PersonId)
     if (!id || seen.has(id)) return false
     seen.add(id)
     return true
   })
+
+  const raw = dedup.filter((m: any) => {
+    const id = str(m?.PersonID ?? m?.PersonId)
+    return currentIds.has(id) || existingIds.has(id)
+  })
+  console.log(`[syncMembers] Filtered out ${dedup.length - raw.length} historical members not in current mandate`)
 
   if (raw.length === 0) {
     console.error('[syncMembers] No members found in either API response — aborting member sync')
@@ -82,28 +101,14 @@ async function syncMembers(db: Db) {
     if (!fullName) {
       console.warn(`[syncMembers] Member ${personId} has no MemberFullDisplayName — writing with empty name`)
     }
-    await db
-      .insert(schema.members)
-      .values({
-        personId,
-        fullName,
-        party: str(m?.PartyName) || null,
-        constituency: str(m?.ConstituencyName) || null,
-        imgUrl: str(m?.MemberImgUrl) || null,
-        isCurrent: currentIds.has(personId),
-        mandate: CURRENT_MANDATE,
-      })
-      .onConflictDoUpdate({
-        target: schema.members.personId,
-        set: {
-          fullName,
-          party: str(m?.PartyName) || null,
-          constituency: str(m?.ConstituencyName) || null,
-          imgUrl: str(m?.MemberImgUrl) || null,
-          isCurrent: currentIds.has(personId),
-          updatedAt: new Date(),
-        },
-      })
+    await upsertMemberSnapshot(db, {
+      personId,
+      fullName,
+      imgUrl: str(m?.MemberImgUrl) || null,
+      party: str(m?.PartyName) || null,
+      constituency: str(m?.ConstituencyName) || null,
+      isCurrent: currentIds.has(personId),
+    })
     written++
   }
   console.log(`[syncMembers] Complete — ${written} written, ${skipped} skipped, ${currentIds.size} marked current`)
@@ -148,7 +153,9 @@ async function syncMandateAndRoles(db: Db) {
         .filter((r: any) =>
           r.RoleType === 'Assembly Membership Role' &&
           r.Role === 'MLA' &&
-          r.AffiliationStart >= '2022-01-01'
+          // Members are returned at the election, which is on or before the first sitting
+          // (CURRENT_MANDATE.start); use electionDate so an election-day affiliation isn't missed.
+          r.AffiliationStart >= CURRENT_MANDATE.electionDate
         )
         .sort((a: any, b: any) =>
           new Date(b.AffiliationStart).getTime() - new Date(a.AffiliationStart).getTime()
@@ -176,21 +183,17 @@ async function syncMandateAndRoles(db: Db) {
       const assemblyRoleEnd = specialRole?.AffiliationEnd?.slice(0, 10) ?? null
 
       if (mandateStart || assemblyRole) {
-        await db
-          .update(schema.members)
-          .set({
-            ...(mandateStart && { mandateStart }),
-            mandateEnd: mandateEnd ?? null,
-            assemblyRole,
-            assemblyRoleStart: assemblyRoleStart ?? null,
-            assemblyRoleEnd: assemblyRoleEnd ?? null,
-            updatedAt: new Date(),
-          })
-          .where(eq(schema.members.personId, personId))
+        await updateMemberTermRoles(db, personId, {
+          mandateStart,
+          mandateEnd,
+          assemblyRole,
+          assemblyRoleStart,
+          assemblyRoleEnd,
+        })
         updated++
       }
 
-      const MANDATE_START = '2022-05-05'
+      const MANDATE_START = CURRENT_MANDATE.start
       const AD_HOC_RE = /concurrent|ad hoc/i
 
       for (const r of roles) {
@@ -234,7 +237,7 @@ async function syncMandateAndRoles(db: Db) {
             organisationId: organisationId || null,
             startDate: effectiveStartDate,
             endDate,
-            mandate: CURRENT_MANDATE,
+            mandate: mandateIdForDate(effectiveStartDate),
           })
           .onConflictDoUpdate({
             target: schema.memberRoleHistory.affiliationId,

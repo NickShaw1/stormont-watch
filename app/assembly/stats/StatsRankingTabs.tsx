@@ -5,6 +5,7 @@ import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import { formatMemberName, abbreviateParty } from '@/lib/format'
 import PartyName from '@/components/PartyName'
+import { useMandate } from '@/components/MandateContext'
 import styles from './statsRankingTabs.module.css'
 
 type MlaRow = {
@@ -60,6 +61,7 @@ function StatCard({
   valueSuffix?: string
   showVoteCounts?: boolean
 }) {
+  const { basePath } = useMandate()
   return (
     <div className={styles.card}>
       <h3 className={styles.cardTitle}>{title}</h3>
@@ -75,7 +77,7 @@ function StatCard({
               square
             />
             <div className={styles.info}>
-              <Link href={`/assembly/mlas/${m.personId}`} className={styles.name}>
+              <Link href={`${basePath}/assembly/mlas/${m.personId}`} className={styles.name}>
                 {formatMemberName(m.fullName)}
               </Link>
               {m.party && (

@@ -3,6 +3,7 @@ import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
 import * as schema from '../lib/db/schema'
 import { eq } from 'drizzle-orm'
+import { mandateIdForDate } from '../lib/constants/mandates'
 
 const BASE = 'http://data.niassembly.gov.uk'
 
@@ -93,12 +94,14 @@ export async function syncQuestionStats(db: Db) {
             month,
             writtenCount: written,
             oralCount: oral,
+            mandate: mandateIdForDate(`${year}-${String(month).padStart(2, '0')}-01`),
           })
           .onConflictDoUpdate({
             target: [schema.questionStats.personId, schema.questionStats.year, schema.questionStats.month],
             set: {
               writtenCount: written,
               oralCount: oral,
+              mandate: mandateIdForDate(`${year}-${String(month).padStart(2, '0')}-01`),
               updatedAt: new Date(),
             },
           })

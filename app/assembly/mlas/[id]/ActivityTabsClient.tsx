@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './mlaDetail.module.css'
 import type { RoleInterval } from '@/lib/salaries'
+import { useMandate } from '@/components/MandateContext'
 
 type ExpenseRow = {
   financial_year: string
@@ -52,8 +53,8 @@ interface Props {
   hideQuestionsTab: boolean
   partyColor: string
   questionRank: { rank: number; totalEligible: number } | null
-  currentSalary: number
-  mandateEarnings: number
+  currentSalary: number | null
+  mandateEarnings: number | null
   roleIntervals: RoleInterval[]
   mandateExpensesRank: number | null
   mandateExpensesTotalMembers: number | null
@@ -107,7 +108,7 @@ function QuestionsChart({ questionStats, partyColor }: { questionStats: Question
     const data = months.map(m => statMap.get(`${m.year}-${m.month}`) ?? 0)
     const labels = months.map(m => m.label)
 
-    let chart: import('chart.js').Chart | null = null
+    let chart: { destroy: () => void } | null = null
 
     import('chart.js/auto').then(({ default: Chart }) => {
       if (!canvasRef.current) return
@@ -200,7 +201,7 @@ function SpeechesChart({ hansardRows, hansardSittingsByMonth, partyColor }: {
     const spokenData = months.map(m => spokenMap.get(`${m.year}-${m.month}`)?.size ?? 0)
     const labels = months.map(m => m.label)
 
-    let chart: import('chart.js').Chart | null = null
+    let chart: { destroy: () => void } | null = null
 
     import('chart.js/auto').then(({ default: Chart }) => {
       if (!canvasRef.current) return
@@ -284,6 +285,7 @@ function SpeechesChart({ hansardRows, hansardSittingsByMonth, partyColor }: {
 
 export default function ActivityTabsClient(props: Props) {
   const { allExpenses, interests, totalQuestions, writtenCount, oralCount, questionStats, hideQuestionsTab, partyColor, questionRank, currentSalary, mandateEarnings, mandateExpensesRank, mandateExpensesTotalMembers, hansardRows, hansardRank, hansardDebateRank, hansardSittingsByMonth } = props
+  const { mandate } = useMandate()
   const participationVisible = (!hideQuestionsTab && totalQuestions > 0) || hansardRows.length > 0
   const [activeTab, setActiveTab] = useState<Tab>(participationVisible ? 'questions' : 'finances')
   const [selectedYear, setSelectedYear] = useState<string>(allExpenses[0]?.financial_year ?? '')
@@ -498,21 +500,27 @@ export default function ActivityTabsClient(props: Props) {
         <div id="panel-finances" role="tabpanel" aria-labelledby="tab-finances" className={styles.financesPanel}>
           <div className={styles.salaryPanel}>
             <h3 className={styles.financesSectionHeading}>Salary &amp; <em>earnings</em></h3>
-            <p className={styles.salaryNotice}>Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</p>
-            <div className={styles.salaryCards}>
-              <div className={styles.salaryCard}>
-                <span className={styles.questionsSummaryLabel}>Current annual salary</span>
-                <span className={styles.questionsSummaryValue}>{gbpSalary(currentSalary)}</span>
-              </div>
-              <div className={styles.salaryCard}>
-                <span className={styles.questionsSummaryLabel}>Estimated mandate earnings</span>
-                <span className={styles.questionsSummaryValue}>{gbpSalary(mandateEarnings)}</span>
-              </div>
-              <div className={styles.salaryCard}>
-                <span className={styles.questionsSummaryLabel}>Mandate</span>
-                <span className={styles.questionsSummaryValue}>2022–2027</span>
-              </div>
-            </div>
+            {currentSalary === null && mandateEarnings === null ? (
+              <p className={styles.salaryNotice}>Salary figures for the {mandate.label} mandate are not yet available: the Assembly&apos;s published pay rates for this mandate have not been released.</p>
+            ) : (
+              <>
+                <p className={styles.salaryNotice}>Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</p>
+                <div className={styles.salaryCards}>
+                  <div className={styles.salaryCard}>
+                    <span className={styles.questionsSummaryLabel}>Current annual salary</span>
+                    <span className={styles.questionsSummaryValue}>{currentSalary === null ? 'N/A' : gbpSalary(currentSalary)}</span>
+                  </div>
+                  <div className={styles.salaryCard}>
+                    <span className={styles.questionsSummaryLabel}>Estimated mandate earnings</span>
+                    <span className={styles.questionsSummaryValue}>{mandateEarnings === null ? 'N/A' : gbpSalary(mandateEarnings)}</span>
+                  </div>
+                  <div className={styles.salaryCard}>
+                    <span className={styles.questionsSummaryLabel}>Mandate</span>
+                    <span className={styles.questionsSummaryValue}>{mandate.label}</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {allExpenses.length > 0 ? (

@@ -4,6 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { partyBorderColor, abbreviateParty } from '@/lib/format'
 import type { PartyStats } from '@/lib/db/queries'
+import { useMandate } from '@/components/MandateContext'
 import styles from './parties.module.css'
 
 const PARTY_DESCRIPTIONS: Record<string, string> = {
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export default function PartiesClient({ parties }: Props) {
+  const { basePath } = useMandate()
   return (
     <ul className={styles.grid} role="list">
       {parties.map((party) => {
@@ -41,7 +43,7 @@ export default function PartiesClient({ parties }: Props) {
         return (
           <li key={party.slug}>
           <Link
-            href={`/assembly/parties/${party.slug}`}
+            href={`${basePath}/assembly/parties/${party.slug}`}
             className={styles.card}
           >
             <div className={styles.cardBody}>

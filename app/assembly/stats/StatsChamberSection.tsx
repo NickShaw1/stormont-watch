@@ -4,7 +4,9 @@ import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
 import { formatMemberName, abbreviateParty, partyBorderColor } from '@/lib/format'
+import { useMandate } from '@/components/MandateContext'
 import styles from './stats.module.css'
+import { sittingAdjective } from '@/lib/constants/mandates'
 
 type MlaRow = {
   personId: string
@@ -37,10 +39,11 @@ interface Props {
   siteStats: SiteStats
 }
 
-function MlaCard({ title, rows, getValue }: {
+function MlaCard({ title, rows, getValue, basePath }: {
   title: string
   rows: MlaRow[]
   getValue: (r: MlaRow) => number
+  basePath: string
 }) {
   return (
     <div className={styles.card}>
@@ -53,7 +56,7 @@ function MlaCard({ title, rows, getValue }: {
               <span className={styles.rank}>{i + 1}</span>
               <MlaPhoto name={m.fullName} imgUrl={m.imgUrl ?? ''} size={48} decorative square />
               <div className={styles.info}>
-                <Link href={`/assembly/mlas/${m.personId}`} className={styles.name}>
+                <Link href={`${basePath}/assembly/mlas/${m.personId}`} className={styles.name}>
                   {formatMemberName(m.fullName)}
                 </Link>
                 {m.party && (
@@ -115,6 +118,7 @@ export default function StatsChamberSection({
   thisMonth,
   siteStats,
 }: Props) {
+  const { mandate, basePath } = useMandate()
   const topSitter = topBySittings[0]
   const topTopics = topByTopics[0]
 
@@ -124,7 +128,7 @@ export default function StatsChamberSection({
         <p className="eyebrow">Plenary chamber</p>
         <h2 id="chamber-heading" className={styles.sectionTitle}>Chamber Activity</h2>
         <div className={styles.sectionRule}></div>
-        <p className={styles.sectionDesc}>Plenary sittings spoken in and debate topics contributed to since May 2022. Excludes presiding officers.</p>
+        <p className={styles.sectionDesc}>Plenary sittings spoken in and debate topics contributed to since {mandate.startLabel}. Excludes presiding officers.</p>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-8)' }}>
@@ -132,7 +136,7 @@ export default function StatsChamberSection({
           <div className={styles.overviewCard}>
             <span className={styles.overviewLabel}>Sittings this mandate</span>
             <span className={styles.overviewValue} style={{ fontSize: '1.5rem' }}>{Number(siteStats.totalSittings).toLocaleString()}</span>
-            <span className={styles.overviewMeta}>since May 2022</span>
+            <span className={styles.overviewMeta}>since {mandate.startLabel}</span>
           </div>
           <div className={styles.overviewCard}>
             <span className={styles.overviewLabel}>This month</span>
@@ -150,7 +154,7 @@ export default function StatsChamberSection({
             <span className={styles.overviewMeta}>{topTopics ? `${Number(topTopics.debates).toLocaleString()} topics spoken on` : ''}</span>
           </div>
         </div>
-        <Link href="/assembly/sittings" className={styles.expensesRankingsCard} style={{ margin: 0 }}>
+        <Link href={`${basePath}/assembly/sittings`} className={styles.expensesRankingsCard} style={{ margin: 0 }}>
           <span className={styles.expensesRankingsCardLeft}>
             <svg className={styles.expensesRankingsCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
@@ -167,21 +171,23 @@ export default function StatsChamberSection({
             title="Most sittings spoken in"
             rows={topBySittings.map(r => ({ ...r, sittings: Number(r.sittings), debates: Number(r.debates) }))}
             getValue={r => r.sittings}
+            basePath={basePath}
           />
           <MlaCard
             title="Fewest sittings spoken in"
             rows={bottomBySittings.map(r => ({ ...r, sittings: Number(r.sittings), debates: Number(r.debates) }))}
             getValue={r => r.sittings}
+            basePath={basePath}
           />
         </div>
 
         <PartyBarChart
-          title="By party: avg sittings per current MLA"
+          title={`By party: avg sittings per ${sittingAdjective(mandate)} MLA`}
           rows={partyAverages.map(r => ({ ...r, avgSittings: Number(r.avgSittings), avgDebates: Number(r.avgDebates) }))}
           getValue={r => r.avgSittings}
         />
 
-        <Link href="/assembly/topics" className={styles.expensesRankingsCard} style={{ margin: 0 }}>
+        <Link href={`${basePath}/assembly/topics`} className={styles.expensesRankingsCard} style={{ margin: 0 }}>
           <span className={styles.expensesRankingsCardLeft}>
             <svg className={styles.expensesRankingsCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
@@ -198,16 +204,18 @@ export default function StatsChamberSection({
             title="Most topics spoken on"
             rows={topByTopics.map(r => ({ ...r, sittings: Number(r.sittings), debates: Number(r.debates) }))}
             getValue={r => r.debates}
+            basePath={basePath}
           />
           <MlaCard
             title="Fewest topics spoken on"
             rows={bottomByTopics.map(r => ({ ...r, sittings: Number(r.sittings), debates: Number(r.debates) }))}
             getValue={r => r.debates}
+            basePath={basePath}
           />
         </div>
 
         <PartyBarChart
-          title="By party: avg topics per current MLA"
+          title={`By party: avg topics per ${sittingAdjective(mandate)} MLA`}
           rows={partyAverages.map(r => ({ ...r, avgSittings: Number(r.avgSittings), avgDebates: Number(r.avgDebates) }))}
           getValue={r => r.avgDebates}
         />

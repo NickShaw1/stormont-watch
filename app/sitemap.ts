@@ -1,7 +1,17 @@
 import type { MetadataRoute } from 'next'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { db } from '@/lib/db/client'
 import { divisions, members, bills } from '@/lib/db/schema'
+import { CURRENT_MANDATE, ARCHIVED_MANDATES } from '@/lib/constants/mandates'
+
+/** Section landing pages, listed for the current mandate (bare) and each archive. */
+const SECTION_PATHS = [
+  '/assembly/votes', '/assembly/mlas', '/assembly/bills', '/assembly/parties',
+  '/assembly/structure', '/assembly/stats', '/assembly/stats/spending',
+  '/assembly/stats/activity', '/assembly/stats/voting', '/assembly/salaries',
+  '/assembly/overall-cost', '/assembly/expenses', '/assembly/questions',
+  '/assembly/sittings', '/assembly/topics', '/assembly/former-mlas',
+]
 
 const BASE = 'https://www.stormontwatch.com'
 
@@ -35,9 +45,9 @@ const STATIC_URLS: MetadataRoute.Sitemap = [
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const [divisionRows, memberRows, billRows, partyRows] = await Promise.all([
-      db.select({ documentId: divisions.documentId, divisionDate: divisions.divisionDate }).from(divisions),
-      db.select({ personId: members.personId, updatedAt: members.updatedAt }).from(members).where(eq(members.isCurrent, true)),
-      db.select({ billId: bills.billId, latestDate: bills.latestDate }).from(bills),
+      db.select({ documentId: divisions.documentId, divisionDate: divisions.divisionDate }).from(divisions).where(eq(divisions.mandate, CURRENT_MANDATE.id)),
+      db.select({ personId: members.personId, updatedAt: members.updatedAt }).from(members).where(and(eq(members.isCurrent, true), eq(members.mandate, CURRENT_MANDATE.id))),
+      db.select({ billId: bills.billId, latestDate: bills.latestDate }).from(bills).where(eq(bills.mandate, CURRENT_MANDATE.id)),
       db.selectDistinct({ party: members.party }).from(members).where(eq(members.isCurrent, true)),
     ])
 
@@ -71,7 +81,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }))
 
-    return [...STATIC_URLS, ...voteUrls, ...divisionUrls, ...mlaUrls, ...partyUrls]
+    // Archive landing pages for each past mandate (kept crawlable so old-mandate
+    // content stays indexed once it moves under /archive/<id>).
+    const archiveUrls: MetadataRoute.Sitemap = ARCHIVED_MANDATES.flatMap((m) =>
+      SECTION_PATHS.map((p) => ({
+        url: `${BASE}/archive/${m.id}${p}`,
+        changeFrequency: 'yearly' as const,
+        priority: 0.3,
+      }))
+    )
+
+    return [...STATIC_URLS, ...voteUrls, ...divisionUrls, ...mlaUrls, ...partyUrls, ...archiveUrls]
   } catch {
     return STATIC_URLS
   }

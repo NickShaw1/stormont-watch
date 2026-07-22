@@ -49,9 +49,9 @@ async function main() {
         const buffer = Buffer.from(await res.arrayBuffer())
         fs.writeFileSync(destPath, buffer)
         await db
-          .update(schema.members)
+          .update(schema.people)
           .set({ imgUrl: localUrl })
-          .where(eq(schema.members.personId, personId))
+          .where(eq(schema.people.personId, personId))
         console.log(`✓ [${personId}] saved and updated → ${localUrl}`)
         success++
       }

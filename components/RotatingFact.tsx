@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import styles from '../app/home.module.css'
+import { sittingAdjective } from '@/lib/constants/mandates'
+import { useMandate } from '@/components/MandateContext'
 
 interface Fact {
   number: number | string
@@ -35,6 +37,7 @@ export default function RotatingFact({
   totalExpensesClaimed,
   totalQuestions,
 }: RotatingFactProps) {
+  const { mandate } = useMandate()
   const facts: Fact[] = [
     {
       number: familyEmployed,
@@ -42,31 +45,31 @@ export default function RotatingFact({
     },
     {
       number: fundedVisits,
-      text: 'funded overseas visits have been declared by MLAs in the Register of Interests since 2022.',
+      text: `funded overseas visits have been declared by MLAs in the Register of Interests since ${mandate.start.slice(0, 4)}.`,
     },
     {
       number: outsideEmployment,
-      text: 'current MLAs have declared paid employment outside the Assembly in the Register of Interests.',
+      text: `${sittingAdjective(mandate)} MLAs have declared paid employment outside the Assembly in the Register of Interests.`,
     },
     {
       number: giftsHospitality,
-      text: 'gifts and hospitality declarations have been made by MLAs in the Register of Interests since 2022.',
+      text: `gifts and hospitality declarations have been made by MLAs in the Register of Interests since ${mandate.start.slice(0, 4)}.`,
     },
     {
       number: sittingDays,
-      text: 'days the Assembly has sat since May 2022.',
+      text: `days the Assembly has sat since ${mandate.startLabel}.`,
     },
     {
       number: gbpShort(totalExpensesClaimed),
-      text: 'claimed in MLA expenses since the start of the 2022–2027 mandate.',
+      text: `claimed in MLA expenses since the start of the ${mandate.label} mandate.`,
     },
     {
       number: overallAgreementRate + '%',
-      text: 'of votes in the Assembly since 2022 passed with cross-community support from both unionist and nationalist MLAs.',
+      text: `of votes in the Assembly since ${mandate.start.slice(0, 4)} passed with cross-community support from both unionist and nationalist MLAs.`,
     },
     {
       number: totalQuestions.toLocaleString('en-GB'),
-      text: 'questions have been asked in the Assembly since May 2022.',
+      text: `questions have been asked in the Assembly since ${mandate.startLabel}.`,
     },
   ]
 

@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv'
 dotenv.config({ path: '.env.local' })
 
-const CURRENT_MANDATE = '2022-2027'
+import { mandateIdForDate } from '../lib/constants/mandates'
 
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
@@ -189,7 +189,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
         isAccelerated,
         currentStage: stage,
         latestDate: plenaryDate,
-        mandate: CURRENT_MANDATE,
+        mandate: mandateIdForDate(plenaryDate),
         updatedAt: new Date(),
       }).onConflictDoUpdate({
         target: bills.billId,
@@ -203,7 +203,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
         plenaryDate,
         hasDivision: false,
         divisionId: null,
-        mandate: CURRENT_MANDATE,
+        mandate: mandateIdForDate(plenaryDate),
         itemTitle: extractItemTitle(item.Title),
         updatedAt: new Date(),
       }).onConflictDoNothing()
@@ -271,6 +271,12 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
   // 6. Improved summary logging
   const skipBreakdown = Object.entries(skipReasons).map(([r, n]) => `${r}: ${n}`).join(', ')
   console.log(`[syncBills] Done. New stages: ${processed}, Skipped: ${skipped}${skipBreakdown ? ` (${skipBreakdown})` : ''}, Errors: ${errors}, Bills stage-resolved: ${stageUpdates.rows.length}`)
+
+  // Surface a total failure: errors occurred and nothing was written. (processed === 0 with
+  // zero errors is normal — every stage already existed — so don't throw in that case.)
+  if (processed === 0 && errors > 0) {
+    throw new Error(`[syncBills] Zero stages written with ${errors} error(s) — possible API/data failure`)
+  }
 }
 
 // Standalone entrypoint

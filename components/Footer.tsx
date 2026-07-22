@@ -1,5 +1,9 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import styles from './Footer.module.css'
+import { CURRENT_MANDATE, mandateById } from '@/lib/constants/mandates'
 
 function EyeLogo() {
   return (
@@ -20,6 +24,13 @@ function EyeLogo() {
 
 export default function Footer() {
   const year = new Date().getFullYear()
+  // Footer sits in the root layout, outside the archive's MandateProvider, so derive
+  // the active mandate from the URL (same approach as Nav) rather than useMandate().
+  const pathname = usePathname()
+  const archiveMatch = pathname.match(/^\/archive\/([^/]+)/)
+  const mandate = (archiveMatch ? mandateById(archiveMatch[1]) : null) ?? CURRENT_MANDATE
+  const basePath = archiveMatch ? `/archive/${archiveMatch[1]}` : ''
+  const homeHref = basePath || '/'
 
   return (
     <footer className={styles.footer}>
@@ -27,7 +38,7 @@ export default function Footer() {
         <div className={styles.grid}>
           {/* Brand column */}
           <div className={styles.brand}>
-            <Link href="/" className={styles.brandLink}>
+            <Link href={homeHref} className={styles.brandLink}>
               <span className={styles.brandLogoWrap}><EyeLogo /></span>
               <span className={styles.brandName}>
                 <span className={styles.brandStormont}>Stormont </span>
@@ -35,10 +46,10 @@ export default function Footer() {
               </span>
             </Link>
             <p className={styles.brandTagline}>
-              Every vote, every MLA, every bill in the Northern Ireland Assembly since May 2022. An independent public-interest project.
+              Every vote, every MLA, every bill in the Northern Ireland Assembly since {mandate.startLabel}. An independent public-interest project.
             </p>
             <div className={styles.brandBadges}>
-              <span className={styles.badge}>2022–2027 mandate</span>
+              <span className={styles.badge}>{mandate.label} mandate</span>
             </div>
           </div>
 
@@ -46,11 +57,11 @@ export default function Footer() {
           <div className={styles.col}>
             <p className={styles.colHeading}>Explore</p>
             <ul className={styles.colLinks} role="list">
-              <li><Link href="/assembly/structure">Assembly</Link></li>
-              <li><Link href="/assembly/mlas">MLAs</Link></li>
-              <li><Link href="/assembly/bills">Legislation</Link></li>
-              <li><Link href="/assembly/votes">Votes</Link></li>
-              <li><Link href="/assembly/stats">Statistics</Link></li>
+              <li><Link href={`${basePath}/assembly/structure`}>Assembly</Link></li>
+              <li><Link href={`${basePath}/assembly/mlas`}>MLAs</Link></li>
+              <li><Link href={`${basePath}/assembly/bills`}>Legislation</Link></li>
+              <li><Link href={`${basePath}/assembly/votes`}>Votes</Link></li>
+              <li><Link href={`${basePath}/assembly/stats`}>Statistics</Link></li>
             </ul>
           </div>
 
@@ -58,8 +69,8 @@ export default function Footer() {
           <div className={styles.col}>
             <p className={styles.colHeading}>Data</p>
             <ul className={styles.colLinks} role="list">
-              <li><Link href="/assembly/expenses">Expenses</Link></li>
-              <li><Link href="/assembly/questions">Questions</Link></li>
+              <li><Link href={`${basePath}/assembly/expenses`}>Expenses</Link></li>
+              <li><Link href={`${basePath}/assembly/questions`}>Questions</Link></li>
               <li>
                 <a
                   href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"

@@ -228,3 +228,23 @@ export function stripPreamble(text: string): string {
   ).trim()
   return stripped.charAt(0).toUpperCase() + stripped.slice(1)
 }
+
+const NI_PARTY_ORDER = [
+  'Democratic Unionist Party', 'Sinn Féin', 'Ulster Unionist Party', 'Alliance Party',
+  'Social Democratic and Labour Party', 'Traditional Unionist Voice',
+  'People Before Profit Alliance', 'Independent',
+]
+
+/**
+ * Distinct parties present in the given rows, in canonical NI order (any party not in
+ * the canonical list — e.g. a new one in a future mandate — is appended alphabetically).
+ * Data-driven so ranking filters only show parties that actually exist in that mandate.
+ */
+export function orderedParties(items: { party?: string | null }[]): string[] {
+  const present = [...new Set(items.map((i) => i.party).filter((p): p is string => !!p))]
+  return present.sort((a, b) => {
+    const ia = NI_PARTY_ORDER.indexOf(a)
+    const ib = NI_PARTY_ORDER.indexOf(b)
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b)
+  })
+}

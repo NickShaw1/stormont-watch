@@ -61,6 +61,19 @@
 .navStormont { color: var(--ink); }
 .navWatch { color: var(--ink-3); font-weight: 400; }
 
+/* Marks the desktop title when an archived mandate is being browsed. */
+.archiveBadge {
+  font-style: italic;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0;
+  color: var(--teal);
+}
+
+@media (max-width: 767px) {
+  .archiveBadge { display: none; }
+}
+
 /* Desktop nav links */
 .links {
   display: flex;
@@ -95,6 +108,72 @@
   color: var(--ink);
   background: var(--paper-3);
 }
+
+/* Mandate switcher (desktop, to the right of the nav links) — styled to match the
+   constituency selector, with a FIXED width so it never resizes with the label. */
+.mandateSwitch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: 0.75rem;
+}
+@media (max-width: 767px) {
+  .mandateSwitch { display: none; }
+}
+.mandateBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 194px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 150ms;
+}
+.mandateBtn > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mandateBtn:hover { border-color: var(--rule-strong); }
+.mandateBtn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.mandateBtn svg { color: var(--ink-3); flex-shrink: 0; }
+.mandateMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 200;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  box-shadow: 0 4px 16px oklch(16% 0.015 250 / 0.08);
+  overflow: hidden;
+}
+.mandateMenu a {
+  display: block;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--ink-2);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+  transition: background 100ms, color 100ms;
+}
+.mandateMenu li:last-child a { border-bottom: none; }
+.mandateMenu a:hover { background: var(--paper-2); color: var(--ink); }
+.mandateMenu a[aria-current='true'] { background: var(--paper-3); color: var(--ink); font-weight: 500; }
 
 /* Nav right group — desktop: hidden (no children visible); mobile: hamburger */
 .navRight {

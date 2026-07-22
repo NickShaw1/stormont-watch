@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
 import styles from './about.module.css'
+import { CURRENT_MANDATE } from '@/lib/constants/mandates'
 
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'About Stormont Watch — tracking every vote in the Northern Ireland Assembly since May 2022.',
+  description: `About Stormont Watch — tracking every vote in the Northern Ireland Assembly since ${CURRENT_MANDATE.startLabel}.`,
   openGraph: {
     title: 'About — Stormont Watch',
-    description: 'About Stormont Watch — tracking every vote in the Northern Ireland Assembly since May 2022.',
+    description: `About Stormont Watch — tracking every vote in the Northern Ireland Assembly since ${CURRENT_MANDATE.startLabel}.`,
     images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },
   alternates: { canonical: 'https://www.stormontwatch.com/about' },
@@ -25,7 +26,7 @@ export default function AboutPage() {
           <h2>What we are</h2>
           <p>
             Stormont Watch is an independent civic accountability site that tracks every recorded
-            vote in the Northern Ireland Assembly since May 2022. Our aim is to make the
+            vote in the Northern Ireland Assembly since {CURRENT_MANDATE.startLabel}. Our aim is to make the
             Assembly&apos;s work accessible and understandable to every citizen.
           </p>
           <p>

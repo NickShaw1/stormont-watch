@@ -1,6 +1,9 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatMemberName, partyBorderColor, abbreviateParty } from '@/lib/format'
+import { useMandate } from '@/components/MandateContext'
 import styles from './structure.module.css'
 
 type Minister = {
@@ -54,6 +57,7 @@ function PersonPhoto({ imgUrl, name, size, priority }: { imgUrl: string | null; 
 }
 
 export default function StructureClient({ fm, dfm, juniorMinisters, departments, chairs, officialLinks, presidingOfficers }: Props) {
+  const { basePath } = useMandate()
   return (
     <>
       {/* Executive */}
@@ -73,7 +77,7 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
             if (!role) return null
             return (
               <div key={role.personId} className={styles.deptBlock}>
-                <Link href={`/assembly/mlas/${role.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(role.party) } as React.CSSProperties}>
+                <Link href={`${basePath}/assembly/mlas/${role.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(role.party) } as React.CSSProperties}>
                   <div className={styles.deptPhoto}><PersonPhoto imgUrl={role.imgUrl} name={role.fullName} size={56} priority /></div>
                   <div className={styles.deptInfo}>
                     <span className={styles.deptLabel}>{role.roleTitle}</span>
@@ -91,7 +95,7 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
           <div className={styles.deptGrid} style={{ marginTop: 'var(--s-5)' }}>
             {[...juniorMinisters].reverse().map((jm) => (
               <div key={jm.personId} className={styles.deptBlock}>
-                <Link href={`/assembly/mlas/${jm.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(jm.party) } as React.CSSProperties}>
+                <Link href={`${basePath}/assembly/mlas/${jm.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(jm.party) } as React.CSSProperties}>
                   <div className={styles.deptPhoto}><PersonPhoto imgUrl={jm.imgUrl} name={jm.fullName} size={56} /></div>
                   <div className={styles.deptInfo}>
                     <span className={styles.deptLabel}>Junior Minister</span>
@@ -125,7 +129,7 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
           <div className={styles.deptGrid}>
             {presidingOfficers.map((p) => (
               <div key={p.personId} className={styles.deptBlock}>
-                <Link href={`/assembly/mlas/${p.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(p.party) } as React.CSSProperties}>
+                <Link href={`${basePath}/assembly/mlas/${p.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(p.party) } as React.CSSProperties}>
                   <div className={styles.deptPhoto}>
                     <PersonPhoto imgUrl={p.imgUrl} name={p.fullName} size={56} />
                   </div>
@@ -168,7 +172,7 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
                     : <span className={styles.deptName}>{m.department ?? ''}</span>
                   }
                 </div>
-                <Link href={`/assembly/mlas/${m.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(m.party) } as React.CSSProperties}>
+                <Link href={`${basePath}/assembly/mlas/${m.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(m.party) } as React.CSSProperties}>
                   <div className={styles.deptPhoto}>
                     <PersonPhoto imgUrl={m.imgUrl} name={m.fullName} size={56} />
                   </div>
@@ -211,7 +215,7 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
                     : <span className={styles.deptName}>{c.committeeName.trim()}</span>
                   }
                 </div>
-                <Link href={`/assembly/mlas/${c.personId}`} className={styles.deptItem}>
+                <Link href={`${basePath}/assembly/mlas/${c.personId}`} className={styles.deptItem}>
                   <div className={styles.deptPhoto}>
                     <PersonPhoto imgUrl={c.imgUrl} name={c.fullName} size={56} />
                   </div>

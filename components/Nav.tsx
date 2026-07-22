@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import MandateSwitcher from './MandateSwitcher'
 import styles from './Nav.module.css'
 
 function EyeLogo() {
@@ -42,6 +43,10 @@ const allLinks = [
 
 export default function Nav() {
   const pathname = usePathname()
+  // When browsing an archive, keep every nav link inside that mandate.
+  const archiveMatch = pathname.match(/^\/archive\/([^/]+)/)
+  const basePath = archiveMatch ? `/archive/${archiveMatch[1]}` : ''
+  const homeHref = basePath || '/'
   const [open, setOpen] = useState(false)
   const drawerRef = useRef<HTMLDivElement>(null)
 
@@ -97,26 +102,29 @@ export default function Nav() {
   return (
     <nav className={styles.nav} aria-label="Main navigation">
       <div className={`container ${styles.inner}`}>
-        <Link href="/" className={styles.navBrand}>
+        <Link href={homeHref} className={styles.navBrand}>
           <span className={styles.navLogoWrap}><EyeLogo /></span>
           <span className={styles.navWordmark}>
             <span className={styles.navStormont}>Stormont </span>
             <span className={styles.navWatch}>Watch</span>
           </span>
+          {archiveMatch && <span className={styles.archiveBadge}>Archive</span>}
         </Link>
 
         <ul className={styles.links} role="list">
           {navLinks.map(({ href, label }) => (
             <li key={href}>
               <Link
-                href={href}
-                aria-current={pathname.startsWith(href) ? 'page' : undefined}
+                href={`${basePath}${href}`}
+                aria-current={pathname.startsWith(`${basePath}${href}`) ? 'page' : undefined}
               >
                 {label}
               </Link>
             </li>
           ))}
         </ul>
+
+        <MandateSwitcher />
 
         <div className={styles.navRight}>
           <button
@@ -140,19 +148,22 @@ export default function Nav() {
           <div id="mobile-menu" ref={drawerRef} className={styles.sidebar} role="dialog" aria-modal="true" aria-label="Navigation menu" onKeyDown={handleDrawerKeyDown}>
             <div className={styles.sidebarBody}>
             <ul className={styles.sidebarLinks} role="list">
-              {allLinks.map(({ href, label }) => (
+              {allLinks.map(({ href, label }) => {
+                const target = href === '/' ? homeHref : `${basePath}${href}`
+                return (
                 <li key={href}>
                   <Link
-                    href={href}
+                    href={target}
                     className={styles.sidebarLink}
-                    aria-current={href === '/' ? pathname === '/' ? 'page' : undefined : pathname.startsWith(href) ? 'page' : undefined}
+                    aria-current={pathname === target ? 'page' : href !== '/' && pathname.startsWith(target) ? 'page' : undefined}
                     onClick={handleNavClick}
                   >
                     <span>{label}</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
                   </Link>
                 </li>
-              ))}
+                )
+              })}
             </ul>
             <div className={styles.mobileMeta}>
               <Link href="/about" onClick={handleNavClick}>About</Link>

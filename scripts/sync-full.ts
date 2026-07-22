@@ -14,8 +14,9 @@
 import './load-env'
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
-import { eq, notInArray, sql } from 'drizzle-orm'
+import { and, eq, notInArray, sql } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
+import { upsertMemberSnapshot, updateMemberTermRoles } from '../lib/db/memberWrites'
 import { syncContactDetails } from './sync-contact-details'
 import { syncBills } from './sync-bills'
 import { syncHansardContributions } from './sync-hansard-contributions'
@@ -24,7 +25,7 @@ import { apiRoleToSalaryRole } from '../lib/salaries'
 
 const BASE = 'http://data.niassembly.gov.uk'
 const CUTOFF = '2022-05-01'
-const CURRENT_MANDATE = '2022-2027'
+import { CURRENT_MANDATE, mandateIdForDate, dateToMandate } from '../lib/constants/mandates'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -110,28 +111,14 @@ async function syncMembers(db: Db) {
     if (!fullName) {
       console.warn(`[syncMembers] Member ${personId} has no MemberFullDisplayName — writing with empty name`)
     }
-    await db
-      .insert(schema.members)
-      .values({
-        personId,
-        fullName,
-        party: str(m?.PartyName) || null,
-        constituency: str(m?.ConstituencyName) || null,
-        imgUrl: str(m?.MemberImgUrl) || null,
-        isCurrent: currentIds.has(personId),
-        mandate: CURRENT_MANDATE,
-      })
-      .onConflictDoUpdate({
-        target: schema.members.personId,
-        set: {
-          fullName,
-          party: str(m?.PartyName) || null,
-          constituency: str(m?.ConstituencyName) || null,
-          imgUrl: sql`CASE WHEN ${schema.members.imgUrl} LIKE '/mla-images/%' THEN ${schema.members.imgUrl} ELSE ${str(m?.MemberImgUrl) || null} END`,
-          isCurrent: currentIds.has(personId),
-          updatedAt: new Date(),
-        },
-      })
+    await upsertMemberSnapshot(db, {
+      personId,
+      fullName,
+      imgUrl: str(m?.MemberImgUrl) || null,
+      party: str(m?.PartyName) || null,
+      constituency: str(m?.ConstituencyName) || null,
+      isCurrent: currentIds.has(personId),
+    })
     written++
   }
   console.log(`[syncMembers] Complete — ${written} written, ${skipped} skipped, ${currentIds.size} marked current`)
@@ -160,19 +147,28 @@ async function syncHansardReports(db: Db) {
         continue
       }
       const dateOnly = plenaryDate.slice(0, 10)
+      // Skip reports that predate every tracked mandate (e.g. the 2016-2022 Assembly)
+      // rather than letting mandateIdForDate throw and abort the whole sync.
+      const reportMandate = dateToMandate(dateOnly)?.id
+      if (!reportMandate) {
+        skipped++
+        continue
+      }
       await db
         .insert(schema.hansardReports)
         .values({
           reportDocId,
           plenaryDate: dateOnly,
           sessionName: sessionName ?? null,
-          mandate: CURRENT_MANDATE,
+          mandate: reportMandate,
         })
         .onConflictDoNothing()
       count++
     }
-    if (count < 500) {
-      console.warn(`[syncHansardReports] Only ${count} reports written — expected 500+. This may indicate a partial API response.`)
+    // Partial-response guard: check what the API returned (written + skipped), not just the
+    // in-mandate reports written — otherwise skipping pre-mandate reports trips a false alarm.
+    if (count + skipped < 500) {
+      console.warn(`[syncHansardReports] Only ${count + skipped} reports returned by the API — expected 500+. This may indicate a partial API response.`)
     }
     console.log(`[syncHansardReports] Complete — ${count} written, ${skipped} skipped`)
   } catch (err) {
@@ -217,7 +213,9 @@ async function syncMandateAndRoles(db: Db) {
         .filter((r: any) =>
           r.RoleType === 'Assembly Membership Role' &&
           r.Role === 'MLA' &&
-          r.AffiliationStart >= '2022-01-01'
+          // Members are returned at the election, which is on or before the first sitting
+          // (CURRENT_MANDATE.start); use electionDate so an election-day affiliation isn't missed.
+          r.AffiliationStart >= CURRENT_MANDATE.electionDate
         )
         .sort((a: any, b: any) =>
           new Date(b.AffiliationStart).getTime() - new Date(a.AffiliationStart).getTime()
@@ -237,21 +235,17 @@ async function syncMandateAndRoles(db: Db) {
       const assemblyRoleEnd = specialRole?.AffiliationEnd?.slice(0, 10) ?? null
 
       if (mandateStart || assemblyRole) {
-        await db
-          .update(schema.members)
-          .set({
-            ...(mandateStart && { mandateStart }),
-            mandateEnd: mandateEnd ?? null,
-            assemblyRole,
-            assemblyRoleStart: assemblyRoleStart ?? null,
-            assemblyRoleEnd: assemblyRoleEnd ?? null,
-            updatedAt: new Date(),
-          })
-          .where(eq(schema.members.personId, personId))
+        await updateMemberTermRoles(db, personId, {
+          mandateStart,
+          mandateEnd,
+          assemblyRole,
+          assemblyRoleStart,
+          assemblyRoleEnd,
+        })
         updated++
       }
 
-      const MANDATE_START = '2022-05-05'
+      const MANDATE_START = CURRENT_MANDATE.start
       const AD_HOC_RE = /concurrent|ad hoc/i
 
       for (const r of roles) {
@@ -290,7 +284,7 @@ async function syncMandateAndRoles(db: Db) {
             organisationId: organisationId || null,
             startDate: effectiveStartDate,
             endDate,
-            mandate: CURRENT_MANDATE,
+            mandate: mandateIdForDate(effectiveStartDate),
           })
           .onConflictDoUpdate({
             target: schema.memberRoleHistory.affiliationId,
@@ -373,10 +367,10 @@ async function syncMinisters(db: Db) {
           personId,
           department,
           roleTitle: roleName ?? null,
-          mandate: CURRENT_MANDATE,
+          mandate: CURRENT_MANDATE.id,
         })
         .onConflictDoUpdate({
-          target: schema.ministers.personId,
+          target: [schema.ministers.personId, schema.ministers.mandate],
           set: {
             department,
             roleTitle: roleName ?? null,
@@ -386,9 +380,12 @@ async function syncMinisters(db: Db) {
       insertedIds.push(personId)
       count++
     }
-    // Remove any ministers no longer in the API response
+    // Remove any current-mandate ministers no longer in the API response. Scoped so
+    // past-mandate ministers remain as an archive.
     if (insertedIds.length > 0) {
-      await db.delete(schema.ministers).where(notInArray(schema.ministers.personId, insertedIds))
+      await db.delete(schema.ministers).where(
+        and(notInArray(schema.ministers.personId, insertedIds), eq(schema.ministers.mandate, CURRENT_MANDATE.id))
+      )
     }
     console.log(`[syncMinisters] Complete — ${count} written, ${skipped} skipped`)
   } catch (err) {
@@ -463,10 +460,10 @@ async function syncCommitteeChairs(db: Db) {
         .values({
           personId,
           committeeName: committee,
-          mandate: CURRENT_MANDATE,
+          mandate: CURRENT_MANDATE.id,
         })
         .onConflictDoUpdate({
-          target: schema.committeeChairs.personId,
+          target: [schema.committeeChairs.personId, schema.committeeChairs.mandate],
           set: {
             committeeName: committee,
             updatedAt: new Date(),
@@ -475,9 +472,12 @@ async function syncCommitteeChairs(db: Db) {
       insertedIds.push(personId)
       count++
     }
-    // Remove any chairs no longer in the API response
+    // Remove any current-mandate chairs no longer in the API response. Scoped so
+    // past-mandate chairs remain as an archive.
     if (insertedIds.length > 0) {
-      await db.delete(schema.committeeChairs).where(notInArray(schema.committeeChairs.personId, insertedIds))
+      await db.delete(schema.committeeChairs).where(
+        and(notInArray(schema.committeeChairs.personId, insertedIds), eq(schema.committeeChairs.mandate, CURRENT_MANDATE.id))
+      )
     }
     console.log(`[syncCommitteeChairs] Complete — ${count} written, ${skipped} skipped`)
   } catch (err) {
@@ -551,13 +551,14 @@ async function syncRegisteredInterests(db: Db) {
           registerEntryStartDate: interest?.RegisterEntryStartDate
             ? new Date(interest.RegisterEntryStartDate)
             : null,
-          mandate: CURRENT_MANDATE,
+          mandate: CURRENT_MANDATE.id,
         })
         .onConflictDoUpdate({
           target: [
             schema.registeredInterests.personId,
             schema.registeredInterests.registerCategoryId,
             schema.registeredInterests.registerEntry,
+            schema.registeredInterests.mandate,
           ],
           set: { updatedAt: new Date() },
         })
@@ -567,11 +568,14 @@ async function syncRegisteredInterests(db: Db) {
       count++
     }
 
-    // Remove any interests no longer in the API response
+    // Remove any current-mandate interests no longer in the API response. Scoped so
+    // past-mandate interests remain as an archive.
     if (insertedIds.length > 0) {
       await db
         .delete(schema.registeredInterests)
-        .where(notInArray(schema.registeredInterests.id, insertedIds))
+        .where(
+          and(notInArray(schema.registeredInterests.id, insertedIds), eq(schema.registeredInterests.mandate, CURRENT_MANDATE.id))
+        )
     }
 
     console.log(`[syncRegisteredInterests] Complete — ${count} written, ${skipped} skipped`)
@@ -711,7 +715,7 @@ async function syncDivisionsAndVotes(db: Db) {
         tabledBy,
         isMotionAmendment,
         parentMotionText,
-        mandate: CURRENT_MANDATE,
+        mandate: mandateIdForDate(divisionDate),
       })
       // Update result fields on conflict. divisionType is included defensively —
       // it rarely changes, but the cross-community count in getAssemblyStats() depends on it being correct.
@@ -754,7 +758,7 @@ async function syncDivisionsAndVotes(db: Db) {
           personId,
           vote: voteValue,
           designation: str(v?.Designation) || null,
-          mandate: CURRENT_MANDATE,
+          mandate: mandateIdForDate(divisionDate),
         })
         .onConflictDoNothing()
     }
@@ -779,7 +783,7 @@ async function syncDivisionsAndVotes(db: Db) {
           personId: member.personId,
           vote: 'NO_SHOW',
           designation: null,
-          mandate: CURRENT_MANDATE,
+          mandate: mandateIdForDate(divisionDate),
         })
         .onConflictDoNothing()
     }
@@ -856,7 +860,7 @@ async function syncPlenaryItems(db: Db) {
       VALUES
         (${documentId}, ${title}, ${plenaryDate}, ${plenaryType}, ${plenaryTypeId},
          ${str(item?.MotionCategory) || null}, ${str(item?.MotionCategoryID) || null},
-         ${str(item?.Text) || null}, ${tabledDate}, ${CURRENT_MANDATE}, NOW())
+         ${str(item?.Text) || null}, ${tabledDate}, ${mandateIdForDate(plenaryDate)}, NOW())
       ON CONFLICT (document_id) DO UPDATE SET
         title = EXCLUDED.title,
         text = EXCLUDED.text,

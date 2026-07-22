@@ -13,11 +13,55 @@ export const members = pgTable('members', {
   assemblyRoleStart: date('assembly_role_start'),
   assemblyRoleEnd: date('assembly_role_end'),
   email: text('email'),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   confirmedSilent: boolean('confirmed_silent').notNull().default(false),
   designation: text('designation'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
+
+// --- Multi-mandate model (expand phase) ---
+// `people` = stable identity, `member_terms` = per-mandate snapshot, `mandates` =
+// registry. The `members` table above is, on migrated databases, a compatibility
+// VIEW over people + member_terms for the current mandate; Drizzle still reads it as
+// before. New code writes people + member_terms directly.
+
+export const mandates = pgTable('mandates', {
+  id: text('id').primaryKey(),
+  label: text('label').notNull(),
+  electionDate: date('election_date'),
+  startDate: date('start_date').notNull(),
+  endDate: date('end_date'),
+  isCurrent: boolean('is_current').notNull().default(false),
+})
+
+export const people = pgTable('people', {
+  personId: text('person_id').primaryKey(),
+  fullName: text('full_name').notNull(),
+  imgUrl: text('img_url'),
+  email: text('email'),
+})
+
+export const memberTerms = pgTable('member_terms', {
+  personId: text('person_id').notNull().references(() => people.personId),
+  mandate: text('mandate').notNull().references(() => mandates.id),
+  party: text('party'),
+  constituency: text('constituency'),
+  designation: text('designation'),
+  isCurrent: boolean('is_current').notNull().default(false),
+  mandateStart: date('mandate_start'),
+  mandateEnd: date('mandate_end'),
+  assemblyRole: text('assembly_role'),
+  assemblyRoleStart: date('assembly_role_start'),
+  assemblyRoleEnd: date('assembly_role_end'),
+  confirmedSilent: boolean('confirmed_silent').notNull().default(false),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.personId, t.mandate] }),
+}))
+
+export type Mandate = typeof mandates.$inferSelect
+export type Person = typeof people.$inferSelect
+export type MemberTerm = typeof memberTerms.$inferSelect
 
 export const divisions = pgTable('divisions', {
   documentId: text('document_id').primaryKey(),
@@ -40,7 +84,7 @@ export const divisions = pgTable('divisions', {
   tabledBy: text('tabled_by'),
   isMotionAmendment: boolean('is_motion_amendment').default(false),
   parentMotionText: text('parent_motion_text'),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
@@ -50,7 +94,7 @@ export const votes = pgTable('votes', {
   personId: text('person_id').notNull().references(() => members.personId),
   vote: text('vote').notNull(),
   designation: text('designation'),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (t) => ({
   unq: unique().on(t.documentId, t.personId),
@@ -61,7 +105,7 @@ export const hansardReports = pgTable('hansard_reports', {
   plenaryDate: date('plenary_date').notNull(),
   sessionName: text('session_name'),
   fullyProcessed: boolean('fully_processed').notNull().default(false),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
@@ -71,7 +115,7 @@ export const hansardContributions = pgTable('hansard_contributions', {
   reportDocId: text('report_doc_id').notNull(),
   plenaryDate: date('plenary_date').notNull(),
   debateTitle: text('debate_title').notNull(),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   uniqueContribution: uniqueIndex('hansard_contributions_person_report_debate_unique')
@@ -79,19 +123,25 @@ export const hansardContributions = pgTable('hansard_contributions', {
 }))
 
 export const ministers = pgTable('ministers', {
-  personId: text('person_id').primaryKey().references(() => members.personId),
+  personId: text('person_id').notNull().references(() => members.personId),
   department: text('department').notNull(),
   roleTitle: text('role_title'),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-})
+}, (t) => ({
+  // Per-mandate: a person can hold a minister row in each mandate, so past-mandate
+  // rows survive as an archive. Sync prunes only the current mandate's snapshot.
+  pk: primaryKey({ columns: [t.personId, t.mandate] }),
+}))
 
 export const committeeChairs = pgTable('committee_chairs', {
-  personId: text('person_id').primaryKey().references(() => members.personId),
+  personId: text('person_id').notNull().references(() => members.personId),
   committeeName: text('committee_name').notNull(),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-})
+}, (t) => ({
+  pk: primaryKey({ columns: [t.personId, t.mandate] }),
+}))
 
 export const expenses = pgTable('expenses', {
   personId: text('person_id').notNull().references(() => members.personId),
@@ -102,7 +152,7 @@ export const expenses = pgTable('expenses', {
   allowances: numeric('allowances', { precision: 10, scale: 2 }).default('0'),
   staffCosts: numeric('staff_costs', { precision: 10, scale: 2 }).default('0'),
   total: numeric('total', { precision: 10, scale: 2 }).default('0'),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (t) => ({
   pk: primaryKey({ columns: [t.personId, t.financialYear] }),
@@ -118,7 +168,7 @@ export const bills = pgTable('bills', {
   latestDate: timestamp('latest_date', { withTimezone: true }),
   royalAssentDate: date('royal_assent_date'),
   actTitle: text('act_title'),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
@@ -129,7 +179,7 @@ export const billStages = pgTable('bill_stages', {
   plenaryDate: timestamp('plenary_date', { withTimezone: true }).notNull(),
   hasDivision: boolean('has_division').default(false),
   divisionId: text('division_id').references(() => divisions.documentId),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   itemTitle: text('item_title'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
@@ -151,10 +201,10 @@ export const registeredInterests = pgTable('registered_interests', {
   registerCategory: text('register_category').notNull(),
   registerEntry: text('register_entry').notNull(),
   registerEntryStartDate: timestamp('register_entry_start_date', { withTimezone: true }),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (t) => ({
-  unq: unique().on(t.personId, t.registerCategoryId, t.registerEntry),
+  unq: unique().on(t.personId, t.registerCategoryId, t.registerEntry, t.mandate),
 }))
 
 export type RegisteredInterest = typeof registeredInterests.$inferSelect
@@ -169,7 +219,7 @@ export const plenaryItems = pgTable('plenary_items', {
   motionCategoryId: text('motion_category_id'),
   text: text('text'),
   tabledDate: date('tabled_date'),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }),
 })
 
@@ -182,6 +232,7 @@ export const questionStats = pgTable('question_stats', {
   month: smallint('month').notNull(),
   writtenCount: integer('written_count').notNull().default(0),
   oralCount: integer('oral_count').notNull().default(0),
+  mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   personYearMonth: unique().on(table.personId, table.year, table.month),
@@ -199,7 +250,7 @@ export const memberRoleHistory = pgTable('member_role_history', {
   organisationId: text('organisation_id'),
   startDate: date('start_date').notNull(),
   endDate: date('end_date'),
-  mandate: text('mandate').notNull().default('2022-2027'),
+  mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 

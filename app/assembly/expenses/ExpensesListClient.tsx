@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
-import { formatMemberName, abbreviateParty, partyBorderColor, partyFilterActiveStyle, formatConstituency } from '@/lib/format'
+import { formatMemberName, abbreviateParty, partyBorderColor, partyFilterActiveStyle, formatConstituency, orderedParties } from '@/lib/format'
+import { useMandate } from '@/components/MandateContext'
+import { sittingAdjective } from '@/lib/constants/mandates'
 import styles from './expenses.module.css'
 
 export interface ExpenseRow {
@@ -28,16 +30,6 @@ interface Props {
 
 
 
-const PARTIES = [
-  'Democratic Unionist Party',
-  'Sinn Féin',
-  'Ulster Unionist Party',
-  'Alliance Party',
-  'Social Democratic and Labour Party',
-  'Traditional Unionist Voice',
-  'People Before Profit Alliance',
-  'Independent',
-]
 
 function gbp(val: string | null | undefined) {
   return `£${parseFloat(val ?? '0').toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
@@ -81,6 +73,8 @@ function buildOverallRows(rows: ExpenseRow[]): ExpenseRow[] {
 }
 
 export default function ExpensesListClient({ rows, years }: Props) {
+  const PARTIES = orderedParties(rows)
+  const { mandate, basePath } = useMandate()
   const [selectedYear, setSelectedYear] = useState<string>(OVERALL)
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false)
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
@@ -216,8 +210,8 @@ export default function ExpensesListClient({ rows, years }: Props) {
       {/* Result count */}
       <p className={styles.resultCount} aria-live="polite" aria-atomic="true">
         <strong>{filtered.length}</strong>{' '}
-        <span className={styles.resultCountDesktop}>{partyFilter === 'ALL' ? 'current' : partyLabel(partyFilter)} MLA{filtered.length !== 1 ? 's' : ''} with published expenses for this period</span>
-        <span className={styles.resultCountMobile}>Current MLA{filtered.length !== 1 ? 's' : ''}</span>
+        <span className={styles.resultCountDesktop}>{partyFilter === 'ALL' ? sittingAdjective(mandate) : partyLabel(partyFilter)} MLA{filtered.length !== 1 ? 's' : ''} with published expenses for this period</span>
+        <span className={styles.resultCountMobile}>{mandate.isCurrent ? 'Current' : 'Sitting'} MLA{filtered.length !== 1 ? 's' : ''}</span>
       </p>
 
       {/* Table */}
@@ -252,7 +246,7 @@ export default function ExpensesListClient({ rows, years }: Props) {
                 <tr
                   key={row.personId}
                   className={`${styles.tableRow} ${isTop ? styles.rowGold : ''}`}
-                  onClick={() => router.push(`/assembly/mlas/${row.personId}`)}
+                  onClick={() => router.push(`${basePath}/assembly/mlas/${row.personId}`)}
                   style={{ cursor: 'pointer' }}
                 >
                   <th scope="row" className={styles.tdRank} aria-label={`Rank ${globalRank}`}>{globalRank}</th>
@@ -267,7 +261,7 @@ export default function ExpensesListClient({ rows, years }: Props) {
                       </span>
                       <div style={{ minWidth: 0 }}>
                         <Link
-                          href={`/assembly/mlas/${row.personId}`}
+                          href={`${basePath}/assembly/mlas/${row.personId}`}
                           className={styles.mlaName}
                           aria-label={`${formatMemberName(row.fullName)}${row.party ? `, ${row.party}` : ''}${row.constituency ? `, ${formatConstituency(row.constituency)}` : ''}`}
                         >

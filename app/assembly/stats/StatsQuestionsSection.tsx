@@ -23,9 +23,10 @@ interface Props {
   top5: MlaRow[]
   bottom5: MlaRow[]
   byParty: PartyRow[]
+  basePath?: string
 }
 
-function MlaCard({ title, rows }: { title: string; rows: MlaRow[] }) {
+function MlaCard({ title, rows, basePath }: { title: string; rows: MlaRow[]; basePath: string }) {
   return (
     <div className={styles.card}>
       <h3 className={styles.cardTitle}>{title}</h3>
@@ -35,7 +36,7 @@ function MlaCard({ title, rows }: { title: string; rows: MlaRow[] }) {
             <span className={styles.rank}>{i + 1}</span>
             <MlaPhoto name={m.fullName} imgUrl={m.imgUrl ?? ''} size={48} decorative square />
             <div className={styles.info}>
-              <Link href={`/assembly/mlas/${m.personId}`} className={styles.name}>
+              <Link href={`${basePath}/assembly/mlas/${m.personId}`} className={styles.name}>
                 {formatMemberName(m.fullName)}
               </Link>
               {m.party && (
@@ -89,10 +90,10 @@ function PartyCard({ title, rows, getValue }: { title: string; rows: PartyRow[];
   )
 }
 
-export default function StatsQuestionsSection({ top5, bottom5, byParty }: Props) {
+export default function StatsQuestionsSection({ top5, bottom5, byParty, basePath = '' }: Props) {
   return (
     <>
-      <Link href="/assembly/questions" className={statsStyles.expensesRankingsCard} style={{ marginTop: 0, marginBottom: 'var(--s-8)' }}>
+      <Link href={`${basePath}/assembly/questions`} className={statsStyles.expensesRankingsCard} style={{ marginTop: 0, marginBottom: 'var(--s-8)' }}>
         <span className={statsStyles.expensesRankingsCardLeft}>
           <svg className={statsStyles.expensesRankingsCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
@@ -104,8 +105,8 @@ export default function StatsQuestionsSection({ top5, bottom5, byParty }: Props)
         <span className={statsStyles.expensesRankingsCardArrow}>↗</span>
       </Link>
       <div className={styles.expensesCardGrid}>
-        <MlaCard title="Most questions asked" rows={top5} />
-        <MlaCard title="Fewest questions asked" rows={bottom5} />
+        <MlaCard title="Most questions asked" rows={top5} basePath={basePath} />
+        <MlaCard title="Fewest questions asked" rows={bottom5} basePath={basePath} />
         <PartyCard title="By party (total)" rows={byParty} getValue={r => r.total} />
         <PartyCard title="Average questions per MLA" rows={byParty} getValue={r => Math.round(r.total / r.memberCount)} />
       </div>

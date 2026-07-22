@@ -43,13 +43,15 @@ function buildSeats(parties: { party: string; mlaCount: number }[]): Seat[] {
 
   const rawCounts = radii.map((r) => Math.round(Math.PI * r / (SR * 2.6)))
 
-  // Adjust to hit total exactly
+  // Adjust to hit total exactly (guard against tiny totals driving a row negative)
   let diff = total - rawCounts.reduce((a, b) => a + b, 0)
   let idx = ROWS - 1
-  while (diff !== 0) {
-    rawCounts[idx] += diff > 0 ? 1 : -1
-    diff += diff > 0 ? -1 : 1
+  let guard = 0
+  while (diff !== 0 && guard < 5000) {
+    if (diff > 0) { rawCounts[idx] += 1; diff -= 1 }
+    else if (rawCounts[idx] > 0) { rawCounts[idx] -= 1; diff += 1 }
     idx = (idx - 1 + ROWS) % ROWS
+    guard += 1
   }
 
   // Generate positions sorted by angular fraction
@@ -57,7 +59,7 @@ function buildSeats(parties: { party: string; mlaCount: number }[]): Seat[] {
   for (let ri = 0; ri < ROWS; ri++) {
     const count = rawCounts[ri]
     for (let si = 0; si < count; si++) {
-      positions.push({ frac: si / (count - 1), r: radii[ri], rowIdx: ri })
+      positions.push({ frac: count > 1 ? si / (count - 1) : 0.5, r: radii[ri], rowIdx: ri })
     }
   }
 

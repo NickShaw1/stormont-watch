@@ -66,9 +66,9 @@ export async function syncContactDetails(db: Db) {
   let updated = 0
   for (const [personId, email] of emailMap) {
     await db
-      .update(schema.members)
+      .update(schema.people)
       .set({ email })
-      .where(eq(schema.members.personId, personId))
+      .where(eq(schema.people.personId, personId))
     updated++
   }
 

@@ -6,6 +6,8 @@ import MlaPhoto from '@/components/MlaPhoto'
 import { formatMemberName, formatConstituency } from '@/lib/format'
 import type { PartyExpenseStats } from '@/lib/db/queries'
 import styles from './partyDetail.module.css'
+import { useMandate } from '@/components/MandateContext'
+import { sittingAdjective } from '@/lib/constants/mandates'
 
 interface PartyExpensesProps {
   expenses: PartyExpenseStats
@@ -29,8 +31,9 @@ function ordinal(n: number): string {
 }
 
 function MlaExpenseRow({ mla, rankSub }: { mla: PartyExpenseStats['highestMla']; rankSub?: string }) {
+  const { basePath } = useMandate()
   return (
-    <Link href={`/assembly/mlas/${mla.personId}`} className={styles.expMlaRow}>
+    <Link href={`${basePath}/assembly/mlas/${mla.personId}`} className={styles.expMlaRow}>
       <div className={styles.statMlaPhoto}>
         <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={40} decorative square />
       </div>
@@ -50,6 +53,7 @@ function MlaExpenseRow({ mla, rankSub }: { mla: PartyExpenseStats['highestMla'];
 
 export default function PartyExpensesClient({ expenses, mandateExpenses, partyColor }: PartyExpensesProps) {
   const router = useRouter()
+  const { mandate, basePath } = useMandate()
   const singleMla = expenses.mlas.length === 1
   const maxTotal = expenses.highestMla.total
 
@@ -59,7 +63,7 @@ export default function PartyExpensesClient({ expenses, mandateExpenses, partyCo
       {mandateExpenses && (
         <>
           <h3 className={styles.expensesSectionHeading} style={{ marginTop: 0 }}>Total mandate <em>expenses</em></h3>
-          <p className={styles.expensesHeadingDate}>May 2022 - present</p>
+          <p className={styles.expensesHeadingDate}>{mandate.startLabel} - present</p>
           <div className={styles.overviewGrid2} style={{ marginBottom: 'var(--s-6)' }}>
             <div className={styles.overviewCard}>
               <span className={styles.overviewLabel}>Total claimed</span>
@@ -114,7 +118,7 @@ export default function PartyExpensesClient({ expenses, mandateExpenses, partyCo
           <div className={styles.expMiniCard}>
             <span className={styles.expMetricLabel}>Average per MLA</span>
             <span className={styles.expMetricValue}>{gbp(expenses.avgPerMla)}</span>
-            <span className={styles.expMetricSub}>Per current MLA</span>
+            <span className={styles.expMetricSub}>Per {sittingAdjective(mandate)} MLA</span>
             <span className={styles.rankBadge} style={{ color: rankColor(expenses.rankAvg, expenses.partyCount) }}>{ordinal(expenses.rankAvg)} of {expenses.partyCount} parties</span>
           </div>
           <div className={styles.expMiniCard}>
@@ -159,14 +163,14 @@ export default function PartyExpensesClient({ expenses, mandateExpenses, partyCo
                 <tr
                   key={mla.personId}
                   className={styles.expTableRow}
-                  onClick={() => router.push(`/assembly/mlas/${mla.personId}`)}
+                  onClick={() => router.push(`${basePath}/assembly/mlas/${mla.personId}`)}
                   style={{ cursor: 'pointer' }}
                 >
                   <td className={styles.expTdRank} aria-label={`Rank ${i + 1}`}>{i + 1}</td>
                   <td>
                     <div className={styles.expMlaCell}>
                       <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={36} decorative square />
-                      <Link href={`/assembly/mlas/${mla.personId}`} className={styles.expMlaName}>
+                      <Link href={`${basePath}/assembly/mlas/${mla.personId}`} className={styles.expMlaName}>
                         {formatMemberName(mla.fullName)}
                       </Link>
                     </div>

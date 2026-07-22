@@ -1,5 +1,7 @@
-// Published salary rates for the 2022-2027 NI Assembly mandate
-// Source: https://www.niassembly.gov.uk/your-mlas/members-salaries-and-expenses/salaries-and-expenditure-rates/salaries-and-expenditure-rates-2022-2027/
+// Published salary rates, keyed by mandate.
+// Source (2022-2027): https://www.niassembly.gov.uk/your-mlas/members-salaries-and-expenses/salaries-and-expenditure-rates/salaries-and-expenditure-rates-2022-2027/
+
+import { CURRENT_MANDATE, mandateById } from './constants/mandates'
 
 export type SalaryRole =
   | 'member'
@@ -118,6 +120,20 @@ export const SALARY_PERIODS: SalaryPeriod[] = [
   },
 ]
 
+/**
+ * Published pay rates keyed by mandate. A mandate appears here ONLY once its rates are
+ * published; a mandate that is absent means rates are pending — the salary functions then
+ * return null so the UI can show "rates pending" instead of a misleading £0 (fail loud).
+ */
+export const SALARY_PERIODS_BY_MANDATE: Record<string, SalaryPeriod[]> = {
+  '2022-2027': SALARY_PERIODS,
+}
+
+/** True if published pay rates exist for the mandate. Pages gate salary/cost UI on this. */
+export function salaryRatesPublished(mandate: string): boolean {
+  return mandate in SALARY_PERIODS_BY_MANDATE
+}
+
 export const ROLE_PRIORITY: Record<SalaryRole, number> = {
   first_minister: 9,
   deputy_first_minister: 8,
@@ -166,9 +182,17 @@ export interface RoleInterval {
 
 export function calculateMandateEarnings(
   intervals: RoleInterval[],
-  todayStr: string
-): number {
+  todayStr: string,
+  mandate: string = CURRENT_MANDATE.id
+): number | null {
+  const periods = SALARY_PERIODS_BY_MANDATE[mandate]
+  if (!periods) return null // rates pending for this mandate — fail loud, do not report £0
+
   const today = new Date(todayStr)
+  // For an open-ended (ongoing) band, the pro-rating denominator is the mandate's end, or
+  // today while the mandate is still running.
+  const mandateEnd = mandateById(mandate)?.end
+  const openBandEnd = mandateEnd ? new Date(mandateEnd) : today
   let total = 0
 
   // Find earliest role start — do not calculate earnings before this date
@@ -176,7 +200,7 @@ export function calculateMandateEarnings(
     return interval.startDate < earliest ? interval.startDate : earliest
   }, intervals[0]?.startDate ?? todayStr)
 
-  for (const period of SALARY_PERIODS) {
+  for (const period of periods) {
     const periodStart = new Date(Math.max(
       new Date(period.start).getTime(),
       new Date(earliestStart).getTime()
@@ -184,7 +208,7 @@ export function calculateMandateEarnings(
     const fullPeriodStart = new Date(period.start)
     const periodEnd = period.end ? new Date(period.end) : today
     const effectivePeriodEnd = periodEnd < today ? periodEnd : today
-    const fullPeriodEnd = period.end ? new Date(period.end) : new Date('2027-05-06')
+    const fullPeriodEnd = period.end ? new Date(period.end) : openBandEnd
     const fullDaysInPeriod = (fullPeriodEnd.getTime() - fullPeriodStart.getTime()) / 86400000
 
     if (periodStart >= effectivePeriodEnd) continue
@@ -238,17 +262,22 @@ export function calculateMandateEarnings(
 
 export function getCurrentAnnualSalary(
   intervals: RoleInterval[],
-  todayStr: string
-): number {
+  todayStr: string,
+  mandate: string = CURRENT_MANDATE.id
+): number | null {
+  const periods = SALARY_PERIODS_BY_MANDATE[mandate]
+  if (!periods) return null // rates pending for this mandate — fail loud, do not report £0
+
   const today = new Date(todayStr)
 
-  const currentPeriod = SALARY_PERIODS.find(p => {
+  const currentPeriod = periods.find(p => {
     const start = new Date(p.start)
     const end = p.end ? new Date(p.end) : null
     return start <= today && (end === null || end >= today)
   })
 
-  if (!currentPeriod) return 0
+  // No band covers today (e.g. an archived mandate viewed after it ended) — not applicable.
+  if (!currentPeriod) return null
 
   let bestRole: SalaryRole = 'member'
   let bestPriority = 0

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/format'
 import { isPassed } from '@/lib/bills'
+import { useMandate } from '@/components/MandateContext'
 import styles from './billDetail.module.css'
 
 const STAGE_PRIORITY: Record<string, number> = {
@@ -88,6 +89,7 @@ function naturalCompareDesc(a: string, b: string): number {
 }
 
 function VotedOnList({ items }: { items: BillStageItem[] }) {
+  const { basePath } = useMandate()
   const voted = items
     .filter(i => i.has_division && i.division_id)
     .sort((a, b) =>
@@ -107,7 +109,7 @@ function VotedOnList({ items }: { items: BillStageItem[] }) {
           const itemPassed = item.outcome ? isPassed(item.outcome) : null
           return (
             <li key={item.document_id} className={styles.itemColumnRowWrap}>
-              <Link href={`/assembly/divisions/${item.division_id}`} className={styles.itemColumnRow}>
+              <Link href={`${basePath}/assembly/divisions/${item.division_id}`} className={styles.itemColumnRow}>
                 {(item.item_title || item.outcome) && (
                   <span className={`${styles.itemLabel} ${styles.votedTitle}`}>
                     {item.item_title ?? item.outcome}

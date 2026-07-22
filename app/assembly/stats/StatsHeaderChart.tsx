@@ -53,10 +53,10 @@ export default function StatsHeaderChart({ data }: { data: Row[] }) {
       style={{ display: 'block' }}
     >
       {/* Y gridlines + labels */}
-      {yTicks.map(v => {
+      {yTicks.map((v, i) => {
         const y = py(v)
         return (
-          <g key={v}>
+          <g key={i}>
             <line x1={PL} y1={y} x2={W - PR} y2={y} stroke={AXIS_COLOR} strokeWidth={0.75} />
             <text x={PL - 3} y={y + 3} textAnchor="end" fill={LABEL_COLOR} style={{ font: FONT }}>{v}</text>
           </g>

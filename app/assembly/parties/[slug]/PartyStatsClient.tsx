@@ -7,6 +7,7 @@ import { formatMemberName, formatConstituency, formatDate } from '@/lib/format'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import type { PartyVoteStats, MlaAttendanceStat } from '@/lib/db/queries'
 import styles from './partyDetail.module.css'
+import { useMandate } from '@/components/MandateContext'
 
 interface PartyStatsProps {
   stats: PartyVoteStats
@@ -17,8 +18,9 @@ interface PartyStatsProps {
 
 
 function MlaStatRow({ mla }: { mla: MlaAttendanceStat }) {
+  const { basePath } = useMandate()
   return (
-    <Link href={`/assembly/mlas/${mla.personId}`} className={styles.statMlaRow}>
+    <Link href={`${basePath}/assembly/mlas/${mla.personId}`} className={styles.statMlaRow}>
       <div className={styles.statMlaPhoto}>
         <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={40} decorative square />
       </div>
@@ -223,6 +225,7 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
 }
 
 export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyStatsProps) {
+  const { mandate, basePath } = useMandate()
   const singleMla = mlaCount === 1 || stats.highestMla.personId === stats.lowestMla.personId
 
   return (
@@ -233,7 +236,7 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
         <div className={styles.statCard}>
           <span className={styles.statLabel}>Party Division Attendance Average</span>
           <span className={styles.statValue}>{stats.attendancePct}%</span>
-          <span className={styles.statSub}>Across current and former MLAs in the 2022–2027 mandate, excluding presiding officers</span>
+          <span className={styles.statSub}>Across current and former MLAs in the {mandate.label} mandate, excluding presiding officers</span>
           <span className={styles.statSub}><strong>{stats.present.toLocaleString()} / {stats.total.toLocaleString()}</strong> divisions party participated in</span>
           <div className={styles.statDivider} />
           {singleMla ? (
@@ -302,7 +305,7 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
               return (
                 <tr key={d.documentId} className={i % 2 === 1 ? styles.divRowEven : ''}>
                   <td className={styles.divSubjectCell}>
-                    <Link href={`/assembly/divisions/${d.documentId}`} className={styles.divSubjectLink}>
+                    <Link href={`${basePath}/assembly/divisions/${d.documentId}`} className={styles.divSubjectLink}>
                       <span className={styles.divSubjectTitle}>{title}</span>
                       {subtitle && <span className={styles.divSubjectSub}>{subtitle}</span>}
                     </Link>
@@ -329,7 +332,7 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
           const voteLabel = d.partyVote === 'AYE' ? 'Aye' : d.partyVote === 'NO' ? 'No' : d.partyVote === 'ABSTAINED' ? 'Abstain' : d.partyVote === 'NO_SHOW' ? 'No show' : null
           const voteCls = d.partyVote === 'AYE' ? 'vote-aye' : d.partyVote === 'NO' ? 'vote-no' : d.partyVote === 'ABSTAINED' ? 'vote-abstain' : 'vote-noshow'
           return (
-            <Link key={`mob-${d.documentId}`} href={`/assembly/divisions/${d.documentId}`} className={styles.divMobileCard}>
+            <Link key={`mob-${d.documentId}`} href={`${basePath}/assembly/divisions/${d.documentId}`} className={styles.divMobileCard}>
               <div className={styles.divMobileTitle}>{title}</div>
               <div className={styles.divMobileSub} aria-hidden={!subtitle || undefined}>
                 {subtitle ?? <span aria-hidden="true">&nbsp;</span>}

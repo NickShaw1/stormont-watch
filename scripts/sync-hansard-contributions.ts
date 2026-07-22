@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 
 const BASE_URL = 'http://data.niassembly.gov.uk'
-const CURRENT_MANDATE = '2022-2027'
+import { mandateIdForDate } from '../lib/constants/mandates'
 const MANDATE_CUTOFF = '2022-05-01'
 
 type Db = ReturnType<typeof drizzle<typeof schema>>
@@ -155,7 +155,7 @@ export async function syncHansardContributions(db: Db) {
                 reportDocId,
                 plenaryDate,
                 debateTitle,
-                mandate: CURRENT_MANDATE,
+                mandate: mandateIdForDate(plenaryDate),
               })
               .onConflictDoNothing()
             rowsWritten++
@@ -180,6 +180,7 @@ export async function syncHansardContributions(db: Db) {
     console.log(`[syncHansardContributions] Complete — ${rowsWritten} rows written, ${membersSkipped} members skipped, ${reportsProcessed} reports processed, ${reportsSkipped} reports skipped`)
   } catch (err) {
     console.error('[syncHansardContributions] Sync error:', err)
+    throw err // surface to runSync so the summary shows ✗, not a false ✓
   }
 }
 

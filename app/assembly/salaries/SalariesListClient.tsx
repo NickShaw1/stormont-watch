@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
-import { formatMemberName, abbreviateParty, partyBorderColor, partyFilterActiveStyle, formatConstituency } from '@/lib/format'
+import { formatMemberName, abbreviateParty, partyBorderColor, partyFilterActiveStyle, formatConstituency, orderedParties } from '@/lib/format'
+import { useMandate } from '@/components/MandateContext'
+import { sittingAdjective } from '@/lib/constants/mandates'
 import styles from '../expenses/expenses.module.css'
 import salaryStyles from './salaries.module.css'
 
@@ -27,16 +29,6 @@ interface Props {
 
 
 
-const PARTIES = [
-  'Democratic Unionist Party',
-  'Sinn Féin',
-  'Ulster Unionist Party',
-  'Alliance Party',
-  'Social Democratic and Labour Party',
-  'Traditional Unionist Voice',
-  'People Before Profit Alliance',
-  'Independent',
-]
 
 function gbp(val: number) {
   return `£${val.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
@@ -49,6 +41,8 @@ function partyLabel(party: string) {
 type SortMode = 'salary' | 'earnings'
 
 export default function SalariesListClient({ bySalary, byEarnings }: Props) {
+  const PARTIES = orderedParties(bySalary)
+  const { mandate, basePath } = useMandate()
   const [sortMode, setSortMode] = useState<SortMode>('salary')
   const [partyFilter, setPartyFilter] = useState('ALL')
   const router = useRouter()
@@ -114,7 +108,7 @@ export default function SalariesListClient({ bySalary, byEarnings }: Props) {
       </div>
 
       <p className={styles.resultCount} aria-live="polite" aria-atomic="true">
-        <strong>{filtered.length}</strong> {partyFilter === 'ALL' ? 'current' : partyLabel(partyFilter)} MLA{filtered.length !== 1 ? 's' : ''}
+        <strong>{filtered.length}</strong> {partyFilter === 'ALL' ? sittingAdjective(mandate) : partyLabel(partyFilter)} MLA{filtered.length !== 1 ? 's' : ''}
       </p>
 
       <div className={styles.tableWrap}>
@@ -153,7 +147,7 @@ export default function SalariesListClient({ bySalary, byEarnings }: Props) {
                 <tr
                   key={row.personId}
                   className={`${styles.tableRow} ${isTop ? styles.rowGold : ''}`}
-                  onClick={() => router.push(`/assembly/mlas/${row.personId}`)}
+                  onClick={() => router.push(`${basePath}/assembly/mlas/${row.personId}`)}
                   style={{ cursor: 'pointer' }}
                 >
                   <th scope="row" className={styles.tdRank} aria-label={`Rank ${rank}`}>{rankDisplay}</th>
@@ -168,7 +162,7 @@ export default function SalariesListClient({ bySalary, byEarnings }: Props) {
                       </span>
                       <div style={{ minWidth: 0 }}>
                         <Link
-                          href={`/assembly/mlas/${row.personId}`}
+                          href={`${basePath}/assembly/mlas/${row.personId}`}
                           className={styles.mlaName}
                           aria-label={`${formatMemberName(row.fullName)}${row.party ? `, ${row.party}` : ''}`}
                         >

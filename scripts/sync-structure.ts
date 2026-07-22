@@ -1,11 +1,11 @@
 import './load-env'
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
-import { notInArray } from 'drizzle-orm'
+import { and, eq, notInArray } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 
 const BASE = 'http://data.niassembly.gov.uk'
-const CURRENT_MANDATE = '2022-2027'
+import { CURRENT_MANDATE } from '../lib/constants/mandates'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -71,10 +71,10 @@ async function syncMinisters(db: Db) {
           personId,
           department,
           roleTitle: roleName ?? null,
-          mandate: CURRENT_MANDATE,
+          mandate: CURRENT_MANDATE.id,
         })
         .onConflictDoUpdate({
-          target: schema.ministers.personId,
+          target: [schema.ministers.personId, schema.ministers.mandate],
           set: {
             department,
             roleTitle: roleName ?? null,
@@ -84,9 +84,12 @@ async function syncMinisters(db: Db) {
       insertedIds.push(personId)
       count++
     }
-    // Remove any ministers no longer in the API response
+    // Remove any current-mandate ministers no longer in the API response. Scoped so
+    // past-mandate ministers remain as an archive.
     if (insertedIds.length > 0) {
-      await db.delete(schema.ministers).where(notInArray(schema.ministers.personId, insertedIds))
+      await db.delete(schema.ministers).where(
+        and(notInArray(schema.ministers.personId, insertedIds), eq(schema.ministers.mandate, CURRENT_MANDATE.id))
+      )
     }
     console.log(`[syncMinisters] Complete — ${count} written, ${skipped} skipped`)
   } catch (err) {
@@ -158,10 +161,10 @@ async function syncCommitteeChairs(db: Db) {
         .values({
           personId,
           committeeName: committee,
-          mandate: CURRENT_MANDATE,
+          mandate: CURRENT_MANDATE.id,
         })
         .onConflictDoUpdate({
-          target: schema.committeeChairs.personId,
+          target: [schema.committeeChairs.personId, schema.committeeChairs.mandate],
           set: {
             committeeName: committee,
             updatedAt: new Date(),
@@ -170,9 +173,12 @@ async function syncCommitteeChairs(db: Db) {
       insertedIds.push(personId)
       count++
     }
-    // Remove any chairs no longer in the API response
+    // Remove any current-mandate chairs no longer in the API response. Scoped so
+    // past-mandate chairs remain as an archive.
     if (insertedIds.length > 0) {
-      await db.delete(schema.committeeChairs).where(notInArray(schema.committeeChairs.personId, insertedIds))
+      await db.delete(schema.committeeChairs).where(
+        and(notInArray(schema.committeeChairs.personId, insertedIds), eq(schema.committeeChairs.mandate, CURRENT_MANDATE.id))
+      )
     }
     console.log(`[syncCommitteeChairs] Complete — ${count} written, ${skipped} skipped`)
   } catch (err) {

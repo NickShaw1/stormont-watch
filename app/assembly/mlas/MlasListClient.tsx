@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react'
 import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import { formatMemberName, formatPartyName, abbreviateParty, partyBorderColor, partyFilterActiveStyle, formatConstituency } from '@/lib/format'
+import { useMandate } from '@/components/MandateContext'
 import styles from './mlas.module.css'
 
 interface MlaRow {
@@ -34,6 +35,7 @@ function abbreviateRole(role: string): string {
 }
 
 export default function MlasListClient({ partyGroups, roleLookup }: Props) {
+  const { basePath } = useMandate()
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
@@ -213,7 +215,7 @@ export default function MlasListClient({ partyGroups, roleLookup }: Props) {
                         <MlaPhoto name={mla.full_name} imgUrl={mla.img_url ?? ''} size={64} decorative />
                       </div>
                       <Link
-                        href={`/assembly/mlas/${mla.person_id}`}
+                        href={`${basePath}/assembly/mlas/${mla.person_id}`}
                         className={styles.mlaName}
                         aria-label={`View profile for ${formatMemberName(mla.full_name)}`}
                       >
@@ -263,7 +265,7 @@ export default function MlasListClient({ partyGroups, roleLookup }: Props) {
                           <MlaPhoto name={mla.full_name} imgUrl={mla.img_url ?? ''} size={64} decorative />
                         </div>
                         <Link
-                          href={`/assembly/mlas/${mla.person_id}`}
+                          href={`${basePath}/assembly/mlas/${mla.person_id}`}
                           className={styles.mlaName}
                           aria-label={`View profile for ${formatMemberName(mla.full_name)}`}
                         >

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { abbreviateParty } from '@/lib/format'
 import { stripHonorifics } from '@/lib/utils/formatNames'
+import { useMandate } from '@/components/MandateContext'
 import styles from './ConstituencySelector.module.css'
 
 const ConstituencyMap = dynamic(() => import('./ConstituencyMap'), { ssr: false })
@@ -161,13 +162,14 @@ export default function ConstituencySelector({ mlasByConstituency }: { mlasByCon
 }
 
 function MlaResults({ mlas, error }: { mlas: MLA[]; error: boolean }) {
+  const { basePath } = useMandate()
   if (error) return <p className={styles.loading}>Failed to load MLAs. Please try again.</p>
   return (
     <div className={styles.mlaList}>
       {mlas.map(mla => (
         <Link
           key={mla.personId}
-          href={`/assembly/mlas/${mla.personId}`}
+          href={`${basePath}/assembly/mlas/${mla.personId}`}
           className={styles.mlaCard}
         >
           {mla.imgUrl && (

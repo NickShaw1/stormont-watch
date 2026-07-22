@@ -1,6 +1,7 @@
 'use client'
 import styles from './stats.module.css'
 import AllPartyAttendanceChart from './AllPartyAttendanceChart'
+import { useMandate } from '@/components/MandateContext'
 
 interface MonthRow { month: string; total_divisions: number }
 interface YearRow { year: number; total: number; passed: number; pass_rate: number }
@@ -17,21 +18,22 @@ export default function AssemblyProductivityClient({
   sittingDays: number
   partyAttendanceTrends: PartyTrendRow[]
 }) {
+  const { mandate } = useMandate()
   const parsed = monthData.map(r => ({ ...r, total_divisions: Number(r.total_divisions) }))
   const currentMonth = new Date().toISOString().slice(0, 7)
   const sittingMonths = parsed.filter(r => r.total_divisions > 0)
   const avg = sittingMonths.length > 0
     ? Math.round(sittingMonths.reduce((s, r) => s + r.total_divisions, 0) / sittingMonths.length * 10) / 10
     : 0
-  const busiest = parsed.reduce((b, r) => r.total_divisions > b.total_divisions ? r : b, parsed[0])
-  const busiestLabel = (() => {
+  const busiest = parsed.length ? parsed.reduce((b, r) => r.total_divisions > b.total_divisions ? r : b, parsed[0]) : null
+  const busiestLabel = busiest ? (() => {
     const d = new Date(busiest.month)
     const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
     return `${mn[d.getMonth()]} ${d.getFullYear()}`
-  })()
+  })() : '-'
   const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   const years = [...new Set(parsed.map(r => new Date(r.month).getFullYear()))].sort()
-  const maxVal = Math.max(...parsed.map(r => r.total_divisions))
+  const maxVal = Math.max(1, ...parsed.map(r => r.total_divisions))
 
   function getColor(val: number) {
     if (val === 0) return 'rgba(180,178,169,0.15)'
@@ -61,11 +63,11 @@ export default function AssemblyProductivityClient({
         <div className={styles.overviewCard}>
           <span className={styles.overviewLabel}>Sitting days</span>
           <span className={styles.overviewValue}>{sittingDays}</span>
-          <span className={styles.overviewMeta}>since May 2022</span>
+          <span className={styles.overviewMeta}>since {mandate.startLabel}</span>
         </div>
         <div className={styles.overviewCard}>
           <span className={styles.overviewLabel}>Busiest month</span>
-          <span className={styles.overviewValue}>{busiest.total_divisions}</span>
+          <span className={styles.overviewValue}>{busiest?.total_divisions ?? 0}</span>
           <span className={styles.overviewMeta}>{busiestLabel}</span>
         </div>
         <div className={styles.overviewCard}>
@@ -76,11 +78,11 @@ export default function AssemblyProductivityClient({
       </div>
 
       <h3 className={styles.chartTitle}>Party Division Attendance</h3>
-      <p className={styles.trendNote} style={{ marginBottom: '1rem' }}>How each party&apos;s division attendance has tracked month by month since May 2022.</p>
+      <p className={styles.trendNote} style={{ marginBottom: '1rem' }}>How each party&apos;s division attendance has tracked month by month since {mandate.startLabel}.</p>
       <AllPartyAttendanceChart data={partyAttendanceTrends} />
 
       <h3 className={styles.chartTitle}>Divisions per month</h3>
-      <p className={styles.trendNote} style={{ marginBottom: '1rem' }}>Number of votes held each month over the last 24 months.</p>
+      <p className={styles.trendNote} style={{ marginBottom: '1rem' }}>Number of votes held each month since {mandate.startLabel}.</p>
 
       {/* Desktop heatmap — hidden on mobile */}
       <div className={styles.heatmapDesktop}>
@@ -177,7 +179,7 @@ export default function AssemblyProductivityClient({
       </div>
 
       <h3 className={styles.chartTitle}>Pass rate by year</h3>
-      <p className={styles.trendNote} style={{ marginBottom: '1rem' }}>Percentage of divisions that passed in each calendar year since May 2022.</p>
+      <p className={styles.trendNote} style={{ marginBottom: '1rem' }}>Percentage of divisions that passed in each calendar year since {mandate.startLabel}.</p>
 
       <div className={styles.overviewGridThree}>
         {yearData.map((r, i) => (

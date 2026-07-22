@@ -6,6 +6,7 @@ import SuspensionBanner from '@/components/SuspensionBanner'
 import Footer from '@/components/Footer'
 import ScrollToTop from '@/components/ScrollToTop'
 import RouteAnnouncer from '@/components/RouteAnnouncer'
+import { CURRENT_MANDATE } from '@/lib/constants/mandates'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -34,11 +35,11 @@ export const metadata: Metadata = {
     default: 'Stormont Watch',
     template: '%s - Stormont Watch',
   },
-  description: 'Stormont Watch tracks every vote, bill and MLA expense in the Northern Ireland Assembly. Independent, plain-language accountability since the 2022 mandate.',
+  description: `Stormont Watch tracks every vote, bill and MLA expense in the Northern Ireland Assembly. Independent, plain-language accountability since the ${CURRENT_MANDATE.label} mandate.`,
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.stormontwatch.com'),
   openGraph: {
     title: 'Stormont Watch',
-    description: 'Stormont Watch tracks every vote, bill and MLA expense in the Northern Ireland Assembly. Independent, plain-language accountability since the 2022 mandate.',
+    description: `Stormont Watch tracks every vote, bill and MLA expense in the Northern Ireland Assembly. Independent, plain-language accountability since the ${CURRENT_MANDATE.label} mandate.`,
     siteName: 'Stormont Watch',
     type: 'website',
     images: [

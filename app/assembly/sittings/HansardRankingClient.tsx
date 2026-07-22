@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
-import { formatMemberName, abbreviateParty, partyBorderColor, partyFilterActiveStyle, formatConstituency } from '@/lib/format'
+import { formatMemberName, abbreviateParty, partyBorderColor, partyFilterActiveStyle, formatConstituency, orderedParties } from '@/lib/format'
+import { useMandate } from '@/components/MandateContext'
+import { sittingAdjective } from '@/lib/constants/mandates'
 import styles from './hansard-ranking.module.css'
 
 export interface HansardRow {
@@ -26,22 +28,14 @@ interface Props {
 
 
 
-const PARTIES = [
-  'Democratic Unionist Party',
-  'Sinn Féin',
-  'Ulster Unionist Party',
-  'Alliance Party',
-  'Social Democratic and Labour Party',
-  'Traditional Unionist Voice',
-  'People Before Profit Alliance',
-  'Independent',
-]
 
 function partyLabel(party: string): string {
   return abbreviateParty(party) || party
 }
 
 export default function HansardRankingClient({ rows, metric, totalMlaCount }: Props) {
+  const PARTIES = orderedParties(rows)
+  const { mandate, basePath } = useMandate()
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
   const router = useRouter()
 
@@ -96,7 +90,7 @@ export default function HansardRankingClient({ rows, metric, totalMlaCount }: Pr
 
       <p className={styles.resultCount} aria-live="polite" aria-atomic="true">
         <strong>{displayCount}</strong>{' '}
-        <span className={styles.resultCountDesktop}>{partyFilter === 'ALL' ? 'current' : partyLabel(partyFilter)} MLA{displayCount !== 1 ? 's' : ''} on record</span>
+        <span className={styles.resultCountDesktop}>{partyFilter === 'ALL' ? sittingAdjective(mandate) : partyLabel(partyFilter)} MLA{displayCount !== 1 ? 's' : ''} on record</span>
         <span className={styles.resultCountMobile}>MLA{displayCount !== 1 ? 's' : ''}</span>
       </p>
 
@@ -129,7 +123,7 @@ export default function HansardRankingClient({ rows, metric, totalMlaCount }: Pr
                 <tr
                   key={row.personId}
                   className={`${styles.tableRow} ${isTop ? styles.rowGold : ''}`}
-                  onClick={() => router.push(`/assembly/mlas/${row.personId}`)}
+                  onClick={() => router.push(`${basePath}/assembly/mlas/${row.personId}`)}
                   style={{ cursor: 'pointer' }}
                 >
                   <td className={styles.tdRank} aria-label={`Rank ${globalRank}`}>{globalRank}</td>
@@ -144,7 +138,7 @@ export default function HansardRankingClient({ rows, metric, totalMlaCount }: Pr
                       </span>
                       <div style={{ minWidth: 0 }}>
                         <Link
-                          href={`/assembly/mlas/${row.personId}`}
+                          href={`${basePath}/assembly/mlas/${row.personId}`}
                           className={styles.mlaName}
                           aria-label={`${formatMemberName(row.fullName)}${row.party ? `, ${row.party}` : ''}${row.constituency ? `, ${formatConstituency(row.constituency)}` : ''}`}
                         >

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
 import { formatMemberName, abbreviateParty, formatConstituency } from '@/lib/format'
+import { useMandate } from '@/components/MandateContext'
 import styles from './expenses.module.css'
 
 interface MissingMla {
@@ -29,6 +30,7 @@ function serviceLabel(mandateStart: string | null): string {
 }
 
 export default function MissingMlasTable({ missing }: { missing: MissingMla[] }) {
+  const { basePath } = useMandate()
   const router = useRouter()
 
   return (
@@ -57,7 +59,7 @@ export default function MissingMlasTable({ missing }: { missing: MissingMla[] })
             key={mla.person_id}
             className={styles.tableRow}
             style={{ cursor: 'pointer' }}
-            onClick={() => router.push(`/assembly/mlas/${mla.person_id}`)}
+            onClick={() => router.push(`${basePath}/assembly/mlas/${mla.person_id}`)}
           >
             <td className={styles.tdRank} style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>—</td>
             <td>
@@ -69,7 +71,7 @@ export default function MissingMlasTable({ missing }: { missing: MissingMla[] })
                   <MlaPhoto name={mla.full_name} imgUrl={mla.img_url ?? ''} size={50} decorative square />
                 </span>
                 <div style={{ minWidth: 0 }}>
-                  <Link href={`/assembly/mlas/${mla.person_id}`} className={styles.mlaName}>
+                  <Link href={`${basePath}/assembly/mlas/${mla.person_id}`} className={styles.mlaName}>
                     {formatMemberName(mla.full_name)}
                   </Link>
                   {mla.party && (

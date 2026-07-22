@@ -4,7 +4,7 @@ import { drizzle } from 'drizzle-orm/neon-http'
 import * as schema from '../lib/db/schema'
 
 const BASE = 'http://data.niassembly.gov.uk'
-const CURRENT_MANDATE = '2022-2027'
+import { dateToMandate } from '../lib/constants/mandates'
 
 type Db = ReturnType<typeof drizzle<typeof schema>>
 
@@ -31,13 +31,20 @@ async function syncHansardReports(db: Db) {
         continue
       }
       const dateOnly = plenaryDate.slice(0, 10)
+      // Skip reports that predate every tracked mandate (e.g. the 2016-2022 Assembly)
+      // rather than letting mandateIdForDate throw and abort the whole sync.
+      const reportMandate = dateToMandate(dateOnly)?.id
+      if (!reportMandate) {
+        skipped++
+        continue
+      }
       await db
         .insert(schema.hansardReports)
         .values({
           reportDocId,
           plenaryDate: dateOnly,
           sessionName: sessionName ?? null,
-          mandate: CURRENT_MANDATE,
+          mandate: reportMandate,
         })
         .onConflictDoNothing()
       count++

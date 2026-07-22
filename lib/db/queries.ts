@@ -1,15 +1,37 @@
 import { eq, desc, sql, and, count, countDistinct, isNotNull, isNull, gte, lte, asc } from 'drizzle-orm'
 import { db } from './client'
-import { members, divisions, votes, hansardReports, ministers, committeeChairs, expenses, registeredInterests, bills, billStages, questionStats, memberRoleHistory, hansardContributions, plenaryDiary } from './schema'
+import { members, divisions, votes, hansardReports, ministers, committeeChairs, expenses, registeredInterests, bills, billStages, questionStats, memberRoleHistory, hansardContributions, plenaryDiary, people, memberTerms } from './schema'
 import { stripHonorifics } from '@/lib/utils/formatNames'
 import { getSurname } from '@/lib/format'
+import { CURRENT_MANDATE as CURRENT_MANDATE_CONFIG, mandateById } from '@/lib/constants/mandates'
 
 const mlaImg = (personId: string | null | undefined): string | null =>
   personId ? `/mla-images/${personId}.jpg` : null
 
-const CURRENT_MANDATE = '2022-2027'
+const CURRENT_MANDATE = CURRENT_MANDATE_CONFIG.id
+/** First day of the current mandate, e.g. '2022-05-05'. */
+const CURRENT_MANDATE_START = CURRENT_MANDATE_CONFIG.start
 
-export async function getAllMlasByConstituency(): Promise<Record<string, { personId: string; fullName: string; party: string; imgUrl: string | null }[]>> {
+/**
+ * Month-range bounds for a mandate's per-month trend charts: the mandate's own start →
+ * its end (or NOW() while ongoing). Lets those charts span the SELECTED mandate rather
+ * than always the current one — needed so archive charts show the right timeframe.
+ */
+function trendBounds(mandate: string) {
+  const meta = mandateById(mandate)
+  const start = meta?.start ?? CURRENT_MANDATE_START
+  return {
+    startSql: sql`${start}::timestamptz`,
+    endSql: meta?.end ? sql`${meta.end}::timestamptz` : sql`NOW()`,
+  }
+}
+
+/** First day of the given mandate as an ISO date string; falls back to the current mandate. */
+function mandateStartOf(mandate: string): string {
+  return mandateById(mandate)?.start ?? CURRENT_MANDATE_START
+}
+
+export async function getAllMlasByConstituency(mandate: string = CURRENT_MANDATE): Promise<Record<string, { personId: string; fullName: string; party: string; imgUrl: string | null }[]>> {
   const rows = await db
     .select({
       personId: members.personId,
@@ -19,7 +41,7 @@ export async function getAllMlasByConstituency(): Promise<Record<string, { perso
       constituency: members.constituency,
     })
     .from(members)
-    .where(and(eq(members.isCurrent, true), isNotNull(members.constituency)))
+    .where(and(eq(members.isCurrent, true), isNotNull(members.constituency), eq(members.mandate, mandate)))
     .orderBy(asc(members.fullName))
   const map: Record<string, { personId: string; fullName: string; party: string; imgUrl: string | null }[]> = {}
   for (const r of rows) {
@@ -30,7 +52,7 @@ export async function getAllMlasByConstituency(): Promise<Record<string, { perso
   return map
 }
 
-export async function getMembersByConstituency(constituency: string) {
+export async function getMembersByConstituency(constituency: string, mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       personId: members.personId,
@@ -41,28 +63,29 @@ export async function getMembersByConstituency(constituency: string) {
     .from(members)
     .where(and(
       eq(members.constituency, constituency),
-      eq(members.isCurrent, true)
+      eq(members.isCurrent, true),
+      eq(members.mandate, mandate)
     ))
     .orderBy(asc(members.fullName))
   return rows.map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
 }
 
-export async function getMemberById(personId: string) {
+export async function getMemberById(personId: string, mandate: string = CURRENT_MANDATE) {
   const result = await db
     .select()
     .from(members)
-    .where(eq(members.personId, personId))
+    .where(and(eq(members.personId, personId), eq(members.mandate, mandate)))
     .limit(1)
   const row = result[0] ?? null
   if (!row) return null
   return { ...row, imgUrl: mlaImg(row.personId) }
 }
 
-export async function getAllMembers() {
-  return db.select().from(members).where(eq(members.isCurrent, true)).orderBy(members.fullName)
+export async function getAllMembers(mandate: string = CURRENT_MANDATE) {
+  return db.select().from(members).where(and(eq(members.isCurrent, true), eq(members.mandate, mandate))).orderBy(members.fullName)
 }
 
-export async function getAllMandateMembers() {
+export async function getAllMandateMembers(mandate: string = CURRENT_MANDATE) {
   return db
     .select({
       personId: members.personId,
@@ -72,31 +95,32 @@ export async function getAllMandateMembers() {
       isCurrent: members.isCurrent,
     })
     .from(members)
-    .where(eq(members.mandate, '2022-2027'))
+    .where(eq(members.mandate, mandate))
     .orderBy(members.fullName)
 }
 
-export async function getAllMembersIncludingFormer() {
+export async function getAllMembersIncludingFormer(mandate: string = CURRENT_MANDATE) {
   // Only current-mandate members (2022-present). Static pages for pre-2022 MLAs are not generated
   // because the site does not cover that era.
   return db
     .select({ personId: members.personId })
     .from(members)
-    .where(and(isNotNull(members.mandateStart), gte(members.mandateStart, '2022-05-05')))
+    .where(and(isNotNull(members.mandateStart), gte(members.mandateStart, mandateStartOf(mandate)), eq(members.mandate, mandate)))
     .orderBy(members.fullName)
 }
 
 
-export async function getDistinctPartyCount(): Promise<number> {
+export async function getDistinctPartyCount(mandate: string = CURRENT_MANDATE): Promise<number> {
   const result = await db.execute(sql`
     SELECT COUNT(DISTINCT party) as count
     FROM members
     WHERE is_current = true AND party IS NOT NULL AND party NOT ILIKE '%independent%'
+    AND mandate = ${mandate}
   `)
   return Number((result.rows[0] as { count: string | number })?.count ?? 0)
 }
 
-export async function getMemberVotingHistory(personId: string) {
+export async function getMemberVotingHistory(personId: string, mandate: string = CURRENT_MANDATE) {
   return db
     .select({
       vote: votes.vote,
@@ -110,7 +134,7 @@ export async function getMemberVotingHistory(personId: string) {
     })
     .from(votes)
     .innerJoin(divisions, eq(votes.documentId, divisions.documentId))
-    .where(eq(votes.personId, personId))
+    .where(and(eq(votes.personId, personId), eq(votes.mandate, mandate)))
     .orderBy(desc(divisions.divisionDate))
 }
 
@@ -131,40 +155,45 @@ export async function getAmendmentMotionTexts(baseTitle: string, divisionDateStr
     .filter(r => r.motion_text)
 }
 
-export async function getDivisionWithVotes(documentId: string) {
+export async function getDivisionWithVotes(documentId: string, mandate: string = CURRENT_MANDATE) {
   const division = await db
     .select()
     .from(divisions)
-    .where(eq(divisions.documentId, documentId))
+    .where(and(eq(divisions.documentId, documentId), eq(divisions.mandate, mandate)))
     .limit(1)
 
   if (!division[0]) return null
 
+  // Party/designation are shown as at the division's own mandate, not the member's
+  // current mandate — so a returning MLA's historical votes keep their period party.
+  const divisionMandate = division[0].mandate
   const divisionVotes = await db
     .select({
       vote: votes.vote,
       designation: votes.designation,
-      personId: members.personId,
-      fullName: members.fullName,
-      party: members.party,
-      memberDesignation: members.designation,
+      personId: people.personId,
+      fullName: people.fullName,
+      party: memberTerms.party,
+      memberDesignation: memberTerms.designation,
     })
     .from(votes)
-    .innerJoin(members, eq(votes.personId, members.personId))
+    .innerJoin(people, eq(votes.personId, people.personId))
+    .leftJoin(memberTerms, and(eq(memberTerms.personId, votes.personId), eq(memberTerms.mandate, divisionMandate)))
     .where(eq(votes.documentId, documentId))
-    .orderBy(votes.vote, members.fullName)
+    .orderBy(votes.vote, people.fullName)
 
   return { division: division[0], votes: divisionVotes }
 }
 
-export async function getAllDivisionsFromDb() {
+export async function getAllDivisionsFromDb(mandate: string = CURRENT_MANDATE) {
   return db
     .select()
     .from(divisions)
+    .where(eq(divisions.mandate, mandate))
     .orderBy(desc(divisions.divisionDate))
 }
 
-export async function getAllDivisionsForList() {
+export async function getAllDivisionsForList(mandate: string = CURRENT_MANDATE) {
   return db
     .select({
       documentId: divisions.documentId,
@@ -178,17 +207,19 @@ export async function getAllDivisionsForList() {
       motionText: divisions.motionText,
     })
     .from(divisions)
+    .where(eq(divisions.mandate, mandate))
     .orderBy(desc(divisions.divisionDate))
 }
 
-export async function getFormerMembers() {
+export async function getFormerMembers(mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select()
     .from(members)
     .where(
       and(
         eq(members.isCurrent, false),
-        sql`${members.mandateStart} >= '2022-01-01'`
+        sql`${members.mandateStart} >= ${mandateStartOf(mandate)}`,
+        eq(members.mandate, mandate)
       )
     )
     .orderBy(desc(members.mandateEnd))
@@ -209,7 +240,7 @@ export async function getFormerMembers() {
     .sort((a, b) => b.mlas.length - a.mlas.length)
 }
 
-export async function getMembersGroupedByParty() {
+export async function getMembersGroupedByParty(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT
       m.person_id,
@@ -224,7 +255,11 @@ export async function getMembersGroupedByParty() {
       CASE
         WHEN m.assembly_role IS NOT NULL AND m.assembly_role_end IS NULL THEN NULL
         ELSE ROUND(
-          COUNT(v.id) FILTER (WHERE v.vote != 'NO_SHOW') * 100.0 /
+          COUNT(v.id) FILTER (WHERE v.vote != 'NO_SHOW' AND
+            (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::timestamptz) AND
+            (m.assembly_role IS NULL OR m.assembly_role_end IS NOT NULL OR
+             d.division_date < m.assembly_role_start::timestamptz)
+          ) * 100.0 /
           NULLIF(COUNT(v.id) FILTER (WHERE
             (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::timestamptz) AND
             (m.assembly_role IS NULL OR m.assembly_role_end IS NOT NULL OR
@@ -233,9 +268,10 @@ export async function getMembersGroupedByParty() {
         )
       END as attendance_pct
     FROM members m
-    LEFT JOIN votes v ON m.person_id = v.person_id
-    LEFT JOIN divisions d ON v.document_id = d.document_id
+    LEFT JOIN votes v ON m.person_id = v.person_id AND v.mandate = ${mandate}
+    LEFT JOIN divisions d ON v.document_id = d.document_id AND d.mandate = ${mandate}
     WHERE m.is_current = true
+    AND m.mandate = ${mandate}
     GROUP BY m.person_id, m.full_name, m.party, m.constituency, m.img_url,
              m.mandate_start, m.assembly_role, m.assembly_role_start, m.assembly_role_end
     ORDER BY m.party, m.full_name
@@ -269,7 +305,7 @@ export async function getMembersGroupedByParty() {
     .sort((a, b) => b.mlas.length - a.mlas.length)
 }
 
-export async function getMlaLeaderboard() {
+export async function getMlaLeaderboard(mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       personId: members.personId,
@@ -289,11 +325,12 @@ export async function getMlaLeaderboard() {
       divisions,
       and(
         eq(votes.documentId, divisions.documentId),
-        sql`${divisions.divisionDate} >= coalesce(${members.mandateStart}::date, '2022-05-01'::date)`,
+        eq(divisions.mandate, mandate),
+        sql`${divisions.divisionDate} >= coalesce(${members.mandateStart}::date, ${mandateStartOf(mandate)}::date)`,
         sql`(${members.assemblyRoleStart} IS NULL OR (${members.assemblyRoleEnd} IS NOT NULL AND (${divisions.divisionDate} < ${members.assemblyRoleStart}::date OR ${divisions.divisionDate} >= ${members.assemblyRoleEnd}::date)))`
       )
     )
-    .where(eq(members.isCurrent, true))
+    .where(and(eq(members.isCurrent, true), eq(members.mandate, mandate), eq(votes.mandate, mandate)))
     .groupBy(members.personId, members.fullName, members.party, members.constituency, members.imgUrl, members.mandateStart)
 
   return rows.map((r) => ({
@@ -303,12 +340,12 @@ export async function getMlaLeaderboard() {
   }))
 }
 
-export async function getAssemblyStats() {
+export async function getAssemblyStats(mandate: string = CURRENT_MANDATE) {
   const [totalDivisions, crossCommunityCount, mostContested, mostUnanimous] = await Promise.all([
-    db.select({ count: sql<number>`count(*)` }).from(divisions).where(eq(divisions.mandate, CURRENT_MANDATE)),
-    db.select({ count: sql<number>`count(*)` }).from(divisions).where(and(eq(divisions.divisionType, 'Cross-Community'), eq(divisions.mandate, CURRENT_MANDATE))),
-    db.select().from(divisions).where(and(sql`total_ayes + total_noes > 0`, eq(divisions.mandate, CURRENT_MANDATE))).orderBy(sql`ABS(total_ayes - total_noes) ASC`).limit(1),
-    db.select().from(divisions).where(and(sql`total_ayes + total_noes > 0`, eq(divisions.mandate, CURRENT_MANDATE))).orderBy(sql`total_ayes::float / (total_ayes + total_noes) DESC`).limit(1),
+    db.select({ count: sql<number>`count(*)` }).from(divisions).where(eq(divisions.mandate, mandate)),
+    db.select({ count: sql<number>`count(*)` }).from(divisions).where(and(eq(divisions.divisionType, 'Cross-Community'), eq(divisions.mandate, mandate))),
+    db.select().from(divisions).where(and(sql`total_ayes + total_noes > 0`, eq(divisions.mandate, mandate))).orderBy(sql`ABS(total_ayes - total_noes) ASC`).limit(1),
+    db.select().from(divisions).where(and(sql`total_ayes + total_noes > 0`, eq(divisions.mandate, mandate))).orderBy(sql`total_ayes::float / (total_ayes + total_noes) DESC`).limit(1),
   ])
   return {
     totalDivisions: Number(totalDivisions[0]?.count ?? 0),
@@ -318,7 +355,7 @@ export async function getAssemblyStats() {
   }
 }
 
-export async function getAverageAttendance(): Promise<number> {
+export async function getAverageAttendance(mandate: string = CURRENT_MANDATE): Promise<number> {
   const result = await db.execute(sql`
     SELECT ROUND(AVG(attendance_pct)::numeric, 1) as avg_pct
     FROM (
@@ -329,7 +366,8 @@ export async function getAverageAttendance(): Promise<number> {
       JOIN votes v ON m.person_id = v.person_id
       JOIN divisions d ON d.document_id = v.document_id
       WHERE m.is_current = true
-      AND v.mandate = ${CURRENT_MANDATE}
+      AND m.mandate = ${mandate}
+      AND v.mandate = ${mandate}
       AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
       AND (m.assembly_role_start IS NULL OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date)))
       GROUP BY m.person_id
@@ -338,7 +376,7 @@ export async function getAverageAttendance(): Promise<number> {
   return Number(result.rows[0]?.avg_pct ?? 0)
 }
 
-export async function getPartyCohesion(): Promise<{ party: string; cohesionPct: number; memberCount: number }[]> {
+export async function getPartyCohesion(mandate: string = CURRENT_MANDATE): Promise<{ party: string; cohesionPct: number; memberCount: number }[]> {
   const result = await db.execute(sql`
     SELECT
       m.party,
@@ -356,12 +394,14 @@ export async function getPartyCohesion(): Promise<{ party: string; cohesionPct: 
       JOIN members m2 ON v.person_id = m2.person_id
       WHERE m2.is_current = true
       AND m2.assembly_role IS NULL
+      AND m2.mandate = ${mandate}
       AND v.vote != 'NO_SHOW'
-      AND v.mandate = ${CURRENT_MANDATE}
+      AND v.mandate = ${mandate}
       GROUP BY v.document_id, m2.party
     ) party_votes ON m.party = party_votes.party
     WHERE m.is_current = true
     AND m.assembly_role IS NULL
+    AND m.mandate = ${mandate}
     AND m.party IS NOT NULL
     GROUP BY m.party
     HAVING COUNT(DISTINCT m.person_id) > 1
@@ -375,7 +415,7 @@ export async function getPartyCohesion(): Promise<{ party: string; cohesionPct: 
   }))
 }
 
-export async function getMostRebelliousMla(): Promise<{
+export async function getMostRebelliousMla(mandate: string = CURRENT_MANDATE): Promise<{
   personId: string
   fullName: string
   party: string
@@ -394,7 +434,8 @@ export async function getMostRebelliousMla(): Promise<{
       JOIN members m ON v.person_id = m.person_id
       WHERE m.is_current = true
       AND m.assembly_role IS NULL
-      AND v.mandate = ${CURRENT_MANDATE}
+      AND m.mandate = ${mandate}
+      AND v.mandate = ${mandate}
       GROUP BY v.document_id, m.party
     ),
     mla_rebellions AS (
@@ -416,7 +457,8 @@ export async function getMostRebelliousMla(): Promise<{
       WHERE m.is_current = true
       AND m.assembly_role IS NULL
       AND m.party != 'Independent'
-      AND v.mandate = ${CURRENT_MANDATE}
+      AND m.mandate = ${mandate}
+      AND v.mandate = ${mandate}
       GROUP BY m.person_id, m.full_name, m.party, m.constituency, m.img_url
       HAVING COUNT(*) FILTER (WHERE v.vote != 'NO_SHOW') > 10
     )
@@ -464,7 +506,7 @@ export async function getPlenaryDiaryThisWeek() {
     .orderBy(asc(plenaryDiary.eventDate), asc(plenaryDiary.startTime))
 }
 
-export async function getMostCrossCommunityAgreement(): Promise<typeof divisions.$inferSelect | null> {
+export async function getMostCrossCommunityAgreement(mandate: string = CURRENT_MANDATE): Promise<typeof divisions.$inferSelect | null> {
   const result = await db.execute(sql`
     SELECT *,
       CASE
@@ -483,7 +525,7 @@ export async function getMostCrossCommunityAgreement(): Promise<typeof divisions
     FROM divisions
     WHERE nationalist_ayes + nationalist_noes > 3
     AND unionist_ayes + unionist_noes > 3
-    AND mandate = ${CURRENT_MANDATE}
+    AND mandate = ${mandate}
     ORDER BY agreement_score DESC,
       (nationalist_ayes + nationalist_noes + unionist_ayes + unionist_noes) DESC,
       division_date DESC
@@ -492,7 +534,7 @@ export async function getMostCrossCommunityAgreement(): Promise<typeof divisions
   return (result.rows[0] as typeof divisions.$inferSelect) ?? null
 }
 
-export async function getMemberStructureRole(personId: string): Promise<
+export async function getMemberStructureRole(personId: string, mandate: string = CURRENT_MANDATE): Promise<
   | { type: 'minister'; roleTitle: string; department: string }
   | { type: 'committeeChair'; committeeName: string }
   | null
@@ -500,11 +542,11 @@ export async function getMemberStructureRole(personId: string): Promise<
   const [ministerRow, chairRow] = await Promise.all([
     db.select({ roleTitle: ministers.roleTitle, department: ministers.department })
       .from(ministers)
-      .where(eq(ministers.personId, personId))
+      .where(and(eq(ministers.personId, personId), eq(ministers.mandate, mandate)))
       .limit(1),
     db.select({ committeeName: committeeChairs.committeeName })
       .from(committeeChairs)
-      .where(eq(committeeChairs.personId, personId))
+      .where(and(eq(committeeChairs.personId, personId), eq(committeeChairs.mandate, mandate)))
       .limit(1),
   ])
   if (ministerRow[0]) {
@@ -520,7 +562,7 @@ export async function getMemberStructureRole(personId: string): Promise<
   return null
 }
 
-export async function getAllMinisters() {
+export async function getAllMinisters(mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       personId: ministers.personId,
@@ -531,12 +573,13 @@ export async function getAllMinisters() {
       imgUrl: members.imgUrl,
     })
     .from(ministers)
-    .innerJoin(members, eq(ministers.personId, members.personId))
+    .innerJoin(members, and(eq(ministers.personId, members.personId), eq(members.mandate, mandate)))
+    .where(eq(ministers.mandate, mandate))
     .orderBy(ministers.department)
   return rows.map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
 }
 
-export async function getAllCommitteeChairs() {
+export async function getAllCommitteeChairs(mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       personId: committeeChairs.personId,
@@ -547,12 +590,13 @@ export async function getAllCommitteeChairs() {
       assemblyRole: members.assemblyRole,
     })
     .from(committeeChairs)
-    .innerJoin(members, eq(committeeChairs.personId, members.personId))
+    .innerJoin(members, and(eq(committeeChairs.personId, members.personId), eq(members.mandate, mandate)))
+    .where(eq(committeeChairs.mandate, mandate))
     .orderBy(committeeChairs.committeeName)
   return rows.map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
 }
 
-export async function getPresidingOfficers() {
+export async function getPresidingOfficers(mandate: string = CURRENT_MANDATE) {
   const ROLE_ORDER: Record<string, number> = { 'Speaker': 1, 'Principal Deputy Speaker': 2, 'Deputy Speaker': 3 }
   const rows = await db
     .select({
@@ -566,6 +610,7 @@ export async function getPresidingOfficers() {
       and(
         sql`${members.assemblyRole} ILIKE '%speaker%'`,
         isNull(members.assemblyRoleEnd),
+        eq(members.mandate, mandate),
       )
     )
   return rows
@@ -573,17 +618,18 @@ export async function getPresidingOfficers() {
     .sort((a, b) => (ROLE_ORDER[a.assemblyRole ?? ''] ?? 99) - (ROLE_ORDER[b.assemblyRole ?? ''] ?? 99))
 }
 
-export async function getTotalExpensesPerMember() {
+export async function getTotalExpensesPerMember(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT person_id as "personId", SUM(total) as "totalExpenses"
     FROM expenses
     WHERE total IS NOT NULL
+    AND mandate = ${mandate}
     GROUP BY person_id
   `)
   return result.rows as { personId: string; totalExpenses: string }[]
 }
 
-export async function getAllExpensesLeagueTable() {
+export async function getAllExpensesLeagueTable(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT
       e.person_id as "personId",
@@ -596,18 +642,19 @@ export async function getAllExpensesLeagueTable() {
       e.financial_year as "financialYear",
       e.period
     FROM expenses e
-    INNER JOIN members m ON m.person_id = e.person_id
+    INNER JOIN members m ON m.person_id = e.person_id AND m.mandate = ${mandate}
     WHERE m.is_current = true
+    AND e.mandate = ${mandate}
     ORDER BY e.financial_year DESC, e.total DESC NULLS LAST
   `)
   type LeagueRow = { personId: string; fullName: string; party: string | null; constituency: string | null; imgUrl: string | null; mandateStart: string | null; total: string | null; financialYear: string; period: string | null }
   return (result.rows as LeagueRow[]).map(r => ({ ...r, imgUrl: `/mla-images/${r.personId}.jpg` }))
 }
 
-export async function getExpensesLeagueTable() {
+export async function getExpensesLeagueTable(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     WITH latest_year AS (
-      SELECT financial_year FROM expenses ORDER BY financial_year DESC LIMIT 1
+      SELECT financial_year FROM expenses WHERE mandate = ${mandate} ORDER BY financial_year DESC LIMIT 1
     )
     SELECT
       e.person_id as "personId",
@@ -624,8 +671,9 @@ export async function getExpensesLeagueTable() {
       e.financial_year as "financialYear",
       e.period
     FROM expenses e
-    INNER JOIN members m ON m.person_id = e.person_id
+    INNER JOIN members m ON m.person_id = e.person_id AND m.mandate = ${mandate}
     WHERE m.is_current = true
+      AND e.mandate = ${mandate}
       AND e.financial_year = (SELECT financial_year FROM latest_year)
     ORDER BY e.total DESC
   `)
@@ -633,13 +681,14 @@ export async function getExpensesLeagueTable() {
   return (result.rows as LeagueLatestRow[]).map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
 }
 
-export async function getMlasWithoutExpenses() {
+export async function getMlasWithoutExpenses(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT m.person_id, m.full_name, m.party, m.constituency, m.img_url, m.mandate_start
     FROM members m
-    LEFT JOIN expenses e ON e.person_id = m.person_id
+    LEFT JOIN expenses e ON e.person_id = m.person_id AND e.mandate = ${mandate}
     WHERE m.is_current = true
       AND e.person_id IS NULL
+      AND m.mandate = ${mandate}
     ORDER BY m.full_name
   `)
   return (result.rows as { person_id: string; full_name: string; party: string | null; constituency: string | null; img_url: string | null; mandate_start: string | null }[])
@@ -671,7 +720,7 @@ export interface PartyExpenseStats {
   mlas: PartyMlaExpense[]
 }
 
-export async function getPartyMandateExpenses(party: string): Promise<{ mandateTotal: number; mandateAvgPerMla: number; mlaCount: number; rankTotal: number; rankAvg: number; partyCount: number } | null> {
+export async function getPartyMandateExpenses(party: string, mandate: string = CURRENT_MANDATE): Promise<{ mandateTotal: number; mandateAvgPerMla: number; mlaCount: number; rankTotal: number; rankAvg: number; partyCount: number } | null> {
   const result = await db.execute(sql`
     WITH party_totals AS (
       SELECT
@@ -679,8 +728,9 @@ export async function getPartyMandateExpenses(party: string): Promise<{ mandateT
         COALESCE(SUM(e.total), 0) as mandate_total,
         COUNT(DISTINCT e.person_id) as mla_count
       FROM expenses e
-      JOIN members m ON m.person_id = e.person_id
+      JOIN members m ON m.person_id = e.person_id AND m.mandate = ${mandate}
       WHERE e.total IS NOT NULL
+        AND e.mandate = ${mandate}
       GROUP BY m.party
     ),
     ranked AS (
@@ -710,7 +760,7 @@ export async function getPartyMandateExpenses(party: string): Promise<{ mandateT
   }
 }
 
-export async function getPartyExpenses(party: string): Promise<PartyExpenseStats | null> {
+export async function getPartyExpenses(party: string, mandate: string = CURRENT_MANDATE): Promise<PartyExpenseStats | null> {
   const [mlaRows, visitRows, rankRows] = await Promise.all([
     db
       .select({
@@ -725,8 +775,9 @@ export async function getPartyExpenses(party: string): Promise<PartyExpenseStats
       .from(expenses)
       .innerJoin(members, eq(expenses.personId, members.personId))
       .where(and(
-        sql`${expenses.financialYear} = (SELECT MAX(financial_year) FROM expenses)`,
-        eq(members.mandate, CURRENT_MANDATE),
+        sql`${expenses.financialYear} = (SELECT MAX(financial_year) FROM expenses WHERE mandate = ${mandate})`,
+        eq(expenses.mandate, mandate),
+        eq(members.mandate, mandate),
         eq(members.party, party),
       ))
       .orderBy(desc(expenses.total)),
@@ -736,7 +787,8 @@ export async function getPartyExpenses(party: string): Promise<PartyExpenseStats
       .innerJoin(members, eq(registeredInterests.personId, members.personId))
       .where(and(
         eq(registeredInterests.registerCategory, 'Visits'),
-        eq(members.mandate, CURRENT_MANDATE),
+        eq(registeredInterests.mandate, mandate),
+        eq(members.mandate, mandate),
         eq(members.party, party),
       )),
     db.execute(sql`
@@ -751,9 +803,10 @@ export async function getPartyExpenses(party: string): Promise<PartyExpenseStats
       LEFT JOIN registered_interests ri
         ON ri.person_id = m.person_id
         AND ri.register_category = 'Visits'
-        AND m.mandate = '2022-2027'
-      WHERE e.financial_year = (SELECT MAX(financial_year) FROM expenses)
-        AND m.mandate = '2022-2027'
+        AND ri.mandate = ${mandate}
+      WHERE e.financial_year = (SELECT MAX(financial_year) FROM expenses WHERE mandate = ${mandate})
+        AND e.mandate = ${mandate}
+        AND m.mandate = ${mandate}
       GROUP BY m.party
     `),
   ])
@@ -798,15 +851,15 @@ export async function getPartyExpenses(party: string): Promise<PartyExpenseStats
   }
 }
 
-export async function getMemberExpenses(personId: string) {
+export async function getMemberExpenses(personId: string, mandate: string = CURRENT_MANDATE) {
   return db
     .select()
     .from(expenses)
-    .where(eq(expenses.personId, personId))
+    .where(and(eq(expenses.personId, personId), eq(expenses.mandate, mandate)))
     .orderBy(desc(expenses.financialYear))
 }
 
-export async function getMemberExpensesWithRank(personId: string) {
+export async function getMemberExpensesWithRank(personId: string, mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     WITH ranked AS (
       SELECT
@@ -821,8 +874,9 @@ export async function getMemberExpensesWithRank(personId: string) {
         RANK() OVER (ORDER BY e.total DESC) as rank,
         COUNT(*) OVER () as total_members
       FROM expenses e
-      JOIN members m ON e.person_id = m.person_id
-      WHERE e.financial_year = (SELECT MAX(financial_year) FROM expenses)
+      JOIN members m ON e.person_id = m.person_id AND m.mandate = ${mandate}
+      WHERE e.mandate = ${mandate}
+        AND e.financial_year = (SELECT MAX(financial_year) FROM expenses WHERE mandate = ${mandate})
         AND m.is_current = true
     )
     SELECT * FROM ranked
@@ -831,7 +885,7 @@ export async function getMemberExpensesWithRank(personId: string) {
   return result.rows[0] ?? null
 }
 
-export async function getAllMemberExpenses(personId: string) {
+export async function getAllMemberExpenses(personId: string, mandate: string = CURRENT_MANDATE) {
   const rows = await db.execute(sql`
     WITH year_ranks AS (
       SELECT
@@ -841,6 +895,7 @@ export async function getAllMemberExpenses(personId: string) {
         RANK() OVER (PARTITION BY financial_year ORDER BY total DESC) as rank,
         COUNT(*) OVER (PARTITION BY financial_year) as total_members
       FROM expenses
+      WHERE mandate = ${mandate}
     )
     SELECT
       e.financial_year,
@@ -855,16 +910,18 @@ export async function getAllMemberExpenses(personId: string) {
     FROM expenses e
     JOIN year_ranks yr ON yr.person_id = e.person_id AND yr.financial_year = e.financial_year
     WHERE e.person_id = ${personId}
+      AND e.mandate = ${mandate}
     ORDER BY e.financial_year DESC
   `)
   return rows.rows
 }
 
-export async function getMandateExpensesRank(personId: string) {
+export async function getMandateExpensesRank(personId: string, mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     WITH totals AS (
       SELECT person_id, SUM(total) as mandate_total
       FROM expenses
+      WHERE mandate = ${mandate}
       GROUP BY person_id
     ),
     ranked AS (
@@ -879,15 +936,15 @@ export async function getMandateExpensesRank(personId: string) {
   return result.rows[0] ?? null
 }
 
-export async function getRegisteredInterestsByMember(personId: string) {
+export async function getRegisteredInterestsByMember(personId: string, mandate: string = CURRENT_MANDATE) {
   return db
     .select()
     .from(registeredInterests)
-    .where(eq(registeredInterests.personId, personId))
+    .where(and(eq(registeredInterests.personId, personId), eq(registeredInterests.mandate, mandate)))
     .orderBy(registeredInterests.registerCategoryId, registeredInterests.registerEntryStartDate)
 }
 
-export async function getExpensesStats() {
+export async function getExpensesStats(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT
       SUM(total) as total_all,
@@ -897,12 +954,13 @@ export async function getExpensesStats() {
       financial_year,
       period
     FROM expenses
+    WHERE mandate = ${mandate}
     GROUP BY financial_year, period
   `)
   return result.rows[0] ?? null
 }
 
-export async function getExpensesByParty() {
+export async function getExpensesByParty(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT
       m.party,
@@ -910,8 +968,9 @@ export async function getExpensesByParty() {
       COUNT(DISTINCT e.person_id) as mla_count,
       SUM(e.total) / COUNT(DISTINCT e.person_id) as per_mla_avg
     FROM expenses e
-    JOIN members m ON e.person_id = m.person_id
-    WHERE e.financial_year = (SELECT MAX(financial_year) FROM expenses)
+    JOIN members m ON e.person_id = m.person_id AND m.mandate = ${mandate}
+    WHERE e.mandate = ${mandate}
+      AND e.financial_year = (SELECT MAX(financial_year) FROM expenses WHERE mandate = ${mandate})
       AND m.is_current = true
     GROUP BY m.party
     ORDER BY party_total DESC
@@ -924,7 +983,7 @@ export async function getExpensesByParty() {
   }[]
 }
 
-export async function getAllBills() {
+export async function getAllBills(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT
       b.bill_id,
@@ -972,6 +1031,7 @@ export async function getAllBills() {
       LIMIT 1
     ) fs_plain ON true
     LEFT JOIN divisions d ON d.document_id = fs_plain.division_id
+    WHERE b.mandate = ${mandate}
     GROUP BY b.bill_id, b.short_title, b.long_title, b.bill_type, b.is_accelerated, b.current_stage, b.latest_date, b.royal_assent_date, b.act_title, fs_plain.has_division, d.outcome, fs_plain.plenary_date
     ORDER BY b.latest_date DESC
   `)
@@ -1038,7 +1098,8 @@ export async function getHansardReportId(plenaryDate: string): Promise<string | 
 }
 
 
-export async function getCrossCommunityTrends() {
+export async function getCrossCommunityTrends(mandate: string = CURRENT_MANDATE) {
+  const { startSql, endSql } = trendBounds(mandate)
   const result = await db.execute(sql`
     SELECT 
       gs.month,
@@ -1046,12 +1107,12 @@ export async function getCrossCommunityTrends() {
       COALESCE(d.agreed_divisions, 0) as agreed_divisions,
       d.agreement_pct
     FROM generate_series(
-      DATE_TRUNC('month', NOW()) - INTERVAL '23 months',
-      DATE_TRUNC('month', NOW()),
+      DATE_TRUNC('month', ${startSql}),
+      DATE_TRUNC('month', ${endSql}),
       INTERVAL '1 month'
     ) AS gs(month)
     LEFT JOIN (
-      SELECT 
+      SELECT
         DATE_TRUNC('month', division_date) as month,
         COUNT(*) as total_divisions,
         COUNT(*) FILTER (WHERE
@@ -1065,7 +1126,8 @@ export async function getCrossCommunityTrends() {
           ) * 100.0 / NULLIF(COUNT(*), 0)
         ) as agreement_pct
       FROM divisions
-      WHERE division_date >= DATE_TRUNC('month', NOW()) - INTERVAL '23 months'
+      WHERE division_date >= ${startSql} AND division_date <= ${endSql}
+        AND mandate = ${mandate}
       GROUP BY DATE_TRUNC('month', division_date)
     ) d ON gs.month = d.month
     ORDER BY gs.month ASC
@@ -1078,7 +1140,7 @@ export async function getCrossCommunityTrends() {
   }[]
 }
 
-export async function getOverallAgreementRate() {
+export async function getOverallAgreementRate(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT
       ROUND(
@@ -1090,27 +1152,29 @@ export async function getOverallAgreementRate() {
         ) * 100.0 / NULLIF(COUNT(*), 0)
       ) as agreement_pct
     FROM divisions
-    WHERE mandate = ${CURRENT_MANDATE}
+    WHERE mandate = ${mandate}
   `)
   return Number((result.rows[0] as { agreement_pct: unknown }).agreement_pct)
 }
 
-export async function getDivisionsPerMonth() {
+export async function getDivisionsPerMonth(mandate: string = CURRENT_MANDATE) {
+  const { startSql, endSql } = trendBounds(mandate)
   const result = await db.execute(sql`
-    SELECT 
+    SELECT
       gs.month,
       COALESCE(d.total_divisions, 0) as total_divisions
     FROM generate_series(
-      DATE_TRUNC('month', NOW()) - INTERVAL '23 months',
-      DATE_TRUNC('month', NOW()),
+      DATE_TRUNC('month', ${startSql}),
+      DATE_TRUNC('month', ${endSql}),
       INTERVAL '1 month'
     ) AS gs(month)
     LEFT JOIN (
-      SELECT 
+      SELECT
         DATE_TRUNC('month', division_date) as month,
         COUNT(*) as total_divisions
       FROM divisions
-      WHERE division_date >= DATE_TRUNC('month', NOW()) - INTERVAL '23 months'
+      WHERE division_date >= ${startSql} AND division_date <= ${endSql}
+        AND mandate = ${mandate}
       GROUP BY DATE_TRUNC('month', division_date)
     ) d ON gs.month = d.month
     ORDER BY gs.month ASC
@@ -1118,7 +1182,7 @@ export async function getDivisionsPerMonth() {
   return result.rows as { month: string; total_divisions: number }[]
 }
 
-export async function getBillsPassedPerMonth() {
+export async function getBillsPassedPerMonth(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT
       gs.month,
@@ -1133,7 +1197,8 @@ export async function getBillsPassedPerMonth() {
         DATE_TRUNC('month', royal_assent_date) as month,
         COUNT(*) as bills_passed
       FROM bills
-      WHERE royal_assent_date >= '2022-05-01'
+      WHERE royal_assent_date >= ${mandateStartOf(mandate)}
+        AND mandate = ${mandate}
       GROUP BY DATE_TRUNC('month', royal_assent_date)
     ) b ON gs.month = b.month
     ORDER BY gs.month ASC
@@ -1141,7 +1206,7 @@ export async function getBillsPassedPerMonth() {
   return result.rows as { month: string; bills_passed: number }[]
 }
 
-export async function getPassRateByYear() {
+export async function getPassRateByYear(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT 
       EXTRACT(YEAR FROM division_date) as year,
@@ -1159,29 +1224,29 @@ export async function getPassRateByYear() {
         ) * 100.0 / NULLIF(COUNT(*), 0)
       ) as pass_rate
     FROM divisions
-    WHERE mandate = ${CURRENT_MANDATE}
+    WHERE mandate = ${mandate}
     GROUP BY year
     ORDER BY year ASC
   `)
   return result.rows as { year: number; total: number; passed: number; pass_rate: number }[]
 }
 
-export async function getSittingDays(): Promise<number> {
+export async function getSittingDays(mandate: string = CURRENT_MANDATE): Promise<number> {
   const result = await db.execute(sql`
     SELECT COUNT(*) as sitting_days
     FROM hansard_reports
-    WHERE plenary_date >= '2022-05-01'
-    AND mandate = '2022-2027'
+    WHERE plenary_date >= ${mandateStartOf(mandate)}
+    AND mandate = ${mandate}
   `)
   return Number(result.rows[0]?.sitting_days ?? 0)
 }
 
-export async function getLatestExpensesYear(): Promise<string> {
-  const result = await db.execute(sql`SELECT MAX(financial_year) as latest FROM expenses`)
+export async function getLatestExpensesYear(mandate: string = CURRENT_MANDATE): Promise<string> {
+  const result = await db.execute(sql`SELECT MAX(financial_year) as latest FROM expenses WHERE mandate = ${mandate}`)
   return String(result.rows[0]?.latest ?? '')
 }
 
-export async function getHomepageStats() {
+export async function getHomepageStats(mandate: string = CURRENT_MANDATE) {
   const [
     totalDivisions,
     actsCount,
@@ -1194,19 +1259,21 @@ export async function getHomepageStats() {
     outsideEmployment,
     giftsHospitality,
   ] = await Promise.all([
-    db.select({ count: count() }).from(divisions),
-    db.select({ count: count() }).from(bills).where(isNotNull(bills.royalAssentDate)),
+    db.select({ count: count() }).from(divisions).where(eq(divisions.mandate, mandate)),
+    db.select({ count: count() }).from(bills).where(and(isNotNull(bills.royalAssentDate), eq(bills.mandate, mandate))),
     db.select({ count: count() }).from(divisions)
-      .where(gte(divisions.divisionDate, sql`date_trunc('week', NOW())`)),
+      .where(and(eq(divisions.mandate, mandate), gte(divisions.divisionDate, sql`date_trunc('week', NOW())`))),
     db.select({ count: countDistinct(billStages.billId) }).from(billStages)
       .where(
         and(
+          eq(billStages.mandate, mandate),
           gte(billStages.plenaryDate, sql`date_trunc('week', NOW())`),
           lte(billStages.plenaryDate, sql`NOW()`)
         )
       ),
     db.select({ plenaryDate: hansardReports.plenaryDate })
       .from(hansardReports)
+      .where(eq(hansardReports.mandate, mandate))
       .orderBy(desc(hansardReports.plenaryDate))
       .limit(1),
     db.select({ count: countDistinct(registeredInterests.personId) })
@@ -1214,27 +1281,31 @@ export async function getHomepageStats() {
       .innerJoin(members, eq(registeredInterests.personId, members.personId))
       .where(and(
         eq(registeredInterests.registerCategoryId, '53'),
-        eq(members.isCurrent, true)
+        eq(registeredInterests.mandate, mandate),
+        eq(members.isCurrent, true),
+        eq(members.mandate, mandate)
       )),
     db.select({
       passed: sql<number>`COUNT(*) FILTER (WHERE outcome ILIKE '%carried%' OR outcome ILIKE '%agreed%' OR outcome ILIKE '%passed%')`,
       total: count(),
     })
     .from(divisions)
-    .where(gte(divisions.divisionDate, sql`date_trunc('week', NOW())`)),
+    .where(and(eq(divisions.mandate, mandate), gte(divisions.divisionDate, sql`date_trunc('week', NOW())`))),
     db.select({ count: count() })
       .from(registeredInterests)
-      .where(eq(registeredInterests.registerCategoryId, '48')),
+      .where(and(eq(registeredInterests.registerCategoryId, '48'), eq(registeredInterests.mandate, mandate))),
     db.select({ count: countDistinct(registeredInterests.personId) })
       .from(registeredInterests)
       .innerJoin(members, eq(registeredInterests.personId, members.personId))
       .where(and(
         eq(registeredInterests.registerCategoryId, '45'),
-        eq(members.isCurrent, true)
+        eq(registeredInterests.mandate, mandate),
+        eq(members.isCurrent, true),
+        eq(members.mandate, mandate)
       )),
     db.select({ count: count() })
       .from(registeredInterests)
-      .where(eq(registeredInterests.registerCategoryId, '47')),
+      .where(and(eq(registeredInterests.registerCategoryId, '47'), eq(registeredInterests.mandate, mandate))),
   ])
 
   return {
@@ -1253,7 +1324,7 @@ export async function getHomepageStats() {
   }
 }
 
-export async function getLeastEngagedMLA() {
+export async function getLeastEngagedMLA(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT
       m.person_id,
@@ -1269,6 +1340,9 @@ export async function getLeastEngagedMLA() {
     JOIN members m ON v.person_id = m.person_id
     JOIN divisions d ON v.document_id = d.document_id
     WHERE m.is_current = true
+    AND m.mandate = ${mandate}
+    AND v.mandate = ${mandate}
+    AND d.mandate = ${mandate}
     AND d.division_date >= m.mandate_start
     AND (
       m.assembly_role_start IS NULL
@@ -1291,7 +1365,7 @@ export async function getLeastEngagedMLA() {
   }
 }
 
-export async function getMostEngagedMLA() {
+export async function getMostEngagedMLA(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT
       m.person_id,
@@ -1307,6 +1381,9 @@ export async function getMostEngagedMLA() {
     JOIN members m ON v.person_id = m.person_id
     JOIN divisions d ON v.document_id = d.document_id
     WHERE m.is_current = true
+    AND m.mandate = ${mandate}
+    AND v.mandate = ${mandate}
+    AND d.mandate = ${mandate}
     AND d.division_date >= m.mandate_start
     AND (
       m.assembly_role_start IS NULL
@@ -1329,7 +1406,7 @@ export async function getMostEngagedMLA() {
   }
 }
 
-export async function getLatestDivisions(limit = 5) {
+export async function getLatestDivisions(limit = 5, mandate: string = CURRENT_MANDATE) {
   return db
     .select({
       documentId: divisions.documentId,
@@ -1339,11 +1416,12 @@ export async function getLatestDivisions(limit = 5) {
       outcome: divisions.outcome,
     })
     .from(divisions)
+    .where(eq(divisions.mandate, mandate))
     .orderBy(desc(divisions.divisionDate))
     .limit(limit)
 }
 
-export async function getBillsProgressedThisWeek(): Promise<{
+export async function getBillsProgressedThisWeek(mandate: string = CURRENT_MANDATE): Promise<{
   weekEvents: {
     bill_id: string
     short_title: string
@@ -1386,7 +1464,8 @@ export async function getBillsProgressedThisWeek(): Promise<{
     FROM bill_stages bs
     JOIN bills b ON bs.bill_id = b.bill_id
     LEFT JOIN divisions d ON bs.division_id = d.document_id
-    WHERE bs.plenary_date >= date_trunc('week', NOW() AT TIME ZONE 'UTC')
+    WHERE bs.mandate = ${mandate}
+      AND bs.plenary_date >= date_trunc('week', NOW() AT TIME ZONE 'UTC')
       AND bs.plenary_date < CURRENT_DATE AT TIME ZONE 'UTC'
     ORDER BY bs.bill_id, bs.stage, bs.plenary_date,
              (bs.item_title IS NULL) DESC,
@@ -1409,7 +1488,8 @@ export async function getBillsProgressedThisWeek(): Promise<{
     FROM bill_stages bs
     WHERE bs.bill_id IN (
       SELECT DISTINCT bill_id FROM bill_stages
-      WHERE plenary_date >= date_trunc('week', NOW() AT TIME ZONE 'UTC')
+      WHERE mandate = ${mandate}
+        AND plenary_date >= date_trunc('week', NOW() AT TIME ZONE 'UTC')
         AND plenary_date <= NOW()
     )
     ORDER BY bs.bill_id, bs.stage, bs.plenary_date,
@@ -1569,16 +1649,11 @@ export async function getWeeklyDiary(weekStart: string): Promise<WeeklyDiaryDay[
         .map(r => { const m = r.title.match(/\((NIA Bill \S+?)\)?$/); return m ? `${m[1]}||${r.title.split(':')[0]?.trim()}` : null })
         .filter(Boolean) as string[]
     )
-    if (dateStr === '2026-05-19') {
-      console.log('[DEBUG 2026-05-19] agenda titles:', agenda.map(r => r.title))
-      console.log('[DEBUG 2026-05-19] agendaBillKeys:', [...agendaBillKeys])
-    }
     const seenBillStage = new Set<string>()
     const dayBillStages = stages
       .filter(r => r.plenary_date.slice(0, 10) === dateStr)
       .filter(r => {
         const key = `${r.bill_id}||${r.stage}`
-        if (dateStr === '2026-05-19') console.log('[DEBUG 2026-05-19] billStage key:', key, '| blocked:', agendaBillKeys.has(key))
         if (seenBillStage.has(key)) return false
         seenBillStage.add(key)
         return !agendaBillKeys.has(key)
@@ -1600,7 +1675,7 @@ export async function getWeeklyDiary(weekStart: string): Promise<WeeklyDiaryDay[
   return days
 }
 
-export async function getInProgressBills(limit = 5) {
+export async function getInProgressBills(limit = 5, mandate: string = CURRENT_MANDATE) {
   return db
     .select({
       billId: bills.billId,
@@ -1613,7 +1688,8 @@ export async function getInProgressBills(limit = 5) {
     .from(bills)
     .where(and(
       isNull(bills.royalAssentDate),
-      lte(bills.latestDate, sql`NOW()`)
+      lte(bills.latestDate, sql`NOW()`),
+      eq(bills.mandate, mandate)
     ))
     .orderBy(desc(bills.latestDate))
     .limit(limit)
@@ -1641,7 +1717,7 @@ function makePartySlug(party: string): string {
     .replace(/[^a-z0-9-]/g, '')
 }
 
-export async function getAllPartiesWithStats(): Promise<PartyStats[]> {
+export async function getAllPartiesWithStats(mandate: string = CURRENT_MANDATE): Promise<PartyStats[]> {
   const result = await db.execute(sql`
     SELECT
       m.party,
@@ -1671,12 +1747,12 @@ export async function getAllPartiesWithStats(): Promise<PartyStats[]> {
         ) ORDER BY m.full_name
       ) AS mlas
     FROM members m
-    LEFT JOIN ministers mi ON mi.person_id = m.person_id
-    LEFT JOIN members mi_m ON mi_m.person_id = mi.person_id
-    LEFT JOIN committee_chairs cc ON cc.person_id = m.person_id
-    LEFT JOIN members cc_m ON cc_m.person_id = cc.person_id
+    LEFT JOIN ministers mi ON mi.person_id = m.person_id AND mi.mandate = ${mandate}
+    LEFT JOIN members mi_m ON mi_m.person_id = mi.person_id AND mi_m.mandate = ${mandate}
+    LEFT JOIN committee_chairs cc ON cc.person_id = m.person_id AND cc.mandate = ${mandate}
+    LEFT JOIN members cc_m ON cc_m.person_id = cc.person_id AND cc_m.mandate = ${mandate}
     WHERE m.is_current = true
-    AND m.mandate = '2022-2027'
+    AND m.mandate = ${mandate}
     GROUP BY m.party
     ORDER BY
       CASE WHEN m.party = 'Independent' THEN 1 ELSE 0 END ASC,
@@ -1716,8 +1792,8 @@ export async function getAllPartiesWithStats(): Promise<PartyStats[]> {
   })
 }
 
-export async function getPartyBySlug(slug: string): Promise<PartyDetail | null> {
-  const all = await getAllPartiesWithStats()
+export async function getPartyBySlug(slug: string, mandate: string = CURRENT_MANDATE): Promise<PartyDetail | null> {
+  const all = await getAllPartiesWithStats(mandate)
   const match = all.find((p) => p.slug === slug)
   if (!match) return null
 
@@ -1727,7 +1803,7 @@ export async function getPartyBySlug(slug: string): Promise<PartyDetail | null> 
       assembly_role, assembly_role_end
     FROM members
     WHERE is_current = true
-    AND mandate = '2022-2027'
+    AND mandate = ${mandate}
     AND party = ${match.party}
     ORDER BY SPLIT_PART(REGEXP_REPLACE(full_name, '^(Mr|Mrs|Miss|Ms|Dr|Lord|Lady|Sir)\s+', '', 'i'), ' ', -1) ASC
   `)
@@ -1746,33 +1822,34 @@ export async function getPartyBySlug(slug: string): Promise<PartyDetail | null> 
   return { ...match, mlas }
 }
 
-export async function getInProgressBillsCount(): Promise<number> {
+export async function getInProgressBillsCount(mandate: string = CURRENT_MANDATE): Promise<number> {
   const result = await db
     .select({ count: count() })
     .from(bills)
     .where(and(
       isNull(bills.royalAssentDate),
       sql`${bills.currentStage} NOT ILIKE '%final stage%'`,
-      lte(bills.latestDate, sql`NOW()`)
+      lte(bills.latestDate, sql`NOW()`),
+      eq(bills.mandate, mandate)
     ))
   return result[0]?.count ?? 0
 }
 
-export async function getActiveBillsCount(): Promise<number> {
+export async function getActiveBillsCount(mandate: string = CURRENT_MANDATE): Promise<number> {
   const result = await db
     .select({ count: count() })
     .from(bills)
-    .where(isNull(bills.royalAssentDate))
+    .where(and(isNull(bills.royalAssentDate), eq(bills.mandate, mandate)))
   return result[0]?.count ?? 0
 }
 
-export async function getBillsRoyalAssentByMonth() {
+export async function getBillsRoyalAssentByMonth(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT
       gs.month,
       COALESCE(b.assent_count, 0) as assent_count
     FROM generate_series(
-      DATE_TRUNC('month', NOW()) - INTERVAL '11 months',
+      DATE_TRUNC('month', ${CURRENT_MANDATE_START}::timestamptz),
       DATE_TRUNC('month', NOW()),
       INTERVAL '1 month'
     ) AS gs(month)
@@ -1782,7 +1859,8 @@ export async function getBillsRoyalAssentByMonth() {
         COUNT(*) as assent_count
       FROM bills
       WHERE royal_assent_date IS NOT NULL
-        AND royal_assent_date::timestamptz >= DATE_TRUNC('month', NOW()) - INTERVAL '11 months'
+        AND royal_assent_date::timestamptz >= ${CURRENT_MANDATE_START}::date
+        AND mandate = ${mandate}
       GROUP BY DATE_TRUNC('month', royal_assent_date::timestamptz)
     ) b ON gs.month = b.month
     ORDER BY gs.month ASC
@@ -1821,7 +1899,7 @@ export interface PartyVoteStats {
   }[]
 }
 
-export async function getPartyAssemblyStats(party: string): Promise<PartyVoteStats> {
+export async function getPartyAssemblyStats(party: string, mandate: string = CURRENT_MANDATE): Promise<PartyVoteStats> {
   const [votesResult, mlaResult, trendResult, divisionsResult] = await Promise.all([
     db.execute(sql`
       SELECT
@@ -1838,7 +1916,9 @@ export async function getPartyAssemblyStats(party: string): Promise<PartyVoteSta
       FROM votes v
       JOIN members m ON m.person_id = v.person_id
       JOIN divisions d ON d.document_id = v.document_id
-      WHERE m.mandate = '2022-2027'
+      WHERE m.mandate = ${mandate}
+      AND v.mandate = ${mandate}
+      AND d.mandate = ${mandate}
       AND m.party = ${party}
       AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
       AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
@@ -1865,13 +1945,15 @@ export async function getPartyAssemblyStats(party: string): Promise<PartyVoteSta
           ) as rnk_low
         FROM votes v
         JOIN members m ON m.person_id = v.person_id
-        WHERE m.mandate = '2022-2027'
+        WHERE m.mandate = ${mandate}
+        AND v.mandate = ${mandate}
         AND m.party = ${party}
         AND m.is_current = true
         AND (m.assembly_role IS NULL OR m.assembly_role NOT ILIKE '%speaker%')
         AND NOT EXISTS (
           SELECT 1 FROM ministers mi
           WHERE mi.person_id = m.person_id
+          AND mi.mandate = ${mandate}
           AND (mi.role_title ILIKE '%First Minister%' OR mi.role_title ILIKE '%deputy First Minister%')
         )
         GROUP BY m.person_id, m.full_name, m.constituency
@@ -1889,7 +1971,9 @@ export async function getPartyAssemblyStats(party: string): Promise<PartyVoteSta
       FROM votes v
       JOIN members m ON m.person_id = v.person_id
       JOIN divisions d ON d.document_id = v.document_id
-      WHERE m.mandate = '2022-2027'
+      WHERE m.mandate = ${mandate}
+      AND v.mandate = ${mandate}
+      AND d.mandate = ${mandate}
       AND m.party = ${party}
       AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
       AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
@@ -1912,8 +1996,9 @@ export async function getPartyAssemblyStats(party: string): Promise<PartyVoteSta
             FROM votes v2
             JOIN members m2 ON m2.person_id = v2.person_id
             WHERE v2.document_id = d.document_id
+            AND v2.mandate = ${mandate}
             AND m2.party = ${party}
-            AND m2.mandate = '2022-2027'
+            AND m2.mandate = ${mandate}
             GROUP BY v2.vote
             ORDER BY COUNT(*) DESC
             LIMIT 1
@@ -1922,7 +2007,9 @@ export async function getPartyAssemblyStats(party: string): Promise<PartyVoteSta
         JOIN votes v ON v.document_id = d.document_id
         JOIN members m ON m.person_id = v.person_id
         WHERE m.party = ${party}
-        AND m.mandate = '2022-2027'
+        AND m.mandate = ${mandate}
+        AND v.mandate = ${mandate}
+        AND d.mandate = ${mandate}
       ) sub
       ORDER BY sort_date DESC
       LIMIT 5
@@ -1979,7 +2066,7 @@ export async function getPartyAssemblyStats(party: string): Promise<PartyVoteSta
   }
 }
 
-export async function getQuestionStatsByMember(personId: string) {
+export async function getQuestionStatsByMember(personId: string, mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       year: questionStats.year,
@@ -1988,12 +2075,12 @@ export async function getQuestionStatsByMember(personId: string) {
       oralCount: questionStats.oralCount,
     })
     .from(questionStats)
-    .where(eq(questionStats.personId, personId))
+    .where(and(eq(questionStats.personId, personId), eq(questionStats.mandate, mandate)))
     .orderBy(questionStats.year, questionStats.month)
   return rows
 }
 
-export async function getQuestionTotalsAllMembers() {
+export async function getQuestionTotalsAllMembers(mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       personId: questionStats.personId,
@@ -2002,11 +2089,12 @@ export async function getQuestionTotalsAllMembers() {
       oral: sql<number>`sum(${questionStats.oralCount})`,
     })
     .from(questionStats)
+    .where(eq(questionStats.mandate, mandate))
     .groupBy(questionStats.personId)
   return rows
 }
 
-export async function getQuestionRankForMember(personId: string): Promise<{ rank: number; totalEligible: number } | null> {
+export async function getQuestionRankForMember(personId: string, mandate: string = CURRENT_MANDATE): Promise<{ rank: number; totalEligible: number } | null> {
   // Subquery: total questions per eligible MLA (current, no assembly role, not a minister)
   const eligible = db
     .select({
@@ -2014,12 +2102,16 @@ export async function getQuestionRankForMember(personId: string): Promise<{ rank
       total: sql<number>`sum(${questionStats.writtenCount} + ${questionStats.oralCount})`.as('total'),
     })
     .from(questionStats)
-    .innerJoin(members, eq(questionStats.personId, members.personId))
-    .leftJoin(ministers, eq(questionStats.personId, ministers.personId))
+    .innerJoin(members, and(eq(questionStats.personId, members.personId), eq(members.mandate, mandate)))
+    // Exclude ministers OF THIS MANDATE only — scoping the join to the mandate keeps the
+    // archived cohort frozen (a person becoming a minister in a later mandate must not
+    // retroactively drop out of this mandate's question ranking).
+    .leftJoin(ministers, and(eq(questionStats.personId, ministers.personId), eq(ministers.mandate, mandate)))
     .where(and(
       eq(members.isCurrent, true),
       sql`(${members.assemblyRole} is null OR ${members.assemblyRole} != 'Speaker')`,
       sql`${ministers.personId} is null`,
+      eq(questionStats.mandate, mandate),
     ))
     .groupBy(questionStats.personId)
     .as('eligible')
@@ -2043,7 +2135,7 @@ export async function getQuestionRankForMember(personId: string): Promise<{ rank
   }
 }
 
-export async function getQuestionStatsByParty(party: string) {
+export async function getQuestionStatsByParty(party: string, mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       personId: questionStats.personId,
@@ -2053,13 +2145,13 @@ export async function getQuestionStatsByParty(party: string) {
       oralCount: questionStats.oralCount,
     })
     .from(questionStats)
-    .innerJoin(members, eq(questionStats.personId, members.personId))
-    .where(eq(members.party, party))
+    .innerJoin(members, and(eq(questionStats.personId, members.personId), eq(members.mandate, mandate)))
+    .where(and(eq(members.party, party), eq(questionStats.mandate, mandate)))
     .orderBy(questionStats.year, questionStats.month)
   return rows
 }
 
-export async function getHansardStatsByMember(personId: string) {
+export async function getHansardStatsByMember(personId: string, mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       reportDocId: hansardContributions.reportDocId,
@@ -2067,12 +2159,12 @@ export async function getHansardStatsByMember(personId: string) {
       debateTitle: hansardContributions.debateTitle,
     })
     .from(hansardContributions)
-    .where(eq(hansardContributions.personId, personId))
+    .where(and(eq(hansardContributions.personId, personId), eq(hansardContributions.mandate, mandate)))
     .orderBy(desc(hansardContributions.plenaryDate))
   return rows
 }
 
-export async function getHansardTotalsAllMembers() {
+export async function getHansardTotalsAllMembers(mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       personId: hansardContributions.personId,
@@ -2082,23 +2174,25 @@ export async function getHansardTotalsAllMembers() {
       debates: sql<number>`count(distinct ${hansardContributions.debateTitle})`,
     })
     .from(hansardContributions)
-    .innerJoin(members, eq(hansardContributions.personId, members.personId))
+    .innerJoin(members, and(eq(hansardContributions.personId, members.personId), eq(members.mandate, mandate)))
+    .where(eq(hansardContributions.mandate, mandate))
     .groupBy(hansardContributions.personId, members.fullName, members.party)
     .orderBy(desc(sql`count(distinct ${hansardContributions.reportDocId})`))
   return rows
 }
 
-export async function getHansardRankForMember(personId: string): Promise<{ rank: number; eligibleCount: number; sittings: number } | null> {
+export async function getHansardRankForMember(personId: string, mandate: string = CURRENT_MANDATE): Promise<{ rank: number; eligibleCount: number; sittings: number } | null> {
   const eligible = db
     .select({
       personId: hansardContributions.personId,
       sittings: sql<number>`count(distinct ${hansardContributions.reportDocId})`.as('sittings'),
     })
     .from(hansardContributions)
-    .innerJoin(members, eq(hansardContributions.personId, members.personId))
+    .innerJoin(members, and(eq(hansardContributions.personId, members.personId), eq(members.mandate, mandate)))
     .where(and(
       eq(members.isCurrent, true),
       isNull(members.assemblyRole),
+      eq(hansardContributions.mandate, mandate),
     ))
     .groupBy(hansardContributions.personId)
     .as('eligible')
@@ -2123,17 +2217,18 @@ export async function getHansardRankForMember(personId: string): Promise<{ rank:
   }
 }
 
-export async function getHansardDebateRankForMember(personId: string): Promise<{ rank: number; eligibleCount: number; debates: number } | null> {
+export async function getHansardDebateRankForMember(personId: string, mandate: string = CURRENT_MANDATE): Promise<{ rank: number; eligibleCount: number; debates: number } | null> {
   const eligible = db
     .select({
       personId: hansardContributions.personId,
       debates: sql<number>`count(distinct ${hansardContributions.debateTitle})`.as('debates'),
     })
     .from(hansardContributions)
-    .innerJoin(members, eq(hansardContributions.personId, members.personId))
+    .innerJoin(members, and(eq(hansardContributions.personId, members.personId), eq(members.mandate, mandate)))
     .where(and(
       eq(members.isCurrent, true),
       isNull(members.assemblyRole),
+      eq(hansardContributions.mandate, mandate),
     ))
     .groupBy(hansardContributions.personId)
     .as('eligible')
@@ -2158,7 +2253,7 @@ export async function getHansardDebateRankForMember(personId: string): Promise<{
   }
 }
 
-export async function getHansardStatsByParty(party: string) {
+export async function getHansardStatsByParty(party: string, mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       personId: hansardContributions.personId,
@@ -2169,14 +2264,14 @@ export async function getHansardStatsByParty(party: string) {
       debates: sql<number>`count(distinct ${hansardContributions.debateTitle})`,
     })
     .from(hansardContributions)
-    .innerJoin(members, eq(hansardContributions.personId, members.personId))
-    .where(and(eq(members.party, party), eq(members.isCurrent, true)))
+    .innerJoin(members, and(eq(hansardContributions.personId, members.personId), eq(members.mandate, mandate)))
+    .where(and(eq(members.party, party), eq(members.isCurrent, true), eq(hansardContributions.mandate, mandate)))
     .groupBy(hansardContributions.personId, members.fullName, members.constituency, members.imgUrl)
     .orderBy(desc(sql`count(distinct ${hansardContributions.reportDocId})`))
   return rows
 }
 
-export async function getHansardPartyRank(party: string): Promise<{ rank: number; totalParties: number; avgSittings: number } | null> {
+export async function getHansardPartyRank(party: string, mandate: string = CURRENT_MANDATE): Promise<{ rank: number; totalParties: number; avgSittings: number } | null> {
   const memberSittings = db
     .select({
       party: members.party,
@@ -2184,8 +2279,8 @@ export async function getHansardPartyRank(party: string): Promise<{ rank: number
       sittings: sql<number>`count(distinct ${hansardContributions.reportDocId})`.as('sittings'),
     })
     .from(members)
-    .leftJoin(hansardContributions, eq(hansardContributions.personId, members.personId))
-    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole)))
+    .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
     .groupBy(members.party, members.personId)
     .as('member_sittings')
 
@@ -2218,7 +2313,7 @@ export async function getHansardPartyRank(party: string): Promise<{ rank: number
   }
 }
 
-export async function getHansardPartyDebateRank(party: string): Promise<{ rank: number; totalParties: number; avgDebates: number } | null> {
+export async function getHansardPartyDebateRank(party: string, mandate: string = CURRENT_MANDATE): Promise<{ rank: number; totalParties: number; avgDebates: number } | null> {
   const memberDebates = db
     .select({
       party: members.party,
@@ -2226,8 +2321,8 @@ export async function getHansardPartyDebateRank(party: string): Promise<{ rank: 
       debates: sql<number>`count(distinct ${hansardContributions.debateTitle})`.as('debates'),
     })
     .from(members)
-    .leftJoin(hansardContributions, eq(hansardContributions.personId, members.personId))
-    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole)))
+    .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
     .groupBy(members.party, members.personId)
     .as('member_debates')
 
@@ -2260,7 +2355,7 @@ export async function getHansardPartyDebateRank(party: string): Promise<{ rank: 
   }
 }
 
-export async function getHansardSittingsByMonthForParty(party: string, mandateStart: string) {
+export async function getHansardSittingsByMonthForParty(party: string, mandateStart: string, mandate: string = CURRENT_MANDATE) {
   const today = new Date().toISOString().slice(0, 10)
   const rows = await db
     .select({
@@ -2269,10 +2364,11 @@ export async function getHansardSittingsByMonthForParty(party: string, mandateSt
       totalSittings: sql<number>`count(distinct (${hansardContributions.personId}, ${hansardContributions.reportDocId}))`,
     })
     .from(hansardContributions)
-    .innerJoin(members, eq(hansardContributions.personId, members.personId))
+    .innerJoin(members, and(eq(hansardContributions.personId, members.personId), eq(members.mandate, mandate)))
     .where(and(
       eq(members.party, party),
       eq(members.isCurrent, true),
+      eq(hansardContributions.mandate, mandate),
       sql`${hansardContributions.plenaryDate} >= ${mandateStart} and ${hansardContributions.plenaryDate} <= ${today}`,
     ))
     .groupBy(sql`extract(year from ${hansardContributions.plenaryDate}), extract(month from ${hansardContributions.plenaryDate})`)
@@ -2280,15 +2376,15 @@ export async function getHansardSittingsByMonthForParty(party: string, mandateSt
   return rows
 }
 
-export async function getHansardSiteStats() {
+export async function getHansardSiteStats(mandate: string = CURRENT_MANDATE) {
   const [sittingsRow, contribRow] = await Promise.all([
     db.select({ totalSittings: sql<number>`count(*)` })
       .from(hansardReports)
-      .where(sql`${hansardReports.plenaryDate} >= '2022-05-01'`),
+      .where(eq(hansardReports.mandate, mandate)),
     db.select({
       totalDebates: sql<number>`count(distinct ${hansardContributions.debateTitle})`,
       totalParticipations: sql<number>`count(*)`,
-    }).from(hansardContributions),
+    }).from(hansardContributions).where(eq(hansardContributions.mandate, mandate)),
   ])
   return {
     totalSittings: sittingsRow[0].totalSittings,
@@ -2297,7 +2393,7 @@ export async function getHansardSiteStats() {
   }
 }
 
-export async function getHansardSittingsByMonth(mandateStart: string) {
+export async function getHansardSittingsByMonth(mandateStart: string, mandate: string = CURRENT_MANDATE) {
   const today = new Date().toISOString().slice(0, 10)
   const rows = await db
     .select({
@@ -2306,24 +2402,30 @@ export async function getHansardSittingsByMonth(mandateStart: string) {
       totalSittings: sql<number>`count(distinct ${hansardReports.plenaryDate})`,
     })
     .from(hansardReports)
-    .where(sql`${hansardReports.plenaryDate} >= ${mandateStart} and ${hansardReports.plenaryDate} <= ${today}`)
+    .where(and(
+      eq(hansardReports.mandate, mandate),
+      sql`${hansardReports.plenaryDate} >= ${mandateStart} and ${hansardReports.plenaryDate} <= ${today}`,
+    ))
     .groupBy(sql`extract(year from ${hansardReports.plenaryDate}), extract(month from ${hansardReports.plenaryDate})`)
     .orderBy(sql`extract(year from ${hansardReports.plenaryDate}), extract(month from ${hansardReports.plenaryDate})`)
   return rows
 }
 
-export async function getHansardTotalDebateSlots(mandateStart: string) {
+export async function getHansardTotalDebateSlots(mandateStart: string, mandate: string = CURRENT_MANDATE) {
   const today = new Date().toISOString().slice(0, 10)
   const rows = await db
     .select({
       total: sql<number>`count(distinct (${hansardContributions.reportDocId}, ${hansardContributions.debateTitle}))`,
     })
     .from(hansardContributions)
-    .where(sql`${hansardContributions.plenaryDate} >= ${mandateStart} and ${hansardContributions.plenaryDate} <= ${today}`)
+    .where(and(
+      eq(hansardContributions.mandate, mandate),
+      sql`${hansardContributions.plenaryDate} >= ${mandateStart} and ${hansardContributions.plenaryDate} <= ${today}`,
+    ))
   return rows[0].total
 }
 
-export async function getHansardTopByMLA(limit: number, orderBy: 'sittings' | 'debates') {
+export async function getHansardTopByMLA(limit: number, orderBy: 'sittings' | 'debates', mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       personId: members.personId,
@@ -2334,8 +2436,8 @@ export async function getHansardTopByMLA(limit: number, orderBy: 'sittings' | 'd
       debates: sql<number>`count(distinct ${hansardContributions.debateTitle})`.as('debates'),
     })
     .from(members)
-    .leftJoin(hansardContributions, eq(hansardContributions.personId, members.personId))
-    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole)))
+    .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
     .groupBy(members.personId, members.fullName, members.party, members.imgUrl)
     .orderBy(orderBy === 'sittings'
       ? desc(sql`count(distinct ${hansardContributions.reportDocId})`)
@@ -2344,7 +2446,7 @@ export async function getHansardTopByMLA(limit: number, orderBy: 'sittings' | 'd
   return rows
 }
 
-export async function getHansardBottomByMLA(limit: number, orderBy: 'sittings' | 'debates') {
+export async function getHansardBottomByMLA(limit: number, orderBy: 'sittings' | 'debates', mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       personId: members.personId,
@@ -2355,8 +2457,8 @@ export async function getHansardBottomByMLA(limit: number, orderBy: 'sittings' |
       debates: sql<number>`count(distinct ${hansardContributions.debateTitle})`.as('debates'),
     })
     .from(members)
-    .leftJoin(hansardContributions, eq(hansardContributions.personId, members.personId))
-    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole)))
+    .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
     .groupBy(members.personId, members.fullName, members.party, members.imgUrl)
     .orderBy(orderBy === 'sittings'
       ? asc(sql`count(distinct ${hansardContributions.reportDocId})`)
@@ -2365,7 +2467,7 @@ export async function getHansardBottomByMLA(limit: number, orderBy: 'sittings' |
   return rows
 }
 
-export async function getHansardAllByMLA() {
+export async function getHansardAllByMLA(mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       personId: members.personId,
@@ -2377,14 +2479,14 @@ export async function getHansardAllByMLA() {
       debates: sql<number>`count(distinct ${hansardContributions.debateTitle})`.as('debates'),
     })
     .from(members)
-    .leftJoin(hansardContributions, eq(hansardContributions.personId, members.personId))
-    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole)))
+    .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
     .groupBy(members.personId, members.fullName, members.party, members.constituency, members.imgUrl)
     .orderBy(desc(sql`count(distinct ${hansardContributions.reportDocId})`))
   return rows
 }
 
-export async function getHansardPartyAverages(): Promise<{ party: string; avgSittings: number; avgDebates: number }[]> {
+export async function getHansardPartyAverages(mandate: string = CURRENT_MANDATE): Promise<{ party: string; avgSittings: number; avgDebates: number }[]> {
   const memberTotals = db
     .select({
       party: members.party,
@@ -2393,8 +2495,8 @@ export async function getHansardPartyAverages(): Promise<{ party: string; avgSit
       debates: sql<number>`count(distinct ${hansardContributions.debateTitle})`.as('debates'),
     })
     .from(members)
-    .leftJoin(hansardContributions, eq(hansardContributions.personId, members.personId))
-    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole)))
+    .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
     .groupBy(members.party, members.personId)
     .as('member_totals')
 
@@ -2415,7 +2517,7 @@ export async function getHansardPartyAverages(): Promise<{ party: string; avgSit
   }))
 }
 
-export async function getHansardThisMonth(): Promise<number> {
+export async function getHansardThisMonth(mandate: string = CURRENT_MANDATE): Promise<number> {
   const now = new Date()
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
@@ -2424,13 +2526,14 @@ export async function getHansardThisMonth(): Promise<number> {
     .select({ total: sql<number>`count(distinct ${hansardReports.reportDocId})` })
     .from(hansardReports)
     .where(and(
+      eq(hansardReports.mandate, mandate),
       sql`${hansardReports.plenaryDate} >= ${monthStart}`,
       sql`${hansardReports.plenaryDate} < ${monthEnd}`,
     ))
   return Number(rows[0]?.total ?? 0)
 }
 
-export async function getMemberRoleHistory(personId: string) {
+export async function getMemberRoleHistory(personId: string, mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       role: memberRoleHistory.role,
@@ -2440,12 +2543,12 @@ export async function getMemberRoleHistory(personId: string) {
       endDate: memberRoleHistory.endDate,
     })
     .from(memberRoleHistory)
-    .where(eq(memberRoleHistory.personId, personId))
+    .where(and(eq(memberRoleHistory.personId, personId), eq(memberRoleHistory.mandate, mandate)))
     .orderBy(memberRoleHistory.startDate)
   return rows
 }
 
-export async function getPartyAttendanceAll(): Promise<{ party: string; attendancePct: number; memberCount: number }[]> {
+export async function getPartyAttendanceAll(mandate: string = CURRENT_MANDATE): Promise<{ party: string; attendancePct: number; memberCount: number }[]> {
   const result = await db.execute(sql`
     SELECT
       m.party,
@@ -2457,7 +2560,9 @@ export async function getPartyAttendanceAll(): Promise<{ party: string; attendan
     FROM votes v
     JOIN members m ON m.person_id = v.person_id
     JOIN divisions d ON d.document_id = v.document_id
-    WHERE m.mandate = ${CURRENT_MANDATE}
+    WHERE m.mandate = ${mandate}
+    AND v.mandate = ${mandate}
+    AND d.mandate = ${mandate}
     AND m.party IS NOT NULL
     AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
     AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
@@ -2473,7 +2578,7 @@ export async function getPartyAttendanceAll(): Promise<{ party: string; attendan
   }))
 }
 
-export async function getAllPartyAttendanceTrends(): Promise<{ party: string; month: string; attendancePct: number; memberCount: number }[]> {
+export async function getAllPartyAttendanceTrends(mandate: string = CURRENT_MANDATE): Promise<{ party: string; month: string; attendancePct: number; memberCount: number }[]> {
   const result = await db.execute(sql`
     SELECT
       m.party,
@@ -2487,7 +2592,9 @@ export async function getAllPartyAttendanceTrends(): Promise<{ party: string; mo
     FROM votes v
     JOIN members m ON m.person_id = v.person_id
     JOIN divisions d ON d.document_id = v.document_id
-    WHERE m.mandate = ${CURRENT_MANDATE}
+    WHERE m.mandate = ${mandate}
+    AND v.mandate = ${mandate}
+    AND d.mandate = ${mandate}
     AND m.party IS NOT NULL
     AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
     AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
@@ -2512,12 +2619,12 @@ export type PartyAlignmentRow = {
   dupAgreePct: number
 }
 
-export async function getPartyAlignmentWithBigTwo(): Promise<{ rows: PartyAlignmentRow[]; totalDivisions: number }> {
+export async function getPartyAlignmentWithBigTwo(mandate: string = CURRENT_MANDATE): Promise<{ rows: PartyAlignmentRow[]; totalDivisions: number }> {
   const result = await db.execute(sql`
     WITH total AS (
       SELECT COUNT(DISTINCT document_id) AS total_divisions
       FROM divisions
-      WHERE mandate = ${CURRENT_MANDATE}
+      WHERE mandate = ${mandate}
     ),
     party_votes AS (
       SELECT
@@ -2529,9 +2636,9 @@ export async function getPartyAlignmentWithBigTwo(): Promise<{ rows: PartyAlignm
         COUNT(*) FILTER (WHERE v.vote = 'NO_SHOW') AS noshows
       FROM votes v
       JOIN members m ON m.person_id = v.person_id
-      WHERE m.mandate = ${CURRENT_MANDATE}
+      WHERE m.mandate = ${mandate}
         AND m.party IS NOT NULL
-        AND v.mandate = ${CURRENT_MANDATE}
+        AND v.mandate = ${mandate}
       GROUP BY v.document_id, m.party
     ),
     division_majorities AS (
@@ -2608,7 +2715,7 @@ export type BigTwoAgreement = {
  * Uses the same party-majority logic as getPartyAlignmentWithBigTwo, so the
  * figures sit alongside the smaller-party alignment table on the voting page.
  */
-export async function getBigTwoAgreement(): Promise<BigTwoAgreement> {
+export async function getBigTwoAgreement(mandate: string = CURRENT_MANDATE): Promise<BigTwoAgreement> {
   const result = await db.execute(sql`
     WITH party_votes AS (
       SELECT
@@ -2620,9 +2727,9 @@ export async function getBigTwoAgreement(): Promise<BigTwoAgreement> {
         COUNT(*) FILTER (WHERE v.vote = 'NO_SHOW') AS noshows
       FROM votes v
       JOIN members m ON m.person_id = v.person_id
-      WHERE m.mandate = ${CURRENT_MANDATE}
+      WHERE m.mandate = ${mandate}
         AND m.party IS NOT NULL
-        AND v.mandate = ${CURRENT_MANDATE}
+        AND v.mandate = ${mandate}
       GROUP BY v.document_id, m.party
     ),
     division_majorities AS (
@@ -2649,7 +2756,7 @@ export async function getBigTwoAgreement(): Promise<BigTwoAgreement> {
       WHERE party = 'Democratic Unionist Party' AND majority_vote IS NOT NULL
     )
     SELECT
-      (SELECT COUNT(DISTINCT document_id) FROM divisions WHERE mandate = ${CURRENT_MANDATE}) AS total_divisions,
+      (SELECT COUNT(DISTINCT document_id) FROM divisions WHERE mandate = ${mandate}) AS total_divisions,
       COUNT(*) FILTER (WHERE sf.sf_vote = dup.dup_vote) AS agreed,
       COUNT(*) FILTER (WHERE sf.sf_vote <> dup.dup_vote) AS disagreed,
       COUNT(*) FILTER (WHERE sf.sf_vote = 'AYE' AND dup.dup_vote = 'AYE') AS both_aye,
@@ -2692,7 +2799,7 @@ export type BlocAgreement = {
  * so abstentions and absences are excluded. Sits beside the party-level figures
  * on the voting page, which use a different (four-position) method.
  */
-export async function getBlocAgreement(): Promise<BlocAgreement> {
+export async function getBlocAgreement(mandate: string = CURRENT_MANDATE): Promise<BlocAgreement> {
   const result = await db.execute(sql`
     WITH positions AS (
       SELECT
@@ -2701,7 +2808,7 @@ export async function getBlocAgreement(): Promise<BlocAgreement> {
         unionist_ayes > (unionist_noes + unionist_ayes) * 0.5 AS uni_aye,
         unionist_noes > (unionist_noes + unionist_ayes) * 0.5 AS uni_no
       FROM divisions
-      WHERE mandate = ${CURRENT_MANDATE}
+      WHERE mandate = ${mandate}
     )
     SELECT
       COUNT(*) AS total_divisions,
@@ -2726,7 +2833,7 @@ export async function getBlocAgreement(): Promise<BlocAgreement> {
   }
 }
 
-export async function getAllMemberRoleHistories() {
+export async function getAllMemberRoleHistories(mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
       personId: memberRoleHistory.personId,
@@ -2737,6 +2844,7 @@ export async function getAllMemberRoleHistories() {
       endDate: memberRoleHistory.endDate,
     })
     .from(memberRoleHistory)
+    .where(eq(memberRoleHistory.mandate, mandate))
     .orderBy(memberRoleHistory.personId, memberRoleHistory.startDate)
   return rows
 }

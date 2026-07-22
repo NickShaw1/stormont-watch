@@ -4,9 +4,10 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/format'
 import { computeBillProgress, BILL_STAGES } from '@/lib/bills/billProgress'
-import type { BillItem } from './page'
+import type { BillItem } from './BillsPageBody'
 import type { BillProgressedThisWeek } from '@/lib/bills/progressedThisWeekProgress'
 import BillProgressedRow from '@/components/bills/BillProgressedRow'
+import { useMandate } from '@/components/MandateContext'
 import styles from './bills.module.css'
 
 interface Props {
@@ -26,6 +27,7 @@ function formatBillNum(billId: string): { main: string; session: string } {
 }
 
 export default function BillsListClient({ scheduled, inProgress, completed, progressedThisWeek }: Props) {
+  const { basePath } = useMandate()
   const [activeTab, setActiveTab] = useState<Tab>('scheduled')
   const [previousTab, setPreviousTab] = useState<Tab>('scheduled')
   const [isSearching, setIsSearching] = useState(false)
@@ -102,7 +104,7 @@ export default function BillsListClient({ scheduled, inProgress, completed, prog
         : 'Awaiting Royal Assent'
 
     return (
-      <Link href={`/assembly/bills/${bill.slug}`} className={styles.billRow}>
+      <Link href={`${basePath}/assembly/bills/${bill.slug}`} className={styles.billRow}>
         <div className={styles.billNum}>
           <strong className={styles.billNumMain}>{main}</strong>
           {session && <div className={styles.billNumSession}>{session}</div>}

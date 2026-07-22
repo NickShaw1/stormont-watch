@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { formatMonthGroup, monthKey } from '@/lib/format'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import styles from './votes.module.css'
+import { useMandate } from '@/components/MandateContext'
 
 function getBaseTitle(rawTitle: string): string {
   // Trailing suffix: "Title - Amendment N"
@@ -80,6 +81,7 @@ interface Props {
 }
 
 export default function VotesListClient({ allItems }: Props) {
+  const { mandate } = useMandate()
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [yearFilter, setYearFilter] = useState('ALL')
@@ -221,7 +223,7 @@ export default function VotesListClient({ allItems }: Props) {
       {/* Result count */}
       <p className={styles.resultCount}>
         <strong>{filteredItems.length}</strong> division{filteredItems.length !== 1 ? 's' : ''}
-        {yearFilter !== 'ALL' ? ` in ${yearFilter}` : <> since <strong>May 2022</strong></>}
+        {yearFilter !== 'ALL' ? ` in ${yearFilter}` : <> since <strong>{mandate.startLabel}</strong></>}
         {q ? ` matching "${q}"` : ''}
       </p>
 
