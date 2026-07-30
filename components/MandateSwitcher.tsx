@@ -18,9 +18,7 @@ export default function MandateSwitcher() {
   const activeId = m ? m[1] : CURRENT_MANDATE.id
   const active = MANDATES.find((x) => x.id === activeId) ?? CURRENT_MANDATE
 
-  // Switching mandate lands on that mandate's homepage, not the equivalent deep page — a
-  // division / MLA / bill from one mandate has no counterpart in another, so preserving the
-  // sub-path would 404 or mislead. The homepage is always a valid landing point.
+  // Lands on that mandate's homepage; a deep page's sub-path has no cross-mandate counterpart.
   const urlFor = (id: string) => (id === CURRENT_MANDATE.id ? '/' : `/archive/${id}`)
 
   useEffect(() => {
@@ -37,8 +35,7 @@ export default function MandateSwitcher() {
     }
   }, [open])
 
-  // Nothing to switch between while only the current mandate is visible (no begun archives).
-  // Placed after all hooks so hook order stays stable (rules-of-hooks).
+  // After all hooks so hook order stays stable (rules-of-hooks).
   if (MANDATES.length < 2) return null
 
   return (

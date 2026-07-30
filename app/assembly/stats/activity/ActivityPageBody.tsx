@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { Activity, MessageCircleQuestion, BarChart3 } from 'lucide-react'
 import {
   getMlaLeaderboard,
   getAllMembers,
@@ -96,26 +98,34 @@ export default async function ActivityPageBody({
 
   return (
     <div className="container">
-      <header className="page-header">
+      <header className={styles.pageHeader}>
         <StatsBreadcrumb label="Parliamentary Activity" basePath={basePath} />
-        <h1>Parliamentary Activity</h1>
-        <p className="lede">Questions to ministers and chamber participation across the {mandate.label} mandate.</p>
+        <h1 className={styles.pageHeaderTitle}>
+          <Activity className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
+          Parliamentary Activity
+        </h1>
+        <p className={styles.lede}>Questions to ministers and chamber participation across the {mandate.label} mandate.</p>
       </header>
 
       {/* Questions */}
       {questionTop5.length > 0 && (
-        <section aria-labelledby="questions-heading" className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <p className="eyebrow">MLA questions</p>
-            <h2 id="questions-heading" className={styles.sectionTitle}>Questions</h2>
-            <div className={styles.sectionRule}></div>
-            <p className={styles.sectionDesc}>Who asks the most questions. Excludes current ministers and speakers.</p>
+        <section aria-labelledby="questions-heading" className={styles.section} style={{ marginTop: 0 }}>
+          <div className={styles.sectionHeadRow} style={{ marginBottom: 0 }}>
+            <div>
+              <span className={styles.sectionEyebrow}>MLA questions</span>
+              <h2 id="questions-heading" className={styles.sectionTitle}>
+                <MessageCircleQuestion className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                Questions
+              </h2>
+            </div>
+            <Link href={`${basePath}/assembly/questions`} className={styles.viewAllBtn}>View full rankings</Link>
+          </div>
+          <div className={styles.sectionHead}>
+            <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>Who asks the most questions. Excludes current ministers and speakers.</p>
           </div>
           <StatsQuestionsSection top5={questionTop5} bottom5={questionBottom5} byParty={questionByParty} basePath={basePath} />
         </section>
       )}
-
-      <hr className="section-rule" />
 
       {/* Chamber activity */}
       <StatsChamberSection
@@ -128,14 +138,14 @@ export default async function ActivityPageBody({
         siteStats={hansardSiteStats}
       />
 
-      <hr className="section-rule" />
-
       {/* Assembly activity */}
-      <section aria-labelledby="productivity-heading" className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <p className="eyebrow">Sitting and voting patterns</p>
-          <h2 id="productivity-heading" className={styles.sectionTitle}>Assembly activity</h2>
-          <div className={styles.sectionRule}></div>
+      <section aria-labelledby="productivity-heading" className={`${styles.section} ${styles.sectionLast}`}>
+        <div className={styles.sectionHead}>
+          <span className={styles.sectionEyebrow}>Sitting and voting patterns</span>
+          <h2 id="productivity-heading" className={styles.sectionTitle}>
+            <BarChart3 className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+            Assembly activity
+          </h2>
           <p className={styles.sectionDesc}>How active the Assembly has been since {mandate.startLabel}.</p>
         </div>
         <AssemblyProductivityClient monthData={divisionsPerMonth} yearData={passRateByYear} sittingDays={sittingDays} partyAttendanceTrends={partyAttendanceTrends} />

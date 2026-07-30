@@ -1,3 +1,4 @@
+import { Users } from 'lucide-react'
 import { getAllMinisters, getAllCommitteeChairs, getPresidingOfficers } from '@/lib/db/queries'
 
 import StructureClient from './StructureClient'
@@ -73,8 +74,11 @@ export default async function StructurePageBody({
   return (
     <div className="container">
       <header className={styles.pageHeader}>
-        <span className="eyebrow">The Assembly</span>
-        <h1>Who&apos;s in Charge</h1>
+        <span className={styles.pageHeaderEyebrow}>The Assembly</span>
+        <h1 className={styles.pageHeaderTitle}>
+          <Users className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
+          Who&apos;s in Charge
+        </h1>
         <p className={styles.lede}>The power-sharing Executive, ministerial departments and committee chairs of the Northern Ireland Assembly.</p>
       </header>
       <StructureClient

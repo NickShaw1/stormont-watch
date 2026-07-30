@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { SearchX, CalendarX, Scale, CheckCircle2, TrendingUp, Landmark, ExternalLink, Zap, Crown } from 'lucide-react'
 import { formatDate } from '@/lib/format'
 import { computeBillProgress, BILL_STAGES } from '@/lib/bills/billProgress'
 import type { BillItem } from './BillsPageBody'
@@ -20,19 +21,80 @@ interface Props {
 const tabs = ['scheduled', 'in-progress', 'completed'] as const
 type Tab = typeof tabs[number]
 
+const TAB_LABELS: Record<Tab, string> = {
+  scheduled: 'Scheduled',
+  'in-progress': 'In progress',
+  completed: 'Completed',
+}
+
+// BILL_STAGES minus "Introduction" — that's not a numbered stage.
+const NUMBERED_STAGES = BILL_STAGES.slice(1).map(s => s.replace(/ Stage$/, ''))
+
 function formatBillNum(billId: string): { main: string; session: string } {
   const idx = billId.lastIndexOf('/')
   if (idx === -1) return { main: billId, session: '' }
   return { main: billId.slice(0, idx), session: billId.slice(idx + 1) }
 }
 
+// Same open/close + outside-click + focus-on-open + arrow-key nav behavior as the
+// homepage constituency selector's trigger/list (mirrors MlasListClient.tsx's hook).
+function useDropdown() {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const list = listRef.current
+    if (list) {
+      const sel = list.querySelector<HTMLLIElement>('[aria-selected="true"]') ?? list.querySelector<HTMLLIElement>('li')
+      sel?.focus()
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    function onOutside(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [open])
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLLIElement>, onSelect: () => void) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onSelect()
+    } else if (e.key === 'Escape') {
+      setOpen(false)
+      triggerRef.current?.focus()
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      const items = Array.from(listRef.current?.querySelectorAll<HTMLLIElement>('li') ?? [])
+      items[items.indexOf(e.currentTarget) + 1]?.focus()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      const items = Array.from(listRef.current?.querySelectorAll<HTMLLIElement>('li') ?? [])
+      items[items.indexOf(e.currentTarget) - 1]?.focus()
+    }
+  }
+
+  return { open, setOpen, wrapRef, triggerRef, listRef, handleKeyDown }
+}
+
 export default function BillsListClient({ scheduled, inProgress, completed, progressedThisWeek }: Props) {
   const { basePath } = useMandate()
-  const [activeTab, setActiveTab] = useState<Tab>('scheduled')
-  const [previousTab, setPreviousTab] = useState<Tab>('scheduled')
+  // No scheduled bills → drop that tab, default to "In progress".
+  const visibleTabs = scheduled.length === 0 ? tabs.filter(t => t !== 'scheduled') : tabs
+  const defaultTab: Tab = scheduled.length === 0 ? 'in-progress' : 'scheduled'
+  const [activeTab, setActiveTab] = useState<Tab>(defaultTab)
+  const [previousTab, setPreviousTab] = useState<Tab>(defaultTab)
   const [isSearching, setIsSearching] = useState(false)
   const [yearFilter, setYearFilter] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
+  const tabDropdown = useDropdown()
+  const yearDropdown = useDropdown()
 
   const years = ['ALL', ...Array.from(new Set(
     completed.map(b => new Date(b.latestDate).getFullYear().toString())
@@ -56,9 +118,9 @@ export default function BillsListClient({ scheduled, inProgress, completed, prog
 
   const allEmpty = isSearching && filteredScheduled.length === 0 && filteredInProgress.length === 0 && filteredCompleted.length === 0
 
-  const showScheduled = isSearching ? filteredScheduled.length > 0 || allEmpty : activeTab === 'scheduled'
-  const showInProgress = isSearching ? filteredInProgress.length > 0 || allEmpty : activeTab === 'in-progress'
-  const showCompleted = isSearching ? filteredCompleted.length > 0 || allEmpty : activeTab === 'completed'
+  const showScheduled = isSearching ? filteredScheduled.length > 0 : activeTab === 'scheduled'
+  const showInProgress = isSearching ? filteredInProgress.length > 0 : activeTab === 'in-progress'
+  const showCompleted = isSearching ? filteredCompleted.length > 0 : activeTab === 'completed'
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab)
@@ -75,6 +137,13 @@ export default function BillsListClient({ scheduled, inProgress, completed, prog
     }
   }
 
+  const EmptyState = ({ icon: Icon, children }: { icon: typeof SearchX; children: React.ReactNode }) => (
+    <p className={styles.emptyState}>
+      <Icon className={styles.emptyStateIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+      {children}
+    </p>
+  )
+
   const monday = (() => {
     const d = new Date()
     const day = d.getDay()
@@ -89,14 +158,14 @@ export default function BillsListClient({ scheduled, inProgress, completed, prog
     const billPassed = bill.passed === true
     const { stageIdx, scheduledIdx, percent: progress } = computeBillProgress(bill.stageHistory, bill.royalAssentDate, billPassed)
 
-    const pillClass =
+    const statusBadgeClass =
       bill.category !== 'completed'
-        ? bill.category === 'scheduled' ? 'accent' : 'neutral'
-        : bill.royalAssentDate ? 'pass'
-        : bill.passed === false ? 'fail'
-        : 'warn'
+        ? bill.category === 'scheduled' ? styles.statusBadgeScheduled : styles.statusBadgeActive
+        : bill.royalAssentDate ? styles.statusBadgeBecameLaw
+        : bill.passed === false ? styles.statusBadgeError
+        : styles.statusBadgeWarn
 
-    const pillLabel =
+    const statusLabel =
       bill.category !== 'completed'
         ? bill.category === 'scheduled' ? 'Scheduled' : 'Active'
         : bill.royalAssentDate ? 'Became law'
@@ -106,56 +175,87 @@ export default function BillsListClient({ scheduled, inProgress, completed, prog
     return (
       <Link href={`${basePath}/assembly/bills/${bill.slug}`} className={styles.billRow}>
         <div className={styles.billNum}>
-          <strong className={styles.billNumMain}>{main}</strong>
-          {session && <div className={styles.billNumSession}>{session}</div>}
-          {bill.billType && <div className={styles.billNumType}>{bill.billType}</div>}
+          <span className={styles.billNumMain}>{main}</span>
+          {session && <span className={styles.billNumSession}>{session}</span>}
+          {bill.billType && <span className={styles.billNumType}>{bill.billType}</span>}
         </div>
         <div className={styles.billCenter}>
-          <div className={styles.billTitle}>{bill.title}</div>
-          <div className={styles.billStageLine}>
-            {bill.category === 'scheduled'
-              ? `Scheduled stage · ${bill.currentStage} · ${formatDate(bill.latestDate)}`
-              : bill.category === 'in-progress'
-              ? `Current stage · ${bill.currentStage} · ${formatDate(bill.latestDate)}`
-              : bill.royalAssentDate
-              ? `Became law · ${formatDate(bill.royalAssentDate)}`
-              : bill.passed === false
-              ? 'Failed'
-              : 'Awaiting Royal Assent'}
-          </div>
-          <div className={styles.billProgress}>
-            {BILL_STAGES.map((s, i) => {
-              const completedUpTo = scheduledIdx !== null ? scheduledIdx - 1 : stageIdx
-              return (
-                <div
-                  key={s}
-                  className={styles.billProgressSeg}
-                  style={{
-                    background:
-                      i <= completedUpTo ? 'var(--forest)' :
-                      i === scheduledIdx ? 'var(--teal)' :
-                      'transparent',
+          <div className={styles.billTitleRow}>
+            <div className={styles.billTitle}>{bill.title}</div>
+            <div className={styles.billBadgeRow}>
+              {bill.isAccelerated && (
+                <span className={`${styles.statusBadge} ${styles.statusBadgeFlag}`}>
+                  <Zap size={11} strokeWidth={2} aria-hidden="true" />
+                  Accelerated
+                </span>
+              )}
+              <span className={`${styles.statusBadge} ${statusBadgeClass}`}>
+                {bill.royalAssentDate && <CheckCircle2 size={11} strokeWidth={2} aria-hidden="true" />}
+                {bill.category === 'completed' && !bill.royalAssentDate && bill.passed !== false && (
+                  <Crown size={11} strokeWidth={2} aria-hidden="true" />
+                )}
+                {statusLabel}
+              </span>
+              {bill.legislationUrl && (
+                <span
+                  role="link"
+                  tabIndex={0}
+                  className={styles.statusBadgeLink}
+                  onClick={e => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    window.open(bill.legislationUrl!, '_blank', 'noopener,noreferrer')
                   }}
-                />
-              )
-            })}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      window.open(bill.legislationUrl!, '_blank', 'noopener,noreferrer')
+                    }
+                  }}
+                >
+                  View Act
+                  <ExternalLink size={11} strokeWidth={2} aria-hidden="true" />
+                </span>
+              )}
+            </div>
           </div>
-          <div className={styles.billProgressLabels}>
-            <span>INTRO</span>
-            <span>ROYAL ASSENT</span>
+          {(() => {
+            // Completed bills without a extra date (Failed/Awaiting Royal Assent) would
+            // just repeat the badge text above with nothing new, so the line is dropped.
+            const stagePart =
+              bill.category === 'scheduled' ? `Scheduled stage · ${bill.currentStage}`
+              : bill.category === 'in-progress' ? `Current stage · ${bill.currentStage}`
+              : null
+            const datePart =
+              bill.category === 'scheduled' || bill.category === 'in-progress'
+                ? formatDate(bill.latestDate)
+                : bill.royalAssentDate
+                ? formatDate(bill.royalAssentDate)
+                : null
+            if (!stagePart && !datePart) return null
+            return (
+              <div className={styles.billStageLine}>
+                {stagePart && <span className={styles.billStageLinePart}>{stagePart}</span>}
+                {stagePart && datePart && <span className={styles.billStageLineSep}> · </span>}
+                {datePart && <span className={styles.billStageLineDate}>{datePart}</span>}
+              </div>
+            )
+          })()}
+          <div className={styles.billProgressWrap}>
+            <div className={styles.billProgressLabels}>
+              <span className={styles.billProgressStageCount}>Stage {Math.max(stageIdx, 0)} of {BILL_STAGES.length - 1}</span>
+              <span className={styles.billProgressPct}>{progress}%</span>
+            </div>
+            <div className={styles.billProgress}>
+              {NUMBERED_STAGES.map((s, j) => {
+                const i = j + 1 // offset for the dropped "Introduction" index
+                const completedUpTo = scheduledIdx !== null ? scheduledIdx - 1 : stageIdx
+                const state = i <= completedUpTo ? 'done' : i === scheduledIdx ? 'scheduled' : undefined
+                return <div key={s} className={styles.billProgressSeg} data-state={state} title={s} />
+              })}
+            </div>
           </div>
-        </div>
-        <div className={styles.billRight}>
-          <div className={styles.billPills}>
-            {bill.isAccelerated && (
-              <span className="pill accent">Accelerated</span>
-            )}
-            <span className={`pill ${pillClass}`}>{pillLabel}</span>
-          </div>
-          {bill.category === 'completed' && bill.passed === true && bill.royalAssentDate
-            ? null
-            : <div className={styles.billPct}>{progress}% complete</div>
-          }
         </div>
       </Link>
     )
@@ -163,106 +263,208 @@ export default function BillsListClient({ scheduled, inProgress, completed, prog
 
   return (
     <>
-      {/* This week section */}
-      {/* Progress key — always visible */}
-      <div className={styles.progressKey}>
-        <h3 className={styles.progressKeyHeading}>Reading the <em>stage bar</em></h3>
-        <p className={styles.progressKeyDesc}>Each bill card shows a progress bar across the eight stages from Introduction to Royal Assent. The bar reflects where a bill currently stands in its parliamentary journey.</p>
-        <div className={styles.progressKeyLegend}>
-          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--forest)' }} />Stage passed</span>
-          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--teal)' }} />Stage scheduled</span>
-          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--paper-3)', border: '1px solid var(--rule)' }} />Not yet reached</span>
-        </div>
-      </div>
-
       {progressedThisWeek.length > 0 && (
-        <>
-        <hr className="section-rule" />
-        <div className={styles.weekSection}>
-          <div className="section-head">
-            <h2>Progressed this week</h2>
+        <div>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionEyebrow}>This week</span>
+            <h2 className={styles.sectionTitle}>
+              <TrendingUp className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+              Progressed this week
+            </h2>
+            <p className={styles.sectionSubtitle}>
+              Legislative stages heard in the Assembly in the week commencing <strong>{mondayLabel}</strong>.
+            </p>
           </div>
-          <p className={styles.weekSubtitle}>
-            Legislative stages heard in the Assembly in the week commencing <strong>{mondayLabel}</strong>.
-          </p>
           <div className={styles.billList}>
             {progressedThisWeek.map(bill => <BillProgressedRow key={bill.billId} bill={bill} />)}
           </div>
         </div>
-        </>
       )}
 
-      {/* Section title */}
-      <hr className="section-rule" />
-      <div className="section-head">
-        <h2>Bills before the Assembly</h2>
+      <div className={styles.sectionHead}>
+        <span className={styles.sectionEyebrow}>All legislation</span>
+        <h2 className={styles.sectionTitle}>
+          <Landmark className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+          Bills before the Assembly
+        </h2>
       </div>
 
-      {/* Tab bar */}
-      <div className={styles.billTabs} role="tablist" aria-label="Bill sections">
-        {tabs.map(tab => {
-          const count = tab === 'scheduled' ? scheduled.length : tab === 'in-progress' ? inProgress.length : completed.length
-          const label = tab === 'scheduled' ? 'Scheduled' : tab === 'in-progress' ? 'In progress' : 'Completed'
-          return (
-            <button
-              key={tab}
-              role="tab"
-              aria-selected={activeTab === tab && !isSearching}
-              aria-controls={`tabpanel-${tab}`}
-              id={`tab-${tab}`}
-              className={`${styles.billTabBtn} ${activeTab === tab && !isSearching ? styles.billTabBtnActive : ''}`}
-              onClick={() => handleTabChange(tab)}
-            >
-              {label}
-              <span className={styles.billTabN}>{count}</span>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Year filter (completed tab only) */}
-      {activeTab === 'completed' && !isSearching && (
-        <div className={styles.yearFilter}>
-          {years.map(y => (
-            <button
-              key={y}
-              className={`${styles.yearBtn} ${yearFilter === y ? styles.yearBtnActive : ''}`}
-              onClick={() => { setYearFilter(y) }}
-              aria-pressed={yearFilter === y}
-            >
-              {y === 'ALL' ? 'All years' : y}
-            </button>
-          ))}
+      <div className={styles.progressKey}>
+        <div className={styles.progressKeyRow}>
+          <span className={styles.progressKeyLabel}>Reading the stage bar:</span>
+          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--sw-success)' }} />Passed</span>
+          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--sw-accent-warm)' }} />Scheduled</span>
+          <span className={styles.progressKeyItem}><i className={styles.progressKeyDot} style={{ background: 'var(--sw-surface-subtle)', border: '1px solid var(--sw-border-strong)' }} />Not yet reached</span>
         </div>
-      )}
-
-      {/* Search */}
-      <div className={styles.searchWrap}>
-        <label htmlFor="bill-search" className="sr-only">Search bills</label>
-        <input
-          id="bill-search"
-          type="search"
-          className={styles.search}
-          placeholder="Search bills…"
-          value={searchQuery}
-          onChange={e => handleSearch(e.target.value)}
-        />
+        <div className={styles.progressKeyStagesRow}>
+          <span className={styles.progressKeyLabel}>Stages:</span>
+          <span className={styles.progressKeyStages}>
+            {NUMBERED_STAGES.map((s, i) => (
+              <span key={s} className={styles.progressKeyStageItem}>
+                <span className={styles.progressKeyStageNum}>{i + 1}</span>
+                {s}
+              </span>
+            ))}
+          </span>
+        </div>
       </div>
 
-      {/* Result count when searching */}
-      {isSearching && (
+      <div className={styles.filterPanel}>
+        <div className={styles.billTabs} role="tablist" aria-label="Bill sections">
+          {visibleTabs.map(tab => {
+            const count = tab === 'scheduled' ? scheduled.length : tab === 'in-progress' ? inProgress.length : completed.length
+            return (
+              <button
+                key={tab}
+                role="tab"
+                aria-selected={activeTab === tab && !isSearching}
+                aria-controls={`tabpanel-${tab}`}
+                id={`tab-${tab}`}
+                className={`${styles.billTabBtn} ${activeTab === tab && !isSearching ? styles.billTabBtnActive : ''}`}
+                onClick={() => handleTabChange(tab)}
+              >
+                {TAB_LABELS[tab]}
+                <span className={styles.billTabN}>{count}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className={styles.tabDropdownWrap}>
+          <div className={styles.dropdownWrap} ref={tabDropdown.wrapRef}>
+            <button
+              ref={tabDropdown.triggerRef}
+              type="button"
+              className={styles.dropdownTrigger}
+              onClick={() => tabDropdown.setOpen(o => !o)}
+              aria-haspopup="listbox"
+              aria-expanded={tabDropdown.open}
+            >
+              {TAB_LABELS[activeTab]}
+              <svg
+                className={`${styles.dropdownTriggerChevron} ${tabDropdown.open ? styles.dropdownTriggerChevronOpen : ''}`}
+                width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+              >
+                <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+
+            {tabDropdown.open && (
+              <ul ref={tabDropdown.listRef} className={styles.dropdownList} role="listbox">
+                {visibleTabs.map(tab => {
+                  const count = tab === 'scheduled' ? scheduled.length : tab === 'in-progress' ? inProgress.length : completed.length
+                  const select = () => { handleTabChange(tab); tabDropdown.setOpen(false) }
+                  return (
+                    <li
+                      key={tab}
+                      role="option"
+                      tabIndex={0}
+                      aria-selected={activeTab === tab}
+                      className={`${styles.dropdownItem} ${activeTab === tab ? styles.dropdownItemSelected : ''}`}
+                      onClick={select}
+                      onKeyDown={e => tabDropdown.handleKeyDown(e, select)}
+                    >
+                      {TAB_LABELS[tab]}
+                      <span className={styles.dropdownItemCount}>{count}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {activeTab === 'completed' && !isSearching && (
+          <>
+            <div className={styles.yearFilter}>
+              {years.map(y => (
+                <button
+                  key={y}
+                  className={`${styles.yearBtn} ${yearFilter === y ? styles.yearBtnActive : ''}`}
+                  onClick={() => { setYearFilter(y) }}
+                  aria-pressed={yearFilter === y}
+                >
+                  {y === 'ALL' ? 'All years' : y}
+                </button>
+              ))}
+            </div>
+
+            <div className={styles.yearDropdownWrap}>
+              <div className={styles.dropdownWrap} ref={yearDropdown.wrapRef}>
+                <button
+                  ref={yearDropdown.triggerRef}
+                  type="button"
+                  className={styles.dropdownTrigger}
+                  onClick={() => yearDropdown.setOpen(o => !o)}
+                  aria-haspopup="listbox"
+                  aria-expanded={yearDropdown.open}
+                >
+                  {yearFilter === 'ALL' ? 'All years' : yearFilter}
+                  <svg
+                    className={`${styles.dropdownTriggerChevron} ${yearDropdown.open ? styles.dropdownTriggerChevronOpen : ''}`}
+                    width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+                  >
+                    <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+
+                {yearDropdown.open && (
+                  <ul ref={yearDropdown.listRef} className={styles.dropdownList} role="listbox">
+                    {years.map(y => {
+                      const select = () => { setYearFilter(y); yearDropdown.setOpen(false) }
+                      return (
+                        <li
+                          key={y}
+                          role="option"
+                          tabIndex={0}
+                          aria-selected={yearFilter === y}
+                          className={`${styles.dropdownItem} ${yearFilter === y ? styles.dropdownItemSelected : ''}`}
+                          onClick={select}
+                          onKeyDown={e => yearDropdown.handleKeyDown(e, select)}
+                        >
+                          {y === 'ALL' ? 'All years' : y}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className={styles.searchWrap}>
+          <label htmlFor="bill-search" className="sr-only">Search bills</label>
+          <input
+            id="bill-search"
+            type="search"
+            className={styles.search}
+            placeholder="Search bills…"
+            value={searchQuery}
+            onChange={e => handleSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {isSearching && !allEmpty && (
         <p className={styles.resultCount}>
           <strong>{filteredScheduled.length + filteredInProgress.length + filteredCompleted.length}</strong> bill{filteredScheduled.length + filteredInProgress.length + filteredCompleted.length !== 1 ? 's' : ''} found
         </p>
       )}
 
+      {allEmpty && (
+        <div className={styles.billList}>
+          <EmptyState icon={SearchX}>No bills match your search.</EmptyState>
+        </div>
+      )}
+
       {/* Scheduled */}
       {showScheduled && (
         <section id="tabpanel-scheduled" role="tabpanel" aria-labelledby="tab-scheduled">
-          {isSearching && <h2 className={styles.sectionTitle}>Scheduled for debate</h2>}
+          {isSearching && <h3 className={styles.searchGroupTitle}>Scheduled for debate</h3>}
           <div className={styles.billList}>
             {filteredScheduled.length === 0
-              ? <p className={styles.emptyState}>No bills match your search.</p>
+              ? <EmptyState icon={CalendarX}>Nothing scheduled at the moment.</EmptyState>
               : filteredScheduled.map(bill => <BillRow key={bill.slug} bill={bill} />)
             }
           </div>
@@ -272,10 +474,10 @@ export default function BillsListClient({ scheduled, inProgress, completed, prog
       {/* In progress */}
       {showInProgress && (
         <section id="tabpanel-in-progress" role="tabpanel" aria-labelledby="tab-in-progress" style={isSearching && showScheduled ? { marginTop: 'var(--s-8)' } : undefined}>
-          {isSearching && <h2 className={styles.sectionTitle}>In progress</h2>}
+          {isSearching && <h3 className={styles.searchGroupTitle}>In progress</h3>}
           <div className={styles.billList}>
             {filteredInProgress.length === 0
-              ? <p className={styles.emptyState}>No bills match your search.</p>
+              ? <EmptyState icon={Scale}>No bills currently in progress.</EmptyState>
               : filteredInProgress.map(bill => <BillRow key={bill.slug} bill={bill} />)
             }
           </div>
@@ -285,10 +487,10 @@ export default function BillsListClient({ scheduled, inProgress, completed, prog
       {/* Completed */}
       {showCompleted && (
         <section id="tabpanel-completed" role="tabpanel" aria-labelledby="tab-completed" style={isSearching && (showScheduled || showInProgress) ? { marginTop: 'var(--s-8)' } : undefined}>
-          {isSearching && <h2 className={styles.sectionTitle}>Completed</h2>}
+          {isSearching && <h3 className={styles.searchGroupTitle}>Completed</h3>}
           <div className={styles.billList}>
             {visibleCompleted.length === 0
-              ? <p className={styles.emptyState}>No bills match your search.</p>
+              ? <EmptyState icon={CheckCircle2}>{yearFilter === 'ALL' ? 'No completed bills yet.' : `No bills completed in ${yearFilter}.`}</EmptyState>
               : visibleCompleted.map(bill => <BillRow key={bill.slug} bill={bill} />)
             }
           </div>

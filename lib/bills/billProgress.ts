@@ -9,15 +9,13 @@ export const BILL_STAGES = [
   'Royal Assent',
 ] as const
 
-export type BillStageName = typeof BILL_STAGES[number]
-
-export const PROCEDURAL_STAGES = [
+const PROCEDURAL_STAGES = [
   'Accelerated Passage',
   'Suspension of Standing Order 39',
   'Extension of Committee Stage',
 ] as const
 
-export interface BillProgress {
+interface BillProgress {
   stageIdx: number
   scheduledIdx: number | null
   currentStageLabel: string

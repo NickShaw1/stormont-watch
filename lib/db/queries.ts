@@ -1,9 +1,10 @@
 import { eq, desc, sql, and, count, countDistinct, isNotNull, isNull, gte, lte, asc } from 'drizzle-orm'
 import { db } from './client'
-import { members, divisions, votes, hansardReports, ministers, committeeChairs, expenses, registeredInterests, bills, billStages, questionStats, memberRoleHistory, hansardContributions, plenaryDiary, people, memberTerms } from './schema'
+import { members, divisions, votes, hansardReports, ministers, committeeChairs, expenses, registeredInterests, bills, billStages, questionStats, memberRoleHistory, hansardContributions, people, memberTerms } from './schema'
 import { stripHonorifics } from '@/lib/utils/formatNames'
 import { getSurname } from '@/lib/format'
 import { CURRENT_MANDATE as CURRENT_MANDATE_CONFIG, mandateById } from '@/lib/constants/mandates'
+import { matchedOutcome } from '@/lib/bills'
 
 const mlaImg = (personId: string | null | undefined): string | null =>
   personId ? `/mla-images/${personId}.jpg` : null
@@ -52,24 +53,6 @@ export async function getAllMlasByConstituency(mandate: string = CURRENT_MANDATE
   return map
 }
 
-export async function getMembersByConstituency(constituency: string, mandate: string = CURRENT_MANDATE) {
-  const rows = await db
-    .select({
-      personId: members.personId,
-      fullName: members.fullName,
-      party: members.party,
-      imgUrl: members.imgUrl,
-    })
-    .from(members)
-    .where(and(
-      eq(members.constituency, constituency),
-      eq(members.isCurrent, true),
-      eq(members.mandate, mandate)
-    ))
-    .orderBy(asc(members.fullName))
-  return rows.map(r => ({ ...r, imgUrl: mlaImg(r.personId) }))
-}
-
 export async function getMemberById(personId: string, mandate: string = CURRENT_MANDATE) {
   const result = await db
     .select()
@@ -109,16 +92,6 @@ export async function getAllMembersIncludingFormer(mandate: string = CURRENT_MAN
     .orderBy(members.fullName)
 }
 
-
-export async function getDistinctPartyCount(mandate: string = CURRENT_MANDATE): Promise<number> {
-  const result = await db.execute(sql`
-    SELECT COUNT(DISTINCT party) as count
-    FROM members
-    WHERE is_current = true AND party IS NOT NULL AND party NOT ILIKE '%independent%'
-    AND mandate = ${mandate}
-  `)
-  return Number((result.rows[0] as { count: string | number })?.count ?? 0)
-}
 
 export async function getMemberVotingHistory(personId: string, mandate: string = CURRENT_MANDATE) {
   return db
@@ -480,32 +453,6 @@ export async function getMostRebelliousMla(mandate: string = CURRENT_MANDATE): P
   }
 }
 
-export async function getPlenaryDiaryToday() {
-  const today = new Date().toISOString().slice(0, 10)
-  return db
-    .select()
-    .from(plenaryDiary)
-    .where(eq(plenaryDiary.eventDate, today))
-    .orderBy(asc(plenaryDiary.startTime))
-}
-
-export async function getPlenaryDiaryThisWeek() {
-  const now = new Date()
-  const day = now.getDay()
-  const diffToMonday = day === 0 ? -6 : 1 - day
-  const monday = new Date(now)
-  monday.setDate(now.getDate() + diffToMonday)
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  const startDate = monday.toISOString().slice(0, 10)
-  const endDate = sunday.toISOString().slice(0, 10)
-  return db
-    .select()
-    .from(plenaryDiary)
-    .where(and(gte(plenaryDiary.eventDate, startDate), lte(plenaryDiary.eventDate, endDate)))
-    .orderBy(asc(plenaryDiary.eventDate), asc(plenaryDiary.startTime))
-}
-
 export async function getMostCrossCommunityAgreement(mandate: string = CURRENT_MANDATE): Promise<typeof divisions.$inferSelect | null> {
   const result = await db.execute(sql`
     SELECT *,
@@ -571,6 +518,7 @@ export async function getAllMinisters(mandate: string = CURRENT_MANDATE) {
       fullName: members.fullName,
       party: members.party,
       imgUrl: members.imgUrl,
+      constituency: members.constituency,
     })
     .from(ministers)
     .innerJoin(members, and(eq(ministers.personId, members.personId), eq(members.mandate, mandate)))
@@ -588,6 +536,7 @@ export async function getAllCommitteeChairs(mandate: string = CURRENT_MANDATE) {
       party: members.party,
       imgUrl: members.imgUrl,
       assemblyRole: members.assemblyRole,
+      constituency: members.constituency,
     })
     .from(committeeChairs)
     .innerJoin(members, and(eq(committeeChairs.personId, members.personId), eq(members.mandate, mandate)))
@@ -604,6 +553,7 @@ export async function getPresidingOfficers(mandate: string = CURRENT_MANDATE) {
       fullName: members.fullName,
       party: members.party,
       assemblyRole: members.assemblyRole,
+      constituency: members.constituency,
     })
     .from(members)
     .where(
@@ -695,7 +645,7 @@ export async function getMlasWithoutExpenses(mandate: string = CURRENT_MANDATE) 
     .map(row => ({ ...row, img_url: mlaImg(row.person_id) }))
 }
 
-export interface PartyMlaExpense {
+interface PartyMlaExpense {
   personId: string
   fullName: string
   imgUrl: string | null
@@ -851,40 +801,6 @@ export async function getPartyExpenses(party: string, mandate: string = CURRENT_
   }
 }
 
-export async function getMemberExpenses(personId: string, mandate: string = CURRENT_MANDATE) {
-  return db
-    .select()
-    .from(expenses)
-    .where(and(eq(expenses.personId, personId), eq(expenses.mandate, mandate)))
-    .orderBy(desc(expenses.financialYear))
-}
-
-export async function getMemberExpensesWithRank(personId: string, mandate: string = CURRENT_MANDATE) {
-  const result = await db.execute(sql`
-    WITH ranked AS (
-      SELECT
-        e.person_id,
-        e.financial_year,
-        e.period,
-        e.constituency_office,
-        e.other_expenses,
-        e.allowances,
-        e.staff_costs,
-        e.total,
-        RANK() OVER (ORDER BY e.total DESC) as rank,
-        COUNT(*) OVER () as total_members
-      FROM expenses e
-      JOIN members m ON e.person_id = m.person_id AND m.mandate = ${mandate}
-      WHERE e.mandate = ${mandate}
-        AND e.financial_year = (SELECT MAX(financial_year) FROM expenses WHERE mandate = ${mandate})
-        AND m.is_current = true
-    )
-    SELECT * FROM ranked
-    WHERE person_id = ${personId}
-  `)
-  return result.rows[0] ?? null
-}
-
 export async function getAllMemberExpenses(personId: string, mandate: string = CURRENT_MANDATE) {
   const rows = await db.execute(sql`
     WITH year_ranks AS (
@@ -944,22 +860,6 @@ export async function getRegisteredInterestsByMember(personId: string, mandate: 
     .orderBy(registeredInterests.registerCategoryId, registeredInterests.registerEntryStartDate)
 }
 
-export async function getExpensesStats(mandate: string = CURRENT_MANDATE) {
-  const result = await db.execute(sql`
-    SELECT
-      SUM(total) as total_all,
-      AVG(total) as avg_total,
-      MAX(total) as max_total,
-      MIN(total) as min_total,
-      financial_year,
-      period
-    FROM expenses
-    WHERE mandate = ${mandate}
-    GROUP BY financial_year, period
-  `)
-  return result.rows[0] ?? null
-}
-
 export async function getExpensesByParty(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
     SELECT
@@ -999,6 +899,7 @@ export async function getAllBills(mandate: string = CURRENT_MANDATE) {
       END as display_stage,
       b.royal_assent_date,
       b.act_title,
+      b.legislation_url,
       b.latest_date,
       COUNT(bs.document_id)::int as stage_count,
       COUNT(bs.division_id)::int as division_count,
@@ -1032,7 +933,7 @@ export async function getAllBills(mandate: string = CURRENT_MANDATE) {
     ) fs_plain ON true
     LEFT JOIN divisions d ON d.document_id = fs_plain.division_id
     WHERE b.mandate = ${mandate}
-    GROUP BY b.bill_id, b.short_title, b.long_title, b.bill_type, b.is_accelerated, b.current_stage, b.latest_date, b.royal_assent_date, b.act_title, fs_plain.has_division, d.outcome, fs_plain.plenary_date
+    GROUP BY b.bill_id, b.short_title, b.long_title, b.bill_type, b.is_accelerated, b.current_stage, b.latest_date, b.royal_assent_date, b.act_title, b.legislation_url, fs_plain.has_division, d.outcome, fs_plain.plenary_date
     ORDER BY b.latest_date DESC
   `)
   return result.rows as {
@@ -1045,6 +946,7 @@ export async function getAllBills(mandate: string = CURRENT_MANDATE) {
     display_stage: string
     royal_assent_date: string | null
     act_title: string | null
+    legislation_url: string | null
     latest_date: string
     stage_count: number
     division_count: number
@@ -1330,6 +1232,7 @@ export async function getLeastEngagedMLA(mandate: string = CURRENT_MANDATE) {
       m.person_id,
       m.full_name,
       m.party,
+      m.constituency,
       m.img_url,
       COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) as attended,
       COUNT(*) as total,
@@ -1348,7 +1251,7 @@ export async function getLeastEngagedMLA(mandate: string = CURRENT_MANDATE) {
       m.assembly_role_start IS NULL
       OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date))
     )
-    GROUP BY m.person_id, m.full_name, m.party, m.img_url
+    GROUP BY m.person_id, m.full_name, m.party, m.constituency, m.img_url
     ORDER BY attendance_pct ASC
     LIMIT 1
   `)
@@ -1358,6 +1261,7 @@ export async function getLeastEngagedMLA(mandate: string = CURRENT_MANDATE) {
     personId: String(row.person_id),
     fullName: stripHonorifics(String(row.full_name)),
     party: String(row.party),
+    constituency: row.constituency ? String(row.constituency) : null,
     imgUrl: mlaImg(String(row.person_id)),
     attendancePct: Number(row.attendance_pct),
     attended: Number(row.attended),
@@ -1371,6 +1275,7 @@ export async function getMostEngagedMLA(mandate: string = CURRENT_MANDATE) {
       m.person_id,
       m.full_name,
       m.party,
+      m.constituency,
       m.img_url,
       COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) as attended,
       COUNT(*) as total,
@@ -1389,7 +1294,7 @@ export async function getMostEngagedMLA(mandate: string = CURRENT_MANDATE) {
       m.assembly_role_start IS NULL
       OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date))
     )
-    GROUP BY m.person_id, m.full_name, m.party, m.img_url
+    GROUP BY m.person_id, m.full_name, m.party, m.constituency, m.img_url
     ORDER BY attendance_pct DESC
     LIMIT 1
   `)
@@ -1399,6 +1304,7 @@ export async function getMostEngagedMLA(mandate: string = CURRENT_MANDATE) {
     personId: String(row.person_id),
     fullName: stripHonorifics(String(row.full_name)),
     party: String(row.party),
+    constituency: row.constituency ? String(row.constituency) : null,
     imgUrl: mlaImg(String(row.person_id)),
     attendancePct: Number(row.attendance_pct),
     attended: Number(row.attended),
@@ -1503,67 +1409,7 @@ export async function getBillsProgressedThisWeek(mandate: string = CURRENT_MANDA
   }
 }
 
-export async function getThisWeekPlenaryItems(): Promise<{ document_id: string; title: string; plenary_date: string; plenary_type: string; plenary_type_id: string; motion_category: string | null; text: string | null }[]> {
-  const [piResult, bsResult] = await Promise.all([
-    db.execute(sql`
-      SELECT
-        document_id,
-        title,
-        plenary_date::text,
-        plenary_type,
-        plenary_type_id,
-        motion_category,
-        text
-      FROM plenary_items
-      WHERE plenary_date >= date_trunc('week', CURRENT_DATE)
-        AND plenary_date < date_trunc('week', CURRENT_DATE) + INTERVAL '7 days'
-        AND plenary_type_id != '2'
-    `),
-    db.execute(sql`
-      SELECT DISTINCT ON (bs.bill_id, bs.plenary_date::date)
-        bs.document_id,
-        bs.stage || ': ' || b.short_title || ' (' || b.bill_id || ')' AS title,
-        bs.plenary_date::date::text AS plenary_date,
-        'Motion' AS plenary_type,
-        '1' AS plenary_type_id,
-        NULL::text AS motion_category,
-        NULL::text AS text
-      FROM bill_stages bs
-      JOIN bills b ON bs.bill_id = b.bill_id
-      WHERE bs.plenary_date::date >= date_trunc('week', CURRENT_DATE)
-        AND bs.plenary_date::date < date_trunc('week', CURRENT_DATE) + INTERVAL '7 days'
-        AND (
-          bs.item_title IS NULL
-          OR NOT EXISTS (
-            SELECT 1 FROM bill_stages bs2
-            WHERE bs2.bill_id = bs.bill_id
-              AND bs2.stage = bs.stage
-              AND bs2.plenary_date::date = bs.plenary_date::date
-              AND bs2.item_title IS NULL
-          )
-        )
-      ORDER BY bs.bill_id, bs.plenary_date::date, bs.plenary_date DESC
-    `),
-  ])
-
-  type Row = { document_id: string; title: string; plenary_date: string; plenary_type: string; plenary_type_id: string; motion_category: string | null; text: string | null }
-
-  const piRows = piResult.rows as Row[]
-  const bsRows = bsResult.rows as Row[]
-
-  // Deduplicate by (title, plenary_date) — prefer plenary_items
-  const seen = new Set(piRows.map(r => `${r.plenary_date}||${r.title}`))
-  const merged = [
-    ...piRows,
-    ...bsRows.filter(r => !seen.has(`${r.plenary_date}||${r.title}`)),
-  ]
-
-  merged.sort((a, b) => a.plenary_date.localeCompare(b.plenary_date) || a.title.localeCompare(b.title))
-
-  return merged
-}
-
-export type WeeklyDiaryDay = {
+type WeeklyDiaryDay = {
   date: string
   weekday: string
   isToday: boolean
@@ -1704,8 +1550,8 @@ export interface PartyStats {
   mlas: { personId: string; fullName: string; imgUrl: string | null; constituency: string | null } [] | null
 }
 
-export interface PartyDetail extends PartyStats {
-  mlas: { personId: string; fullName: string; imgUrl: string | null; constituency: string | null; assemblyRole: string | null; assemblyRoleEnd: string | null }[]
+interface PartyDetail extends PartyStats {
+  mlas: { personId: string; fullName: string; imgUrl: string | null; constituency: string | null; assemblyRole: string | null; assemblyRoleEnd: string | null; attendancePct: number | null }[]
 }
 
 function makePartySlug(party: string): string {
@@ -1799,16 +1645,35 @@ export async function getPartyBySlug(slug: string, mandate: string = CURRENT_MAN
 
   const mlasResult = await db.execute(sql`
     SELECT
-      person_id, full_name, img_url, constituency,
-      assembly_role, assembly_role_end
-    FROM members
-    WHERE is_current = true
-    AND mandate = ${mandate}
-    AND party = ${match.party}
-    ORDER BY SPLIT_PART(REGEXP_REPLACE(full_name, '^(Mr|Mrs|Miss|Ms|Dr|Lord|Lady|Sir)\s+', '', 'i'), ' ', -1) ASC
+      m.person_id, m.full_name, m.img_url, m.constituency,
+      m.assembly_role, m.assembly_role_end,
+      CASE
+        WHEN m.assembly_role IS NOT NULL AND m.assembly_role_end IS NULL THEN NULL
+        ELSE ROUND(
+          COUNT(v.id) FILTER (WHERE v.vote != 'NO_SHOW' AND
+            (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::timestamptz) AND
+            (m.assembly_role IS NULL OR m.assembly_role_end IS NOT NULL OR
+             d.division_date < m.assembly_role_start::timestamptz)
+          ) * 100.0 /
+          NULLIF(COUNT(v.id) FILTER (WHERE
+            (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::timestamptz) AND
+            (m.assembly_role IS NULL OR m.assembly_role_end IS NOT NULL OR
+             d.division_date < m.assembly_role_start::timestamptz)
+          ), 0)
+        )
+      END as attendance_pct
+    FROM members m
+    LEFT JOIN votes v ON m.person_id = v.person_id AND v.mandate = ${mandate}
+    LEFT JOIN divisions d ON v.document_id = d.document_id AND d.mandate = ${mandate}
+    WHERE m.is_current = true
+    AND m.mandate = ${mandate}
+    AND m.party = ${match.party}
+    GROUP BY m.person_id, m.full_name, m.img_url, m.constituency,
+             m.mandate_start, m.assembly_role, m.assembly_role_start, m.assembly_role_end
+    ORDER BY SPLIT_PART(REGEXP_REPLACE(m.full_name, '^(Mr|Mrs|Miss|Ms|Dr|Lord|Lady|Sir)\s+', '', 'i'), ' ', -1) ASC
   `)
 
-  type MlaRow = { person_id: string; full_name: string; img_url: string | null; constituency: string | null; assembly_role: string | null; assembly_role_end: string | null }
+  type MlaRow = { person_id: string; full_name: string; img_url: string | null; constituency: string | null; assembly_role: string | null; assembly_role_end: string | null; attendance_pct: number | null }
 
   const mlas = (mlasResult.rows as MlaRow[]).map((r) => ({
     personId: r.person_id,
@@ -1817,22 +1682,10 @@ export async function getPartyBySlug(slug: string, mandate: string = CURRENT_MAN
     constituency: r.constituency,
     assemblyRole: r.assembly_role,
     assemblyRoleEnd: r.assembly_role_end,
+    attendancePct: r.attendance_pct !== null ? Number(r.attendance_pct) : null,
   }))
 
   return { ...match, mlas }
-}
-
-export async function getInProgressBillsCount(mandate: string = CURRENT_MANDATE): Promise<number> {
-  const result = await db
-    .select({ count: count() })
-    .from(bills)
-    .where(and(
-      isNull(bills.royalAssentDate),
-      sql`${bills.currentStage} NOT ILIKE '%final stage%'`,
-      lte(bills.latestDate, sql`NOW()`),
-      eq(bills.mandate, mandate)
-    ))
-  return result[0]?.count ?? 0
 }
 
 export async function getActiveBillsCount(mandate: string = CURRENT_MANDATE): Promise<number> {
@@ -1841,31 +1694,6 @@ export async function getActiveBillsCount(mandate: string = CURRENT_MANDATE): Pr
     .from(bills)
     .where(and(isNull(bills.royalAssentDate), eq(bills.mandate, mandate)))
   return result[0]?.count ?? 0
-}
-
-export async function getBillsRoyalAssentByMonth(mandate: string = CURRENT_MANDATE) {
-  const result = await db.execute(sql`
-    SELECT
-      gs.month,
-      COALESCE(b.assent_count, 0) as assent_count
-    FROM generate_series(
-      DATE_TRUNC('month', ${CURRENT_MANDATE_START}::timestamptz),
-      DATE_TRUNC('month', NOW()),
-      INTERVAL '1 month'
-    ) AS gs(month)
-    LEFT JOIN (
-      SELECT
-        DATE_TRUNC('month', royal_assent_date::timestamptz) as month,
-        COUNT(*) as assent_count
-      FROM bills
-      WHERE royal_assent_date IS NOT NULL
-        AND royal_assent_date::timestamptz >= ${CURRENT_MANDATE_START}::date
-        AND mandate = ${mandate}
-      GROUP BY DATE_TRUNC('month', royal_assent_date::timestamptz)
-    ) b ON gs.month = b.month
-    ORDER BY gs.month ASC
-  `)
-  return result.rows as { month: string; assent_count: number }[]
 }
 
 export interface MlaAttendanceStat {
@@ -2164,23 +1992,6 @@ export async function getHansardStatsByMember(personId: string, mandate: string 
   return rows
 }
 
-export async function getHansardTotalsAllMembers(mandate: string = CURRENT_MANDATE) {
-  const rows = await db
-    .select({
-      personId: hansardContributions.personId,
-      fullName: members.fullName,
-      party: members.party,
-      sittings: sql<number>`count(distinct ${hansardContributions.reportDocId})`,
-      debates: sql<number>`count(distinct ${hansardContributions.debateTitle})`,
-    })
-    .from(hansardContributions)
-    .innerJoin(members, and(eq(hansardContributions.personId, members.personId), eq(members.mandate, mandate)))
-    .where(eq(hansardContributions.mandate, mandate))
-    .groupBy(hansardContributions.personId, members.fullName, members.party)
-    .orderBy(desc(sql`count(distinct ${hansardContributions.reportDocId})`))
-  return rows
-}
-
 export async function getHansardRankForMember(personId: string, mandate: string = CURRENT_MANDATE): Promise<{ rank: number; eligibleCount: number; sittings: number } | null> {
   const eligible = db
     .select({
@@ -2409,20 +2220,6 @@ export async function getHansardSittingsByMonth(mandateStart: string, mandate: s
     .groupBy(sql`extract(year from ${hansardReports.plenaryDate}), extract(month from ${hansardReports.plenaryDate})`)
     .orderBy(sql`extract(year from ${hansardReports.plenaryDate}), extract(month from ${hansardReports.plenaryDate})`)
   return rows
-}
-
-export async function getHansardTotalDebateSlots(mandateStart: string, mandate: string = CURRENT_MANDATE) {
-  const today = new Date().toISOString().slice(0, 10)
-  const rows = await db
-    .select({
-      total: sql<number>`count(distinct (${hansardContributions.reportDocId}, ${hansardContributions.debateTitle}))`,
-    })
-    .from(hansardContributions)
-    .where(and(
-      eq(hansardContributions.mandate, mandate),
-      sql`${hansardContributions.plenaryDate} >= ${mandateStart} and ${hansardContributions.plenaryDate} <= ${today}`,
-    ))
-  return rows[0].total
 }
 
 export async function getHansardTopByMLA(limit: number, orderBy: 'sittings' | 'debates', mandate: string = CURRENT_MANDATE) {
@@ -2699,7 +2496,7 @@ export async function getPartyAlignmentWithBigTwo(mandate: string = CURRENT_MAND
   }
 }
 
-export type BigTwoAgreement = {
+type BigTwoAgreement = {
   agreed: number
   disagreed: number
   bothAye: number
@@ -2756,15 +2553,17 @@ export async function getBigTwoAgreement(mandate: string = CURRENT_MANDATE): Pro
       WHERE party = 'Democratic Unionist Party' AND majority_vote IS NOT NULL
     )
     SELECT
-      (SELECT COUNT(DISTINCT document_id) FROM divisions WHERE mandate = ${mandate}) AS total_divisions,
+      COUNT(DISTINCT d.document_id) AS total_divisions,
       COUNT(*) FILTER (WHERE sf.sf_vote = dup.dup_vote) AS agreed,
-      COUNT(*) FILTER (WHERE sf.sf_vote <> dup.dup_vote) AS disagreed,
+      COUNT(*) FILTER (WHERE sf.sf_vote IS DISTINCT FROM dup.dup_vote) AS disagreed,
       COUNT(*) FILTER (WHERE sf.sf_vote = 'AYE' AND dup.dup_vote = 'AYE') AS both_aye,
       COUNT(*) FILTER (WHERE sf.sf_vote = 'NO' AND dup.dup_vote = 'NO') AS both_no,
       COUNT(*) FILTER (WHERE sf.sf_vote = 'ABSTAINED' AND dup.dup_vote = 'ABSTAINED') AS both_abstain,
       COUNT(*) FILTER (WHERE sf.sf_vote = 'NO_SHOW' AND dup.dup_vote = 'NO_SHOW') AS both_noshow
-    FROM sf
-    JOIN dup ON dup.document_id = sf.document_id
+    FROM divisions d
+    LEFT JOIN sf ON sf.document_id = d.document_id
+    LEFT JOIN dup ON dup.document_id = d.document_id
+    WHERE d.mandate = ${mandate}
   `)
 
   const r = (result.rows as unknown as Record<string, unknown>[])[0]
@@ -2783,7 +2582,193 @@ export async function getBigTwoAgreement(mandate: string = CURRENT_MANDATE): Pro
   }
 }
 
-export type BlocAgreement = {
+export type AgreedDivisionRow = {
+  documentId: string
+  subject: string
+  title: string | null
+  divisionDate: Date
+  outcome: string | null
+  sharedVote: 'AYE' | 'NO' | 'ABSTAINED' | 'NO_SHOW'
+  wonOverall: boolean
+}
+
+export type PartyAgreedDivisions = {
+  party: string
+  sfAgreed: AgreedDivisionRow[]
+  dupAgreed: AgreedDivisionRow[]
+}
+
+type RawAgreedRow = {
+  pair: 'sf' | 'dup'
+  party: string
+  document_id: string
+  subject: string
+  title: string | null
+  division_date: string
+  outcome: string | null
+  shared_vote: string
+}
+
+/**
+ * Per-division rows behind the "Agreement with Sinn Féin"/"Agreement with DUP"
+ * percentages: for every smaller party, every division where that party's
+ * majority position matched SF's (or DUP's). Only the agreed set is returned —
+ * never the disagreed divisions — since that's all these stat cards ever show.
+ * Uses the same party-majority CTEs as getPartyAlignmentWithBigTwo.
+ */
+export async function getPartyAgreedDivisions(mandate: string = CURRENT_MANDATE): Promise<PartyAgreedDivisions[]> {
+  const result = await db.execute(sql`
+    WITH party_votes AS (
+      SELECT
+        v.document_id,
+        m.party,
+        COUNT(*) FILTER (WHERE v.vote = 'AYE') AS ayes,
+        COUNT(*) FILTER (WHERE v.vote = 'NO') AS noes,
+        COUNT(*) FILTER (WHERE v.vote = 'ABSTAINED') AS abstains,
+        COUNT(*) FILTER (WHERE v.vote = 'NO_SHOW') AS noshows
+      FROM votes v
+      JOIN members m ON m.person_id = v.person_id
+      WHERE m.mandate = ${mandate}
+        AND m.party IS NOT NULL
+        AND v.mandate = ${mandate}
+      GROUP BY v.document_id, m.party
+    ),
+    division_majorities AS (
+      SELECT
+        document_id,
+        party,
+        CASE
+          WHEN ayes > noes AND ayes > abstains AND ayes > noshows THEN 'AYE'
+          WHEN noes > ayes AND noes > abstains AND noes > noshows THEN 'NO'
+          WHEN abstains > ayes AND abstains > noes AND abstains > noshows THEN 'ABSTAINED'
+          WHEN noshows > ayes AND noshows > noes AND noshows > abstains THEN 'NO_SHOW'
+          ELSE NULL
+        END AS majority_vote
+      FROM party_votes
+    ),
+    sf AS (
+      SELECT document_id, majority_vote AS sf_vote
+      FROM division_majorities
+      WHERE party = 'Sinn Féin' AND majority_vote IS NOT NULL
+    ),
+    dup AS (
+      SELECT document_id, majority_vote AS dup_vote
+      FROM division_majorities
+      WHERE party = 'Democratic Unionist Party' AND majority_vote IS NOT NULL
+    ),
+    smaller AS (
+      SELECT document_id, party, majority_vote
+      FROM division_majorities
+      WHERE party NOT IN ('Sinn Féin', 'Democratic Unionist Party')
+        AND majority_vote IS NOT NULL
+    )
+    SELECT 'sf' AS pair, s.party, d.document_id, d.subject, d.title, d.division_date, d.outcome, s.majority_vote AS shared_vote
+    FROM smaller s
+    JOIN sf ON sf.document_id = s.document_id AND sf.sf_vote = s.majority_vote
+    JOIN divisions d ON d.document_id = s.document_id
+
+    UNION ALL
+
+    SELECT 'dup' AS pair, s.party, d.document_id, d.subject, d.title, d.division_date, d.outcome, s.majority_vote AS shared_vote
+    FROM smaller s
+    JOIN dup ON dup.document_id = s.document_id AND dup.dup_vote = s.majority_vote
+    JOIN divisions d ON d.document_id = s.document_id
+
+    ORDER BY party, pair, division_date DESC
+  `)
+
+  const rows = result.rows as unknown as RawAgreedRow[]
+  const byParty = new Map<string, PartyAgreedDivisions>()
+  for (const r of rows) {
+    if (!byParty.has(r.party)) {
+      byParty.set(r.party, { party: r.party, sfAgreed: [], dupAgreed: [] })
+    }
+    const sharedVote = r.shared_vote as AgreedDivisionRow['sharedVote']
+    const row: AgreedDivisionRow = {
+      documentId: r.document_id,
+      subject: r.subject,
+      title: r.title,
+      divisionDate: new Date(r.division_date),
+      outcome: r.outcome,
+      sharedVote,
+      wonOverall: matchedOutcome(sharedVote, r.outcome),
+    }
+    const entry = byParty.get(r.party)!
+    if (r.pair === 'sf') entry.sfAgreed.push(row)
+    else entry.dupAgreed.push(row)
+  }
+  return [...byParty.values()]
+}
+
+/**
+ * Per-division rows behind "Agreement between Sinn Féin and the DUP": every
+ * division where SF's and DUP's majority positions matched. Uses the same
+ * party-majority CTEs as getBigTwoAgreement.
+ */
+export async function getBigTwoAgreedDivisions(mandate: string = CURRENT_MANDATE): Promise<AgreedDivisionRow[]> {
+  const result = await db.execute(sql`
+    WITH party_votes AS (
+      SELECT
+        v.document_id,
+        m.party,
+        COUNT(*) FILTER (WHERE v.vote = 'AYE') AS ayes,
+        COUNT(*) FILTER (WHERE v.vote = 'NO') AS noes,
+        COUNT(*) FILTER (WHERE v.vote = 'ABSTAINED') AS abstains,
+        COUNT(*) FILTER (WHERE v.vote = 'NO_SHOW') AS noshows
+      FROM votes v
+      JOIN members m ON m.person_id = v.person_id
+      WHERE m.mandate = ${mandate}
+        AND m.party IS NOT NULL
+        AND v.mandate = ${mandate}
+      GROUP BY v.document_id, m.party
+    ),
+    division_majorities AS (
+      SELECT
+        document_id,
+        party,
+        CASE
+          WHEN ayes > noes AND ayes > abstains AND ayes > noshows THEN 'AYE'
+          WHEN noes > ayes AND noes > abstains AND noes > noshows THEN 'NO'
+          WHEN abstains > ayes AND abstains > noes AND abstains > noshows THEN 'ABSTAINED'
+          WHEN noshows > ayes AND noshows > noes AND noshows > abstains THEN 'NO_SHOW'
+          ELSE NULL
+        END AS majority_vote
+      FROM party_votes
+    ),
+    sf AS (
+      SELECT document_id, majority_vote AS sf_vote
+      FROM division_majorities
+      WHERE party = 'Sinn Féin' AND majority_vote IS NOT NULL
+    ),
+    dup AS (
+      SELECT document_id, majority_vote AS dup_vote
+      FROM division_majorities
+      WHERE party = 'Democratic Unionist Party' AND majority_vote IS NOT NULL
+    )
+    SELECT d.document_id, d.subject, d.title, d.division_date, d.outcome, sf.sf_vote AS shared_vote
+    FROM sf
+    JOIN dup ON dup.document_id = sf.document_id AND dup.dup_vote = sf.sf_vote
+    JOIN divisions d ON d.document_id = sf.document_id
+    ORDER BY d.division_date DESC
+  `)
+
+  type RawRow = { document_id: string; subject: string; title: string | null; division_date: string; outcome: string | null; shared_vote: string }
+  const rows = result.rows as unknown as RawRow[]
+  return rows.map((r) => {
+    const sharedVote = r.shared_vote as AgreedDivisionRow['sharedVote']
+    return {
+      documentId: r.document_id,
+      subject: r.subject,
+      title: r.title,
+      divisionDate: new Date(r.division_date),
+      outcome: r.outcome,
+      sharedVote,
+      wonOverall: matchedOutcome(sharedVote, r.outcome),
+    }
+  })
+}
+
+type BlocAgreement = {
   agreed: number
   disagreed: number
   bothAye: number

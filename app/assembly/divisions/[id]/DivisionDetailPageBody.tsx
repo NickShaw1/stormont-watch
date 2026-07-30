@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { Vote, FileText, Users, Scale, CheckCircle2, XCircle, MinusCircle, UserX, Pencil, CalendarDays, User, Hash } from 'lucide-react'
 import { eq } from 'drizzle-orm'
 import { getDivisionWithVotes, getHansardReportId, getAmendmentMotionTexts } from '@/lib/db/queries'
 import { db } from '@/lib/db/client'
@@ -19,11 +20,7 @@ import DesignationChartClient from './DesignationChartClient'
 import PartyBreakdownClient from './PartyBreakdownClient'
 import styles from './divisionDetail.module.css'
 
-/**
- * Shared body for the Division detail page — rendered by both the live route (current
- * mandate, basePath '') and the archive route (`/archive/<id>`). `mandate` drives copy;
- * `basePath` prefixes internal links.
- */
+// Shared by the live route and the archive route; mandate/basePath vary per route.
 export default async function DivisionDetailPageBody({
   id,
   mandate,
@@ -33,8 +30,7 @@ export default async function DivisionDetailPageBody({
   mandate: Mandate
   basePath: string
 }) {
-  // Mandate-scoped: a division from another mandate returns null here and 404s, so a 2027
-  // division can't render on the bare/current path (nor a 2022-2027 one under an archive).
+  // Mandate-scoped: a division from another mandate returns null and 404s here.
   const data = await getDivisionWithVotes(id, mandate.id)
   if (!data) notFound()
 
@@ -76,7 +72,6 @@ export default async function DivisionDetailPageBody({
   const totalNoes = division.totalNoes ?? noes.length
   const totalAbstain = division.totalAbstains ?? abstains.length
   const totalNoShow = noShows.length
-  const votedTotal = totalAyes + totalNoes + totalAbstain
 
   const passed = isPassed(division.outcome)
 
@@ -146,42 +141,87 @@ export default async function DivisionDetailPageBody({
           </ol>
         </nav>
 
-        {/* Tags */}
-        <div className={styles.tags}>
-          {passed === true && <span className="pill pass">Passed</span>}
-          {passed === false && <span className="pill fail">Failed</span>}
-          <span className="tag">Division {documentId}</span>
-          {division.divisionType === 'Cross-Community' && (
-            <span className="tag" style={{ color: 'var(--ochre)', borderColor: 'var(--ochre)' }}>Cross-community</span>
-          )}
-          <span className="tag">{formatDate(division.divisionDate.toISOString())}</span>
-        </div>
+        <div className={styles.titleCard}>
+          <span className={styles.eyebrow}>
+            <Vote className={styles.eyebrowIconMobile} size={14} strokeWidth={1.75} aria-hidden="true" />
+            Votes
+          </span>
+          <h1 className={`${styles.title} ${subtitle ? styles.titleWithSub : ''}`}>
+            <Vote className={`${styles.titleIcon} ${styles.titleIconDesktopOnly}`} size={29} strokeWidth={1.75} aria-hidden="true" />
+            {displayTitle}
+          </h1>
 
-        {/* Title */}
-        <h1 className={`${styles.title} ${subtitle ? styles.titleWithSub : ''}`}>{displayTitle}</h1>
-        {subtitle && <span className={styles.subtitlePill}>{subtitle}</span>}
+          {/* Mobile-only meta rows for Division/Amendment — icon+prose, matching
+              the Date/Tabled by/Report treatment below, not chips. */}
+          <div className={`${styles.metaStrip} ${styles.metaStripMobile}`}>
+            <div className={styles.metaRow}>
+              <span className={styles.metaLabel}>
+                <Hash className={styles.metaLabelIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
+                Division
+              </span>
+              <span className={styles.metaValue}>{documentId}</span>
+            </div>
+            {subtitle && (
+              <div className={styles.metaRow}>
+                <span className={styles.metaLabel}>
+                  <Pencil className={styles.metaLabelIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
+                  Amendment
+                </span>
+                <span className={styles.metaValue}>{subtitle}</span>
+              </div>
+            )}
+          </div>
 
-        {/* Meta strip */}
-        {(tabledByClean || officialReportUrl) && (
+          {/* Meta strip — date sits here as a plain label/value line, same shape as
+              Tabled by/Report, not as a chip (it's metadata, not a status/tag). */}
           <div className={styles.metaStrip}>
+            <div className={styles.metaRow}>
+              <span className={styles.metaLabel}>
+                <CalendarDays className={styles.metaLabelIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
+                Date
+              </span>
+              <span className={styles.metaValue}>{formatDate(division.divisionDate.toISOString())}</span>
+            </div>
             {tabledByClean && (
               <div className={styles.metaRow}>
-                <span className={styles.metaLabel}>Tabled by</span>
+                <span className={styles.metaLabel}>
+                  <User className={styles.metaLabelIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
+                  Tabled by
+                </span>
                 <span className={styles.metaValue}>{tabledByClean}</span>
               </div>
             )}
             {officialReportUrl && (
               <div className={styles.metaRow}>
-                <span className={styles.metaLabel}>Report</span>
+                <span className={styles.metaLabel}>
+                  <FileText className={styles.metaLabelIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
+                  Report
+                </span>
                 <span className={styles.metaValue}>
                   <a href={officialReportUrl} target="_blank" rel="noopener noreferrer">
-                    Official Report <span aria-hidden="true">↗</span>
+                    Official Report
                   </a>
                 </span>
               </div>
             )}
           </div>
-        )}
+
+          {/* Footer — identifying chips left (desktop only), cross-community/outcome
+              chips right, matching Bills' .titleCardFoot exactly. */}
+          <div className={styles.titleCardFoot}>
+            <div className={`${styles.badgeRow} ${styles.idBadgeRowDesktop}`}>
+              <span className={`${styles.chip} ${styles.chipNeutral}`}>Division {documentId}</span>
+              {subtitle && <span className={`${styles.chip} ${styles.chipNeutral}`}>{subtitle}</span>}
+            </div>
+            <div className={`${styles.badgeRow} ${styles.statusBadgeRow}`}>
+              {division.divisionType === 'Cross-Community' && (
+                <span className={`${styles.chip} ${styles.chipCrossCommunity}`}>Cross-community</span>
+              )}
+              {passed === true && <span className={`${styles.chip} ${styles.chipPass}`}>Passed</span>}
+              {passed === false && <span className={`${styles.chip} ${styles.chipFail}`}>Failed</span>}
+            </div>
+          </div>
+        </div>
       </header>
 
       {/* Motion text */}
@@ -189,27 +229,43 @@ export default async function DivisionDetailPageBody({
         const isMotionAmendment = division.isMotionAmendment === true
         return (
           <>
-            <section className={styles.motionSection}>
-              <h2 className={styles.sectionHeading}>Motion text</h2>
+            <section className={`${styles.motionSection} ${styles.pageSection}`}>
+              <div className={styles.sectionHead}>
+                <span className={styles.eyebrow}>The vote</span>
+                <h2 className={styles.sectionHeading}>
+                  <FileText className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                  Motion text
+                </h2>
+              </div>
               {isMotionAmendment && division.parentMotionText ? (
                 <div className={styles.motionColumns}>
                   <div className={`${styles.motionColumn} ${styles.motionColumnOriginal}`}>
-                    <h3 className={styles.motionSubheading}>Original motion</h3>
+                    <h3 className={styles.motionSubheading}>
+                      <FileText className={styles.motionSubheadingIcon} size={13} strokeWidth={2} aria-hidden="true" />
+                      Original motion
+                    </h3>
                     <p className={styles.motionText}>{division.parentMotionText}</p>
                   </div>
                   <div className={`${styles.motionColumn} ${styles.motionColumnAmended}`}>
-                    <h3 className={styles.motionSubheading}>Amendment text</h3>
+                    <h3 className={styles.motionSubheading}>
+                      <Pencil className={styles.motionSubheadingIcon} size={13} strokeWidth={2} aria-hidden="true" />
+                      Amendment text
+                    </h3>
                     <p className={styles.motionText}>{division.motionText}</p>
                   </div>
                 </div>
               ) : amendmentTexts.length > 0 ? (
                 <div className={styles.motionColumns}>
                   <div className={`${styles.motionColumn} ${styles.motionColumnOriginal}`}>
-                    <h3 className={styles.motionSubheading}>Original motion</h3>
+                    <h3 className={styles.motionSubheading}>
+                      <FileText className={styles.motionSubheadingIcon} size={13} strokeWidth={2} aria-hidden="true" />
+                      Original motion
+                    </h3>
                     <p className={styles.motionText}>{division.motionText}</p>
                   </div>
                   <div className={`${styles.motionColumn} ${styles.motionColumnAmended}`}>
                     <h3 className={styles.motionSubheading}>
+                      <Pencil className={styles.motionSubheadingIcon} size={13} strokeWidth={2} aria-hidden="true" />
                       {amendmentTexts.length === 1 ? 'Amendment text (passed)' : 'Amendments passed'}
                     </h3>
                     {amendmentTexts.map((a) => (
@@ -220,11 +276,17 @@ export default async function DivisionDetailPageBody({
               ) : /as amended/i.test(division.outcome ?? '') && !isMotionAmendment ? (
                 <div className={styles.motionColumns}>
                   <div className={`${styles.motionColumn} ${styles.motionColumnOriginal}`}>
-                    <h3 className={styles.motionSubheading}>Original motion</h3>
+                    <h3 className={styles.motionSubheading}>
+                      <FileText className={styles.motionSubheadingIcon} size={13} strokeWidth={2} aria-hidden="true" />
+                      Original motion
+                    </h3>
                     <p className={styles.motionText}>{division.motionText}</p>
                   </div>
                   <div className={`${styles.motionColumn} ${styles.motionColumnAmended}`}>
-                    <h3 className={styles.motionSubheading}>Amendment text (passed)</h3>
+                    <h3 className={styles.motionSubheading}>
+                      <Pencil className={styles.motionSubheadingIcon} size={13} strokeWidth={2} aria-hidden="true" />
+                      Amendment text (passed)
+                    </h3>
                     <p className={styles.amendmentNote}>
                       The amendment was agreed without a formal division. The amended text is not available in the current data -{' '}
                       {officialReportUrl
@@ -235,91 +297,114 @@ export default async function DivisionDetailPageBody({
                   </div>
                 </div>
               ) : (
-                <>
+                <div className={styles.motionCard}>
                   {isMotionAmendment && (
                     <p className={styles.amendmentNote}>This amendment proposes changes to the original motion text.</p>
                   )}
                   <p className={styles.motionText}>{division.motionText}</p>
-                </>
+                </div>
               )}
             </section>
-            <hr className="section-rule" />
           </>
         )
       })()}
 
-      {/* Vote results */}
-      <section className={styles.resultsSection} aria-labelledby="vote-results-heading">
-        <h2 id="vote-results-heading" className={styles.sectionHeading}>Vote results</h2>
-
-        {/* Tally bars */}
-        <div>
-          {[
-            { label: 'Aye', val: totalAyes, total: votedTotal, cls: 'Aye' },
-            { label: 'No',  val: totalNoes, total: votedTotal, cls: 'No' },
-            { label: 'Abs', val: totalAbstain, total: votedTotal, cls: 'Abs' },
-          ].map(({ label, val, total, cls }) => (
-            <div key={label} className={styles.tallyRow}>
-              <span className={`${styles.tallyLabel} ${styles[`tallyLabel${cls}`]}`}>{label}</span>
-              <div className={styles.tallyBar}>
-                <div
-                  className={`${styles.tallyBarFill} ${styles[`tallyBar${cls}`]}`}
-                  style={{ width: total > 0 ? `${(val / total) * 100}%` : '0%' }}
-                />
-              </div>
-              <span className={`${styles.tallyVal} ${styles[`tallyVal${cls}`]}`}>{val}</span>
-            </div>
-          ))}
+      {/* Vote results — one card: big numbers first, one combined proportional
+          bar underneath for context. Replaces the old three-separate-bars +
+          four-separate-cards layout, which said the same thing twice. */}
+      <section className={`${styles.resultsSection} ${styles.pageSection}`} aria-labelledby="vote-results-heading">
+        <div className={styles.sectionHead}>
+          <span className={styles.eyebrow}>The vote</span>
+          <h2 id="vote-results-heading" className={styles.sectionHeading}>
+            <Vote className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+            Vote results
+          </h2>
         </div>
 
-        {/* Count cards */}
-        <div className={styles.counts}>
-          <div className={`${styles.countItem} ${styles.countItemAye}`}>
-            <span className={styles.countNum}>{totalAyes}</span>
-            <span className={styles.countLabel}>Ayes</span>
+        <div className={styles.resultsCard}>
+          <div className={styles.counts}>
+            <div className={`${styles.countItem} ${styles.countItemAye}`}>
+              <div className={styles.countLabelRow}>
+                <span className={styles.countLabel}>Ayes</span>
+                <CheckCircle2 className={styles.countIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+              </div>
+              <span className={styles.countNum}>{totalAyes}</span>
+            </div>
+            <div className={`${styles.countItem} ${styles.countItemNo}`}>
+              <div className={styles.countLabelRow}>
+                <span className={styles.countLabel}>Noes</span>
+                <XCircle className={styles.countIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+              </div>
+              <span className={styles.countNum}>{totalNoes}</span>
+            </div>
+            <div className={styles.countItem}>
+              <div className={styles.countLabelRow}>
+                <span className={styles.countLabel}>Abstain</span>
+                <MinusCircle className={styles.countIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+              </div>
+              <span className={styles.countNum}>{totalAbstain}</span>
+            </div>
+            <div className={styles.countItem}>
+              <div className={styles.countLabelRow}>
+                <span className={styles.countLabel}>No Show</span>
+                <UserX className={styles.countIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+              </div>
+              <span className={styles.countNum}>{totalNoShow}</span>
+            </div>
           </div>
-          <div className={`${styles.countItem} ${styles.countItemNo}`}>
-            <span className={styles.countNum}>{totalNoes}</span>
-            <span className={styles.countLabel}>Noes</span>
-          </div>
-          <div className={`${styles.countItem} ${styles.countItemAbs}`}>
-            <span className={styles.countNum}>{totalAbstain}</span>
-            <span className={styles.countLabel}>Abstain</span>
-          </div>
-          <div className={`${styles.countItem} ${styles.countItemNs}`}>
-            <span className={styles.countNum}>{totalNoShow}</span>
-            <span className={styles.countLabel}>No Show</span>
-          </div>
+
+          {/* Single combined proportional bar — one visual for the whole picture,
+              matching the votes list page's .divBarTrack pattern (§ Pattern). */}
+          {(() => {
+            const shareTotal = totalAyes + totalNoes + totalAbstain + totalNoShow
+            const pct = (n: number) => shareTotal > 0 ? `${(n / shareTotal) * 100}%` : '0%'
+            return (
+              <div className={styles.resultsBarTrack} role="img" aria-label={`${totalAyes} Ayes, ${totalNoes} Noes, ${totalAbstain} Abstain, ${totalNoShow} No Show`}>
+                {totalAyes > 0 && <span className={styles.resultsBarAye} style={{ width: pct(totalAyes) }} />}
+                {totalNoes > 0 && <span className={styles.resultsBarNo} style={{ width: pct(totalNoes) }} />}
+                {totalAbstain > 0 && <span className={styles.resultsBarAbs} style={{ width: pct(totalAbstain) }} />}
+                {totalNoShow > 0 && <span className={styles.resultsBarNs} style={{ width: pct(totalNoShow) }} />}
+              </div>
+            )
+          })()}
         </div>
       </section>
 
       {/* Party breakdown */}
       {votes.length > 0 && (
-        <>
-          <hr className="section-rule" />
-          <section aria-labelledby="party-breakdown-heading">
-            <h2 id="party-breakdown-heading" className={styles.sectionHeading}>Party breakdown</h2>
-            <PartyBreakdownClient votes={votes} />
-          </section>
-        </>
+        <section className={styles.pageSection} aria-labelledby="party-breakdown-heading">
+          <div className={styles.sectionHead}>
+            <span className={styles.eyebrow}>The vote</span>
+            <h2 id="party-breakdown-heading" className={styles.sectionHeading}>
+              <Users className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+              Party breakdown
+            </h2>
+          </div>
+          <PartyBreakdownClient votes={votes} />
+        </section>
       )}
 
       {/* Designation breakdown */}
       {hasDesignationBreakdown && (
-        <>
-          <hr className="section-rule" />
-          <section className={styles.designationSection} aria-labelledby="designation-heading">
-            <h2 id="designation-heading" className={styles.sectionHeading}>
-              Designation breakdown
-            </h2>
+        <section className={`${styles.designationSection} ${styles.pageSection}`} aria-labelledby="designation-heading">
+            <div className={styles.sectionHead}>
+              <span className={styles.eyebrow}>The vote</span>
+              <h2 id="designation-heading" className={styles.sectionHeading}>
+                <Scale className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                Designation breakdown
+              </h2>
+            </div>
             {(() => {
               const dataCols = 2 + (hasDesignationNoShow ? 1 : 0) + 1
-              const gridCols = `1fr repeat(${dataCols}, minmax(40px, auto))`
-              const fmt = (n: number) => n === 0 ? '-' : n
+              const gridColsStyle = { '--data-cols': dataCols } as React.CSSProperties
+              const renderCell = (n: number) =>
+                n === 0
+                  ? <span className={styles.blocCellZero}>-</span>
+                  : <span className={styles.blocCellValue}>{n}</span>
               return (
             <div className={styles.designationLayout}>
-              <div className={styles.blocGrid} style={{ border: 'none', borderRadius: 0, maxWidth: 'none' }}>
-                <div className={styles.blocHeaderRow} style={{ gridTemplateColumns: gridCols }}>
+              <div className={`${styles.blocGrid} ${styles.blocGridPlain}`}>
+                <div className={styles.blocHeaderRow} style={gridColsStyle}>
                   <span />
                   <span className={styles.blocColHead}>Aye</span>
                   <span className={styles.blocColHead}>No</span>
@@ -331,14 +416,14 @@ export default async function DivisionDetailPageBody({
                   { label: 'Nationalist', designation: 'nationalist', ayes: division.nationalistAyes ?? 0, noes: division.nationalistNoes ?? 0, ns: noShowByDesignation.Nationalist, abs: abstainByDesignation.Nationalist },
                   { label: 'Other',       designation: 'other',       ayes: division.otherAyes ?? 0,       noes: division.otherNoes ?? 0,       ns: noShowByDesignation.Other,       abs: abstainByDesignation.Other },
                 ].map(({ label, designation, ayes, noes, ns, abs }) => (
-                  <div key={label} className={styles.blocItem} style={{ gridTemplateColumns: gridCols }}>
+                  <div key={label} className={styles.blocItem} style={gridColsStyle}>
                     <span className={styles.blocLabel}>
                       <span className="designation-pill" data-designation={designation}>{label}</span>
                     </span>
-                    <span className={styles.blocCell}>{fmt(ayes)}</span>
-                    <span className={styles.blocCell}>{fmt(noes)}</span>
-                    {hasDesignationNoShow && <span className={styles.blocCell}>{fmt(ns)}</span>}
-                    <span className={styles.blocCell}>{fmt(abs)}</span>
+                    <span className={styles.blocCell}>{renderCell(ayes)}</span>
+                    <span className={styles.blocCell}>{renderCell(noes)}</span>
+                    {hasDesignationNoShow && <span className={styles.blocCell}>{renderCell(ns)}</span>}
+                    <span className={styles.blocCell}>{renderCell(abs)}</span>
                     <b className={styles.blocValueDesktop}>
                       <span className={styles.blocAye}>{ayes} Aye</span>
                       {' · '}
@@ -368,12 +453,11 @@ export default async function DivisionDetailPageBody({
               )
             })()}
           </section>
-        </>
       )}
 
-      <hr className="section-rule" />
-
-      <RollCallClient votes={votes} />
+      <div className={`${styles.pageSection} ${styles.sectionLast}`}>
+        <RollCallClient votes={votes} />
+      </div>
     </div>
   )
 }

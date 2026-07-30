@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Users } from 'lucide-react'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
-import { formatMemberName, abbreviateParty, partyBorderColor, partyFilterActiveStyle, formatConstituency, orderedParties } from '@/lib/format'
+import { formatMemberName, abbreviateParty, partyBorderColor, formatConstituency, orderedParties } from '@/lib/format'
 import { useMandate } from '@/components/MandateContext'
+import { useDropdown } from '@/lib/useDropdown'
 import { sittingAdjective } from '@/lib/constants/mandates'
 import styles from './hansard-ranking.module.css'
 
@@ -37,7 +38,7 @@ export default function HansardRankingClient({ rows, metric, totalMlaCount }: Pr
   const PARTIES = orderedParties(rows)
   const { mandate, basePath } = useMandate()
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
-  const router = useRouter()
+  const partyDropdown = useDropdown()
 
   const getValue = (r: HansardRow) => metric === 'sittings' ? r.sittings : r.debates
 
@@ -57,135 +58,150 @@ export default function HansardRankingClient({ rows, metric, totalMlaCount }: Pr
 
   return (
     <>
-      <h2 className={styles.mobileRankingsTitle}>Rankings</h2>
+      <div className={styles.filterPanel}>
+        {/* Party filter pills (desktop) */}
+        <div className={`${styles.filterRow} ${styles.filterRowDesktop}`} role="group" aria-label="Filter by party">
+          <button
+            className={`${styles.filterBtn} ${partyFilter === 'ALL' ? `${styles.filterBtnActive} ${styles.filterBtnActiveAll}` : ''}`}
+            onClick={() => handlePartyFilter('ALL')}
+            aria-pressed={partyFilter === 'ALL'}
+          >
+            All parties
+          </button>
+          {PARTIES.map(party => {
+            const isActive = partyFilter === party
+            return (
+              <button
+                key={party}
+                className={`${styles.filterBtn} ${isActive ? `${styles.filterBtnActive} ${styles.filterBtnActiveAll}` : ''}`}
+                onClick={() => handlePartyFilter(party)}
+                aria-pressed={isActive}
+              >
+                {partyLabel(party)}
+              </button>
+            )
+          })}
+        </div>
 
-      <div className={`${styles.filterRow} ${styles.filterRowDesktop}`} role="group" aria-label="Filter by party">
-        <button
-          className={`${styles.filterBtn} ${partyFilter === 'ALL' ? `${styles.filterBtnActive} ${styles.filterBtnActiveAll}` : ''}`}
-          onClick={() => handlePartyFilter('ALL')}
-          aria-pressed={partyFilter === 'ALL'}
-        >
-          All parties
-        </button>
-        {PARTIES.map(party => {
-          const isActive = partyFilter === party
-          const activeStyle = isActive ? partyFilterActiveStyle(party) : null
-          return (
+        {/* Party filter dropdown (mobile) */}
+        <div className={styles.filterDropdownWrap}>
+          <div className={styles.dropdownWrap} ref={partyDropdown.wrapRef}>
             <button
-              key={party}
-              className={`${styles.filterBtn} ${isActive ? styles.filterBtnActive : ''}`}
-              style={activeStyle ? {
-                background: activeStyle.background,
-                color: activeStyle.color,
-                borderColor: activeStyle.borderColor,
-              } : undefined}
-              onClick={() => handlePartyFilter(party)}
-              aria-pressed={isActive}
+              ref={partyDropdown.triggerRef}
+              type="button"
+              className={styles.dropdownTrigger}
+              onClick={() => partyDropdown.setOpen((o) => !o)}
+              aria-haspopup="listbox"
+              aria-expanded={partyDropdown.open}
             >
-              {partyLabel(party)}
+              {partyFilter === 'ALL' ? 'All parties' : partyLabel(partyFilter)}
+              <svg
+                className={`${styles.dropdownTriggerChevron} ${partyDropdown.open ? styles.dropdownTriggerChevronOpen : ''}`}
+                width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+              >
+                <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
             </button>
+
+            {partyDropdown.open && (
+              <ul ref={partyDropdown.listRef} className={styles.dropdownList} role="listbox">
+                <li
+                  role="option"
+                  tabIndex={0}
+                  aria-selected={partyFilter === 'ALL'}
+                  className={`${styles.dropdownItem} ${partyFilter === 'ALL' ? styles.dropdownItemSelected : ''}`}
+                  onClick={() => { handlePartyFilter('ALL'); partyDropdown.setOpen(false) }}
+                  onKeyDown={(e) => partyDropdown.handleKeyDown(e, () => { handlePartyFilter('ALL'); partyDropdown.setOpen(false) })}
+                >
+                  All parties
+                </li>
+                {PARTIES.map(party => (
+                  <li
+                    key={party}
+                    role="option"
+                    tabIndex={0}
+                    aria-selected={party === partyFilter}
+                    className={`${styles.dropdownItem} ${party === partyFilter ? styles.dropdownItemSelected : ''}`}
+                    onClick={() => { handlePartyFilter(party); partyDropdown.setOpen(false) }}
+                    onKeyDown={(e) => partyDropdown.handleKeyDown(e, () => { handlePartyFilter(party); partyDropdown.setOpen(false) })}
+                  >
+                    {partyLabel(party)}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        <p className={styles.resultCount} aria-live="polite" aria-atomic="true">
+          <Users className={styles.resultCountIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
+          <strong>{displayCount}</strong>{' '}
+          <span className={styles.resultCountDesktop}>{partyFilter === 'ALL' ? sittingAdjective(mandate) : partyLabel(partyFilter)} MLA{displayCount !== 1 ? 's' : ''} on record</span>
+          <span className={styles.resultCountMobile}>MLA{displayCount !== 1 ? 's' : ''}</span>
+        </p>
+      </div>
+
+      <div className={styles.rankCardHead} aria-hidden="true">
+        <span className={styles.rankCardHeadRank}>#</span>
+        <span className={styles.rankCardHeadMain}>MLA</span>
+        <span className={styles.rankCardHeadParty}>Party</span>
+        <span className={styles.rankCardHeadConstituency}>Constituency</span>
+        <span className={styles.rankCardHeadValue}>{colLabel}</span>
+      </div>
+
+      <div className={styles.rankCardList} role="list" aria-label={`MLA ${colLabel.toLowerCase()} ranked list`}>
+        {visible.map((row, i) => {
+          const val = getValue(row)
+          const barPct = maxVal > 0 ? Math.round(val / maxVal * 100) : 0
+          const globalRank = i + 1
+
+          return (
+            <Link
+              key={row.personId}
+              href={`${basePath}/assembly/mlas/${row.personId}`}
+              className={styles.rankCard}
+              aria-label={`${formatMemberName(row.fullName)}${row.party ? `, ${row.party}` : ''}${row.constituency ? `, ${formatConstituency(row.constituency)}` : ''}`}
+            >
+              <span className={styles.rankCardRank} aria-hidden="true">{globalRank}</span>
+              <div className={styles.rankCardMain}>
+                <div className={styles.rankCardPhoto}>
+                  <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={44} decorative square personId={row.personId} />
+                </div>
+                <div className={styles.rankCardInfo}>
+                  <span className={styles.rankCardName}>{formatMemberName(row.fullName)}</span>
+                  {row.party && (
+                    <span className={`party-pill ${styles.mobilePill}`} data-party={abbreviateParty(row.party)}>
+                      <PartyName party={row.party} />
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <span className={styles.rankCardParty}>
+                {row.party && (
+                  <span className="party-pill" data-party={abbreviateParty(row.party)}>
+                    <PartyName party={row.party} />
+                  </span>
+                )}
+              </span>
+
+              <span className={styles.rankCardConstituency}>
+                {row.constituency ? formatConstituency(row.constituency) : '-'}
+              </span>
+
+              <span className={styles.rankCardValueCol}>
+                <span className={styles.rankCardBarTrack} aria-hidden="true">
+                  <span
+                    className={styles.rankCardBarFill}
+                    style={{ display: 'block', width: `${barPct}%`, background: partyBorderColor(row.party) }}
+                  />
+                </span>
+                <span className={styles.rankCardValue}>{val.toLocaleString()}</span>
+              </span>
+            </Link>
           )
         })}
       </div>
-
-      <p className={styles.resultCount} aria-live="polite" aria-atomic="true">
-        <strong>{displayCount}</strong>{' '}
-        <span className={styles.resultCountDesktop}>{partyFilter === 'ALL' ? sittingAdjective(mandate) : partyLabel(partyFilter)} MLA{displayCount !== 1 ? 's' : ''} on record</span>
-        <span className={styles.resultCountMobile}>MLA{displayCount !== 1 ? 's' : ''}</span>
-      </p>
-
-      <div className={styles.tableWrap}>
-        <table className={styles.table} aria-label={`MLA ${colLabel.toLowerCase()} ranked table`}>
-          <colgroup>
-            <col className={styles.colRank} />
-            <col className={styles.colMla} />
-            <col className={`${styles.colParty} ${styles.hideMobile}`} />
-            <col className={`${styles.colConstituency} ${styles.hideMobile} ${styles.hideTablet}`} />
-            <col className={styles.colValue} />
-          </colgroup>
-          <thead>
-            <tr>
-              <th scope="col" className={styles.colRank}>#</th>
-              <th scope="col">MLA</th>
-              <th scope="col" className={styles.hideMobile}>Party</th>
-              <th scope="col" className={`${styles.hideMobile} ${styles.hideTablet}`}>Constituency</th>
-              <th scope="col">{colLabel}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((row, i) => {
-              const val = getValue(row)
-              const barPct = maxVal > 0 ? Math.round(val / maxVal * 100) : 0
-              const globalRank = i + 1
-              const isTop = i === 0
-
-              return (
-                <tr
-                  key={row.personId}
-                  className={`${styles.tableRow} ${isTop ? styles.rowGold : ''}`}
-                  onClick={() => router.push(`${basePath}/assembly/mlas/${row.personId}`)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <td className={styles.tdRank} aria-label={`Rank ${globalRank}`}>{globalRank}</td>
-
-                  <td>
-                    <div className={styles.mlaCell}>
-                      <span className={styles.photoDesktop}>
-                        <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={36} decorative square />
-                      </span>
-                      <span className={styles.photoMobile}>
-                        <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={50} decorative square />
-                      </span>
-                      <div style={{ minWidth: 0 }}>
-                        <Link
-                          href={`${basePath}/assembly/mlas/${row.personId}`}
-                          className={styles.mlaName}
-                          aria-label={`${formatMemberName(row.fullName)}${row.party ? `, ${row.party}` : ''}${row.constituency ? `, ${formatConstituency(row.constituency)}` : ''}`}
-                        >
-                          {formatMemberName(row.fullName)}
-                        </Link>
-                        {row.party && partyFilter === 'ALL' && (
-                          <span
-                            className={`party-pill ${styles.mobilePill}`}
-                            data-party={abbreviateParty(row.party)}
-                          >
-                            <PartyName party={row.party} />
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className={`${styles.tdParty} ${styles.hideMobile}`}>
-                    {row.party && (
-                      <span className="party-pill" data-party={abbreviateParty(row.party)}>
-                        <PartyName party={row.party} />
-                      </span>
-                    )}
-                  </td>
-
-                  <td className={`${styles.tdConstituency} ${styles.hideMobile} ${styles.hideTablet}`}>
-                    {row.constituency ? formatConstituency(row.constituency) : '—'}
-                  </td>
-
-                  <td className={styles.tdValue}>
-                    <div className={styles.valueInner}>
-                      <div className={styles.barTrack} aria-hidden="true">
-                        <div
-                          className={styles.barFill}
-                          style={{ width: `${barPct}%`, background: partyBorderColor(row.party) }}
-                        />
-                      </div>
-                      <span className={styles.valueNum}>{val.toLocaleString()}</span>
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-
     </>
   )
 }

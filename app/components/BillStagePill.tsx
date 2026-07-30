@@ -1,3 +1,4 @@
+import { Milestone } from 'lucide-react'
 import styles from './BillStagePill.module.css'
 
 interface Props {
@@ -8,8 +9,10 @@ interface Props {
 
 export default function BillStagePill({ category, currentStage, passed }: Props) {
   if (!currentStage || passed !== null || category === 'completed') return null
-  if (category === 'scheduled') {
-    return <span className={styles.stagePillScheduled}>Scheduled: {currentStage}</span>
-  }
-  return <span className={styles.stagePill}>{currentStage}</span>
+  return (
+    <span className={styles.stageChip}>
+      <Milestone size={12} strokeWidth={2} aria-hidden="true" />
+      {category === 'scheduled' ? `Scheduled: ${currentStage}` : currentStage}
+    </span>
+  )
 }

@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { formatMemberName, partyBorderColor, abbreviateParty } from '@/lib/format'
+import { Handshake, Gavel, Building2, ShieldCheck } from 'lucide-react'
+import { formatMemberName, abbreviateParty } from '@/lib/format'
 import { useMandate } from '@/components/MandateContext'
 import styles from './structure.module.css'
 
@@ -13,6 +14,7 @@ type Minister = {
   imgUrl: string | null
   roleTitle: string | null
   department: string | null
+  constituency: string | null
 }
 
 type Chair = {
@@ -22,6 +24,7 @@ type Chair = {
   imgUrl: string | null
   committeeName: string
   assemblyRole: string | null
+  constituency: string | null
 }
 
 type PresidingOfficer = {
@@ -30,6 +33,7 @@ type PresidingOfficer = {
   party: string | null
   assemblyRole: string | null
   imgUrl: string | null
+  constituency: string | null
 }
 
 interface Props {
@@ -42,16 +46,16 @@ interface Props {
   presidingOfficers: PresidingOfficer[]
 }
 
-function PersonPhoto({ imgUrl, name, size, priority }: { imgUrl: string | null; name: string; size: number; priority?: boolean }) {
-  if (!imgUrl) return <div style={{ width: size, height: size, borderRadius: 'var(--r-2)', background: 'var(--paper-3)', border: '1px solid var(--rule)', flexShrink: 0 }} />
+function PersonPhoto({ imgUrl, name, sizes, priority }: { imgUrl: string | null; name: string; sizes: string; priority?: boolean }) {
+  if (!imgUrl) return null
   return (
     <Image
       src={imgUrl}
       alt={name}
-      width={size}
-      height={size}
+      fill
+      sizes={sizes}
       priority={priority}
-      style={{ width: size, height: size, objectFit: 'cover', objectPosition: 'top center', borderRadius: 'var(--r-2)', border: '1px solid var(--rule)', flexShrink: 0 }}
+      style={{ objectFit: 'cover', objectPosition: 'top center' }}
     />
   )
 }
@@ -63,46 +67,49 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
       {/* Executive */}
       <section aria-label="The Executive" className={styles.section}>
         <div className={styles.sectionHead}>
-          <div>
-            <span className={styles.sectionEyebrow}>Power sharing</span>
-            <h2 className={styles.sectionTitle}>The Executive</h2>
-          </div>
+          <span className={styles.sectionEyebrow}>Power sharing</span>
+          <h2 className={styles.sectionTitle}>
+            <Handshake className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+            The Executive
+          </h2>
         </div>
         <p className={styles.sectionBlurb}>
           The <a href="https://www.northernireland.gov.uk/" target="_blank" rel="noopener noreferrer">Northern Ireland Executive</a> is the devolved government established under the <a href="https://en.wikipedia.org/wiki/Good_Friday_Agreement" target="_blank" rel="noopener noreferrer">Good Friday Agreement</a>. It operates on a mandatory power-sharing basis, with the First Minister and Deputy First Minister drawn from the largest unionist and nationalist parties respectively.
         </p>
 
-        <div className={styles.deptGrid}>
+        <div className={styles.execGrid}>
           {[fm, dfm].filter(Boolean).map((role) => {
             if (!role) return null
             return (
-              <div key={role.personId} className={styles.deptBlock}>
-                <Link href={`${basePath}/assembly/mlas/${role.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(role.party) } as React.CSSProperties}>
-                  <div className={styles.deptPhoto}><PersonPhoto imgUrl={role.imgUrl} name={role.fullName} size={56} priority /></div>
-                  <div className={styles.deptInfo}>
-                    <span className={styles.deptLabel}>{role.roleTitle}</span>
-                    <span className={styles.deptMlaName}>{formatMemberName(role.fullName)}</span>
-                    {role.party && <span className="party-pill" data-party={abbreviateParty(role.party)}>{abbreviateParty(role.party)}</span>}
+              <Link key={role.personId} href={`${basePath}/assembly/mlas/${role.personId}`} className={styles.execCard}>
+                <div className={styles.execMain}>
+                  <div className={styles.execPhoto}><PersonPhoto imgUrl={role.imgUrl} name={role.fullName} sizes="88px" priority /></div>
+                  <div className={styles.execInfo}>
+                    <span className={styles.execLabel}>{role.roleTitle}</span>
+                    <span className={styles.execName}>{formatMemberName(role.fullName)}</span>
+                    {role.constituency && <span className={styles.constituency}>{role.constituency}</span>}
                   </div>
-                  <span className={styles.deptArrow}>→</span>
-                </Link>
-              </div>
+                </div>
+                {role.party && <span className="party-pill" data-party={abbreviateParty(role.party)}>{abbreviateParty(role.party)}</span>}
+              </Link>
             )
           })}
         </div>
 
         {juniorMinisters.length > 0 && (
-          <div className={styles.deptGrid} style={{ marginTop: 'var(--s-5)' }}>
+          <div className={styles.deptGrid} style={{ marginTop: 'var(--s-4)' }}>
             {[...juniorMinisters].reverse().map((jm) => (
               <div key={jm.personId} className={styles.deptBlock}>
-                <Link href={`${basePath}/assembly/mlas/${jm.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(jm.party) } as React.CSSProperties}>
-                  <div className={styles.deptPhoto}><PersonPhoto imgUrl={jm.imgUrl} name={jm.fullName} size={56} /></div>
-                  <div className={styles.deptInfo}>
-                    <span className={styles.deptLabel}>Junior Minister</span>
-                    <span className={styles.deptMlaName}>{formatMemberName(jm.fullName)}</span>
-                    {jm.party && <span className="party-pill" data-party={abbreviateParty(jm.party)}>{abbreviateParty(jm.party)}</span>}
+                <Link href={`${basePath}/assembly/mlas/${jm.personId}`} className={styles.deptItem}>
+                  <div className={styles.deptMain}>
+                    <div className={styles.deptPhoto}><PersonPhoto imgUrl={jm.imgUrl} name={jm.fullName} sizes="56px" /></div>
+                    <div className={styles.deptInfo}>
+                      <span className={styles.deptLabel}>Junior Minister</span>
+                      <span className={styles.deptMlaName}>{formatMemberName(jm.fullName)}</span>
+                      {jm.constituency && <span className={styles.constituency}>{jm.constituency}</span>}
+                    </div>
                   </div>
-                  <span className={styles.deptArrow}>→</span>
+                  {jm.party && <span className="party-pill" data-party={abbreviateParty(jm.party)}>{abbreviateParty(jm.party)}</span>}
                 </Link>
               </div>
             ))}
@@ -110,35 +117,38 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
         )}
       </section>
 
-      <hr className="section-rule" />
+      <hr className={`section-rule ${styles.mobileRule}`} />
 
       {/* Presiding Officers */}
       <section aria-label="Presiding Officers" className={styles.section}>
         <div className={styles.sectionHead}>
-          <div>
-            <span className={styles.sectionEyebrow}>Assembly business</span>
-            <h2 className={styles.sectionTitle}>Presiding Officers</h2>
-          </div>
+          <span className={styles.sectionEyebrow}>Assembly business</span>
+          <h2 className={styles.sectionTitle}>
+            <Gavel className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+            Presiding Officers
+          </h2>
         </div>
         <p className={styles.sectionBlurb}>
           The presiding officers chair plenary sessions of the Assembly, maintain order in the chamber and oversee the conduct of Assembly business. The Speaker is elected by members at the start of each mandate.
         </p>
         {presidingOfficers.length === 0 ? (
-          <p className="text-secondary">Presiding officer data is not currently available.</p>
+          <p className={styles.emptyState}>Presiding officer data is not currently available.</p>
         ) : (
           <div className={styles.deptGrid}>
             {presidingOfficers.map((p) => (
               <div key={p.personId} className={styles.deptBlock}>
-                <Link href={`${basePath}/assembly/mlas/${p.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(p.party) } as React.CSSProperties}>
-                  <div className={styles.deptPhoto}>
-                    <PersonPhoto imgUrl={p.imgUrl} name={p.fullName} size={56} />
+                <Link href={`${basePath}/assembly/mlas/${p.personId}`} className={styles.deptItem}>
+                  <div className={styles.deptMain}>
+                    <div className={styles.deptPhoto}>
+                      <PersonPhoto imgUrl={p.imgUrl} name={p.fullName} sizes="56px" />
+                    </div>
+                    <div className={styles.deptInfo}>
+                      <span className={styles.deptLabel}>{p.assemblyRole}</span>
+                      <span className={styles.deptMlaName}>{formatMemberName(p.fullName)}</span>
+                      {p.constituency && <span className={styles.constituency}>{p.constituency}</span>}
+                    </div>
                   </div>
-                  <div className={styles.deptInfo}>
-                    <span className={styles.deptLabel}>{p.assemblyRole}</span>
-                    <span className={styles.deptMlaName}>{formatMemberName(p.fullName)}</span>
-                    {p.party && <span className="party-pill" data-party={abbreviateParty(p.party)}>{abbreviateParty(p.party)}</span>}
-                  </div>
-                  <span className={styles.deptArrow}>→</span>
+                  {p.party && <span className="party-pill" data-party={abbreviateParty(p.party)}>{abbreviateParty(p.party)}</span>}
                 </Link>
               </div>
             ))}
@@ -146,22 +156,21 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
         )}
       </section>
 
-      <hr className="section-rule" />
-
       {/* Departments */}
       <section aria-label="Departments" className={styles.section}>
         <div className={styles.sectionHead}>
-          <div>
-            <span className={styles.sectionEyebrow}>d&apos;Hondt allocation</span>
-            <h2 className={styles.sectionTitle}>Departments</h2>
-          </div>
+          <span className={styles.sectionEyebrow}>d&apos;Hondt allocation</span>
+          <h2 className={styles.sectionTitle}>
+            <Building2 className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+            Departments
+          </h2>
         </div>
         <p className={styles.sectionBlurb}>
           Each of the nine departments is led by a minister nominated by one of the Assembly parties. Posts are allocated sequentially using the <a href="https://en.wikipedia.org/wiki/D%27Hondt_method" target="_blank" rel="noopener noreferrer">d&apos;Hondt method</a>, where parties take turns selecting departments in proportion to their seat share.
         </p>
 
         {departments.length === 0 ? (
-          <p className="text-secondary">Ministerial data is not currently available.</p>
+          <p className={styles.emptyState}>Ministerial data is not currently available.</p>
         ) : (
           <div className={styles.deptGrid}>
             {departments.map((m) => (
@@ -172,16 +181,18 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
                     : <span className={styles.deptName}>{m.department ?? ''}</span>
                   }
                 </div>
-                <Link href={`${basePath}/assembly/mlas/${m.personId}`} className={styles.deptItem} style={{ '--party-c': partyBorderColor(m.party) } as React.CSSProperties}>
-                  <div className={styles.deptPhoto}>
-                    <PersonPhoto imgUrl={m.imgUrl} name={m.fullName} size={56} />
+                <Link href={`${basePath}/assembly/mlas/${m.personId}`} className={styles.deptItem}>
+                  <div className={styles.deptMain}>
+                    <div className={styles.deptPhoto}>
+                      <PersonPhoto imgUrl={m.imgUrl} name={m.fullName} sizes="56px" />
+                    </div>
+                    <div className={styles.deptInfo}>
+                      <span className={styles.deptLabel}>Minister</span>
+                      <span className={styles.deptMlaName}>{formatMemberName(m.fullName)}</span>
+                      {m.constituency && <span className={styles.constituency}>{m.constituency}</span>}
+                    </div>
                   </div>
-                  <div className={styles.deptInfo}>
-                    <span className={styles.deptLabel}>Minister</span>
-                    <span className={styles.deptMlaName}>{formatMemberName(m.fullName)}</span>
-                    {m.party && <span className="party-pill" data-party={abbreviateParty(m.party)}>{abbreviateParty(m.party)}</span>}
-                  </div>
-                  <span className={styles.deptArrow}>→</span>
+                  {m.party && <span className="party-pill" data-party={abbreviateParty(m.party)}>{abbreviateParty(m.party)}</span>}
                 </Link>
               </div>
             ))}
@@ -189,22 +200,23 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
         )}
       </section>
 
-      <hr className="section-rule" />
+      <hr className={`section-rule ${styles.mobileRule}`} />
 
       {/* Committee chairs */}
-      <section aria-label="Committee Chairs" className={styles.section}>
+      <section aria-label="Committee Chairs" className={`${styles.section} ${styles.sectionLast}`}>
         <div className={styles.sectionHead}>
-          <div>
-            <span className={styles.sectionEyebrow}>Scrutiny</span>
-            <h2 className={styles.sectionTitle}>Committee Chairs</h2>
-          </div>
+          <span className={styles.sectionEyebrow}>Scrutiny</span>
+          <h2 className={styles.sectionTitle}>
+            <ShieldCheck className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+            Committee Chairs
+          </h2>
         </div>
         <p className={styles.sectionBlurb}>
           The statutory committees shadow each of the nine departments, scrutinising legislation, examining spending and holding ministers to account. Chairs are allocated to parties in proportion to their Assembly seats.
         </p>
 
         {chairs.length === 0 ? (
-          <p className="text-secondary">Committee chair data is not currently available.</p>
+          <p className={styles.emptyState}>Committee chair data is not currently available.</p>
         ) : (
           <div className={styles.deptGrid}>
             {chairs.map((c) => (
@@ -216,18 +228,20 @@ export default function StructureClient({ fm, dfm, juniorMinisters, departments,
                   }
                 </div>
                 <Link href={`${basePath}/assembly/mlas/${c.personId}`} className={styles.deptItem}>
-                  <div className={styles.deptPhoto}>
-                    <PersonPhoto imgUrl={c.imgUrl} name={c.fullName} size={56} />
-                  </div>
-                  <div className={styles.deptInfo}>
-                    <span className={styles.deptLabel}>Chair</span>
-                    <span className={styles.deptMlaName}>{formatMemberName(c.fullName)}</span>
-                    <div className={styles.pillRow}>
-                      {c.party && <span className="party-pill" data-party={abbreviateParty(c.party)}>{abbreviateParty(c.party)}</span>}
-                      {c.assemblyRole && <span className="party-pill" data-party={abbreviateParty(c.party)} style={{ '--dot-c': partyBorderColor(c.party) } as React.CSSProperties}>{c.assemblyRole}</span>}
+                  <div className={styles.deptMain}>
+                    <div className={styles.deptPhoto}>
+                      <PersonPhoto imgUrl={c.imgUrl} name={c.fullName} sizes="56px" />
+                    </div>
+                    <div className={styles.deptInfo}>
+                      <span className={styles.deptLabel}>Chair</span>
+                      <span className={styles.nameRow}>
+                        <span className={styles.deptMlaName}>{formatMemberName(c.fullName)}</span>
+                        {c.assemblyRole && <span className={styles.speakerBadge}>{c.assemblyRole}</span>}
+                      </span>
+                      {c.constituency && <span className={styles.constituency}>{c.constituency}</span>}
                     </div>
                   </div>
-                  <span className={styles.deptArrow}>→</span>
+                  {c.party && <span className="party-pill" data-party={abbreviateParty(c.party)}>{abbreviateParty(c.party)}</span>}
                 </Link>
               </div>
             ))}

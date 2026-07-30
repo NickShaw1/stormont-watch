@@ -1,6 +1,8 @@
-import Link from 'next/link'
+import { Mic2 } from 'lucide-react'
 import { getHansardAllByMLA } from '@/lib/db/queries'
 import HansardRankingClient from './HansardRankingClient'
+import StatsBreadcrumb from '../stats/StatsBreadcrumb'
+import styles from './hansard-ranking.module.css'
 import { type Mandate, sittingAdjective } from '@/lib/constants/mandates'
 
 /**
@@ -29,15 +31,14 @@ export default async function SittingsPageBody({
 
   return (
     <div className="container">
-      <header className="page-header">
-        <nav aria-label="Breadcrumb" className="breadcrumb">
-          <ol>
-            <li><Link href={`${basePath}/assembly/stats`}>Statistics</Link></li>
-            <li aria-current="page">MLA sittings</li>
-          </ol>
-        </nav>
-        <h1>MLA sittings</h1>
-        <p className="lede">Plenary sittings spoken in by every <strong>{sittingAdjective(mandate)} MLA</strong> since the {mandate.label} mandate began. Excludes presiding officers. Data sourced from Hansard.</p>
+      <header className={styles.pageHeader}>
+        <StatsBreadcrumb label="MLA sittings" basePath={basePath} />
+        <span className={styles.pageHeaderEyebrow}>Rankings</span>
+        <h1 className={styles.pageHeaderTitle}>
+          <Mic2 className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
+          MLA sittings
+        </h1>
+        <p className={styles.lede}>Plenary sittings spoken in by every {sittingAdjective(mandate)} MLA since the {mandate.label} mandate began. Excludes presiding officers. Data sourced from Hansard.</p>
       </header>
 
       <HansardRankingClient rows={rows} metric="sittings" totalMlaCount={rows.length} />

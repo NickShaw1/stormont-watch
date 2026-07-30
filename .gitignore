@@ -49,6 +49,7 @@ drizzle/meta/
 # Claude
 .claude/
 .playwright-mcp/
+CLAUDE.md
 
 # Docs (local only)
 docs/

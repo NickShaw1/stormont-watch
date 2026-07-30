@@ -1,7 +1,9 @@
-import Link from 'next/link'
+import { PoundSterling } from 'lucide-react'
 import { getAllMembers, getAllMemberRoleHistories } from '@/lib/db/queries'
 import { calculateMandateEarnings, getCurrentAnnualSalary, apiRoleToSalaryRole, salaryRatesPublished, type RoleInterval } from '@/lib/salaries'
 import SalariesListClient from './SalariesListClient'
+import StatsBreadcrumb from '../stats/StatsBreadcrumb'
+import styles from '../expenses/expenses.module.css'
 import { type Mandate, sittingAdjective } from '@/lib/constants/mandates'
 
 const mlaImg = (personId: string) => `/mla-images/${personId}.jpg`
@@ -59,22 +61,18 @@ export default async function SalariesPageBody({
 
   return (
     <div className="container">
-      <header className="page-header">
-        <nav aria-label="Breadcrumb" className="breadcrumb">
-          <ol>
-            <li><Link href={`${basePath}/assembly/stats`}>Statistics</Link></li>
-            <li aria-current="page">MLA Salaries</li>
-          </ol>
-        </nav>
-        <h1>MLA Salaries</h1>
-        <p className="lede">Estimated salaries for all {sittingAdjective(mandate)} MLAs based on published Assembly rates. Figures include role supplements for ministers, committee chairs and other officeholders.</p>
+      <header className={styles.pageHeader}>
+        <StatsBreadcrumb label="MLA salaries" basePath={basePath} />
+        <span className={styles.pageHeaderEyebrow}>Rankings</span>
+        <h1 className={styles.pageHeaderTitle}>
+          <PoundSterling className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
+          MLA Salaries
+        </h1>
+        <p className={styles.lede}>Estimated salaries for all {sittingAdjective(mandate)} MLAs based on published Assembly rates. Figures include role supplements for ministers, committee chairs and other officeholders. Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</p>
       </header>
 
       {ratesPublished ? (
-        <>
-          <div className="notice-card">Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</div>
-          <SalariesListClient bySalary={bySalary} byEarnings={byEarnings} />
-        </>
+        <SalariesListClient bySalary={bySalary} byEarnings={byEarnings} />
       ) : (
         <div className="notice-card">Salary figures for the {mandate.label} mandate are not yet available: the Assembly&apos;s published pay rates for this mandate have not been released.</div>
       )}

@@ -7,7 +7,7 @@
   overflow: hidden;
   background: #fff;
   flex-shrink: 0;
-  border: 2px solid #fff;
+  border: 1px solid var(--sw-border-strong);
 }
 
 .wrapFallback {

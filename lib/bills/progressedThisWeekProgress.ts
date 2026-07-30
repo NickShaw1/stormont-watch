@@ -1,4 +1,4 @@
-export type BillEventType = 'voted' | 'passed'
+type BillEventType = 'voted' | 'passed'
 
 export interface BillEvent {
   stage: string
@@ -27,7 +27,7 @@ const PROCEDURAL = [
 
 const PRECEDENCE: Record<BillEventType, number> = { voted: 2, passed: 1 }
 
-export function deriveHeadlineEvent(events: BillEvent[]): BillEvent {
+function deriveHeadlineEvent(events: BillEvent[]): BillEvent {
   if (events.length === 0) throw new Error('deriveHeadlineEvent called with empty array')
   return events.reduce((best, e) => {
     const bp = PRECEDENCE[best.eventType]
@@ -49,12 +49,15 @@ export function getPillInfo(bill: BillProgressedThisWeek): { label: string; cls:
   return { label: 'Heard', cls: 'neutral' }
 }
 
-export function formatEventLine(event: BillEvent): string {
+// omitAction drops the action word (e.g. "passed by vote") when it would just
+// repeat the status badge shown above the event list for that same event.
+export function formatEventLine(event: BillEvent, omitAction = false): string {
   const dateStr = new Date(event.plenaryDate).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   })
+  if (omitAction) return `${event.stage} · ${dateStr}`
   let action: string
   if (event.eventType === 'passed') {
     action = 'heard'

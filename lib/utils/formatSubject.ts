@@ -1,8 +1,9 @@
 export function formatDivisionSubject(raw: string): {
   title: string
   subtitle: string | null
+  stage: string | null
 } {
-  if (!raw) return { title: raw, subtitle: null }
+  if (!raw) return { title: raw, subtitle: null, stage: null }
 
   // Pattern 1 — newer format: "-#1 Main Title - Amendment 1: Motion Amendment 1 [Member]"
   const amendmentMatch = raw.match(/^-#\d+\s+(.+?)\s+-\s+(Amendment \d+):/i)
@@ -10,6 +11,7 @@ export function formatDivisionSubject(raw: string): {
     return {
       title: amendmentMatch[1].trim(),
       subtitle: amendmentMatch[2].trim(),
+      stage: null,
     }
   }
 
@@ -18,7 +20,8 @@ export function formatDivisionSubject(raw: string): {
   if (stageAmendmentMatch) {
     return {
       title: stageAmendmentMatch[3].trim(),
-      subtitle: stageAmendmentMatch[2].trim(),
+      subtitle: stageAmendmentMatch[1].trim(),
+      stage: stageAmendmentMatch[2].trim(),
     }
   }
 
@@ -28,6 +31,7 @@ export function formatDivisionSubject(raw: string): {
     return {
       title: titleAmendmentMatch[1].trim(),
       subtitle: titleAmendmentMatch[2].trim(),
+      stage: null,
     }
   }
 
@@ -37,6 +41,7 @@ export function formatDivisionSubject(raw: string): {
     return {
       title: stageReadingMatch[2].trim(),
       subtitle: stageReadingMatch[1].trim(),
+      stage: null,
     }
   }
 
@@ -46,8 +51,9 @@ export function formatDivisionSubject(raw: string): {
     return {
       title: memberMatch[1].trim(),
       subtitle: null,
+      stage: null,
     }
   }
 
-  return { title: raw, subtitle: null }
+  return { title: raw, subtitle: null, stage: null }
 }

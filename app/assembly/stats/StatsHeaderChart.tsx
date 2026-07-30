@@ -6,10 +6,10 @@ const PL = 36  // space for y-axis title + labels
 const PR = 4
 const PT = 8
 const PB = 26  // space for x-axis title + labels
-const COLOR = '#C41E3A'
-const LABEL_COLOR = 'rgba(120,120,120,0.7)'
-const AXIS_COLOR = 'rgba(120,120,120,0.25)'
-const FONT = '9px ui-monospace, monospace'
+const COLOR = '#3a5a7a'
+const LABEL_COLOR = '#656b72'
+const AXIS_COLOR = 'rgba(101,107,114,0.25)'
+const FONT = '9px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
 const Y_TICKS = 4
 
 export default function StatsHeaderChart({ data }: { data: Row[] }) {

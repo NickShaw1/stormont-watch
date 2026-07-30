@@ -10,7 +10,7 @@ const SECTION_PATHS = [
   '/assembly/structure', '/assembly/stats', '/assembly/stats/spending',
   '/assembly/stats/activity', '/assembly/stats/voting', '/assembly/salaries',
   '/assembly/overall-cost', '/assembly/expenses', '/assembly/questions',
-  '/assembly/sittings', '/assembly/topics', '/assembly/former-mlas',
+  '/assembly/sittings', '/assembly/topics',
 ]
 
 const BASE = 'https://www.stormontwatch.com'
@@ -36,7 +36,6 @@ const STATIC_URLS: MetadataRoute.Sitemap = [
   { url: `${BASE}/assembly/sittings`, changeFrequency: 'daily', priority: 0.7 },
   { url: `${BASE}/assembly/topics`, changeFrequency: 'daily', priority: 0.7 },
   { url: `${BASE}/assembly/legislation-guide`, changeFrequency: 'yearly', priority: 0.5 },
-  { url: `${BASE}/assembly/former-mlas`, changeFrequency: 'monthly', priority: 0.5 },
   { url: `${BASE}/about`, changeFrequency: 'monthly', priority: 0.4 },
   { url: `${BASE}/privacy`, changeFrequency: 'yearly', priority: 0.2 },
   { url: `${BASE}/terms`, changeFrequency: 'yearly', priority: 0.2 },
@@ -81,8 +80,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }))
 
-    // Archive landing pages for each past mandate (kept crawlable so old-mandate
-    // content stays indexed once it moves under /archive/<id>).
+    // Archive landing pages, kept crawlable so old-mandate content stays indexed.
     const archiveUrls: MetadataRoute.Sitemap = ARCHIVED_MANDATES.flatMap((m) =>
       SECTION_PATHS.map((p) => ({
         url: `${BASE}/archive/${m.id}${p}`,

@@ -1,170 +1,413 @@
-
 /* ── Page header ────────────────────────────────────────────── */
 .pageHeader {
-  padding-block: var(--s-12) var(--s-8);
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: var(--s-10);
+  padding-block: var(--s-8) var(--s-6);
+  border-bottom: 1px solid var(--sw-accent);
+  margin-bottom: var(--sw-space-9);
 }
 
-.pageHeader h1 {
+.pageHeaderEyebrow {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+}
+
+.pageHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: clamp(48px, 6vw, 96px);
-  letter-spacing: -0.045em;
-  line-height: 0.96;
-  margin-top: var(--s-2);
+  font-weight: 700;
+  font-size: var(--sw-fs-display);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: var(--s-1) 0 0;
+}
+
+.pageHeaderIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
 }
 
 .lede {
-  font-size: 15px;
-  color: var(--ink-2);
-  max-width: 60ch;
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  max-width: 62ch;
   margin-top: var(--s-4);
   line-height: 1.5;
 }
 
-@media (max-width: 640px) {
-  .pageHeader { padding-block: var(--s-8) var(--s-6); }
-  .pageHeader h1 { font-size: 44px; }
-  .lede { font-size: 15px; }
+@media (max-width: 600px) {
+  .lede {
+    font-size: var(--sw-fs-body-sm);
+  }
 }
 
-/* ── Mode chips + party filter ──────────────────────────────── */
+.formerMlasLink {
+  color: var(--sw-text-tertiary);
+  margin-top: var(--s-2);
+  margin-bottom: 0;
+  font-size: var(--sw-fs-body-sm);
+}
+
+.formerMlasLink a {
+  color: var(--sw-accent);
+  text-decoration: none;
+}
+
+.formerMlasLink a:hover {
+  color: var(--sw-accent-strong);
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .pageHeader { padding-block: var(--s-6) var(--s-5); }
+  .pageHeaderTitle { font-size: var(--sw-fs-h2); }
+}
+
+/* Mode toggle, party chips and search live inside one bordered frame. */
+.filterPanel {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
+  margin-bottom: var(--sw-space-9);
+}
+
+/* Squared controls (§11), matching the mandate switcher vocabulary. */
 .modeChips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-2);
-  margin-bottom: var(--s-3);
+  padding-bottom: var(--s-4);
+  margin-bottom: var(--s-4);
+  border-bottom: 1px solid var(--sw-border);
+}
+
+/* Desktop: 3-button toggle row. Mobile: dropdown instead (labels don't fit). */
+@media (max-width: 640px) {
+  .modeChips { display: none; }
+}
+
+/* Mobile-only dropdowns, matching the homepage constituency selector's shape. */
+.modeDropdownWrap,
+.partyDropdownWrap {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .modeDropdownWrap,
+  .partyDropdownWrap {
+    display: block;
+    padding-bottom: var(--s-4);
+    margin-bottom: var(--s-4);
+    border-bottom: 1px solid var(--sw-border);
+  }
+}
+
+.dropdownWrap {
+  position: relative;
+}
+
+.dropdownTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  background: var(--sw-surface);
+  color: var(--sw-text-primary);
+  font-size: var(--sw-fs-body);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 150ms;
+}
+
+.dropdownTrigger:hover { border-color: var(--sw-accent); }
+.dropdownTrigger:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+
+.dropdownTriggerChevron {
+  color: var(--sw-text-tertiary);
+  transition: transform 150ms ease;
+  flex-shrink: 0;
+}
+
+.dropdownTriggerChevronOpen { transform: rotate(180deg); }
+
+.dropdownList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  max-height: 260px;
+  overflow-y: auto;
+  box-shadow: var(--sw-elevation-overlay);
+}
+
+.dropdownList::-webkit-scrollbar { width: 4px; }
+.dropdownList::-webkit-scrollbar-track { background: transparent; }
+.dropdownList::-webkit-scrollbar-thumb { background: var(--sw-border); border-radius: 4px; }
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: 10px 14px;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-secondary);
+  border-bottom: 1px solid var(--sw-border);
+  cursor: pointer;
+  transition: background 100ms, color 100ms;
+  user-select: none;
+}
+
+.dropdownItem:last-child { border-bottom: none; }
+.dropdownItem:hover { background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItem:focus { outline: none; background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItemSelected { background: var(--sw-surface-subtle); color: var(--sw-text-primary); font-weight: 600; }
+
+/* Reuses .partyFilterCount's look, restated since it's not inside a .partyFilterBtn here. */
+.dropdownItemCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: var(--sw-surface-subtle);
+  font-size: var(--sw-fs-eyebrow);
+  font-variant-numeric: tabular-nums;
+  color: var(--sw-text-tertiary);
+  flex-shrink: 0;
+}
+
+.dropdownItemSelected .dropdownItemCount {
+  background: var(--sw-surface);
 }
 
 .partyFilter {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-2);
-  margin-bottom: var(--s-3);
+  padding-bottom: var(--s-4);
+  margin-bottom: var(--s-4);
+  border-bottom: 1px solid var(--sw-border);
+}
+
+/* Desktop: chip row. Mobile: dropdown instead (9 options don't wrap cleanly). */
+@media (max-width: 640px) {
+  .partyFilter { display: none; }
 }
 
 .partyFilterBtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
-  min-height: 44px;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink-2);
-  font-size: 0.875rem;
+  padding: 8px 12px;
+  min-height: 38px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-surface);
+  color: var(--sw-text-secondary);
+  font-size: var(--sw-fs-body-sm);
   font-weight: 600;
   font-family: var(--font-sans);
   cursor: pointer;
   white-space: nowrap;
+  transition: border-color 150ms, color 150ms, background 150ms;
 }
 
 .partyFilterBtn:hover {
-  background: var(--paper-2);
-  color: var(--ink);
+  border-color: var(--sw-accent);
+  color: var(--sw-text-primary);
+}
+
+.partyFilterBtn:focus-visible {
+  outline: 2px solid var(--sw-focus);
+  outline-offset: 2px;
 }
 
 .partyFilterBtnActive {
-  background: var(--teal);
-  color: #fff;
-  border-color: var(--teal);
+  background: var(--sw-accent);
+  color: #ffffff;
+  border-color: var(--sw-accent);
+}
+
+.partyFilterBtnActive:hover {
+  border-color: var(--sw-accent-strong);
+  color: #ffffff;
 }
 
 .partyFilterBtnActiveAll {
-  background: var(--teal);
-  color: #fff;
-  border-color: var(--teal);
+  background: var(--sw-accent);
+  color: #ffffff;
+  border-color: var(--sw-accent);
 }
 
 .partyFilterBtnActiveAll:hover {
-  background: var(--teal);
-  color: #fff;
+  background: var(--sw-accent-strong);
+  border-color: var(--sw-accent-strong);
+  color: #ffffff;
 }
 
+/* Distinct small pill so "27" reads as a count, not part of the party name. */
 .partyFilterCount {
-  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: var(--sw-surface-subtle);
+  font-size: var(--sw-fs-eyebrow);
   font-variant-numeric: tabular-nums;
-  color: var(--ink-3);
+  color: var(--sw-text-tertiary);
 }
 
 .partyFilterBtnActive .partyFilterCount,
 .partyFilterBtnActiveAll .partyFilterCount {
-  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
-/* ── Search ─────────────────────────────────────────────────── */
-.searchWrap {
-  margin-bottom: var(--s-10);
-}
-
+/* ── Search — last region in .filterPanel, no divider/margin of its own. ── */
 .search {
+  -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   max-width: 480px;
   padding: 9px 14px;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-2);
-  background: var(--paper);
-  color: var(--ink);
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-surface);
+  color: var(--sw-text-primary);
   font-size: 16px;
+  font-family: var(--font-sans);
   outline: none;
-  transition: border-color 120ms;
+  box-shadow: none;
+  transition: border-color 150ms;
 }
 
 .search:focus {
-  border-color: var(--teal);
+  outline: none;
+  box-shadow: none;
 }
 
-.searchRule,
-.sectionRule {
-  border: none;
-  border-top: 1px solid var(--rule);
-  margin: var(--s-8) 0;
+/* -webkit-appearance: none alone doesn't fully strip native search-field decoration. */
+.search::-webkit-search-decoration,
+.search::-webkit-search-cancel-button,
+.search::-webkit-search-results-button,
+.search::-webkit-search-results-decoration {
+  -webkit-appearance: none;
 }
 
-/* ── Party sections ─────────────────────────────────────────── */
-.partySection {
+.search::placeholder {
+  color: var(--sw-text-tertiary);
+}
+
+.search:focus-visible {
+  outline: 1px solid var(--sw-focus);
+  outline-offset: 0;
+}
+
+.emptyState {
   display: flex;
-  flex-direction: column;
-  padding-block: var(--s-8);
-  border-top: 1px solid var(--rule);
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--sw-fs-body-sm);
+  font-style: italic;
+  color: var(--sw-text-tertiary);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface-subtle);
+  padding: var(--s-5);
+  margin-bottom: var(--sw-space-9);
+}
+
+@media (max-width: 640px) {
+  .emptyState { margin-bottom: var(--s-10); }
+}
+
+.emptyStateIcon {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
+}
+
+/* Standard section-head shape, repeated once per group; swatch stands in for an icon. */
+.partySection {
+  margin-top: var(--sw-space-9);
 }
 
 .partySection:first-of-type {
-  border-top: 2px solid var(--ink);
+  margin-top: 0;
+}
+
+@media (max-width: 640px) {
+  .partySection { margin-top: var(--s-10); }
+}
+
+/* Last group; applied dynamically in the TSX since it depends on filtered data (§1.1.7). */
+.sectionLast {
+  margin-bottom: var(--sw-space-9);
+}
+
+@media (max-width: 640px) {
+  .sectionLast { margin-bottom: var(--s-10); }
+}
+
+.partyHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin-bottom: var(--s-5);
+  flex-wrap: wrap;
 }
 
 .partyHeading {
-  font-size: 32px;
-  font-weight: 500;
-  letter-spacing: -0.035em;
-  color: var(--ink);
-  display: inline-flex;
-  align-items: baseline;
-  gap: 14px;
-  margin: 0 0 var(--s-5);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-h2);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: 0;
 }
 
 .partySwatch {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--sw-radius-sm);
   flex-shrink: 0;
   display: inline-block;
-  transform: translateY(-1px);
-  align-self: center;
 }
 
 .partyNameFull { /* shown by default */ }
 .partyNameShort { display: none; }
 
 .partyCount {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ink-3);
-  font-weight: 400;
-  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: var(--sw-surface-subtle);
+  font-size: var(--sw-fs-eyebrow);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--sw-text-tertiary);
 }
 
 /* ── MLA grid ───────────────────────────────────────────────── */
@@ -182,11 +425,12 @@
   .mlaGrid { grid-template-columns: repeat(3, 1fr); }
 }
 
+/* Single column below 640px — two-up truncates the name/constituency text. */
 @media (max-width: 640px) {
-  .mlaGrid { grid-template-columns: repeat(2, 1fr); gap: var(--s-3); }
+  .mlaGrid { grid-template-columns: 1fr; }
 }
 
-/* ── MLA card ───────────────────────────────────────────────── */
+/* Pattern B: plain bordered card, no tint, accent border on hover only (§4.2). */
 .mlaCardWrapper {
   display: contents;
 }
@@ -197,35 +441,44 @@
   flex-direction: column;
   gap: var(--s-3);
   padding: var(--s-4);
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border);
+  border-radius: var(--sw-radius-none);
   overflow: hidden;
-  transition: border-color 150ms, background 100ms;
+  min-width: 0;
+  transition: border-color 150ms;
 }
 
 .mlaCard:hover {
-  border-color: var(--teal);
-  background: var(--paper-2);
+  border-color: var(--sw-accent);
 }
 
+/* Photo + name/constituency side by side, matching .deptMain elsewhere. */
+.mlaMain {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+}
 
-/* Photo */
+/* Photo — squared, bordered frame matching .execPhoto/.deptPhoto elsewhere. */
 .mlaPhoto {
   width: 64px;
   height: 64px;
-  border-radius: var(--r-2);
+  border-radius: var(--sw-radius-none);
   overflow: hidden;
-  background: var(--paper-3);
+  border: 1px solid var(--sw-border-strong);
+  background: var(--sw-surface-subtle);
   flex-shrink: 0;
 }
 
-/* MlaPhoto renders a <span> wrapper; force it + img to fill */
+/* MlaPhoto renders a <span> wrapper; force it to fill the squared frame. */
 .mlaPhoto > span {
   width: 100% !important;
   height: 100% !important;
   min-width: unset !important;
-  border-radius: var(--r-2) !important;
+  border-radius: 0 !important;
+  outline: none !important;
 }
 
 .mlaPhoto img {
@@ -235,13 +488,36 @@
   object-position: top center !important;
 }
 
+.mlaPhoto img[data-photo-position] {
+  object-position: var(--photo-position, top center) !important;
+}
+
+/* flex:1 so the name column claims the full remaining row width. */
+.mlaInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Attendance sits with the identity block, not in the footer below the hairline. */
+.mlaAttRow {
+  margin-top: 2px;
+}
+
 /* Name */
 .mlaName {
-  font-size: 15px;
+  display: block;
+  font-size: var(--sw-fs-body);
   font-weight: 600;
-  color: var(--ink);
+  color: var(--sw-text-primary);
   line-height: 1.2;
   text-decoration: none;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mlaName::before {
@@ -258,30 +534,37 @@
 }
 
 .mlaCard:hover .mlaName {
-  color: var(--teal);
+  color: var(--sw-accent-strong);
 }
 
 /* Constituency */
 .mlaConstituency {
-  font-size: 12px;
-  color: var(--ink-3);
-  line-height: 1.3;
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* Footer */
-.mlaFoot {
+/* Former MLA "Left [date]" — icon + text, same size/colour as constituency,
+   right-aligned on the party-pill row at every width. */
+.mlaLeftDate {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: auto;
-  padding-top: var(--s-2);
-  border-top: 1px solid var(--rule);
-  gap: var(--s-2);
+  gap: 4px;
+  margin-left: auto;
+}
+
+.mlaLeftDateIcon {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
 }
 
 .mlaAtt {
-  font-size: 12px;
-  color: var(--ink-2);
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-secondary);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
@@ -290,69 +573,73 @@
 }
 
 .mlaAtt strong {
-  color: var(--ink);
+  color: var(--sw-text-primary);
   font-weight: 600;
 }
 
-/* Role badge (absolute, top-right) */
+/* Party pill left, role badge right; always one line regardless of role. */
+.mlaFoot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: var(--s-2);
+  border-top: 1px solid var(--sw-border);
+}
+
+/* margin-left:auto keeps it right-aligned even with no party pill; matches §4.2.1's box model. */
 .roleBadge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 10px;
-  padding: 2px 6px;
-  background: var(--teal);
-  color: var(--paper);
-  border-radius: var(--r-1);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  background: var(--sw-accent-solid);
+  color: #ffffff;
+  border-radius: 3px;
   white-space: nowrap;
 }
 
-/* ── Misc ───────────────────────────────────────────────────── */
-.loadMoreWrap {
-  display: block;
+@media (max-width: 640px) {
+  .mlaFoot {
+    justify-content: space-between;
+    order: -1;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: var(--s-2);
+    border-top: none;
+    border-bottom: 1px solid var(--sw-border);
+  }
+  .roleBadge { order: -1; margin-left: 0; }
+  .mlaFoot > :only-child { margin-left: auto; }
 }
 
+/* ── Misc ───────────────────────────────────────────────────── */
 .loadMoreBtn {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-2);
-  background: transparent;
-  color: var(--ink-2);
-  font-size: 14px;
+  padding: 11px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-surface);
+  color: var(--sw-text-secondary);
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
   cursor: pointer;
   margin-top: var(--s-4);
   transition: border-color 150ms, color 150ms;
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .loadMoreBtn:hover {
-  border-color: var(--teal);
-  color: var(--teal);
+  border-color: var(--sw-accent);
+  color: var(--sw-accent-strong);
 }
 
-.formerMlasLink {
-  color: var(--ink-3);
-  margin-top: var(--s-2);
-  margin-bottom: 0;
-  font-size: 14px;
-}
-
-.formerMlasLink a {
-  color: var(--teal);
-  text-decoration: none;
-}
-
-.formerMlasLink a:hover {
-  text-decoration: underline;
-}
-
+/* Abbreviated party name once the full name would crowd the count badge. */
 @media (max-width: 767px) {
-  .partyFilter { display: none; }
   .partyNameFull { display: none; }
   .partyNameShort { display: inline; }
-  .partyHeading { font-size: 24px; margin-bottom: var(--s-4); }
 }

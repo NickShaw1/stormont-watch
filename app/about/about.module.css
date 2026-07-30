@@ -1,16 +1,110 @@
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
+/* Matches the Assembly Structure page's header pattern. */
+.pageHeader {
+  padding-block: var(--s-8) var(--s-6);
+  border-bottom: 1px solid var(--sw-accent);
+  margin-bottom: var(--sw-space-9);
 }
 
-.section h2 {
-  margin-bottom: 0;
-  /* max-width: 65ch; */
-  font-style: normal;
+.pageHeaderEyebrow {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+}
+
+.pageHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-display);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: var(--s-1) 0 0;
+}
+
+.pageHeaderIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+.lede {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  max-width: 62ch;
+  margin-top: var(--s-4);
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .pageHeader { padding-block: var(--s-6) var(--s-5); }
+  .pageHeaderTitle { font-size: var(--sw-fs-h2); }
+}
+
+/* ── Section head ───────────────────────────────────────────── */
+.sectionEyebrow {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-h2);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: var(--s-1) 0 0;
+}
+
+.sectionTitleIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+/* ── Section spacing ────────────────────────────────────────── */
+.section {
+  margin-top: var(--sw-space-9);
+}
+
+.section:first-of-type {
+  margin-top: 0;
 }
 
 .section p {
-  color: var(--text-secondary);
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  line-height: 1.6;
+  max-width: 72ch;
+  margin-top: var(--s-2);
+}
+
+.section p a {
+  color: var(--sw-accent);
+  text-decoration: none;
+}
+
+.section p a:hover {
+  color: var(--sw-accent-strong);
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .section { margin-top: var(--s-10); }
+}
+
+/* Closes the gap before the footer (§1.1 point 7). */
+.sectionLast {
+  margin-bottom: var(--sw-space-9);
+}
+
+@media (max-width: 640px) {
+  .sectionLast { margin-bottom: var(--s-10); }
 }

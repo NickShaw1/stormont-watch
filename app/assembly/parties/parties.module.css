@@ -1,8 +1,8 @@
 /* ── Page header ────────────────────────────────────────────── */
 .pageHeader {
-  padding-block: var(--s-12) var(--s-8);
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: var(--s-10);
+  padding-block: var(--s-8) var(--s-6);
+  border-bottom: 1px solid var(--sw-accent);
+  margin-bottom: var(--sw-space-9);
   display: flex;
   align-items: center;
   gap: var(--s-8);
@@ -16,150 +16,245 @@
 .headerChart {
   flex: 0 0 320px;
   width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.mobileRule {
+/* Desktop: no title, chart floats beside the header text as before. */
+.headerChartTitle {
   display: none;
 }
 
-.pageHeader h1 {
+.pageHeaderEyebrow {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+}
+
+.pageHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: clamp(48px, 6vw, 96px);
-  letter-spacing: -0.045em;
-  line-height: 0.96;
-  margin-top: var(--s-2);
+  font-weight: 700;
+  font-size: var(--sw-fs-display);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: var(--s-1) 0 0;
+}
+
+.pageHeaderIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
 }
 
 .lede {
-  font-size: 15px;
-  color: var(--ink-2);
-  max-width: 60ch;
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  max-width: 62ch;
   margin-top: var(--s-4);
   line-height: 1.5;
 }
 
+@media (max-width: 600px) {
+  .lede {
+    font-size: var(--sw-fs-body-sm);
+  }
+}
+
+/* Column stack + chart card; 768px matches this page's other collapse points. */
 @media (max-width: 768px) {
   .pageHeader {
     flex-direction: column;
     align-items: stretch;
-    padding-block: var(--s-8) var(--s-6);
+    border-bottom: none;
   }
-  .mobileRule {
-    display: block;
-    border: none;
-    border-top: 1px solid var(--rule);
-    margin: 0;
+  .headerLeft {
+    border-bottom: 1px solid var(--sw-accent);
+    padding-bottom: var(--s-6);
   }
   .headerChart {
     flex: unset;
     width: 100%;
-    max-width: 320px;
-    align-self: center;
+    max-width: none;
+    align-self: stretch;
+    border: 1px solid var(--sw-border);
+    background: var(--sw-surface);
+    padding: var(--s-5);
+    margin-top: var(--s-6);
   }
-  .pageHeader h1 { font-size: 44px; letter-spacing: -0.045em; }
+  .headerChartTitle {
+    display: block;
+    font-size: var(--sw-fs-eyebrow);
+    font-weight: var(--sw-fw-eyebrow);
+    text-transform: uppercase;
+    letter-spacing: var(--sw-eyebrow-tracking);
+    color: var(--sw-text-tertiary);
+    margin-bottom: var(--s-4);
+    text-align: center;
+  }
 }
 
-/* ── Cards grid ─────────────────────────────────────────────── */
+/* Matches .pageHeader's mobile treatment in mlas.module.css exactly. */
+@media (max-width: 640px) {
+  .pageHeader { padding-block: var(--s-6) var(--s-5); margin-bottom: var(--s-6); }
+  .pageHeaderTitle { font-size: var(--sw-fs-h2); }
+}
+
+/* Last element on the page; needs margin-bottom (§1.1 point 7). */
 .grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--s-3);
   padding: 0;
-  margin: 0;
+  margin: 0 0 var(--sw-space-9);
   list-style: none;
+}
+
+@media (max-width: 640px) {
+  .grid { margin-bottom: var(--s-10); }
 }
 
 .grid > li {
   display: contents;
 }
 
-/* ── Party card ─────────────────────────────────────────────── */
+/* Pattern B: plain bordered card, no tint, accent border on hover only (§4.2). */
 .card {
   display: flex;
   flex-direction: column;
-  background: var(--paper-2);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border);
+  border-radius: var(--sw-radius-none);
   text-decoration: none;
   color: inherit;
   overflow: hidden;
-  transition: border-color 150ms, background 150ms;
+  transition: border-color 150ms;
 }
 
 .card:hover {
-  border-color: var(--teal);
-  background: var(--paper-3);
+  border-color: var(--sw-accent);
   text-decoration: none;
 }
 
-/* ── Card body ──────────────────────────────────────────────── */
+/* Deliberate one-off: party colour as a leading swatch block, since the party IS the subject here. */
 .cardBody {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
+  display: grid;
+  grid-template-columns: 48px 1fr 76px;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "swatch name  count"
+    "swatch desc  count";
+  column-gap: var(--s-4);
+  row-gap: 4px;
   padding: var(--s-5);
   min-width: 0;
 }
 
-.cardTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-3);
-}
-
-.partyNameWrap {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-}
-
 .partySwatch {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  flex-shrink: 0;
+  grid-area: swatch;
+  align-self: start;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--sw-radius-sm);
 }
 
 .partyName {
-  font-size: 20px;
+  grid-area: name;
+  align-self: center;
+  min-width: 0;
+  font-size: clamp(20px, 2.5vw, 26px);
   font-weight: 700;
-  color: var(--ink);
-  line-height: 1.2;
-}
-
-.mlaCount {
-  font-size: 13px;
-  color: var(--ink-2);
-}
-
-.description {
-  font-size: 15px;
-  color: var(--ink-2);
-  line-height: 1.5;
-  flex: 1;
-}
-
-/* ── View link ──────────────────────────────────────────────── */
-.viewLink {
-  font-size: 13px;
-  color: var(--ink-3);
-  white-space: nowrap;
-  flex-shrink: 0;
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  line-height: 1.1;
   transition: color 120ms;
 }
 
-.card:hover .viewLink {
-  color: var(--teal);
+.card:hover .partyName {
+  color: var(--sw-accent-strong);
+}
+
+.description {
+  grid-area: desc;
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .description {
+    font-size: var(--sw-fs-body-sm);
+  }
 }
 
 .partyNameShort { display: none; }
 
-/* ── Mobile ─────────────────────────────────────────────────── */
+/* Big stat-number block (.kfigNum/.statVal treatment), spans the full card height. */
+.countCol {
+  grid-area: count;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding-left: var(--s-4);
+  border-left: 1px solid var(--sw-border);
+}
+
+.countNum {
+  font-size: var(--sw-fs-stat);
+  font-weight: var(--sw-fw-stat);
+  letter-spacing: -0.01em;
+  color: var(--sw-text-primary);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  transition: color 120ms;
+}
+
+.card:hover .countNum {
+  color: var(--sw-accent-strong);
+}
+
+.countLabel {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-tertiary);
+}
+
+/* Count moves inline with the top row; description drops to its own full-width row. */
 @media (max-width: 640px) {
-  .partyName { font-size: 17px; }
+  .cardBody {
+    grid-template-columns: 40px 1fr 68px;
+    grid-template-areas:
+      "swatch name  count"
+      "desc   desc  desc";
+    padding: var(--s-4);
+    column-gap: var(--s-3);
+    row-gap: var(--s-2);
+  }
+
+  .partySwatch { width: 40px; height: 40px; align-self: center; }
+
+  .partyName { font-size: 18px; }
   .partyNameFull { display: none; }
   .partyNameShort { display: inline; }
+
+  .countCol {
+    align-self: center;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 5px;
+    padding-left: var(--s-3);
+  }
+
+  .countNum { font-size: var(--sw-fs-h3); }
+  .countLabel { font-size: 10px; }
 }

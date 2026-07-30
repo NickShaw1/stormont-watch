@@ -39,6 +39,8 @@ export default function PartiesClient({ parties }: Props) {
       {parties.map((party) => {
         const borderColor = partyBorderColor(party.party)
         const description = PARTY_DESCRIPTIONS[party.party] ?? ''
+        // Abbreviating "Independent" to "Ind" reads as a typo, unlike "DUP"/"UUP".
+        const shortName = party.party === 'Independent' ? party.party : abbreviateParty(party.party)
 
         return (
           <li key={party.slug}>
@@ -47,18 +49,16 @@ export default function PartiesClient({ parties }: Props) {
             className={styles.card}
           >
             <div className={styles.cardBody}>
-              <div className={styles.cardTop}>
-                <span className={styles.partyNameWrap}>
-                  <span className={styles.partySwatch} style={{ background: borderColor }} aria-hidden="true" />
-                  <span className={styles.partyName}>
-                    <span className={styles.partyNameFull}>{party.party}</span>
-                    <span className={styles.partyNameShort}>{abbreviateParty(party.party)}</span>
-                  </span>
-                </span>
-                <span className={styles.viewLink}>View party ↗</span>
-              </div>
-              <span className={styles.mlaCount}>{party.mlaCount} {party.mlaCount === 1 ? 'MLA' : 'MLAs'}</span>
+              <span className={styles.partySwatch} style={{ background: borderColor }} aria-hidden="true" />
+              <span className={styles.partyName}>
+                <span className={styles.partyNameFull}>{party.party}</span>
+                <span className={styles.partyNameShort}>{shortName}</span>
+              </span>
               {description && <span className={styles.description}>{description}</span>}
+              <div className={styles.countCol}>
+                <span className={styles.countNum}>{party.mlaCount}</span>
+                <span className={styles.countLabel}>{party.mlaCount === 1 ? 'MLA' : 'MLAs'}</span>
+              </div>
             </div>
           </Link>
           </li>

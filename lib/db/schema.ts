@@ -61,7 +61,6 @@ export const memberTerms = pgTable('member_terms', {
 
 export type Mandate = typeof mandates.$inferSelect
 export type Person = typeof people.$inferSelect
-export type MemberTerm = typeof memberTerms.$inferSelect
 
 export const divisions = pgTable('divisions', {
   documentId: text('document_id').primaryKey(),
@@ -168,6 +167,7 @@ export const bills = pgTable('bills', {
   latestDate: timestamp('latest_date', { withTimezone: true }),
   royalAssentDate: date('royal_assent_date'),
   actTitle: text('act_title'),
+  legislationUrl: text('legislation_url'),
   mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
@@ -187,12 +187,9 @@ export const billStages = pgTable('bill_stages', {
 export type Member = typeof members.$inferSelect
 export type Division = typeof divisions.$inferSelect
 export type Vote = typeof votes.$inferSelect
-export type HansardReport = typeof hansardReports.$inferSelect
 export type Minister = typeof ministers.$inferSelect
 export type CommitteeChair = typeof committeeChairs.$inferSelect
-export type Expense = typeof expenses.$inferSelect
 export type Bill = typeof bills.$inferSelect
-export type BillStage = typeof billStages.$inferSelect
 
 export const registeredInterests = pgTable('registered_interests', {
   id: serial('id').primaryKey(),
@@ -209,22 +206,6 @@ export const registeredInterests = pgTable('registered_interests', {
 
 export type RegisteredInterest = typeof registeredInterests.$inferSelect
 
-export const plenaryItems = pgTable('plenary_items', {
-  documentId: text('document_id').primaryKey(),
-  title: text('title').notNull(),
-  plenaryDate: date('plenary_date').notNull(),
-  plenaryType: text('plenary_type').notNull(),
-  plenaryTypeId: text('plenary_type_id').notNull(),
-  motionCategory: text('motion_category'),
-  motionCategoryId: text('motion_category_id'),
-  text: text('text'),
-  tabledDate: date('tabled_date'),
-  mandate: text('mandate').notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }),
-})
-
-export type PlenaryItem = typeof plenaryItems.$inferSelect
-
 export const questionStats = pgTable('question_stats', {
   id: serial('id').primaryKey(),
   personId: text('person_id').notNull().references(() => members.personId),
@@ -235,7 +216,7 @@ export const questionStats = pgTable('question_stats', {
   mandate: text('mandate').notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
-  personYearMonth: unique().on(table.personId, table.year, table.month),
+  personYearMonth: unique().on(table.personId, table.year, table.month, table.mandate),
 }))
 
 export type QuestionStat = typeof questionStats.$inferSelect
@@ -254,8 +235,6 @@ export const memberRoleHistory = pgTable('member_role_history', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
-export type MemberRoleHistory = typeof memberRoleHistory.$inferSelect
-
 export const plenaryDiary = pgTable('plenary_diary', {
   eventId: text('event_id').primaryKey(),
   eventDate: date('event_date').notNull(),
@@ -266,4 +245,3 @@ export const plenaryDiary = pgTable('plenary_diary', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
-export type PlenaryDiaryEvent = typeof plenaryDiary.$inferSelect

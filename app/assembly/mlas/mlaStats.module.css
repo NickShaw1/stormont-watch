@@ -80,7 +80,7 @@
 }
 
 .name:hover {
-  color: var(--accent);
+  color: var(--sw-accent-strong);
   text-decoration: underline;
 }
 

@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type CSSProperties } from 'react'
 import Link from 'next/link'
+import { TrendingUp, ListChecks, Scale, FileText, Megaphone, PenLine } from 'lucide-react'
 import MlaPhoto from '@/components/MlaPhoto'
+import BillStagePill from '@/app/components/BillStagePill'
 import { formatMemberName, formatConstituency, formatDate } from '@/lib/format'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import type { PartyVoteStats, MlaAttendanceStat } from '@/lib/db/queries'
@@ -20,19 +22,19 @@ interface PartyStatsProps {
 function MlaStatRow({ mla }: { mla: MlaAttendanceStat }) {
   const { basePath } = useMandate()
   return (
-    <Link href={`${basePath}/assembly/mlas/${mla.personId}`} className={styles.statMlaRow}>
-      <div className={styles.statMlaPhoto}>
-        <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={40} decorative square />
+    <Link href={`${basePath}/assembly/mlas/${mla.personId}`} className={styles.factRow}>
+      <div className={styles.factRowPhoto}>
+        <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={40} decorative square personId={mla.personId} />
       </div>
-      <div className={styles.statMlaInfo}>
-        <span className={styles.statMlaName}>{formatMemberName(mla.fullName)}</span>
+      <div className={styles.factRowInfo}>
+        <span className={styles.factRowName}>{formatMemberName(mla.fullName)}</span>
         {mla.constituency && (
-          <span className={styles.statMlaConstituency}>{formatConstituency(mla.constituency)}</span>
+          <span className={styles.factRowConstituency}>{formatConstituency(mla.constituency)}</span>
         )}
       </div>
-      <div className={styles.statMlaValueCol}>
-        <span className={styles.statMlaPct}>{mla.attendancePct}%</span>
-        <span className={styles.statMlaCount}>{mla.present}/{mla.total}</span>
+      <div className={styles.factRowValueCol}>
+        <span className={styles.factRowValue}>{mla.attendancePct}%</span>
+        <span className={styles.factRowSub}>{mla.present}/{mla.total}</span>
       </div>
     </Link>
   )
@@ -45,6 +47,14 @@ function DonutChart({ stats }: { stats: PartyVoteStats; partyColor: string }) {
   const total = stats.aye + stats.no + stats.abstained + stats.noShow
 
   useEffect(() => {
+    const root = getComputedStyle(document.documentElement)
+    const colorAye = root.getPropertyValue('--sw-success').trim() || '#2f6a4f'
+    const colorNo = root.getPropertyValue('--sw-error').trim() || '#a4301f'
+    const colorAbstain = root.getPropertyValue('--sw-accent-warm').trim() || '#e0a72a'
+    const colorNoShow = root.getPropertyValue('--sw-text-tertiary').trim() || '#656b72'
+    const textPrimary = root.getPropertyValue('--sw-text-primary').trim() || '#1a1d21'
+    const textTertiary = root.getPropertyValue('--sw-text-tertiary').trim() || '#656b72'
+
     const centreTextPlugin = {
       id: 'centreText',
       beforeDraw(chart: import('chart.js').Chart<'doughnut'>) {
@@ -54,10 +64,10 @@ function DonutChart({ stats }: { stats: PartyVoteStats; partyColor: string }) {
         ctx.save()
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#222'
-        ctx.font = '500 18px sans-serif'
+        ctx.fillStyle = textPrimary
+        ctx.font = '700 18px sans-serif'
         ctx.fillText(total.toLocaleString(), cx, cy - 8)
-        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--ink-3').trim() || '#888'
+        ctx.fillStyle = textTertiary
         ctx.font = '400 11px sans-serif'
         ctx.fillText('votes', cx, cy + 10)
         ctx.restore()
@@ -73,7 +83,7 @@ function DonutChart({ stats }: { stats: PartyVoteStats; partyColor: string }) {
           labels: ['Aye', 'No', 'Abstain', 'No Show'],
           datasets: [{
             data: [stats.aye, stats.no, stats.abstained, stats.noShow],
-            backgroundColor: ['#2E6B40', '#8B1A1A', '#B8860B', '#888888'],
+            backgroundColor: [colorAye, colorNo, colorAbstain, colorNoShow],
             borderWidth: 0,
           }],
         },
@@ -97,29 +107,39 @@ function DonutChart({ stats }: { stats: PartyVoteStats; partyColor: string }) {
   }, [stats, total])
 
   const legendItems = [
-    { label: 'Aye', count: stats.aye, color: '#2E6B40' },
-    { label: 'No', count: stats.no, color: '#8B1A1A' },
-    { label: 'Abstain', count: stats.abstained, color: '#B8860B' },
-    { label: 'No show', count: stats.noShow, color: '#888888' },
+    { label: 'Aye', count: stats.aye, cls: 'success' as const },
+    { label: 'No', count: stats.no, cls: 'error' as const },
+    { label: 'Abstain', count: stats.abstained, cls: 'warm' as const },
+    { label: 'No show', count: stats.noShow, cls: 'tertiary' as const },
   ]
+
+  const swatchColor: Record<typeof legendItems[number]['cls'], string> = {
+    success: 'var(--sw-success)',
+    error: 'var(--sw-error)',
+    warm: 'var(--sw-accent-warm)',
+    tertiary: 'var(--sw-text-tertiary)',
+  }
 
   return (
     <>
-      <div style={{ position: 'relative', flex: 1, minHeight: 140, marginTop: 'var(--s-3)' }}>
+      <div className={styles.donutArea}>
         <canvas
           ref={canvasRef}
           role="img"
           aria-label={`Voting breakdown: Aye ${stats.aye.toLocaleString()}, No ${stats.no.toLocaleString()}, Abstain ${stats.abstained.toLocaleString()}, No show ${stats.noShow.toLocaleString()}`}
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }}
         />
       </div>
       <div className={styles.donutLegend}>
         {legendItems.map((item) => (
           <div key={item.label} className={styles.donutLegendItem}>
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: item.color, flexShrink: 0, display: 'inline-block' }} />
-            <span style={{ color: 'var(--ink-3)' }}>{item.label}</span>
-            <span style={{ color: 'var(--ink-2)', fontWeight: 500 }}>{item.count.toLocaleString()}</span>
-            <span style={{ color: 'var(--ink-4)' }}>{total > 0 ? Math.round(item.count / total * 100) : 0}%</span>
+            <span className={styles.donutLegendKey}>
+              <span className={styles.donutLegendSwatch} style={{ background: swatchColor[item.cls] }} />
+              {item.label}
+            </span>
+            <span className={styles.donutLegendValue}>
+              <span className={styles.donutLegendCount}>{item.count.toLocaleString()}</span>{' '}
+              <span className={styles.donutLegendPct}>{total > 0 ? Math.round(item.count / total * 100) : 0}%</span>
+            </span>
           </div>
         ))}
       </div>
@@ -143,6 +163,10 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
       if (cancelled) return
       if (!canvasRef.current) return
       if (canvasRef.current.offsetWidth === 0) return
+
+      const root = getComputedStyle(document.documentElement)
+      const tickColor = root.getPropertyValue('--sw-text-tertiary').trim() || '#656b72'
+      const gridColor = root.getPropertyValue('--sw-border').trim() || '#dcded9'
 
       import('chart.js/auto').then(({ Chart }) => {
         if (cancelled) return
@@ -177,8 +201,9 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
               y: {
                 min: 0,
                 max: 100,
-                grid: { color: 'rgba(0,0,0,0.06)' },
+                grid: { color: gridColor },
                 ticks: {
+                  color: tickColor,
                   font: { size: 11 },
                   callback: (v) => `${v}%`,
                 },
@@ -186,6 +211,7 @@ function TrendChart({ trend, partyColor }: { trend: PartyVoteStats['trend']; par
               x: {
                 grid: { display: false },
                 ticks: {
+                  color: tickColor,
                   font: { size: 11 },
                   maxRotation: 0,
                   autoSkip: false,
@@ -229,124 +255,136 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
   const singleMla = mlaCount === 1 || stats.highestMla.personId === stats.lowestMla.personId
 
   return (
-    <div className={styles.statsSection}>
-      {/* Metric cards */}
-      <div className={styles.statsGrid}>
-        {/* Attendance card */}
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Party Division Attendance Average</span>
-          <span className={styles.statValue}>{stats.attendancePct}%</span>
-          <span className={styles.statSub}>Across current and former MLAs in the {mandate.label} mandate, excluding presiding officers</span>
-          <span className={styles.statSub}><strong>{stats.present.toLocaleString()} / {stats.total.toLocaleString()}</strong> divisions party participated in</span>
-          <div className={styles.statDivider} />
+    <div>
+      {/* Metric panels */}
+      <div className={styles.factPanelGrid}>
+        {/* Attendance panel */}
+        <div className={styles.factPanel}>
+          <span className={styles.factLabel}>Party division attendance average</span>
+          <span className={styles.factValue}>{stats.attendancePct}%</span>
+          <ul className={styles.factSubList}>
+            <li>Across current and former MLAs in the {mandate.label} mandate, excluding presiding officers.</li>
+            <li>{stats.present.toLocaleString()} / {stats.total.toLocaleString()} divisions party participated in.</li>
+          </ul>
+
+          <div className={styles.factDivider} />
           {singleMla ? (
             <MlaStatRow mla={stats.highestMla} />
           ) : (
             <>
-              <div className={styles.statMlaArrow} style={{ color: 'var(--forest)' }}>↑ Highest</div>
-              <MlaStatRow mla={stats.highestMla} />
-              <div className={styles.statMlaSep} />
-              <div className={styles.statMlaArrow} style={{ color: 'var(--crimson)' }}>↓ Lowest</div>
-              <MlaStatRow mla={stats.lowestMla} />
+              <div className={styles.factRankGroup} style={{ '--rank-c': 'var(--sw-success)' } as CSSProperties}>
+                <div className={styles.factRankLabel} style={{ color: 'var(--sw-success)' }}>↑ Highest</div>
+                <MlaStatRow mla={stats.highestMla} />
+              </div>
+              <div className={styles.factRankSep} />
+              <div className={styles.factRankGroup} style={{ '--rank-c': 'var(--sw-error)' } as CSSProperties}>
+                <div className={styles.factRankLabel} style={{ color: 'var(--sw-error)' }}>↓ Lowest</div>
+                <MlaStatRow mla={stats.lowestMla} />
+              </div>
             </>
           )}
-          <p className={styles.statNote}>Based on division participation, excluding Speakers and First/Deputy First Ministers</p>
+          <p className={styles.factSub} style={{ marginTop: 'var(--s-3)' }}>Based on division participation, excluding Speakers and First/Deputy First Ministers.</p>
         </div>
 
-        {/* Donut card */}
-        <div className={styles.statCard}>
-          <span className={styles.statLabel}>Voting Breakdown</span>
-          <span className={styles.statSub}>All votes cast by current and former MLAs, excluding presiding officers</span>
+        {/* Donut panel */}
+        <div className={styles.factPanel}>
+          <span className={styles.factLabel}>Voting breakdown</span>
+          <span className={styles.factSub}>All votes cast by current and former MLAs, excluding presiding officers.</span>
           <DonutChart stats={stats} partyColor={partyColor} />
         </div>
       </div>
 
       {/* Trend chart */}
-      <hr className="section-rule" />
-      <h3 className={styles.expensesSectionHeading} style={{ marginBottom: 'var(--s-4)' }}>Party Division <em>Attendance</em></h3>
-      <div style={{ position: 'relative', width: '100%', height: '200px' }}>
+      <div className={`${styles.sectionHead} ${styles.sectionHeadWithSubtitle}`}>
+        <span className={styles.sectionEyebrow}>Trends</span>
+        <h3 className={styles.sectionHeading}>
+          <TrendingUp className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+          Party division attendance
+        </h3>
+        <p className={styles.sectionSubtitle}>Only months with recorded divisions are shown. Excludes presiding officers and divisions before each MLA&apos;s mandate start date.</p>
+      </div>
+      <div className={styles.chartArea}>
         <TrendChart trend={stats.trend} partyColor={partyColor} />
       </div>
-      <div className="note-card" style={{ marginTop: 'var(--s-3)' }}>
-        <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
-          <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
-          <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
-        </svg>
-        <p>Only months with recorded divisions are shown. Excludes presiding officers and divisions before each MLA&apos;s mandate start date.</p>
-      </div>
 
-      <hr className="section-rule" />
-      {/* Recent divisions */}
-      <h3 className={styles.statsHeading}>Recent divisions</h3>
-      {/* Desktop table */}
-      <div className={styles.divisionsTable}>
-        <table className={styles.divTable}>
-          <colgroup>
-            <col style={{ width: 'auto' }} />
-            <col style={{ width: 96 }} />
-            <col style={{ width: 96 }} />
-            <col style={{ width: 120 }} />
-          </colgroup>
-          <thead>
-            <tr>
-              <th scope="col">Division</th>
-              <th scope="col">Party vote</th>
-              <th scope="col">Result</th>
-              <th scope="col">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stats.recentDivisions.map((d, i) => {
-              const { title, subtitle } = formatDivisionSubject(d.title ?? d.subject)
-              const passed = /carried|agreed/i.test(d.outcome ?? '') ? true : /negatived|fell/i.test(d.outcome ?? '') ? false : null
-              const voteLabel = d.partyVote === 'AYE' ? 'Aye' : d.partyVote === 'NO' ? 'No' : d.partyVote === 'ABSTAINED' ? 'Abstain' : d.partyVote === 'NO_SHOW' ? 'No show' : null
-              const voteCls = d.partyVote === 'AYE' ? 'vote-aye' : d.partyVote === 'NO' ? 'vote-no' : d.partyVote === 'ABSTAINED' ? 'vote-abstain' : 'vote-noshow'
-              return (
-                <tr key={d.documentId} className={i % 2 === 1 ? styles.divRowEven : ''}>
-                  <td className={styles.divSubjectCell}>
-                    <Link href={`${basePath}/assembly/divisions/${d.documentId}`} className={styles.divSubjectLink}>
-                      <span className={styles.divSubjectTitle}>{title}</span>
-                      {subtitle && <span className={styles.divSubjectSub}>{subtitle}</span>}
-                    </Link>
-                  </td>
-                  <td className={styles.divResultCell}>
-                    {voteLabel && <span className={`vote-pill ${voteCls}`}>{voteLabel}</span>}
-                  </td>
-                  <td className={styles.divResultCell}>
-                    {passed !== null && <span className={`pill ${passed ? 'pass' : 'fail'}`}>{passed ? 'Passed' : 'Failed'}</span>}
-                  </td>
-                  <td className={styles.divDateCell}>{formatDate(d.divisionDate)}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+      {/* Recent divisions — matches the MLA detail page's voting record row. */}
+      <div className={`${styles.subHeadRow} ${styles.subHeadingSpaced}`}>
+        <div className={styles.sectionHead}>
+          <span className={styles.sectionEyebrow}>Voting record</span>
+          <h3 className={styles.sectionHeading}>
+            <ListChecks className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+            Party vote on recent divisions
+          </h3>
+        </div>
+        <Link href={`${basePath}/assembly/votes`} className={styles.viewAllBtn}>All divisions</Link>
       </div>
-
-      {/* Mobile cards */}
-      <div className={styles.divMobileCards}>
+      <div className={styles.voteRowList}>
         {stats.recentDivisions.map((d) => {
-          const { title, subtitle } = formatDivisionSubject(d.title ?? d.subject)
+          const voteLabel = d.partyVote === 'AYE' ? 'Aye' : d.partyVote === 'NO' ? 'No' : d.partyVote === 'ABSTAINED' ? 'Abstain' : d.partyVote === 'NO_SHOW' ? 'No Show' : null
+          const voteChipCls = d.partyVote === 'AYE' ? styles.voteChipAYE : d.partyVote === 'NO' ? styles.voteChipNO : d.partyVote === 'ABSTAINED' ? styles.voteChipABSTAINED : styles.voteChipNO_SHOW
           const passed = /carried|agreed/i.test(d.outcome ?? '') ? true : /negatived|fell/i.test(d.outcome ?? '') ? false : null
-          const voteLabel = d.partyVote === 'AYE' ? 'Aye' : d.partyVote === 'NO' ? 'No' : d.partyVote === 'ABSTAINED' ? 'Abstain' : d.partyVote === 'NO_SHOW' ? 'No show' : null
-          const voteCls = d.partyVote === 'AYE' ? 'vote-aye' : d.partyVote === 'NO' ? 'vote-no' : d.partyVote === 'ABSTAINED' ? 'vote-abstain' : 'vote-noshow'
+          const raw = d.title ?? d.subject
+          const { title, subtitle, stage } = formatDivisionSubject(raw)
+
+          const amendmentMatch = subtitle?.match(/^Amendment (\d+)$/)
+          const stageText = stage
+
+          // Same category derivation as the homepage's Recent Divisions.
+          const t = d.title ?? ''
+          const s = d.subject ?? ''
+          const isStatutory = /^The draft /i.test(t) || /^Prayer of Annulment:/i.test(t) || /^Applicability Motion/i.test(t)
+          const isBill = !isStatutory && (/NIA Bill/i.test(s) || /(?:First|Second|Committee|Consideration|Further Consideration|Final) Stage:/i.test(s))
+          const category = isStatutory ? 'Regulations' : isBill ? 'Bill' : 'Motion'
+          const CategoryIcon = isStatutory ? FileText : isBill ? Scale : Megaphone
+          const categoryCls = isStatutory ? styles.chipRegulations : isBill ? styles.chipBill : styles.chipMotion
+
           return (
-            <Link key={`mob-${d.documentId}`} href={`${basePath}/assembly/divisions/${d.documentId}`} className={styles.divMobileCard}>
-              <div className={styles.divMobileTitle}>{title}</div>
-              <div className={styles.divMobileSub} aria-hidden={!subtitle || undefined}>
-                {subtitle ?? <span aria-hidden="true">&nbsp;</span>}
+            <Link
+              key={d.documentId}
+              href={`${basePath}/assembly/divisions/${d.documentId}`}
+              className={styles.voteRow}
+              aria-label={`View division: ${title}`}
+            >
+              <div className={styles.voteRowMain}>
+                <span className={styles.voteRowTitle}>{title}</span>
+                <div className={styles.voteRowChips}>
+                  <span className={`${styles.divChip} ${categoryCls}`}>
+                    <CategoryIcon size={12} strokeWidth={2} aria-hidden="true" />
+                    {category}
+                  </span>
+                  {stageText && (
+                    <BillStagePill category="in-progress" currentStage={stageText} passed={null} />
+                  )}
+                  {amendmentMatch && (
+                    <span className={`${styles.divChip} ${styles.chipAmendment}`}>
+                      <PenLine size={12} strokeWidth={2} aria-hidden="true" />
+                      Amendment {amendmentMatch[1]}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className={styles.divMobilePills}>
-                <span className={styles.divMobilePillGroup}>
-                  <span className={styles.divMobilePillLabel}>Vote</span>
-                  {voteLabel && <span className={`vote-pill ${voteCls}`}>{voteLabel}</span>}
-                </span>
-                <span className={styles.divMobilePillGroup}>
-                  <span className={styles.divMobilePillLabel}>Result</span>
-                  {passed !== null && <span className={`pill ${passed ? 'pass' : 'fail'}`}>{passed ? 'Passed' : 'Failed'}</span>}
-                </span>
-                <span className={styles.divMobileDate}>{formatDate(d.divisionDate)}</span>
+
+              <div className={styles.voteRowMeta}>
+                {(voteLabel || passed !== null) && (
+                  <span className={styles.voteOutcomeLine}>
+                    {voteLabel && (
+                      <span className={styles.voteOutcomePair}>
+                        <span className={styles.voteOutcomeLabel}>Party voted</span>
+                        <span className={voteChipCls}>{voteLabel}</span>
+                      </span>
+                    )}
+                    {voteLabel && passed !== null && <span className={styles.voteOutcomeSep}>&middot;</span>}
+                    {passed !== null && (
+                      <span className={styles.voteOutcomePair}>
+                        <span className={styles.voteOutcomeLabel}>Result</span>
+                        <span className={passed ? styles.voteOutcomePass : styles.voteOutcomeFail}>
+                          {passed ? 'Passed' : 'Failed'}
+                        </span>
+                      </span>
+                    )}
+                  </span>
+                )}
+                <span className={styles.voteRowDateCaption}>{formatDate(d.divisionDate)}</span>
               </div>
             </Link>
           )

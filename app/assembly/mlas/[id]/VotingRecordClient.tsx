@@ -1,11 +1,13 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { Vote, FileText, Scale, Megaphone, PenLine } from 'lucide-react'
 import { isPassed } from '@/lib/bills'
 import { formatDate } from '@/lib/format'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import { useMandate } from '@/components/MandateContext'
+import BillStagePill from '@/app/components/BillStagePill'
 import styles from './mlaDetail.module.css'
 
 type VoteRow = {
@@ -22,7 +24,6 @@ type Filter = 'ALL' | 'AYE' | 'NO' | 'NO_SHOW' | 'ABSTAINED'
 
 interface Props {
   votes: VoteRow[]
-  memberName: string
   noExpensesTab?: boolean
 }
 
@@ -35,7 +36,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 ]
 
 
-export default function VotingRecordClient({ votes, memberName, noExpensesTab }: Props) {
+export default function VotingRecordClient({ votes, noExpensesTab }: Props) {
   const { basePath } = useMandate()
   const [filter, setFilter] = useState<Filter>('ALL')
   const filteredVotes = filter === 'ALL' ? votes : votes.filter((v) => v.vote === filter)
@@ -55,6 +56,23 @@ export default function VotingRecordClient({ votes, memberName, noExpensesTab }:
   const tabRefs = useRef<Record<Filter, HTMLButtonElement | null>>({
     ALL: null, AYE: null, NO: null, NO_SHOW: null, ABSTAINED: null,
   })
+
+  // Mobile-only dropdown, same shape as the expenses year picker.
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false)
+  const filterDropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!filterDropdownOpen) return
+    function onOutside(e: MouseEvent) {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target as Node)) {
+        setFilterDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [filterDropdownOpen])
+
+  const activeFilter = FILTERS.find((f) => f.key === filter)!
 
   function handleKeyDown(e: React.KeyboardEvent, currentKey: Filter) {
     const keys = visibleFilters.map((f) => f.key)
@@ -76,7 +94,13 @@ export default function VotingRecordClient({ votes, memberName, noExpensesTab }:
   return (
     <section aria-labelledby="voting-record-heading">
       <div className={styles.recordHeader}>
-        <h2 id="voting-record-heading" className={`${styles.sectionHeading}${noExpensesTab ? ` ${styles.noExpensesTop}` : ''}`}>Voting record</h2>
+        <div className={`${styles.sectionHead}${noExpensesTab ? ` ${styles.noExpensesTop}` : ''}`}>
+          <span className={styles.sectionEyebrow}>This MLA</span>
+          <h2 id="voting-record-heading" className={styles.sectionHeading}>
+            <Vote className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+            Voting record
+          </h2>
+        </div>
         <div
           className={`${styles.filters}${noExpensesTab ? ` ${styles.noExpensesTop}` : ''}`}
           role="tablist"
@@ -100,154 +124,136 @@ export default function VotingRecordClient({ votes, memberName, noExpensesTab }:
             </button>
           ))}
         </div>
+
+        <div
+          className={`${styles.voteFilterDropdownWrap}${noExpensesTab ? ` ${styles.noExpensesTop}` : ''}`}
+          ref={filterDropdownRef}
+        >
+          <button
+            type="button"
+            className={styles.expensesYearTrigger}
+            onClick={() => setFilterDropdownOpen((o) => !o)}
+            aria-haspopup="listbox"
+            aria-expanded={filterDropdownOpen}
+            aria-label={`Filter voting record, currently ${activeFilter.label}`}
+          >
+            <span>{activeFilter.label} ({counts[activeFilter.key]})</span>
+            <svg
+              className={`${styles.expensesYearChevron} ${filterDropdownOpen ? styles.expensesYearChevronOpen : ''}`}
+              width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+            >
+              <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+          {filterDropdownOpen && (
+            <ul className={styles.expensesYearDropdownList} role="listbox">
+              {visibleFilters.map((f) => (
+                <li
+                  key={f.key}
+                  role="option"
+                  tabIndex={0}
+                  aria-selected={filter === f.key}
+                  className={`${styles.expensesYearDropdownItem} ${filter === f.key ? styles.expensesYearDropdownItemSelected : ''}`}
+                  onClick={() => { setFilter(f.key); setFilterDropdownOpen(false) }}
+                >
+                  {f.label} ({counts[f.key]})
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
-      <p className={styles.voteCount} aria-live="polite" aria-atomic="true">
-        <span><strong>{filteredVotes.length}</strong> vote{filteredVotes.length !== 1 ? 's' : ''}</span>
-        {filter !== 'ALL' && (
-          <span className={`${styles.filterPill} ${styles[`filterPill${filter}`]}`}>
-            {filter === 'NO_SHOW' ? 'No show' : filter === 'ABSTAINED' ? 'Abstain' : filter.charAt(0) + filter.slice(1).toLowerCase()}
-          </span>
-        )}
-      </p>
+      <span className={styles.voteCountSr} role="status" aria-live="polite" aria-atomic="true">
+        {filteredVotes.length} vote{filteredVotes.length !== 1 ? 's' : ''}
+      </span>
 
       <div
         id="voting-record-panel"
         role="tabpanel"
         aria-labelledby="voting-record-heading"
+        className={styles.voteRowList}
       >
-        {/* Desktop table */}
-        <div className={`${styles.tableWrap} ${styles.desktopTable}`}>
-          <table
-            className={styles.table}
-            aria-label={`Voting record for ${memberName}`}
-          >
-            <colgroup>
-              <col className={styles.colSubject} />
-              <col className={styles.colVote} />
-              <col className={styles.colResult} />
-              <col className={`${styles.colDate} ${styles.dateCol}`} />
-            </colgroup>
-            <thead>
-              <tr>
-                <th scope="col">Division</th>
-                <th scope="col" className={styles.voteHeader}>Vote</th>
-                <th scope="col" className={styles.resultCol}>Result</th>
-                <th scope="col" className={styles.dateCell}>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleVotes.map((h, i) => {
-                const voteLabel =
-                  h.vote === 'AYE'       ? 'Aye' :
-                  h.vote === 'NO'        ? 'No' :
-                  h.vote === 'ABSTAINED' ? 'Abstain' :
-                  h.vote === 'NO_SHOW'   ? 'No Show' : null
+        {visibleVotes.map((h) => {
+          const voteLabel =
+            h.vote === 'AYE'       ? 'Aye' :
+            h.vote === 'NO'        ? 'No' :
+            h.vote === 'ABSTAINED' ? 'Abstain' :
+            h.vote === 'NO_SHOW'   ? 'No Show' : null
 
-                const voteCls =
-                  h.vote === 'AYE'       ? 'vote-aye' :
-                  h.vote === 'NO'        ? 'vote-no' :
-                  h.vote === 'ABSTAINED' ? 'vote-abstain' :
-                  'vote-noshow'
+          const voteChipCls =
+            h.vote === 'AYE'       ? styles.voteChipAYE :
+            h.vote === 'NO'        ? styles.voteChipNO :
+            h.vote === 'ABSTAINED' ? styles.voteChipABSTAINED :
+            styles.voteChipNO_SHOW
+          const passed = isPassed(h.outcome)
+          const raw = h.title ?? h.subject
+          const { title, subtitle, stage } = formatDivisionSubject(raw)
 
-                const passed = isPassed(h.outcome)
-                const isEven = i % 2 === 1
-                const raw = h.title ?? h.subject
-                const { title, subtitle } = formatDivisionSubject(raw)
-                return (
-                  <tr
-                    key={`${filter}-${h.documentId}`}
-                    className={[
-                      styles.voteRow,
-                      isEven ? styles.rowEven : '',
-                      h.vote === 'NO_SHOW' ? styles.voteNoShow : '',
-                    ].filter(Boolean).join(' ')}
-                  >
-                    <td className={styles.subjectCell}>
-                      <Link
-                        href={`${basePath}/assembly/divisions/${h.documentId}`}
-                        aria-label={`View division: ${title}`}
-                      >
-                        <span className={styles.subjectTitle}>{title}</span>
-                        {subtitle && (
-                          <span className={styles.subjectSubtitle}>{subtitle}</span>
-                        )}
-                      </Link>
-                    </td>
-                    <td className={styles.voteCell}>
-                      {voteLabel && (
-                        <span className={`vote-pill ${voteCls}`}>{voteLabel}</span>
-                      )}
-                    </td>
-                    <td className={styles.resultCell}>
-                      {passed !== null && (
-                        <span
-                          className={styles.outcomeDot}
-                          data-passed={passed}
-                          role="img"
-                          aria-label={passed ? 'Passed' : 'Failed'}
-                        />
-                      )}
-                    </td>
-                    <td className={styles.dateCell}>{formatDate(h.divisionDate.toISOString())}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+          // Amendment label becomes a chip instead of plain caption text.
+          const amendmentMatch = subtitle?.match(/^Amendment (\d+)$/)
+          const stageText = stage
 
-        {/* Mobile cards */}
-        <div className={styles.mobileCards}>
-          {visibleVotes.map((h) => {
-            const voteLabel =
-              h.vote === 'AYE'       ? 'Aye' :
-              h.vote === 'NO'        ? 'No' :
-              h.vote === 'ABSTAINED' ? 'Abstain' :
-              h.vote === 'NO_SHOW'   ? 'No Show' : null
+          // Same category derivation as the homepage's Recent Divisions.
+          const t = h.title ?? ''
+          const s = h.subject ?? ''
+          const isStatutory = /^The draft /i.test(t) || /^Prayer of Annulment:/i.test(t) || /^Applicability Motion/i.test(t)
+          const isBill = !isStatutory && (/NIA Bill/i.test(s) || /(?:First|Second|Committee|Consideration|Further Consideration|Final) Stage:/i.test(s))
+          const category = isStatutory ? 'Regulations' : isBill ? 'Bill' : 'Motion'
+          const CategoryIcon = isStatutory ? FileText : isBill ? Scale : Megaphone
+          const categoryCls = isStatutory ? styles.chipRegulations : isBill ? styles.chipBill : styles.chipMotion
 
-            const voteCls =
-              h.vote === 'AYE'       ? 'vote-aye' :
-              h.vote === 'NO'        ? 'vote-no' :
-              h.vote === 'ABSTAINED' ? 'vote-abstain' :
-              'vote-noshow'
+          return (
+            <Link
+              key={`${filter}-${h.documentId}`}
+              href={`${basePath}/assembly/divisions/${h.documentId}`}
+              className={styles.voteRow}
+              aria-label={`View division: ${title}`}
+            >
+              <div className={styles.voteRowMain}>
+                <span className={styles.voteRowTitle}>{title}</span>
+                <div className={styles.voteRowChips}>
+                  <span className={`${styles.divChip} ${categoryCls}`}>
+                    <CategoryIcon size={12} strokeWidth={2} aria-hidden="true" />
+                    {category}
+                  </span>
+                  {stageText && (
+                    <BillStagePill category="in-progress" currentStage={stageText} passed={null} />
+                  )}
+                  {amendmentMatch && (
+                    <span className={`${styles.divChip} ${styles.chipAmendment}`}>
+                      <PenLine size={12} strokeWidth={2} aria-hidden="true" />
+                      Amendment {amendmentMatch[1]}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-            const passed = isPassed(h.outcome)
-            const raw = h.title ?? h.subject
-            const { title, subtitle } = formatDivisionSubject(raw)
-            return (
-              <Link
-                key={`mobile-${filter}-${h.documentId}`}
-                href={`${basePath}/assembly/divisions/${h.documentId}`}
-                className={styles.mobileCard}
-              >
-                <div className={styles.mobileTitle}>{title}</div>
-                {subtitle && (
-                  <div className={styles.mobileSub}>{subtitle}</div>
-                )}
-                <div className={styles.mobileMeta}>
-                  <div className={styles.mobilePills}>
+              <div className={styles.voteRowMeta}>
+                {(voteLabel || passed !== null) && (
+                  <span className={styles.voteOutcomeLine}>
                     {voteLabel && (
-                      <span className={styles.mobilePillGroup}>
-                        <span className={styles.mobilePillLabel}>Vote</span>
-                        <span className={`vote-pill ${voteCls}`}>{voteLabel}</span>
+                      <span className={styles.voteOutcomePair}>
+                        <span className={styles.voteOutcomeLabel}>Voted</span>
+                        <span className={voteChipCls}>{voteLabel}</span>
                       </span>
                     )}
+                    {voteLabel && passed !== null && <span className={styles.voteOutcomeSep}>&middot;</span>}
                     {passed !== null && (
-                      <span className={styles.mobilePillGroup}>
-                        <span className={styles.mobilePillLabel}>Result</span>
-                        <span className={passed ? styles.outcomePass : styles.outcomeFail}>
+                      <span className={styles.voteOutcomePair}>
+                        <span className={styles.voteOutcomeLabel}>Result</span>
+                        <span className={passed ? styles.voteOutcomePass : styles.voteOutcomeFail}>
                           {passed ? 'Passed' : 'Failed'}
                         </span>
                       </span>
                     )}
-                  </div>
-                  <span className={styles.mobileDate}>{formatDate(h.divisionDate.toISOString())}</span>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
+                  </span>
+                )}
+                <span className={styles.voteRowDateCaption}>{formatDate(h.divisionDate.toISOString())}</span>
+              </div>
+            </Link>
+          )
+        })}
       </div>
 
     </section>

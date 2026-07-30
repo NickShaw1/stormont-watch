@@ -10,15 +10,15 @@
 }
 
 .loading {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-secondary);
   padding: 2rem 0;
   text-align: center;
 }
 
 .attribution {
-  font-size: 0.625rem;
-  color: var(--text-secondary);
+  font-size: var(--sw-fs-eyebrow);
+  color: var(--sw-text-secondary);
   margin: 0 0 8px;
   line-height: 1.4;
   text-align: center;
@@ -46,11 +46,11 @@
 
 .tooltip {
   position: absolute;
-  background: var(--accent);
-  color: white;
-  border-radius: 4px;
+  background: #1a1d21;
+  color: #ffffff;
+  border-radius: 3px;
   padding: 3px 8px;
-  font-size: 0.75rem;
+  font-size: var(--sw-fs-body-sm);
   font-weight: 500;
   pointer-events: none;
   white-space: nowrap;

@@ -86,6 +86,7 @@ export async function syncQuestionStats(db: Db) {
       // Upsert into question_stats
       for (const [key, { written, oral }] of Object.entries(counts)) {
         const [year, month] = key.split('-').map(Number)
+        const mandate = mandateIdForDate(`${year}-${String(month).padStart(2, '0')}-01`)
         await db
           .insert(schema.questionStats)
           .values({
@@ -94,14 +95,13 @@ export async function syncQuestionStats(db: Db) {
             month,
             writtenCount: written,
             oralCount: oral,
-            mandate: mandateIdForDate(`${year}-${String(month).padStart(2, '0')}-01`),
+            mandate,
           })
           .onConflictDoUpdate({
-            target: [schema.questionStats.personId, schema.questionStats.year, schema.questionStats.month],
+            target: [schema.questionStats.personId, schema.questionStats.year, schema.questionStats.month, schema.questionStats.mandate],
             set: {
               writtenCount: written,
               oralCount: oral,
-              mandate: mandateIdForDate(`${year}-${String(month).padStart(2, '0')}-01`),
               updatedAt: new Date(),
             },
           })

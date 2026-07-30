@@ -1,7 +1,9 @@
-import Link from 'next/link'
+import { PoundSterling } from 'lucide-react'
 import { getAllMembers, getAllMemberRoleHistories, getTotalExpensesPerMember } from '@/lib/db/queries'
-import { calculateMandateEarnings, apiRoleToSalaryRole, salaryRatesPublished, type RoleInterval } from '@/lib/salaries'
+import { calculateMandateEarnings, apiRoleToSalaryRole, salaryRatesPublished, hasServedOneYear, type RoleInterval } from '@/lib/salaries'
 import OverallCostListClient from './OverallCostListClient'
+import StatsBreadcrumb from '../stats/StatsBreadcrumb'
+import styles from '../expenses/expenses.module.css'
 import { type Mandate, sittingAdjective } from '@/lib/constants/mandates'
 
 const mlaImg = (personId: string) => `/mla-images/${personId}.jpg`
@@ -35,7 +37,7 @@ export default async function OverallCostPageBody({
   const ratesPublished = salaryRatesPublished(mandate.id)
 
   const rows = allMembers
-    .filter(m => m.mandateStart)
+    .filter(m => m.mandateStart && hasServedOneYear(m.mandateStart, today))
     .map(m => {
       const history = rolesByPerson.get(m.personId) ?? []
       const roleIntervals: RoleInterval[] = history
@@ -65,22 +67,18 @@ export default async function OverallCostPageBody({
 
   return (
     <div className="container">
-      <header className="page-header">
-        <nav aria-label="Breadcrumb" className="breadcrumb">
-          <ol>
-            <li><Link href={`${basePath}/assembly/stats`}>Statistics</Link></li>
-            <li aria-current="page">Overall cost</li>
-          </ol>
-        </nav>
-        <h1>Overall cost</h1>
-        <p className="lede">Total estimated mandate salary plus all published expenses for every <strong>{sittingAdjective(mandate)} MLA</strong>. MLAs who joined within the last year are excluded as their figures are not comparable.</p>
+      <header className={styles.pageHeader}>
+        <StatsBreadcrumb label="Overall cost" basePath={basePath} />
+        <span className={styles.pageHeaderEyebrow}>Rankings</span>
+        <h1 className={styles.pageHeaderTitle}>
+          <PoundSterling className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
+          Overall cost
+        </h1>
+        <p className={styles.lede}>Total estimated mandate salary plus all published expenses for every {sittingAdjective(mandate)} MLA. MLAs who joined within the last year are excluded as their figures are not comparable. Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</p>
       </header>
 
       {ratesPublished ? (
-        <>
-          <div className="notice-card">Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</div>
-          <OverallCostListClient rows={rows} />
-        </>
+        <OverallCostListClient rows={rows} />
       ) : (
         <div className="notice-card">Overall cost figures for the {mandate.label} mandate are not yet available: the salary component depends on the Assembly&apos;s published pay rates, which have not been released for this mandate.</div>
       )}

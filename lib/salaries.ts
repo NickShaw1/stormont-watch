@@ -14,14 +14,14 @@ export type SalaryRole =
   | 'minister'
   | 'junior_minister'
 
-export interface SalaryPeriod {
+interface SalaryPeriod {
   start: string
   end: string | null
   isSuspension: boolean
   rates: Record<SalaryRole, number>
 }
 
-export const SALARY_PERIODS: SalaryPeriod[] = [
+const SALARY_PERIODS: SalaryPeriod[] = [
   {
     start: '2022-05-05',
     end: '2022-12-31',
@@ -125,7 +125,7 @@ export const SALARY_PERIODS: SalaryPeriod[] = [
  * published; a mandate that is absent means rates are pending — the salary functions then
  * return null so the UI can show "rates pending" instead of a misleading £0 (fail loud).
  */
-export const SALARY_PERIODS_BY_MANDATE: Record<string, SalaryPeriod[]> = {
+const SALARY_PERIODS_BY_MANDATE: Record<string, SalaryPeriod[]> = {
   '2022-2027': SALARY_PERIODS,
 }
 
@@ -134,7 +134,17 @@ export function salaryRatesPublished(mandate: string): boolean {
   return mandate in SALARY_PERIODS_BY_MANDATE
 }
 
-export const ROLE_PRIORITY: Record<SalaryRole, number> = {
+/**
+ * True once an MLA has held their seat for a full year, so partial-year cost/salary
+ * figures aren't compared against MLAs with a full year on record.
+ */
+export function hasServedOneYear(mandateStart: string, todayStr: string): boolean {
+  const oneYearAgo = new Date(todayStr)
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+  return new Date(mandateStart) <= oneYearAgo
+}
+
+const ROLE_PRIORITY: Record<SalaryRole, number> = {
   first_minister: 9,
   deputy_first_minister: 8,
   speaker: 7,

@@ -1,7 +1,8 @@
-import Link from 'next/link'
+import { PoundSterling, AlertTriangle } from 'lucide-react'
 import { getAllExpensesLeagueTable, getMlasWithoutExpenses } from '@/lib/db/queries'
 import ExpensesListClient from './ExpensesListClient'
 import MissingMlasTable from './MissingMlasTable'
+import StatsBreadcrumb from '../stats/StatsBreadcrumb'
 import styles from './expenses.module.css'
 import type { Mandate } from '@/lib/constants/mandates'
 
@@ -39,26 +40,27 @@ export default async function ExpensesPageBody({
 
   return (
     <div className="container">
-      <header className="page-header">
-        <nav aria-label="Breadcrumb" className="breadcrumb">
-          <ol>
-            <li><Link href={`${basePath}/assembly/stats`}>Statistics</Link></li>
-            <li aria-current="page">MLA expenses</li>
-          </ol>
-        </nav>
-        <h1>MLA expenses</h1>
-        <p className="lede">Expenses claimed by every MLA: office costs, travel, constituency support and staff salaries.</p>
+      <header className={styles.pageHeader}>
+        <StatsBreadcrumb label="MLA expenses" basePath={basePath} />
+        <span className={styles.pageHeaderEyebrow}>Rankings</span>
+        <h1 className={styles.pageHeaderTitle}>
+          <PoundSterling className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
+          MLA expenses
+        </h1>
+        <p className={styles.lede}>Expenses claimed by every MLA: office costs, travel, constituency support and staff salaries.</p>
       </header>
 
       {missing.length > 0 && (
         <div className={styles.missingSection} role="note" aria-label="MLAs with no expenses on record">
-          <h2 className={styles.missingHeading}>
-            {missing.length} MLA{missing.length !== 1 ? 's' : ''} {missing.length !== 1 ? 'have' : 'has'} no expenses on record for this period
-          </h2>
-          <div className={styles.tableWrap}>
-            <MissingMlasTable missing={missing} />
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionEyebrow}>Data gap</span>
+            <h2 className={styles.sectionHeading}>
+              <AlertTriangle className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+              No record
+            </h2>
+            <p className={styles.sectionSubtitle}>{missing.length} MLA{missing.length !== 1 ? 's' : ''} {missing.length !== 1 ? 'have' : 'has'} no expenses on record for this period.</p>
           </div>
-          <hr className="section-rule" />
+          <MissingMlasTable missing={missing} />
         </div>
       )}
 

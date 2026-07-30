@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: 'Legislation',
   description: `Browse all bills and acts in the Northern Ireland Assembly since the ${CURRENT_MANDATE.label} mandate. Track legislation from introduction through to Royal Assent.`,
   openGraph: {
-    title: 'Legislation — Stormont Watch',
+    title: 'Legislation - Stormont Watch',
     description: `Browse all bills and acts in the Northern Ireland Assembly since the ${CURRENT_MANDATE.label} mandate. Track legislation from introduction through to Royal Assent.`,
     images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },

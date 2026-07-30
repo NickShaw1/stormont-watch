@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: bill.short_title,
     description,
     openGraph: {
-      title: `${bill.short_title} — Stormont Watch`,
+      title: `${bill.short_title} - Stormont Watch`,
       description,
       images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
     },

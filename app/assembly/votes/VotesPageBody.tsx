@@ -1,3 +1,4 @@
+import { Vote } from 'lucide-react'
 import { getAllDivisionsForList } from '@/lib/db/queries'
 
 import { isPassed } from '@/lib/bills'
@@ -38,15 +39,22 @@ export default async function VotesPageBody({
 
   return (
     <div className="container">
-      <header className={`${styles.pageHeader} page-header`}>
-        <span className="eyebrow">The vote record</span>
-        <h1>Divisions</h1>
-        <p className={styles.lede}>Every recorded division in the Assembly since {mandate.startLabel} including cross-community votes, opposition motions and bill stages.</p>
+      <header className={styles.pageHeader}>
+        <span className={styles.pageHeaderEyebrow}>The vote record</span>
+        <h1 className={styles.pageHeaderTitle}>
+          <Vote className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
+          Votes
+        </h1>
+        <p className={styles.lede}>Every recorded division in the Assembly since {mandate.startLabel}, including cross-community votes, opposition motions and bill stages. Click any vote for the full breakdown: party and designation splits, and how each MLA voted.</p>
       </header>
-      {mandate.hadEarlySuspension && (
-        <p className={styles.notice}>The Assembly did not sit between May 2022 and February 2024. No divisions were recorded during this period aside from procedural Speaker nomination votes.</p>
-      )}
+
       <VotesListClient allItems={allItems} />
+
+      {mandate.hadEarlySuspension && (
+        <div className={`${styles.noticeBlock} ${styles.sectionLast}`}>
+          <p className={styles.notice}>The Assembly did not sit between May 2022 and February 2024. No divisions were recorded during this period aside from procedural Speaker nomination votes.</p>
+        </div>
+      )}
     </div>
   )
 }

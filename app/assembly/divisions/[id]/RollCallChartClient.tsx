@@ -45,6 +45,10 @@ export default function RollCallChartClient({ votes }: { votes: Vote[] }) {
       ),
     }))
 
+    const root = getComputedStyle(document.documentElement)
+    const tickColor = root.getPropertyValue('--sw-text-tertiary').trim() || '#656b72'
+    const gridColor = root.getPropertyValue('--sw-border').trim() || '#dcded9'
+
     import('chart.js/auto').then(({ Chart }) => {
       if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
       if (!canvasRef.current) return
@@ -68,13 +72,13 @@ export default function RollCallChartClient({ votes }: { votes: Vote[] }) {
             x: {
               stacked: true,
               beginAtZero: true,
-              grid: { color: 'rgba(0,0,0,0.06)' },
-              ticks: { font: { size: 11 }, precision: 0 },
+              grid: { color: gridColor },
+              ticks: { font: { size: 11 }, precision: 0, color: tickColor },
             },
             y: {
               stacked: true,
               grid: { display: false },
-              ticks: { font: { size: 12, weight: 'bold' } },
+              ticks: { font: { size: 12, weight: 'bold' }, color: tickColor },
             },
           },
         },
@@ -86,7 +90,9 @@ export default function RollCallChartClient({ votes }: { votes: Vote[] }) {
 
   return (
     <div className={styles.rollCallChart}>
-      <canvas ref={canvasRef} />
+      <div className={styles.chartCanvasWrap}>
+        <canvas ref={canvasRef} />
+      </div>
     </div>
   )
 }

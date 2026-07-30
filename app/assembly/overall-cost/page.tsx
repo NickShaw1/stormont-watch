@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'MLA Overall Cost',
   description: 'All current MLAs ranked by total public cost — mandate salary plus all published expenses.',
   openGraph: {
-    title: 'MLA Overall Cost — Stormont Watch',
+    title: 'MLA Overall Cost - Stormont Watch',
     description: 'All current MLAs ranked by total public cost — mandate salary plus all published expenses.',
     images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },

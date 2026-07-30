@@ -1,99 +1,115 @@
-/* Desktop roll call — three columns */
-.rollCallFilters,
+/* Desktop roll call shows four columns; mobile switches to a filter dropdown + a flat list. */
+.rollCallFilterDropdown,
 .loadMore,
 .rollCallMobileList {
   display: none;
 }
 
-/* Filter buttons */
-.filterBtn {
+.filterCount {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  min-height: 44px;
-  border-radius: 999px;
-  border: 1px solid var(--rule);
-  background: transparent;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.filterBtn:hover {
-  background: var(--surface);
-  color: var(--text-primary);
-  border-color: var(--accent);
-}
-
-.filterBtnActive {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-
-.filterBtnActive:hover {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-
-.filterBtnActive[data-filter="AYE"] {
-  background: var(--forest-wash);
-  color: var(--forest);
-  border-color: var(--forest-border);
-}
-
-.filterBtnActive[data-filter="NO"] {
-  background: var(--crimson-wash);
-  color: var(--crimson);
-  border-color: var(--crimson-border);
-}
-
-.filterBtnActive[data-filter="NO_SHOW"] {
-  background: var(--no-show-wash);
-  color: var(--no-show);
-  border-color: var(--border);
-}
-
-.filterBtnActive[data-filter="ABSTAINED"] {
-  background: var(--abstain-wash);
-  color: var(--no-show);
-  border-color: var(--border);
-}
-
-.filterCount {
-  font-size: 0.875rem;
+  justify-content: center;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: var(--sw-surface-subtle);
+  font-size: var(--sw-fs-eyebrow);
   font-variant-numeric: tabular-nums;
-  color: var(--text-secondary);
+  color: var(--sw-text-tertiary);
 }
 
-.filterBtnActive .filterCount {
-  color: inherit;
-  opacity: 0.7;
+/* Mobile-only filter dropdown — same trigger/list shape as the votes list page's
+   mobile dropdowns (VotesListClient.tsx / votes.module.css), so this page's one
+   dropdown-style filter reads as the site's one dropdown pattern. */
+.dropdownWrap {
+  position: relative;
 }
 
+.dropdownTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  background: var(--sw-surface);
+  color: var(--sw-text-primary);
+  font-size: var(--sw-fs-body);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 150ms;
+}
+
+.dropdownTrigger:hover { border-color: var(--sw-accent); }
+.dropdownTrigger:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+
+.dropdownTriggerChevron {
+  color: var(--sw-text-tertiary);
+  transition: transform 150ms ease;
+  flex-shrink: 0;
+}
+
+.dropdownTriggerChevronOpen { transform: rotate(180deg); }
+
+.dropdownList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  max-height: 260px;
+  overflow-y: auto;
+  box-shadow: var(--sw-elevation-overlay);
+}
+
+.dropdownList::-webkit-scrollbar { width: 4px; }
+.dropdownList::-webkit-scrollbar-track { background: transparent; }
+.dropdownList::-webkit-scrollbar-thumb { background: var(--sw-border); border-radius: 4px; }
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: 10px 14px;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-secondary);
+  border-bottom: 1px solid var(--sw-border);
+  cursor: pointer;
+  transition: background 100ms, color 100ms;
+  user-select: none;
+}
+
+.dropdownItem:last-child { border-bottom: none; }
+.dropdownItem:hover { background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItem:focus { outline: none; background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItemSelected { background: var(--sw-surface-subtle); color: var(--sw-text-primary); font-weight: 600; }
+
+/* Vote pill — squared, matches .divChip family (§4.3), not a rounded badge. */
 .votePill {
-  display: inline-block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--sw-fs-caption);
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--sw-radius-sm);
   white-space: nowrap;
 }
 
-.voteAYE      { background: var(--forest-wash);  color: var(--forest);  border: 1px solid var(--forest-border); }
-.voteNO       { background: var(--crimson-wash); color: var(--crimson); border: 1px solid var(--crimson-border); }
-.voteNO_SHOW  { background: var(--no-show-wash); color: var(--no-show); border: 1px solid var(--border); }
-.voteABSTAINED { background: var(--abstain-wash); color: var(--no-show); border: 1px solid var(--border); }
+.voteAYE      { color: var(--sw-success-solid); background: color-mix(in srgb, var(--sw-success) 14%, var(--sw-surface)); }
+.voteNO       { color: var(--sw-error-solid); background: color-mix(in srgb, var(--sw-error) 14%, var(--sw-surface)); }
+.voteNO_SHOW  { color: var(--sw-text-secondary); background: var(--sw-surface-subtle); }
+.voteABSTAINED { color: var(--sw-text-secondary); background: var(--sw-surface-subtle); }
 
 @media (max-width: 640px) {
-  .votePill {
-    font-size: 0.6875rem;
-  }
-
   .rollCall {
     display: none;
   }
@@ -101,83 +117,91 @@
   .rollCallMobileList {
     display: flex;
     flex-direction: column;
-    margin-top: var(--spacing-sm);
+    margin-top: var(--s-4);
   }
 
+  /* Top border colour comes from an inline style (partyBorderColor per-party),
+     matching the desktop .partyGroup's Pattern A tinted top-border treatment. */
   .mobilePartyGroup {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px var(--spacing-md);
-    margin-bottom: var(--spacing-sm);
+    border: 1px solid var(--sw-border);
+    border-top: 3px solid var(--sw-border);
+    background: var(--sw-surface);
+    padding: var(--s-3) var(--s-4) var(--s-4);
+    margin-bottom: var(--s-3);
   }
 
   .mobilePartyRule {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 40px 0;
+    display: none;
   }
 
   .mobilePartyHeading {
-    padding-block: var(--spacing-xs);
+    padding-block: var(--s-1);
     margin-bottom: 4px;
+  }
+
+  /* Vote-type grouping shown only when the "All votes" filter is selected —
+     colour-coded heading matches the desktop columns' Aye/No treatment. */
+  .mobileVoteTypeGroup {
+    margin-bottom: var(--s-6);
+  }
+
+  .mobileVoteTypeGroup:last-child {
+    margin-bottom: 0;
+  }
+
+  .mobileVoteTypeHeading {
+    margin-bottom: var(--s-3);
   }
 
   .rollCallMobileRow {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-block: var(--spacing-xs);
-    border-bottom: 1px solid var(--border);
-    font-size: 0.875rem;
+    padding-block: 8px;
+    border-bottom: 1px solid var(--sw-border);
+    font-size: var(--sw-fs-body-sm);
   }
 
   .rollCallMobileRow:last-child {
     border-bottom: none;
   }
 
-
   .rollCallName {
-    color: var(--text-primary);
+    color: var(--sw-text-primary);
     text-decoration: none;
   }
 
   .rollCallName:hover {
-    color: var(--accent);
+    color: var(--sw-accent-strong);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
 
-  .rollCallFilters {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--s-2);
+  .rollCallFilterDropdown {
+    display: block;
     width: 100%;
-    margin-top: 24px;
-    margin-bottom: 24px;
-  }
-
-  .rollCallFilters .filterBtn {
-    justify-content: center;
+    margin-top: var(--s-5);
+    margin-bottom: var(--s-5);
   }
 
   .loadMore {
     display: block;
     width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
+    padding: 11px;
+    min-height: 44px;
+    border: 1px solid var(--sw-border-strong);
+    border-radius: var(--sw-radius-sm);
+    background: var(--sw-surface);
+    color: var(--sw-text-secondary);
+    font-size: var(--sw-fs-body-sm);
+    font-weight: 600;
     cursor: pointer;
-    margin-top: var(--spacing-md);
-    transition: border-color 150ms ease, color 150ms ease;
+    margin-top: var(--s-4);
+    transition: border-color 150ms, color 150ms;
   }
 
   .loadMore:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+    border-color: var(--sw-accent);
+    color: var(--sw-accent-strong);
   }
 }
-

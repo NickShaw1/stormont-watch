@@ -15,9 +15,7 @@ function billSlug(billId: string): string {
 
 export async function generateStaticParams() {
   const bills = await getAllBills(mandate.id)
-  // Cloudflare's next-on-pages adapter rejects a dynamicParams=false route with zero generated
-  // paths (poisons the whole build, not just this route) — while 2027-2032 has no bills yet,
-  // seed one placeholder path so the route always has ≥1 static output. The page body 404s it.
+  // Cloudflare's adapter rejects a route with zero generated paths; seed a placeholder if empty.
   if (bills.length === 0) return [{ id: ARCHIVE_PLACEHOLDER_PARAM }]
   return bills.map((b) => ({ id: billSlug(b.bill_id) }))
 }

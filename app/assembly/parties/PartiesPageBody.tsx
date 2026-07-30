@@ -1,3 +1,4 @@
+import { Landmark } from 'lucide-react'
 import { getAllPartiesWithStats } from '@/lib/db/queries'
 import PartiesClient from './PartiesClient'
 import AssemblyHemicycle from '@/components/AssemblyHemicycle'
@@ -20,12 +21,15 @@ export default async function PartiesPageBody({
     <div className="container">
       <header className={styles.pageHeader}>
         <div className={styles.headerLeft}>
-          <span className="eyebrow">The Assembly</span>
-          <h1>Parties</h1>
+          <span className={styles.pageHeaderEyebrow}>The Assembly</span>
+          <h1 className={styles.pageHeaderTitle}>
+            <Landmark className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
+            Parties
+          </h1>
           <p className={styles.lede}>Political parties represented in the Northern Ireland Assembly.</p>
         </div>
-        <hr className={styles.mobileRule} />
         <div className={styles.headerChart}>
+          <span className={styles.headerChartTitle}>NI Assembly: {mandate.label}</span>
           <AssemblyHemicycle parties={parties.map(p => ({ party: p.party, mlaCount: p.mlaCount }))} />
         </div>
       </header>

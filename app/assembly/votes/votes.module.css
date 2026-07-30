@@ -1,63 +1,178 @@
-/* ── Page header ──────────────────────────────────────────────── */
+/* Page header — matches Bills/MLAs list page pattern. */
 .pageHeader {
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: var(--s-10);
+  padding-block: var(--s-8) var(--s-6);
+  border-bottom: 1px solid var(--sw-accent);
+  margin-bottom: var(--sw-space-9);
 }
 
-.pageHeader h1 {
+.pageHeaderEyebrow {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+}
+
+.pageHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: clamp(48px, 6vw, 96px);
-  letter-spacing: -0.045em;
-  line-height: 0.96;
-  margin-top: var(--s-2);
+  font-weight: 700;
+  font-size: var(--sw-fs-display);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: var(--s-1) 0 0;
 }
 
-@media (max-width: 767px) {
-  .pageHeader h1 {
-    font-size: clamp(36px, 8vw, 64px);
-    letter-spacing: -0.04em;
+.pageHeaderIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+.lede {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  max-width: 68ch;
+  margin-top: var(--s-4);
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .lede {
+    font-size: var(--sw-fs-body-sm);
   }
 }
 
-.pageHeader .lede {
-  font-size: 15px;
-  color: var(--ink-2);
-  /* max-width: 60ch; */
-  margin-top: var(--s-4);
-  line-height: 1.5;
-  font-family: var(--font-sans);
+@media (max-width: 640px) {
+  .pageHeader { padding-block: var(--s-6) var(--s-5); }
+  .pageHeaderTitle { font-size: var(--sw-fs-h2); }
 }
 
-/* ── Notice ───────────────────────────────────────────────────── */
+/* Key figures strip — Pattern A tinted top-border cards (§4.1). Sits between the
+   filter panel and the division list, live totals for the current filter/search. */
+/* margin-bottom matches .monthSection's margin-top (var(--sw-space-9)) since
+   :first-of-type zeroes that section's own top margin — this is the one
+   element supplying that gap before the first month heading. */
+.statStrip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-4);
+  margin-bottom: var(--sw-space-9);
+}
+
+.statCell {
+  border: 1px solid var(--sw-border);
+  border-top: 1px solid var(--sw-accent);
+  background: color-mix(in srgb, var(--sw-accent) 11%, var(--sw-surface));
+  padding: var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.statCell[data-tone="success"] {
+  border-top-color: var(--sw-success);
+  background: color-mix(in srgb, var(--sw-success) 12%, var(--sw-surface));
+}
+
+.statCell[data-tone="error"] {
+  border-top-color: var(--sw-error);
+  background: color-mix(in srgb, var(--sw-error) 12%, var(--sw-surface));
+}
+
+.statCell[data-tone="warm"] {
+  border-top-color: var(--sw-accent-warm);
+  background: color-mix(in srgb, var(--sw-accent-warm) 14%, var(--sw-surface));
+}
+
+.statLabelRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.statLabel {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-secondary);
+}
+
+.statIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+.statCell[data-tone="success"] .statIcon { color: var(--sw-success); }
+.statCell[data-tone="error"] .statIcon { color: var(--sw-error); }
+.statCell[data-tone="warm"] .statIcon { color: var(--sw-accent-warm); }
+
+/* Matches the homepage's "This week" .twVal exactly (22px), not the larger .kfigNum (31px). */
+.statVal {
+  font-size: var(--sw-fs-h2);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--sw-text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+@media (max-width: 1024px) {
+  .statStrip { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .statStrip { grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+}
+
+/* ── Notice — quiet footnote block below the division list. ─────── */
+.noticeBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--sw-space-9);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--sw-border);
+}
+
+@media (max-width: 640px) {
+  .noticeBlock { margin-top: var(--s-10); }
+}
+
 .notice {
-  border: 1px solid var(--rule);
-  border-left: 3px solid var(--ochre);
-  background: var(--ochre-wash);
-  border-radius: 0 var(--r-2) var(--r-2) 0;
-  padding: var(--s-3) var(--s-4);
-  font-size: 13px !important;
-  font-family: var(--font-sans);
-  color: var(--ink-2) !important;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-tertiary);
   line-height: 1.5;
-  margin-top: var(--s-3);
-  margin-bottom: var(--s-10);
+  margin: 0;
 }
 
-/* ── Filters ──────────────────────────────────────────────────── */
+/* ── Filter panel — one bordered frame holding type/outcome/year and search. ──── */
+.filterPanel {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
+  margin-bottom: var(--s-5);
+}
+
 .filterRow {
   display: flex;
   align-items: center;
   gap: var(--s-2);
   flex-wrap: wrap;
-  margin-bottom: var(--s-5);
+  padding-bottom: var(--s-4);
+  margin-bottom: var(--s-4);
+  border-bottom: 1px solid var(--sw-border);
 }
 
 .filterDivider {
   width: 1px;
   height: 20px;
-  background: var(--rule);
+  background: var(--sw-border);
   margin: 0 var(--s-1);
+  flex-shrink: 0;
 }
 
 .yearFilters {
@@ -68,58 +183,61 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
-  min-height: 44px;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink-2);
-  font-size: 0.875rem;
+  padding: 8px 12px;
+  min-height: 38px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-surface);
+  color: var(--sw-text-secondary);
+  font-size: var(--sw-fs-body-sm);
   font-weight: 600;
   font-family: var(--font-sans);
   cursor: pointer;
   white-space: nowrap;
-  transition: background 120ms, color 120ms;
+  transition: border-color 150ms, color 150ms, background 150ms;
 }
 
 .filterBtn:hover {
-  background: var(--paper-2);
-  color: var(--ink);
+  border-color: var(--sw-accent);
+  color: var(--sw-text-primary);
+}
+
+.filterBtn:focus-visible {
+  outline: 2px solid var(--sw-focus);
+  outline-offset: 2px;
 }
 
 .filterBtnActive {
-  background: var(--teal);
-  color: #fff;
-  border-color: var(--teal);
+  background: var(--sw-accent);
+  color: #ffffff;
+  border-color: var(--sw-accent);
 }
 
 .filterBtnActive:hover {
-  background: var(--teal);
-  color: #fff;
+  background: var(--sw-accent-strong);
+  border-color: var(--sw-accent-strong);
+  color: #ffffff;
 }
 
 .filterBtnActive[data-filter="PASSED"] {
-  background: var(--forest-wash);
-  border-color: var(--forest);
-  color: var(--forest);
+  background: color-mix(in srgb, var(--sw-success) 14%, var(--sw-surface));
+  border-color: var(--sw-success);
+  color: var(--sw-success);
 }
 
 .filterBtnActive[data-filter="PASSED"]:hover {
-  background: var(--forest-wash);
-  color: var(--forest);
+  background: color-mix(in srgb, var(--sw-success) 22%, var(--sw-surface));
 }
 
 .filterBtnActive[data-filter="FAILED"] {
-  background: var(--crimson-wash);
-  border-color: var(--crimson);
-  color: var(--crimson);
+  background: color-mix(in srgb, var(--sw-error) 14%, var(--sw-surface));
+  border-color: var(--sw-error);
+  color: var(--sw-error);
 }
 
 .filterBtnActive[data-filter="FAILED"]:hover {
-  background: var(--crimson-wash);
-  color: var(--crimson);
+  background: color-mix(in srgb, var(--sw-error) 22%, var(--sw-surface));
 }
-
 
 .resultGroup {
   display: flex;
@@ -128,503 +246,683 @@
 }
 
 /* ── Search ───────────────────────────────────────────────────── */
-.searchWrap {
-  margin-bottom: var(--s-5);
-}
+.searchWrap { }
 
 .search {
+  -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   max-width: 480px;
   padding: 9px 14px;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-2);
-  background: var(--paper);
-  color: var(--ink);
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-surface);
+  color: var(--sw-text-primary);
   font-size: 16px;
+  font-family: var(--font-sans);
   outline: none;
-  transition: border-color 120ms;
+  box-shadow: none;
+  transition: border-color 150ms;
 }
 
-.search:focus {
-  border-color: var(--teal);
+.search::-webkit-search-decoration,
+.search::-webkit-search-cancel-button,
+.search::-webkit-search-results-button,
+.search::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+}
+
+.search::placeholder {
+  color: var(--sw-text-tertiary);
+}
+
+.search:focus-visible {
+  outline: 1px solid var(--sw-focus);
+  outline-offset: 0;
 }
 
 /* ── Empty state ──────────────────────────────────────────────── */
 .emptyState {
-  font-size: 14px;
-  color: var(--ink-3);
-  padding: var(--s-6) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--sw-fs-body-sm);
   font-style: italic;
+  color: var(--sw-text-tertiary);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface-subtle);
+  padding: var(--s-5);
 }
 
-/* ── Result count ─────────────────────────────────────────────── */
-.resultCount {
-  font-size: 13px;
-  font-family: var(--font-sans);
-  color: var(--ink-3);
-  margin-bottom: 0;
-  padding-bottom: var(--s-10);
+.emptyStateIcon {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
 }
 
 /* ── Month heading ────────────────────────────────────────────── */
 .monthSection {
-  margin-bottom: var(--s-8);
+  margin-top: var(--sw-space-9);
+}
+
+.monthSection:first-of-type {
+  margin-top: 0;
 }
 
 .monthRule {
   border: none;
-  border-top: 1px solid var(--rule);
-  margin-block: var(--spacing-xl);
+  border-top: 1px solid var(--sw-border);
+  margin: 0;
 }
 
 .monthHeading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
   font-family: var(--font-sans);
-  font-size: clamp(22px, 2.8vw, 32px);
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  color: var(--ink);
-  margin: var(--s-4) 0 var(--s-5);
-  line-height: 1;
+  font-weight: 700;
+  font-size: var(--sw-fs-h2);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: 0 0 var(--s-5);
+}
+
+.monthHeadingIcon {
+  flex-shrink: 0;
+  align-self: center;
+  color: var(--sw-accent);
 }
 
 .monthCount {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  margin-left: var(--s-3);
-  color: var(--ink-3);
-  vertical-align: baseline;
-  font-weight: 400;
-  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: var(--sw-surface-subtle);
+  font-size: var(--sw-fs-eyebrow);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--sw-text-tertiary);
+}
+
+@media (max-width: 640px) {
+  .monthSection { margin-top: var(--s-10); }
 }
 
 /* ── Division list ────────────────────────────────────────────── */
 .divList {
   display: flex;
   flex-direction: column;
+  gap: var(--s-3);
 }
 
-/* ── Division row ─────────────────────────────────────────────── */
+/* ── Division row — Pattern B plain bordered card (§4.2): date block + content. ── */
 .divRow {
   display: grid;
-  grid-template-columns: 80px 1fr 200px auto;
-  gap: var(--s-4);
-  align-items: center;
-  padding: 20px 0;
-  border-top: 1px solid var(--rule);
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: var(--s-5);
+  align-items: stretch;
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
   text-decoration: none !important;
   color: inherit;
-  transition: background 100ms;
+  transition: border-color 150ms;
 }
 
-.divRow:first-child {
-  border-top: 2px solid var(--ink);
-}
-
-.divRowBill:hover {
-  background: var(--paper-2);
-}
-
+.divRow:hover,
+.divRow:active,
 .divRow:visited,
 .divRow:focus {
   text-decoration: none !important;
 }
 
-.divRow:hover {
-  background: var(--paper-2);
-  text-decoration: none !important;
+.divRowBill:hover {
+  border-color: var(--sw-accent);
 }
 
-.divRow:hover .divTitle {
-  color: var(--teal);
+.divRowBill:hover .divTitle {
+  color: var(--sw-accent-strong);
 }
 
-/* Date column */
+/* Date column — matches .billNum shape. */
 .divDate {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  line-height: 1.2;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--s-2);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface-subtle);
+  text-align: center;
 }
 
+/* Matches the homepage's .diaryDateNum exactly (§3.2 date-block day-number, 22px). */
 .divDay {
-  font-family: var(--font-mono);
   font-size: 22px;
-  font-weight: 400;
-  color: var(--ink);
-  line-height: 1;
+  font-weight: 700;
+  color: var(--sw-text-primary);
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
 }
 
 .divMonthYear {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--ink-3);
-  letter-spacing: 0.04em;
-  margin-top: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  color: var(--sw-text-tertiary);
+  letter-spacing: var(--sw-eyebrow-tracking);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Center column */
 .divMain {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
 }
 
-
-.billTag {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 600;
-  font-family: var(--font-sans);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--teal) 12%, transparent);
-  color: var(--teal);
-  margin-right: var(--s-2);
-  white-space: nowrap;
-  flex-shrink: 0;
+/* Title row — category pill | hairline | title, all on one line. */
+.divTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
 }
 
-.flexBreak {
-  display: none;
-  flex-basis: 100%;
-  height: 0;
-}
-
-
-.srPill {
-  font-size: 10px;
-  font-weight: 600;
-  font-family: var(--font-sans);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--ochre-wash);
-  color: var(--ochre);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.xcPill {
-  font-size: 10px;
-  font-weight: 600;
-  font-family: var(--font-sans);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--xc-wash);
-  color: var(--xc);
-  white-space: nowrap;
-  flex-shrink: 0;
+.divTitleMain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .divTitle {
-  font-family: var(--font-sans);
-  font-size: 17px;
-  font-weight: 400;
-  color: var(--ink);
-  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  border-left: 1px solid var(--sw-border);
+  min-width: 0;
+  font-size: var(--sw-fs-body);
+  font-weight: 600;
+  color: var(--sw-text-primary);
+  letter-spacing: -0.005em;
   line-height: 1.35;
   transition: color 150ms;
 }
 
-.divSub {
-  display: flex;
+/* Mobile-only stand-in for the type pill (hidden below) — Bill/Motion/Statutory
+   Rules icon inline before the title text. */
+.divTitleIcon {
+  display: none;
+  flex-shrink: 0;
+  margin-right: 6px;
+  color: var(--sw-text-tertiary);
+}
+
+/* Solid-fill badges — matches the homepage's .divOutcomeBadge / Bills' .pillPassed family.
+   Shared min-width (sized to fit "Statutory Rules") keeps the hairline/title that follows
+   at a consistent x-position across cards, regardless of which category is showing. */
+.billTag,
+.srPill,
+.motionTag {
+  display: inline-flex;
   align-items: center;
-  gap: var(--s-2);
-  font-family: var(--font-mono);
+  justify-content: center;
+  gap: 4px;
+  flex-shrink: 0;
+  min-width: 98px;
   font-size: 11px;
-  color: var(--ink-3);
-  letter-spacing: 0.03em;
-  margin-top: var(--s-2);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  padding: 3px 9px;
+  border-radius: 3px;
+  color: #ffffff;
+  white-space: nowrap;
 }
 
-/* Vote bar column */
-.divBarCol {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding-right: var(--s-3);
-}
+/* Purple, not --sw-accent-solid: site blue reads as an active filter button here. */
+.billTag { background: #8b5cf6; }
+/* Teal — matches the Motion category colour used in MLA voting-record chips. */
+.motionTag { background: #14b8a6; }
+/* Fixed hex, not --sw-warning: that token pales in dark mode and fails contrast as a white-text fill. */
+.srPill  { background: #b3821f; }
 
-.divBarTrack {
-  display: flex;
-  height: 18px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: var(--paper-3);
-}
-
-.divBarAye {
-  background: var(--forest);
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  padding-left: 8px;
-  border-radius: 6px 0 0 6px;
-}
-
-.divBarNo {
-  background: var(--crimson);
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 8px;
-  border-radius: 0 6px 6px 0;
-}
-
-.divCounts {
+.flexBreak {
   display: none;
 }
 
-.divCountAye { color: var(--forest); }
-.divCountNo  { color: var(--crimson); }
-
-.divBarAyeLabel,
-.divBarNoLabel {
-  font-size: 12px;
-  line-height: 18px;
-  font-weight: 400;
-  font-family: var(--font-sans);
-  color: rgba(255, 255, 255, 0.85);
-  white-space: nowrap;
-  overflow: hidden;
+/* ── Outcome list — one bordered card per amendment/stage, matches Bills' .itemColumnList. ──── */
+.divOutcomeList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
 }
 
-/* ── Grouped card ─────────────────────────────────────────────── */
+/* Grid recipe matches Bills' .itemColumnRow: title | tally (hairline) | pill (hairline). */
+.divOutcomeRow {
+  display: grid;
+  grid-template-areas: "label tally pill";
+  grid-template-columns: 1fr 176px 80px;
+  align-items: stretch;
+  gap: 0;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  font-size: var(--sw-fs-body-sm);
+  text-decoration: none !important;
+  color: inherit;
+  transition: border-color 150ms;
+}
+
+.divOutcomeRow:hover {
+  border-color: var(--sw-accent);
+}
+
+.divOutcomeRow:hover .divOutcomeLabel {
+  color: var(--sw-accent-strong);
+}
+
+.divOutcomeLabel {
+  grid-area: label;
+  display: flex;
+  align-items: center;
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 500;
+  color: var(--sw-text-secondary);
+  min-width: 0;
+  transition: color 150ms;
+}
+
+.divOutcomeLabel::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--sw-accent);
+  margin-right: 7px;
+  flex-shrink: 0;
+}
+
+.divOutcomeDate {
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
+  flex-shrink: 0;
+}
+
+/* Per-amendment cross-community marker — a single row within a group can be
+   cross-community even when the group's main motion isn't (§ per-division, not per-day). */
+.xcBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  border-radius: 3px;
+  background: #6366f1;
+  color: #ffffff;
+}
+
+.divOutcomeBar {
+  grid-area: tally;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 14px;
+  border-left: 1px solid var(--sw-border);
+}
+
+/* Vote margin bar — counts flank a flat two-tone track, symmetric fixed-width number
+   columns so the track always sits dead-center regardless of digit count either side. */
+.divBarWrap {
+  display: grid;
+  grid-template-columns: 20px 1fr 20px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.divCountAye,
+.divCountNo {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.divCountAye { color: var(--sw-success-solid); text-align: right; }
+.divCountNo  { color: var(--sw-error-solid); text-align: left; }
+
+.divBarTrack {
+  display: flex;
+  min-width: 0;
+  height: 8px;
+  border-radius: var(--sw-radius-sm);
+  overflow: hidden;
+  background: var(--sw-surface-subtle);
+}
+
+.divBarAye,
+.divBarNo {
+  min-width: 0;
+  height: 100%;
+}
+
+.divBarAye { background: var(--sw-success-solid); }
+.divBarNo  { background: var(--sw-error-solid); }
+
+/* Pill column — left hairline, badge centered in the remaining space so the gap
+   either side of the pill reads even (not left-hugged against the hairline). */
+.divOutcomePillCol {
+  grid-area: pill;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 12px;
+  border-left: 1px solid var(--sw-border);
+}
+
+.divOutcomePillCol .outcomePill {
+  justify-content: center;
+  min-width: 58px;
+}
+
+/* Solid-fill outcome badge — matches the homepage's .divOutcomeBadge / Bills' .pillPassed. */
+.outcomePill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  padding: 3px 9px;
+  border-radius: 3px;
+  color: #ffffff;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.outcomePass { background: var(--sw-success-solid); }
+.outcomeFail { background: var(--sw-error-solid); }
+
+/* ── Grouped card (bill with multiple stages/amendments) ─────────── */
 .divGrouped {
-  grid-template-columns: 80px 1fr;
+  grid-template-columns: 72px 1fr;
   align-items: start;
 }
 
 .divGrouped:hover {
-  background: transparent;
+  border-color: var(--sw-border);
 }
 
 .divGrouped:hover .divTitle {
-  color: var(--ink);
-}
-
-.divOutcomeList {
-  margin-top: var(--s-2);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-2);
-  overflow: hidden;
-}
-
-.divOutcomeRow {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  padding: 8px 12px;
-  font-size: 13px;
-  text-decoration: none !important;
-  color: inherit;
-}
-
-.divOutcomeRow + .divOutcomeRow {
-  border-top: 1px solid var(--rule);
-}
-
-.divOutcomeRow:hover {
-  background: var(--paper-2);
-}
-
-.divOutcomeRow:hover .divOutcomeLabel {
-  color: var(--teal);
-}
-
-.divOutcomeLabel {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--ink-3);
-  min-width: 90px;
-  flex-shrink: 0;
-}
-
-.divOutcomeLabel::before {
-  content: '•';
-  color: var(--teal);
-  margin-right: 6px;
-}
-
-.divOutcomeDate {
-  font-size: 12px;
-  color: var(--color-text-tertiary);
-  flex-shrink: 0;
-}
-
-.divOutcomeBar {
-  width: 200px;
-  flex-shrink: 0;
-  margin-left: auto;
+  color: var(--sw-text-primary);
 }
 
 /* ── Load more ────────────────────────────────────────────────── */
 .loadMore {
   width: 100%;
-  padding: 12px;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-2);
-  background: transparent;
-  color: var(--ink-2);
-  font-size: 14px;
+  padding: 11px;
+  min-height: 44px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-surface);
+  color: var(--sw-text-secondary);
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
   cursor: pointer;
   margin-top: var(--s-5);
   transition: border-color 150ms, color 150ms;
 }
 
-
 .loadMore:hover {
-  border-color: var(--teal);
-  color: var(--teal);
+  border-color: var(--sw-accent);
+  color: var(--sw-accent-strong);
 }
+
+.sectionLast {
+  margin-bottom: var(--sw-space-9);
+}
+
+@media (max-width: 640px) {
+  .sectionLast { margin-bottom: var(--s-10); }
+}
+
+/* Mobile-only dropdowns (year, type, outcome) — hidden on desktop, same
+   trigger/list shape as the bills/MLAs pages' mobile dropdowns so all three
+   read as the site's one dropdown pattern. */
+.mobileFilterDropdowns {
+  display: none;
+}
+
+.dropdownWrap {
+  position: relative;
+}
+
+.dropdownTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  background: var(--sw-surface);
+  color: var(--sw-text-primary);
+  font-size: var(--sw-fs-body);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 150ms;
+}
+
+.dropdownTrigger:hover { border-color: var(--sw-accent); }
+.dropdownTrigger:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+
+.dropdownTriggerChevron {
+  color: var(--sw-text-tertiary);
+  transition: transform 150ms ease;
+  flex-shrink: 0;
+}
+
+.dropdownTriggerChevronOpen { transform: rotate(180deg); }
+
+.dropdownList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  max-height: 260px;
+  overflow-y: auto;
+  box-shadow: var(--sw-elevation-overlay);
+}
+
+.dropdownList::-webkit-scrollbar { width: 4px; }
+.dropdownList::-webkit-scrollbar-track { background: transparent; }
+.dropdownList::-webkit-scrollbar-thumb { background: var(--sw-border); border-radius: 4px; }
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: 10px 14px;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-secondary);
+  border-bottom: 1px solid var(--sw-border);
+  cursor: pointer;
+  transition: background 100ms, color 100ms;
+  user-select: none;
+}
+
+.dropdownItem:last-child { border-bottom: none; }
+.dropdownItem:hover { background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItem:focus { outline: none; background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItemSelected { background: var(--sw-surface-subtle); color: var(--sw-text-primary); font-weight: 600; }
 
 /* ── Mobile ───────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .pageHeader h1 {
-    font-size: 44px;
-    letter-spacing: -0.045em;
+  .filterPanel {
+    padding: var(--s-4);
   }
 
-  .pageHeader .lede {
-    font-size: 15px;
-  }
-
-  .notice {
-    font-size: 13px !important;
+  .statStrip {
     margin-bottom: var(--s-10);
   }
 
   .filterRow {
-    flex-wrap: wrap;
-  }
-
-  .filterDivider {
     display: none;
   }
 
-  .filterBtnAll {
-    display: none;
-  }
-
-  .yearFilters {
-    display: none;
-  }
-
-  .yearDivider {
-    display: none;
-  }
-
-  .filterBtn {
-    flex: 1;
-    justify-content: center;
-    font-size: 0.8rem;
-    padding: 8px 10px;
-    min-height: 40px;
-  }
-
-  .resultGroup {
-    width: 100%;
-  }
-
-  .resultGroup .filterBtn {
-    flex: 1;
+  .mobileFilterDropdowns {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+    padding-bottom: var(--s-4);
+    margin-bottom: var(--s-4);
+    border-bottom: 1px solid var(--sw-border);
   }
 
   .search {
     max-width: 100%;
   }
 
-  .divRow {
-    grid-template-columns: 36px 1fr auto;
-    grid-template-rows: auto auto;
-    grid-template-areas:
-      "date main pill"
-      "date bar  bar";
-    gap: var(--s-2) var(--s-3);
-    padding: 24px 0;
-  }
-
-  .divDate  { grid-area: date; }
-  .divMain  { grid-area: main; }
-  .divBarCol { grid-area: bar; padding-right: 0; }
-  .divRow > :global(.pill),
-  .divRow > :global(.pill.pass),
-  .divRow > :global(.pill.fail) {
-    grid-area: pill;
-    align-self: start;
-  }
-
+  /* Long titles pushed the date box/pill (both vertically centered against a
+     short row) far from the wrapped text below — stack date, title, pill as
+     three top-aligned lines instead of the desktop's fixed-date-column grid.
+     .divGrouped's own grid-template-columns (72px 1fr, defined outside any
+     media query) must be overridden here too, or grouped/multi-amendment
+     rows keep the 2-column desktop layout at mobile widths. */
+  .divRow,
   .divGrouped {
-    grid-template-columns: 36px 1fr;
-    grid-template-rows: auto;
-    grid-template-areas: none;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--s-4);
+    gap: var(--s-3);
   }
 
-  .divGrouped .divDate { grid-area: unset; }
-  .divGrouped .divMain { grid-area: unset; }
+  /* Same bordered/grey-bg treatment as desktop, just one line + uniform size, full width. */
+  .divDate {
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: baseline;
+    gap: 4px;
+    padding: var(--s-2);
+    border: 1px solid var(--sw-border);
+    background: var(--sw-surface-subtle);
+    text-align: left;
+  }
+
+  .divDay,
+  .divMonthYear {
+    font-size: var(--sw-fs-caption);
+    font-weight: 700;
+    color: var(--sw-text-primary);
+    line-height: 1.3;
+  }
+
+  .divMonthYear {
+    flex-direction: row;
+    gap: 4px;
+    font-weight: 700;
+    letter-spacing: normal;
+  }
+
+  .divMain {
+    gap: var(--s-3);
+  }
+
+  .divTitleRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-2);
+  }
+
+  .divTitleMain {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-2);
+  }
+
+  .divTitle {
+    align-items: flex-start;
+    padding-left: 0;
+    border-left: none;
+    font-size: var(--sw-fs-body);
+  }
+
+  .divTitleIcon {
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* Bill/Motion/Statutory Rules pill is redundant with the title on mobile. */
+  .divTitleMain .billTag,
+  .divTitleMain .motionTag,
+  .divTitleMain .srPill {
+    display: none;
+  }
+
+  .divOutcomeList {
+    width: 100%;
+  }
 
   .divOutcomeRow {
-    flex-wrap: wrap;
-    align-items: center;
-    row-gap: 4px;
+    width: 100%;
+    grid-template-areas:
+      "label label"
+      "tally pill";
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 8px;
+    padding: 10px;
   }
 
   .divOutcomeLabel {
     font-size: 11px;
-    order: 1;
-    flex: 1;
-    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .divOutcomeRow > :global(.pill) {
-    order: 2;
-    flex-shrink: 0;
-    margin-left: auto;
-  }
-
   .divOutcomeBar {
-    order: 3;
+    justify-content: flex-start;
+    padding-left: 0;
+    border-left: none;
     width: 100%;
-    margin-left: 0;
-    padding-block: 4px;
   }
 
+  .divBarWrap {
+    width: 100%;
+  }
+
+  .divOutcomePillCol {
+    justify-content: flex-end;
+    padding-left: 0;
+    border-left: none;
+  }
+}
+
+/* Matches the homepage Recent-divisions date-block's own sub-640 step (§3.2/§10). */
+@media (max-width: 480px) {
   .divDay { font-size: 18px; }
-
-  .divTitle { font-size: 15px; }
-
-  .monthHeading { font-size: 20px; }
-
-  .divSub {
-    flex-wrap: wrap;
-    row-gap: var(--s-2);
-  }
 }
-
-@media (max-width: 768px) {
-  .divOutcomeLabel {
-    font-size: 12px;
-  }
-
-  .divOutcomeRow :global(.pill) {
-    font-size: 10px;
-  }
-
-  .divOutcomeRow {
-    padding: 12px 12px;
-  }
-
-  .divOutcomeList {
-    margin-top: var(--s-3);
-  }
-
-}
-

@@ -121,7 +121,7 @@ const TODAY_ISO = new Date().toISOString().slice(0, 10)
  * stays hidden from user-facing navigation until then, though it remains in MANDATES so the
  * next transition is already wired up.
  */
-export function mandateHasBegun(m: Mandate, todayIso: string = TODAY_ISO): boolean {
+function mandateHasBegun(m: Mandate, todayIso: string = TODAY_ISO): boolean {
   return m.start <= todayIso
 }
 

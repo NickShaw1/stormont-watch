@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Parties',
   description: `Every political party in the Northern Ireland Assembly — voting records, attendance, party cohesion, expenses and MLA profiles for the ${CURRENT_MANDATE.label} mandate.`,
   openGraph: {
-    title: 'Parties — Stormont Watch',
+    title: 'Parties - Stormont Watch',
     description: `Every political party in the Northern Ireland Assembly — voting records, attendance, party cohesion, expenses and MLA profiles for the ${CURRENT_MANDATE.label} mandate.`,
     images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },

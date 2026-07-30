@@ -17,8 +17,8 @@ interface Props {
   otherAbs: number
 }
 
-const U_COLOR = '#e67e22'
-const N_COLOR = '#2e7d32'
+const U_COLOR = '#f97316'
+const N_COLOR = '#15803d'
 const O_COLOR = '#9e9e9e'
 
 export default function DesignationChartClient({
@@ -38,6 +38,10 @@ export default function DesignationChartClient({
     const labels = ['Aye', 'No']
     if (hasNoShow) labels.push('No Show')
     if (hasAbstain) labels.push('Abstain')
+
+    const root = getComputedStyle(document.documentElement)
+    const tickColor = root.getPropertyValue('--sw-text-tertiary').trim() || '#656b72'
+    const gridColor = root.getPropertyValue('--sw-border').trim() || '#dcded9'
 
     import('chart.js/auto').then(({ Chart }) => {
       if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
@@ -81,13 +85,13 @@ export default function DesignationChartClient({
             x: {
               stacked: true,
               beginAtZero: true,
-              grid: { color: 'rgba(0,0,0,0.06)' },
-              ticks: { font: { size: 11 }, precision: 0 },
+              grid: { color: gridColor },
+              ticks: { font: { size: 11 }, precision: 0, color: tickColor },
             },
             y: {
               stacked: true,
               grid: { display: false },
-              ticks: { font: { size: 12, weight: 'bold' } },
+              ticks: { font: { size: 12, weight: 'bold' }, color: tickColor },
             },
           },
         },
@@ -98,7 +102,9 @@ export default function DesignationChartClient({
 
   return (
     <div className={styles.designationChart}>
-      <canvas ref={canvasRef} />
+      <div className={styles.chartCanvasWrap}>
+        <canvas ref={canvasRef} />
+      </div>
     </div>
   )
 }

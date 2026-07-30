@@ -1,15 +1,196 @@
-.mobileRankingsTitle {
-  display: none;
+/* ── Sub-page header (matches stats sub-pages) ─────────────── */
+.pageHeader {
+  padding-block: var(--s-8) var(--s-6);
+  border-bottom: 1px solid var(--sw-accent);
+  margin-bottom: var(--sw-space-9);
 }
 
-/* Filter pills */
+.pageHeaderEyebrow {
+  display: block;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+  margin-top: var(--s-3);
+}
+
+.pageHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-display);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: var(--s-1) 0 0;
+}
+
+.pageHeaderIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+.lede {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  max-width: 62ch;
+  margin-top: var(--s-4);
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .lede {
+    font-size: var(--sw-fs-body-sm);
+  }
+}
+
+@media (max-width: 640px) {
+  .pageHeader { padding-block: var(--s-6) var(--s-5); }
+  .pageHeaderTitle { font-size: var(--sw-fs-h2); }
+}
+
+.sectionHead {
+  margin-bottom: var(--s-5);
+}
+
+.sectionEyebrow {
+  display: block;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+  margin-bottom: 4px;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-h2);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  color: var(--sw-text-primary);
+  margin: 0;
+}
+
+.sectionHeadingIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+.sectionSubtitle {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  line-height: 1.5;
+  margin: var(--s-2) 0 0;
+}
+
+@media (max-width: 640px) {
+  .sectionSubtitle {
+    font-size: var(--sw-fs-body-sm);
+  }
+}
+
+.filterPanel {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
+  margin-bottom: var(--sw-space-9);
+}
+
 .filterRow {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
-  margin-bottom: var(--spacing-md);
 }
+
+.filterDropdownWrap {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .filterDropdownWrap {
+    display: block;
+  }
+}
+
+.dropdownWrap {
+  position: relative;
+}
+
+.dropdownTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  background: var(--sw-surface);
+  color: var(--sw-text-primary);
+  font-size: var(--sw-fs-body);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 150ms;
+}
+
+.dropdownTrigger:hover { border-color: var(--sw-accent); }
+.dropdownTrigger:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+
+.dropdownTriggerChevron {
+  color: var(--sw-text-tertiary);
+  transition: transform 150ms ease;
+  flex-shrink: 0;
+}
+
+.dropdownTriggerChevronOpen { transform: rotate(180deg); }
+
+.dropdownList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  max-height: 260px;
+  overflow-y: auto;
+  box-shadow: var(--sw-elevation-overlay);
+}
+
+.dropdownList::-webkit-scrollbar { width: 4px; }
+.dropdownList::-webkit-scrollbar-track { background: transparent; }
+.dropdownList::-webkit-scrollbar-thumb { background: var(--sw-border); border-radius: 4px; }
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: 10px 14px;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-secondary);
+  border-bottom: 1px solid var(--sw-border);
+  cursor: pointer;
+  transition: background 100ms, color 100ms;
+  user-select: none;
+}
+
+.dropdownItem:last-child { border-bottom: none; }
+.dropdownItem:hover { background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItem:focus { outline: none; background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItemSelected { background: var(--sw-surface-subtle); color: var(--sw-text-primary); font-weight: 600; }
 
 .filterBtn {
   display: inline-flex;
@@ -17,19 +198,20 @@
   gap: 6px;
   padding: 10px 16px;
   min-height: 44px;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
+  border: 1px solid var(--sw-border);
+  border-radius: var(--sw-radius-sm);
   background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+  color: var(--sw-text-secondary);
+  font-size: var(--sw-fs-body-sm);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  transition: border-color 150ms, background 150ms, color 150ms;
 }
 
 .filterBtn:hover {
-  background: var(--surface);
-  color: var(--text-primary);
+  border-color: var(--sw-accent);
+  color: var(--sw-text-primary);
 }
 
 .filterBtnActive {
@@ -37,15 +219,15 @@
 }
 
 .filterBtnActiveAll {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
+  background: var(--sw-accent-solid);
+  color: #ffffff;
+  border-color: var(--sw-accent-solid);
 }
 
 .filterBtnActiveAll:hover {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
+  background: var(--sw-accent-strong-solid);
+  color: #ffffff;
+  border-color: var(--sw-accent-strong-solid);
 }
 
 .filterRowDesktop {}
@@ -53,38 +235,45 @@
 .resultCountDesktop {}
 .resultCountMobile { display: none; }
 
-/* Result count */
 .resultCount {
-  font-size: 13px;
-  font-family: var(--font-sans);
-  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-tertiary);
   margin-bottom: var(--s-5);
 }
 
-/* Table wrapper */
+.filterPanel .resultCount {
+  margin-bottom: 0;
+  margin-top: var(--s-4);
+}
+
+.resultCountIcon {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
+}
+
 .tableWrap {
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  border: 1px solid var(--rule);
-  border-radius: 3px;
+  border: 1px solid var(--sw-border);
+  border-radius: 0;
 }
 
-/* Table */
 .table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
-/* Column widths */
 .colRank         { width: 44px; }
 .colMla          { width: auto; }
 .colParty        { width: 110px; }
 .colConstituency { width: 160px; }
 .colQuestions    { width: 200px; }
 
-/* Header */
 .table thead tr {
   position: sticky;
   top: 0;
@@ -92,34 +281,22 @@
 }
 
 .table thead th {
-  background: var(--paper-2);
-  font-size: 11px;
-  font-weight: 500;
+  background: var(--sw-surface-subtle);
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-tertiary);
   padding: 10px 12px;
   text-align: left;
-  border-bottom: 2px solid var(--rule);
+  border-bottom: 2px solid var(--sw-border);
   white-space: nowrap;
   user-select: none;
 }
 
-.table thead th:first-child {
-  text-align: center;
-  border-radius: 8px 0 0 0;
-}
-
-.table thead th:last-child {
-  text-align: right;
-  border-radius: 0 8px 0 0;
-}
-
-/* Body rows */
 .table tbody tr {
-  border-bottom: 1px solid var(--rule);
-  background: var(--paper);
+  border-bottom: 1px solid var(--sw-border);
+  background: var(--sw-surface);
   transition: background 100ms ease;
 }
 
@@ -128,36 +305,33 @@
 }
 
 .tableRow:hover {
-  background: var(--surface);
+  background: var(--sw-surface-subtle);
 }
 
 .rowGold {
-  background: #FEFCE8 !important;
+  background: color-mix(in srgb, var(--sw-accent-warm) 12%, var(--sw-surface)) !important;
 }
 
 .rowGold.tableRow:hover {
-  background: var(--surface) !important;
+  background: color-mix(in srgb, var(--sw-accent-warm) 18%, var(--sw-surface)) !important;
 }
 
-/* Cells */
 .table tbody td {
   padding: 10px 12px;
-  font-size: 0.875rem;
-  color: var(--text-primary);
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-primary);
   vertical-align: middle;
   overflow: hidden;
 }
 
-/* Rank cell */
 .tdRank {
   text-align: center;
-  font-size: 0.75rem;
+  font-size: var(--sw-fs-caption);
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--sw-text-tertiary);
   width: 44px;
 }
 
-/* MLA cell */
 .mlaCell {
   display: flex;
   align-items: center;
@@ -168,35 +342,32 @@
 .mlaName {
   font-size: 14px;
   font-weight: 500;
-  font-family: var(--font-sans);
-  color: var(--ink);
+  color: var(--sw-text-primary);
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
+  transition: color 120ms;
 }
 
 .mlaName:hover,
 .tableRow:hover .mlaName {
-  color: var(--teal);
+  color: var(--sw-accent-strong);
 }
 
-/* Party cell */
 .tdParty {
   white-space: nowrap;
 }
 
-/* Constituency cell */
 .tdConstituency {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Questions cell */
 .tdQuestions {
   text-align: right;
 }
@@ -212,7 +383,7 @@
   flex: 1;
   max-width: 90px;
   height: 5px;
-  background: var(--border);
+  background: var(--sw-surface-subtle);
   border-radius: 99px;
   overflow: hidden;
 }
@@ -220,42 +391,40 @@
 .barFill {
   height: 100%;
   border-radius: 99px;
-  opacity: 0.75;
+  opacity: 0.85;
 }
 
 .questionsValue {
   font-size: 14px;
   font-weight: 600;
-  color: var(--ink);
+  color: var(--sw-text-primary);
   white-space: nowrap;
   min-width: 48px;
   text-align: right;
-  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
 
-/* Load more */
 .loadMore {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--rule);
-  border-radius: 3px;
+  border: 1px solid var(--sw-border);
+  border-radius: 0;
   background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+  color: var(--sw-text-secondary);
+  font-size: var(--sw-fs-body-sm);
   cursor: pointer;
-  margin-top: var(--spacing-md);
+  margin-top: var(--s-4);
   transition: border-color 150ms ease, color 150ms ease;
 }
 
 @media (max-width: 640px) { .loadMore { display: none; } }
 
 .loadMore:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--sw-accent);
+  color: var(--sw-accent-strong);
 }
 
-/* Responsive — tablet: hide constituency */
 @media (max-width: 900px) {
   .colConstituency,
   .hideTablet {
@@ -270,62 +439,227 @@
 .photoDesktop { display: contents; }
 .photoMobile  { display: none; }
 
-/* Responsive — mobile */
+/* Rank cards — replaces .tableWrap entirely, Pattern B (§4.2) at every width. */
+.rankCardHead {
+  display: none;
+}
+
+.rankCardList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-bottom: var(--sw-space-9);
+}
+
 @media (max-width: 640px) {
-  .photoDesktop { display: none; }
-  .photoMobile  { display: contents; }
+  .rankCardList {
+    margin-bottom: var(--s-10);
+  }
+}
 
-  .colParty,
-  .colConstituency,
-  .hideMobile {
+.rankCard,
+.rankCard:hover,
+.rankCard:active,
+.rankCard:visited {
+  text-decoration: none !important;
+}
+
+.rankCard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border);
+  border-radius: var(--sw-radius-none);
+  transition: border-color 150ms;
+  text-decoration: none;
+}
+
+.rankCard:hover {
+  border-color: var(--sw-accent);
+}
+
+.rankCardRank {
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+  font-size: var(--sw-fs-caption);
+  font-weight: 700;
+  color: var(--sw-text-tertiary);
+}
+
+.rankCardMain {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+  flex: 1;
+}
+
+.rankCardPhoto {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--sw-radius-none);
+  overflow: hidden;
+  border: 1px solid var(--sw-border-strong);
+  background: var(--sw-surface-subtle);
+  flex-shrink: 0;
+}
+
+.rankCardPhoto > span {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: unset !important;
+  border-radius: 0 !important;
+  outline: none !important;
+}
+
+.rankCardPhoto img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: top center !important;
+}
+
+.rankCardPhoto img[data-photo-position] {
+  object-position: var(--photo-position, top center) !important;
+}
+
+.rankCardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rankCardName {
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
+  color: var(--sw-text-primary);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  transition: color 120ms;
+}
+
+.rankCard:hover .rankCardName {
+  color: var(--sw-accent-strong);
+}
+
+/* Party pill — desktop only, own column next to the name. */
+.rankCardParty {
+  flex-shrink: 0;
+  width: 130px;
+  display: none;
+}
+
+/* Constituency — desktop only, own column. */
+.rankCardConstituency {
+  flex-shrink: 0;
+  width: 160px;
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: none;
+}
+
+.rankCardValueCol {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.rankCardBarTrack {
+  flex: 1;
+  max-width: 90px;
+  height: 5px;
+  background: var(--sw-surface-subtle);
+  border-radius: 99px;
+  overflow: hidden;
+  display: none;
+}
+
+.rankCardBarFill {
+  height: 100%;
+  border-radius: 99px;
+  opacity: 0.85;
+}
+
+.rankCardValue {
+  flex-shrink: 0;
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
+  color: var(--sw-text-primary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  min-width: 78px;
+}
+
+@media (min-width: 641px) {
+  .rankCardHead {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    padding: 10px var(--s-4);
+    background: var(--sw-surface-subtle);
+    border: 1px solid var(--sw-border);
+    margin-bottom: var(--s-3);
+    font-size: var(--sw-fs-eyebrow);
+    font-weight: var(--sw-fw-eyebrow);
+    text-transform: uppercase;
+    letter-spacing: var(--sw-eyebrow-tracking);
+    color: var(--sw-text-tertiary);
+  }
+
+  .rankCardHeadRank {
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+  }
+
+  .rankCardHeadMain {
+    flex: 1;
+  }
+
+  .rankCardHeadParty {
+    flex-shrink: 0;
+    width: 130px;
+  }
+
+  .rankCardHeadConstituency {
+    flex-shrink: 0;
+    width: 160px;
+  }
+
+  .rankCardHeadValue {
+    flex-shrink: 0;
+    width: 220px;
+    text-align: right;
+  }
+
+  .rankCardParty,
+  .rankCardConstituency,
+  .rankCardBarTrack {
+    display: flex;
+  }
+
+  .rankCardValueCol {
+    width: 220px;
+  }
+}
+
+/* Mobile-only rank list adjustments */
+@media (max-width: 640px) {
+  .tableWrap {
     display: none;
-  }
-
-  .colMla {
-    width: auto;
-  }
-
-  .colQuestions {
-    width: 80px;
-  }
-
-  .barTrack {
-    display: none;
-  }
-
-  .questionsValue {
-    min-width: 0;
-    font-size: 0.875rem;
-  }
-
-  .table thead th {
-    padding: 8px 10px;
-  }
-
-  .table tbody td {
-    padding: 8px 10px;
-  }
-
-  .mobilePill {
-    display: inline-flex !important;
-  }
-
-  .mobileRankingsTitle {
-    display: block;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 12px;
-  }
-
-  .mobileRankingsTitle::after {
-    content: '';
-    display: block;
-    height: 2px;
-    width: 40px;
-    background: var(--accent);
-    border-radius: 1px;
-    margin-top: 0.4rem;
   }
 
   .filterRowDesktop {
@@ -349,7 +683,7 @@
 
 @media (max-width: 767px) {
   .filterBtn {
-    font-size: 0.8rem;
+    font-size: var(--sw-fs-caption);
     padding: 8px 10px;
     min-height: 40px;
   }

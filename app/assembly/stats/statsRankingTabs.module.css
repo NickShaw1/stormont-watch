@@ -2,7 +2,7 @@
 .wrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--s-4);
 }
 
 /* ── Tab controls — desktop: hidden ─────────────────────── */
@@ -14,7 +14,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-md);
+  gap: var(--s-5);
 }
 
 .panel {
@@ -41,21 +41,29 @@
 
 /* ── Card ────────────────────────────────────────────────── */
 .card {
-  border: 1px solid var(--rule);
-  border-radius: 3px;
-  padding: var(--spacing-lg);
-  background: var(--paper-2);
+  border: 1px solid var(--sw-border);
+  border-radius: 0;
+  padding: var(--s-5);
+  background: var(--sw-surface);
+  overflow: hidden;
 }
 
 .cardTitle {
-  font-size: 11px;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  margin-bottom: var(--s-4);
-  margin-top: 0;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-tertiary);
+  margin: 0 0 var(--s-4);
+}
+
+.cardTitleIcon {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
 }
 
 /* ── List ────────────────────────────────────────────────── */
@@ -70,9 +78,11 @@
 .row {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  padding-block: var(--spacing-sm);
-  border-bottom: 1px solid var(--rule);
+  gap: var(--s-3);
+  padding-block: var(--s-3);
+  border-bottom: 1px solid var(--sw-border);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .row:last-child {
@@ -85,12 +95,18 @@
 }
 
 .rank {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--ink-3);
-  width: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
-  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--sw-text-tertiary);
+  background: var(--sw-surface-subtle);
+  border: 1px solid var(--sw-border);
 }
 
 .info {
@@ -98,22 +114,22 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
 }
 
 .name {
-  font-size: 14px;
-  font-weight: 500;
-  font-family: var(--font-sans);
-  color: var(--ink);
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
+  color: var(--sw-text-primary);
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 120ms;
 }
 
 .name:hover {
-  color: var(--teal);
+  color: var(--sw-accent-strong);
   text-decoration: none;
 }
 
@@ -126,69 +142,29 @@
 }
 
 .value {
-  font-size: 14px;
-  font-weight: 600;
-  font-family: var(--font-mono);
-  color: var(--ink);
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 700;
+  color: var(--sw-text-primary);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 .voteCounts {
-  font-size: 0.6875rem;
-  color: var(--ink-3);
+  font-size: 11px;
+  color: var(--sw-text-tertiary);
   white-space: nowrap;
-  font-family: var(--font-body), system-ui, sans-serif;
 }
 
 /* Square MLA photos */
 .photoSquare :global(.wrap),
 .photoSquare :global(.wrapFallback) {
-  border-radius: 3px !important;
+  border-radius: 0 !important;
 }
 
 @media (max-width: 767px) {
-  .cardTitle {
-    font-size: 0.8125rem;
-  }
-
-  .card {
-    padding: 12px;
-    overflow: hidden;
-  }
-
-  .row {
-    gap: 8px;
-    min-width: 0;
-    overflow: hidden;
-  }
-
-  .name {
-    font-size: 0.875rem;
-  }
-
-  .value {
-    font-size: 0.875rem;
-    font-weight: 700;
-  }
-}
-
-.bigStat {
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 700;
-  font-family: var(--font-mono);
-  color: var(--ink);
-  line-height: 1;
-  margin: var(--s-4) 0 var(--s-3);
-}
-
-.bigStatLabel {
-  font-size: 0.875rem;
-  color: var(--ink-3);
-  margin: 0 0 var(--s-3);
-}
-
-.footnote {
-  font-size: 0.75rem;
-  color: var(--ink-3);
-  margin: var(--s-3) 0 0;
-  line-height: 1.4;
+  .cardTitle { font-size: 11px; }
+  .card { padding: var(--s-4); overflow: hidden; }
+  .row { gap: var(--s-2); min-width: 0; overflow: hidden; }
+  .name { font-size: var(--sw-fs-body-sm); }
+  .value { font-size: var(--sw-fs-body-sm); font-weight: 700; }
 }

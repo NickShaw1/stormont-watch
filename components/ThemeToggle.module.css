@@ -1,0 +1,82 @@
+.toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  color: var(--sw-text-primary);
+  cursor: pointer;
+  transition: border-color var(--sw-transition), color var(--sw-transition);
+}
+
+.toggle:hover {
+  border-color: var(--sw-accent);
+  color: var(--sw-accent-strong);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--sw-focus);
+  outline-offset: 2px;
+}
+
+.toggle:active {
+  background: var(--sw-surface-subtle);
+}
+
+/* Both icons stacked and cross-faded with a rotate + scale, not an instant swap. */
+.iconStack {
+  position: relative;
+  width: 16px;
+  height: 16px;
+}
+
+.sunIcon,
+.moonIcon {
+  position: absolute;
+  inset: 0;
+  transition: opacity 400ms ease, transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.sunIcon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.sunRays {
+  transform-origin: center;
+  transition: opacity 300ms ease, transform 400ms ease;
+}
+
+.moonIcon {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.4);
+}
+
+.iconStack.isDark .sunIcon {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.4);
+}
+
+.iconStack.isDark .sunRays {
+  opacity: 0;
+  transform: scale(0.3);
+}
+
+.iconStack.isDark .moonIcon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sunIcon,
+  .moonIcon,
+  .sunRays {
+    transition: opacity 150ms linear;
+    transform: none !important;
+  }
+}

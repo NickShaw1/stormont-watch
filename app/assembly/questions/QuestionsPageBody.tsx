@@ -1,6 +1,8 @@
-import Link from 'next/link'
+import { Mic2 } from 'lucide-react'
 import { getQuestionTotalsAllMembers, getAllMembers, getAllMinisters } from '@/lib/db/queries'
 import QuestionsRankingClient from './QuestionsRankingClient'
+import StatsBreadcrumb from '../stats/StatsBreadcrumb'
+import styles from './questions.module.css'
 import { type Mandate, sittingAdjective } from '@/lib/constants/mandates'
 
 /**
@@ -43,15 +45,14 @@ export default async function QuestionsPageBody({
 
   return (
     <div className="container">
-      <header className="page-header">
-        <nav aria-label="Breadcrumb" className="breadcrumb">
-          <ol>
-            <li><Link href={`${basePath}/assembly/stats`}>Statistics</Link></li>
-            <li aria-current="page">MLA questions</li>
-          </ol>
-        </nav>
-        <h1>MLA questions</h1>
-        <p className="lede">Questions tabled by every <strong>{sittingAdjective(mandate)} MLA</strong> since the {mandate.label} mandate began. Excludes current ministers and the Speaker. Data sourced from the NI Assembly.</p>
+      <header className={styles.pageHeader}>
+        <StatsBreadcrumb label="MLA questions" basePath={basePath} />
+        <span className={styles.pageHeaderEyebrow}>Rankings</span>
+        <h1 className={styles.pageHeaderTitle}>
+          <Mic2 className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
+          MLA questions
+        </h1>
+        <p className={styles.lede}>Questions tabled by every {sittingAdjective(mandate)} MLA since the {mandate.label} mandate began. Excludes current ministers and the Speaker. Data sourced from the NI Assembly.</p>
       </header>
 
       <QuestionsRankingClient rows={rows} totalMlaCount={rows.length} />

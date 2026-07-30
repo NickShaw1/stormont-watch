@@ -1,90 +1,158 @@
-
+/* Matches the Bills/MLAs list page pattern. */
 .pageHeader {
-  padding-bottom: var(--spacing-md);
+  padding-block: var(--s-8) var(--s-6);
+  border-bottom: 1px solid var(--sw-accent);
+  margin-bottom: var(--sw-space-9);
 }
 
-@media (max-width: 767px) {
-  .pageHeader {
-    padding-bottom: 0;
-  }
+.pageHeaderEyebrow {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+}
 
-  .source {
-    margin-top: 0;
+.pageHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-display);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: var(--s-1) 0 0;
+}
+
+.pageHeaderIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+.lede {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  max-width: 68ch;
+  margin-top: var(--s-4);
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .lede {
+    font-size: var(--sw-fs-body-sm);
   }
 }
 
+@media (max-width: 640px) {
+  .pageHeader { padding-block: var(--s-6) var(--s-5); }
+  .pageHeaderTitle { font-size: var(--sw-fs-h2); }
+}
+
+/* Each stage is its own Pattern B bordered card (§4.2). */
 .guide {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  margin-bottom: var(--spacing-xl);
-  counter-reset: stage;
+  gap: var(--s-3);
+  margin-bottom: var(--sw-space-9);
 }
 
 .stage {
-  padding: var(--spacing-lg) 0;
-  border-bottom: 0.5px solid var(--border);
-  counter-increment: stage;
-}
-
-.stage:last-child {
-  border-bottom: none;
+  padding: var(--s-6);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
 }
 
 .stageTitle {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: var(--spacing-sm);
-  border-left: 3px solid var(--accent);
-  padding-left: 0.75rem;
+  align-items: baseline;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-3);
+}
+
+.stageNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-accent);
+  color: #ffffff;
+  font-size: var(--sw-fs-caption);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 .stageLabel {
-  font-size: 1.125rem;
+  font-family: var(--font-sans);
   font-weight: 700;
-  color: var(--text-primary);
-}
-
-.stageLabel::before {
-  content: counter(stage) '. ';
-  color: var(--text-secondary);
-  font-weight: 400;
-}
-
-.stage p {
-  color: var(--text-secondary);
+  font-size: var(--sw-fs-h3);
+  letter-spacing: -0.01em;
+  color: var(--sw-text-primary);
 }
 
 .stageSub {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--accent);
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  color: var(--sw-accent-strong);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--sw-eyebrow-tracking);
 }
 
-.source {
-  font-size: 1rem;
-  color: var(--text-secondary);
-  padding-top: var(--spacing-md);
-  border-top: 0.5px solid var(--border);
+.stage p {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  line-height: 1.6;
+  max-width: 72ch;
+  margin: 0;
 }
 
 .stageNote {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-top: 0.5rem;
-  padding-left: 0.75rem;
-  border-left: 2px solid var(--border);
-  max-width: none;
+  display: flex;
+  gap: var(--s-2);
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-secondary);
+  line-height: 1.5;
+  margin-top: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface-subtle);
+  max-width: 72ch;
+}
+
+.stageNoteIcon {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
+  margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .stage { padding: var(--s-5) var(--s-4); }
+}
+
+/* Quiet footnote, matching the bills page's .notice. */
+.source {
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-tertiary);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--sw-border);
+  margin-bottom: var(--sw-space-9);
 }
 
 .source a {
-  color: var(--text-primary);
+  color: var(--sw-accent);
   text-decoration: none;
 }
 
 .source a:hover {
+  color: var(--sw-accent-strong);
   text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .source { margin-bottom: var(--s-10); }
 }

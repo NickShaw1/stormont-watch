@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { Globe, BookOpen } from 'lucide-react'
 import { getPartyBySlug, getPartyAssemblyStats, getPartyExpenses, getPartyMandateExpenses, getQuestionStatsByParty, getHansardStatsByParty, getHansardPartyRank, getHansardPartyDebateRank, getHansardSittingsByMonthForParty } from '@/lib/db/queries'
-import type { CSSProperties } from 'react'
 import { partyBorderColor, abbreviateParty } from '@/lib/format'
 import type { Mandate } from '@/lib/constants/mandates'
 import styles from './partyDetail.module.css'
@@ -92,7 +92,7 @@ export default async function PartyDetailPageBody({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <header className={styles.partyHeader}>
+      <header className={styles.header}>
         <nav aria-label="Breadcrumb" className="breadcrumb">
           <ol>
             <li><Link href={`${basePath}/assembly/parties`}>Parties</Link></li>
@@ -100,26 +100,34 @@ export default async function PartyDetailPageBody({
           </ol>
         </nav>
 
-        <h1 className={styles.partyName} style={{ '--party-c': borderColor } as CSSProperties} aria-label={party.party}>
-          <span className={styles.partyNameFull} aria-hidden="true">{party.party}</span>
-          <span className={styles.partyNameShort} aria-hidden="true">{party.party === 'Independent' ? 'Independent' : abbreviateParty(party.party)}</span>
-        </h1>
+        <span className={styles.pageHeaderEyebrow}>Parties</span>
 
-        <div className={styles.metaRow}>
-          <span className="tag">{party.mlaCount} {party.mlaCount === 1 ? 'MLA' : 'MLAs'}</span>
-          {partyUrl && (
-            <a href={partyUrl} target="_blank" rel="noopener noreferrer" className={styles.externalLink}>
-              Official website<span className={styles.externalLinkArrow}> ↗</span>
-            </a>
-          )}
-          {partyUrl && wikiUrl && <span className={styles.metaSep} aria-hidden="true">·</span>}
-          {wikiUrl && (
-            <a href={wikiUrl} target="_blank" rel="noopener noreferrer" className={styles.externalLink}>
-              Wikipedia<span className={styles.externalLinkArrow}> ↗</span>
-            </a>
-          )}
+        <div className={styles.nameRow}>
+          <span className={styles.partySwatch} style={{ background: borderColor }} aria-hidden="true" />
+          <h1 className={styles.partyName} aria-label={party.party}>
+            <span className={styles.partyNameFull} aria-hidden="true">{party.party}</span>
+            <span className={styles.partyNameShort} aria-hidden="true">{party.party === 'Independent' ? 'Independent' : abbreviateParty(party.party)}</span>
+          </h1>
         </div>
 
+        {description && <p className={styles.description}>{description}</p>}
+
+        {(partyUrl || wikiUrl) && (
+          <div className={styles.linkRow}>
+            {partyUrl && (
+              <a href={partyUrl} target="_blank" rel="noopener noreferrer" className={styles.externalLink}>
+                <Globe className={styles.externalLinkIcon} size={15} strokeWidth={1.75} aria-hidden="true" />
+                Official website
+              </a>
+            )}
+            {wikiUrl && (
+              <a href={wikiUrl} target="_blank" rel="noopener noreferrer" className={styles.externalLink}>
+                <BookOpen className={styles.externalLinkIcon} size={15} strokeWidth={1.75} aria-hidden="true" />
+                Wikipedia
+              </a>
+            )}
+          </div>
+        )}
       </header>
 
       <PartyDetailClient
@@ -128,8 +136,6 @@ export default async function PartyDetailPageBody({
         ministers={party.ministers ?? []}
         chairs={party.committeeChairs ?? []}
         borderColor={borderColor}
-        description={description}
-        wikiUrl={wikiUrl}
         totalQuestions={totalQuestions}
         writtenCount={writtenCount}
         oralCount={oralCount}
@@ -155,7 +161,7 @@ export default async function PartyDetailPageBody({
           expenses ? (
             <PartyExpensesClient expenses={expenses} mandateExpenses={mandateExpenses} partyColor={borderColor} />
           ) : (
-            <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>No expenses data available.</p>
+            <p className={styles.sectionNote}>No expenses data available.</p>
           )
         }
       />

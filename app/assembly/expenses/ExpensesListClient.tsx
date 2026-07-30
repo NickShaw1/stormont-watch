@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Users, ListChecks, CalendarDays } from 'lucide-react'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
-import { formatMemberName, abbreviateParty, partyBorderColor, partyFilterActiveStyle, formatConstituency, orderedParties } from '@/lib/format'
+import { formatMemberName, abbreviateParty, partyBorderColor, formatConstituency, orderedParties } from '@/lib/format'
 import { useMandate } from '@/components/MandateContext'
+import { useDropdown } from '@/lib/useDropdown'
 import { sittingAdjective } from '@/lib/constants/mandates'
 import styles from './expenses.module.css'
 
@@ -43,7 +44,7 @@ function serviceMonths(mandateStart: string | null): number {
 }
 
 function serviceLabel(mandateStart: string | null): string {
-  if (!mandateStart) return '—'
+  if (!mandateStart) return '-'
   const total = serviceMonths(mandateStart)
   const years = Math.floor(total / 12)
   const months = total % 12
@@ -79,7 +80,7 @@ export default function ExpensesListClient({ rows, years }: Props) {
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false)
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
   const yearDropdownRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
+  const partyDropdown = useDropdown()
 
   useEffect(() => {
     if (!yearDropdownOpen) return
@@ -119,200 +120,217 @@ export default function ExpensesListClient({ rows, years }: Props) {
   return (
     <>
       {/* Rankings header */}
-      <div className={styles.rankingsHeader}>
-        <h2 className={styles.rankingsTitle}>MLA expenses rankings</h2>
-        <p className={styles.rankingsSubtitle}>Showing overall expenses across all published years by default. Use the filter to view a specific financial year.</p>
+      <div className={styles.sectionHead}>
+        <span className={styles.sectionEyebrow}>Rankings</span>
+        <h2 className={styles.sectionHeading}>
+          <ListChecks className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+          MLA expenses rankings
+        </h2>
+        <p className={styles.sectionSubtitle}>Showing overall expenses across all published years by default. Use the filter to view a specific financial year.</p>
       </div>
 
-      {/* Year dropdown */}
-      {years.length > 1 && (
-        <div className={styles.yearDropdownWrap} ref={yearDropdownRef}>
-          <button
-            className={styles.yearDropdownTrigger}
-            onClick={() => setYearDropdownOpen(o => !o)}
-            aria-haspopup="listbox"
-            aria-expanded={yearDropdownOpen}
-          >
-            <span>{selectedYear === OVERALL ? 'Overall' : selectedYear}</span>
-            <svg
-              className={`${styles.yearDropdownChevron} ${yearDropdownOpen ? styles.yearDropdownChevronOpen : ''}`}
-              width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+      <div className={styles.filterPanel}>
+        <div className={styles.filterTopRow}>
+          {/* Party filter pills (desktop) */}
+          <div className={`${styles.filterRow} ${styles.filterRowDesktop}`} role="group" aria-label="Filter by party">
+            <button
+              className={`${styles.filterBtn} ${partyFilter === 'ALL' ? `${styles.filterBtnActive} ${styles.filterBtnActiveAll}` : ''}`}
+              onClick={() => handlePartyFilter('ALL')}
+              aria-pressed={partyFilter === 'ALL'}
             >
-              <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
-          {yearDropdownOpen && (
-            <ul className={styles.yearDropdownList} role="listbox">
-              <li
-                role="option"
-                aria-selected={selectedYear === OVERALL}
-                className={`${styles.yearDropdownItem} ${selectedYear === OVERALL ? styles.yearDropdownItemSelected : ''}`}
-                onClick={() => { handleYearChange(OVERALL); setYearDropdownOpen(false) }}
-              >
-                Overall
-              </li>
-              {years.map(year => (
-                <li
-                  key={year}
-                  role="option"
-                  aria-selected={year === selectedYear}
-                  className={`${styles.yearDropdownItem} ${year === selectedYear ? styles.yearDropdownItemSelected : ''}`}
-                  onClick={() => { handleYearChange(year); setYearDropdownOpen(false) }}
+              All parties
+            </button>
+            {PARTIES.map(party => {
+              const isActive = partyFilter === party
+              return (
+                <button
+                  key={party}
+                  className={`${styles.filterBtn} ${isActive ? `${styles.filterBtnActive} ${styles.filterBtnActiveAll}` : ''}`}
+                  onClick={() => handlePartyFilter(party)}
+                  aria-pressed={isActive}
                 >
-                  {year}
-                </li>
-              ))}
-            </ul>
+                  {partyLabel(party)}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Party filter dropdown (mobile) */}
+          <div className={styles.filterDropdownWrap}>
+            <div className={styles.dropdownWrap} ref={partyDropdown.wrapRef}>
+              <button
+                ref={partyDropdown.triggerRef}
+                type="button"
+                className={styles.dropdownTrigger}
+                onClick={() => partyDropdown.setOpen((o) => !o)}
+                aria-haspopup="listbox"
+                aria-expanded={partyDropdown.open}
+              >
+                {partyFilter === 'ALL' ? 'All parties' : partyLabel(partyFilter)}
+                <svg
+                  className={`${styles.dropdownTriggerChevron} ${partyDropdown.open ? styles.dropdownTriggerChevronOpen : ''}`}
+                  width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+                >
+                  <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+
+              {partyDropdown.open && (
+                <ul ref={partyDropdown.listRef} className={styles.dropdownList} role="listbox">
+                  <li
+                    role="option"
+                    tabIndex={0}
+                    aria-selected={partyFilter === 'ALL'}
+                    className={`${styles.dropdownItem} ${partyFilter === 'ALL' ? styles.dropdownItemSelected : ''}`}
+                    onClick={() => { handlePartyFilter('ALL'); partyDropdown.setOpen(false) }}
+                    onKeyDown={(e) => partyDropdown.handleKeyDown(e, () => { handlePartyFilter('ALL'); partyDropdown.setOpen(false) })}
+                  >
+                    All parties
+                  </li>
+                  {PARTIES.map(party => (
+                    <li
+                      key={party}
+                      role="option"
+                      tabIndex={0}
+                      aria-selected={party === partyFilter}
+                      className={`${styles.dropdownItem} ${party === partyFilter ? styles.dropdownItemSelected : ''}`}
+                      onClick={() => { handlePartyFilter(party); partyDropdown.setOpen(false) }}
+                      onKeyDown={(e) => partyDropdown.handleKeyDown(e, () => { handlePartyFilter(party); partyDropdown.setOpen(false) })}
+                    >
+                      {partyLabel(party)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          {/* Year dropdown */}
+          {years.length > 1 && (
+            <div className={styles.yearDropdownWrap} ref={yearDropdownRef}>
+              <button
+                className={styles.yearDropdownTrigger}
+                onClick={() => setYearDropdownOpen(o => !o)}
+                aria-haspopup="listbox"
+                aria-expanded={yearDropdownOpen}
+              >
+                <span>{selectedYear === OVERALL ? 'Overall' : selectedYear}</span>
+                <svg
+                  className={`${styles.yearDropdownChevron} ${yearDropdownOpen ? styles.yearDropdownChevronOpen : ''}`}
+                  width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+                >
+                  <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+              {yearDropdownOpen && (
+                <ul className={styles.yearDropdownList} role="listbox">
+                  <li
+                    role="option"
+                    aria-selected={selectedYear === OVERALL}
+                    className={`${styles.yearDropdownItem} ${selectedYear === OVERALL ? styles.yearDropdownItemSelected : ''}`}
+                    onClick={() => { handleYearChange(OVERALL); setYearDropdownOpen(false) }}
+                  >
+                    Overall
+                  </li>
+                  {years.map(year => (
+                    <li
+                      key={year}
+                      role="option"
+                      aria-selected={year === selectedYear}
+                      className={`${styles.yearDropdownItem} ${year === selectedYear ? styles.yearDropdownItemSelected : ''}`}
+                      onClick={() => { handleYearChange(year); setYearDropdownOpen(false) }}
+                    >
+                      {year}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           )}
         </div>
-      )}
 
-      {/* Coverage note */}
-      <p className={styles.coverageNote}>
-        {selectedYear === OVERALL
-          ? <>Totals combine all published financial years: <strong>{years[years.length - 1]} to {years[0]}</strong>.</>
-          : <>Figures cover <strong>{periodLabel}</strong> ({selectedYear}).</>}
-      </p>
+        {/* Coverage note */}
+        <p className={styles.coverageNote}>
+          <CalendarDays className={styles.resultCountIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
+          {selectedYear === OVERALL
+            ? <>Totals combine all published financial years: <strong>{years[years.length - 1]} to {years[0]}</strong>.</>
+            : <>Figures cover <strong>{periodLabel}</strong> ({selectedYear}).</>}
+        </p>
 
-      {/* Mobile title */}
-      <h2 className={styles.mobileRankingsTitle}>Rankings</h2>
+        <p className={styles.resultCount} aria-live="polite" aria-atomic="true">
+          <Users className={styles.resultCountIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
+          <strong>{filtered.length}</strong>{' '}
+          <span className={styles.resultCountDesktop}>{partyFilter === 'ALL' ? sittingAdjective(mandate) : partyLabel(partyFilter)} MLA{filtered.length !== 1 ? 's' : ''} with published expenses for this period</span>
+          <span className={styles.resultCountMobile}>{mandate.isCurrent ? 'Current' : 'Sitting'} MLA{filtered.length !== 1 ? 's' : ''}</span>
+        </p>
+      </div>
 
-      {/* Party filter pills */}
-      <div className={`${styles.filterRow} ${styles.filterRowDesktop}`} role="group" aria-label="Filter by party">
-        <button
-          className={`${styles.filterBtn} ${partyFilter === 'ALL' ? `${styles.filterBtnActive} ${styles.filterBtnActiveAll}` : ''}`}
-          onClick={() => handlePartyFilter('ALL')}
-          aria-pressed={partyFilter === 'ALL'}
-        >
-          All parties
-        </button>
-        {PARTIES.map(party => {
-          const isActive = partyFilter === party
-          const activeStyle = isActive ? partyFilterActiveStyle(party) : null
+      <div className={styles.rankCardHead} aria-hidden="true">
+        <span className={styles.rankCardHeadRank}>#</span>
+        <span className={styles.rankCardHeadMain}>MLA</span>
+        <span className={styles.rankCardHeadParty}>Party</span>
+        <span className={styles.rankCardHeadConstituency}>Constituency</span>
+        <span className={styles.rankCardHeadService} title="Years and months of service since mandate start">Service</span>
+        <span className={styles.rankCardHeadValue}>Expenses</span>
+      </div>
+
+      <div className={styles.rankCardList} role="list" aria-label="MLA expenses ranked list">
+        {visible.map((row, i) => {
+          const total = parseFloat(row.total ?? '0')
+          const barPct = maxTotal > 0 ? Math.round(total / maxTotal * 100) : 0
+          const globalRank = i + 1
+
           return (
-            <button
-              key={party}
-              className={`${styles.filterBtn} ${isActive ? styles.filterBtnActive : ''}`}
-              style={activeStyle ? {
-                background: activeStyle.background,
-                color: activeStyle.color,
-                borderColor: activeStyle.borderColor,
-              } : undefined}
-              onClick={() => handlePartyFilter(party)}
-              aria-pressed={isActive}
+            <Link
+              key={row.personId}
+              href={`${basePath}/assembly/mlas/${row.personId}`}
+              className={styles.rankCard}
+              aria-label={`${formatMemberName(row.fullName)}${row.party ? `, ${row.party}` : ''}${row.constituency ? `, ${formatConstituency(row.constituency)}` : ''}`}
             >
-              {partyLabel(party)}
-            </button>
+              <span className={styles.rankCardRank} aria-hidden="true">{globalRank}</span>
+              <div className={styles.rankCardMain}>
+                <div className={styles.rankCardPhoto}>
+                  <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={44} decorative square personId={row.personId} />
+                </div>
+                <div className={styles.rankCardInfo}>
+                  <span className={styles.rankCardName}>{formatMemberName(row.fullName)}</span>
+                  {row.party && (
+                    <span className={`party-pill ${styles.mobilePill}`} data-party={abbreviateParty(row.party)}>
+                      <PartyName party={row.party} />
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <span className={styles.rankCardParty}>
+                {row.party && (
+                  <span className="party-pill" data-party={abbreviateParty(row.party)}>
+                    <PartyName party={row.party} />
+                  </span>
+                )}
+              </span>
+
+              <span className={styles.rankCardConstituency}>
+                {row.constituency ? formatConstituency(row.constituency) : '-'}
+              </span>
+
+              <span className={styles.rankCardService}>
+                {serviceLabel(row.mandateStart)}
+              </span>
+
+              <span className={styles.rankCardValueCol}>
+                <span className={styles.rankCardBarTrack} aria-hidden="true">
+                  <span
+                    className={styles.rankCardBarFill}
+                    style={{ display: 'block', width: `${barPct}%`, background: partyBorderColor(row.party) }}
+                  />
+                </span>
+                <span className={styles.rankCardValue}>{gbp(row.total)}</span>
+              </span>
+            </Link>
           )
         })}
       </div>
-
-      {/* Result count */}
-      <p className={styles.resultCount} aria-live="polite" aria-atomic="true">
-        <strong>{filtered.length}</strong>{' '}
-        <span className={styles.resultCountDesktop}>{partyFilter === 'ALL' ? sittingAdjective(mandate) : partyLabel(partyFilter)} MLA{filtered.length !== 1 ? 's' : ''} with published expenses for this period</span>
-        <span className={styles.resultCountMobile}>{mandate.isCurrent ? 'Current' : 'Sitting'} MLA{filtered.length !== 1 ? 's' : ''}</span>
-      </p>
-
-      {/* Table */}
-      <div className={styles.tableWrap}>
-        <table className={styles.table} aria-label="MLA expenses ranked table">
-          <colgroup>
-            <col className={styles.colRank} />
-            <col className={styles.colMla} />
-            <col className={`${styles.colParty} ${styles.hideMobile}`} />
-            <col className={`${styles.colConstituency} ${styles.hideMobile} ${styles.hideTablet}`} />
-            <col className={`${styles.colService} ${styles.hideMobile} ${styles.hideTablet}`} />
-            <col className={styles.colExpenses} />
-          </colgroup>
-          <thead>
-            <tr>
-              <th scope="col" className={styles.colRank}>#</th>
-              <th scope="col">MLA</th>
-              <th scope="col" className={styles.hideMobile}>Party</th>
-              <th scope="col" className={`${styles.hideMobile} ${styles.hideTablet}`}>Constituency</th>
-              <th scope="col" className={`${styles.hideMobile} ${styles.hideTablet}`} title="Years and months of service since mandate start">Service</th>
-              <th scope="col">Expenses</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((row, i) => {
-              const total = parseFloat(row.total ?? '0')
-              const barPct = maxTotal > 0 ? Math.round(total / maxTotal * 100) : 0
-              const globalRank = i + 1
-              const isTop = i === 0
-
-              return (
-                <tr
-                  key={row.personId}
-                  className={`${styles.tableRow} ${isTop ? styles.rowGold : ''}`}
-                  onClick={() => router.push(`${basePath}/assembly/mlas/${row.personId}`)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <th scope="row" className={styles.tdRank} aria-label={`Rank ${globalRank}`}>{globalRank}</th>
-
-                  <td>
-                    <div className={styles.mlaCell}>
-                      <span className={styles.photoDesktop}>
-                        <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={36} decorative square />
-                      </span>
-                      <span className={styles.photoMobile}>
-                        <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={50} decorative square />
-                      </span>
-                      <div style={{ minWidth: 0 }}>
-                        <Link
-                          href={`${basePath}/assembly/mlas/${row.personId}`}
-                          className={styles.mlaName}
-                          aria-label={`${formatMemberName(row.fullName)}${row.party ? `, ${row.party}` : ''}${row.constituency ? `, ${formatConstituency(row.constituency)}` : ''}`}
-                        >
-                          {formatMemberName(row.fullName)}
-                        </Link>
-                        {row.party && partyFilter === 'ALL' && (
-                          <span
-                            className={`party-pill ${styles.mobilePill}`}
-                            data-party={abbreviateParty(row.party)}
-                          >
-                            <PartyName party={row.party} />
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className={`${styles.tdParty} ${styles.hideMobile}`}>
-                    {row.party && (
-                      <span className="party-pill" data-party={abbreviateParty(row.party)}>
-                        <PartyName party={row.party} />
-                      </span>
-                    )}
-                  </td>
-
-                  <td className={`${styles.tdConstituency} ${styles.hideMobile} ${styles.hideTablet}`}>
-                    {row.constituency ? formatConstituency(row.constituency) : '—'}
-                  </td>
-
-                  <td className={`${styles.tdService} ${styles.hideMobile} ${styles.hideTablet}`}>
-                    {serviceLabel(row.mandateStart)}
-                  </td>
-
-                  <td className={styles.tdExpenses}>
-                    <div className={styles.expensesInner}>
-                      <div className={styles.barTrack} aria-hidden="true">
-                        <div
-                          className={styles.barFill}
-                          style={{ width: `${barPct}%`, background: partyBorderColor(row.party) }}
-                        />
-                      </div>
-                      <span className={styles.expensesValue}>{gbp(row.total)}</span>
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-
     </>
   )
 }

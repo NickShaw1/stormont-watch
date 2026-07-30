@@ -5,6 +5,10 @@ import { useState } from 'react'
 import { formatMemberName, initials } from '@/lib/format'
 import styles from './MlaPhoto.module.css'
 
+const OBJECT_POSITION_OVERRIDES: Record<string, string> = {
+  '8542': 'center 40%',
+}
+
 interface Props {
   name: string
   imgUrl: string
@@ -14,9 +18,10 @@ interface Props {
   decorative?: boolean
   square?: boolean
   priority?: boolean
+  personId?: string
 }
 
-export default function MlaPhoto({ name, imgUrl, size, borderColor, noOutline, decorative, square, priority }: Props) {
+export default function MlaPhoto({ name, imgUrl, size, borderColor, noOutline, decorative, square, priority, personId }: Props) {
   const [error, setError] = useState(false)
   const showFallback = !imgUrl || error
 
@@ -26,7 +31,7 @@ export default function MlaPhoto({ name, imgUrl, size, borderColor, noOutline, d
   return (
     <span
       className={`${styles.wrap}${showFallback ? ` ${styles.wrapFallback}` : ''}`}
-      style={{ width: size, height: size, minWidth: size, borderRadius: square ? 'var(--r-2)' : undefined, border: square ? 'none' : undefined, outline: showOutline ? `3px solid ${borderColor}` : undefined, outlineOffset: '2px' }}
+      style={{ width: size, height: size, minWidth: size, borderRadius: square ? 0 : undefined, border: square ? '1px solid var(--sw-border-strong)' : undefined, outline: showOutline ? `3px solid ${borderColor}` : undefined, outlineOffset: '2px' }}
     >
       {showFallback ? (
         <span
@@ -45,10 +50,11 @@ export default function MlaPhoto({ name, imgUrl, size, borderColor, noOutline, d
           role={decorative ? 'presentation' : undefined}
           width={size}
           height={size}
-          style={{ width: size, height: size }}
+          style={{ width: size, height: 'auto', objectPosition: personId ? OBJECT_POSITION_OVERRIDES[personId] : undefined, ['--photo-position' as string]: personId ? OBJECT_POSITION_OVERRIDES[personId] : undefined }}
           className={styles.img}
           priority={priority}
           onError={() => setError(true)}
+          data-photo-position={personId && OBJECT_POSITION_OVERRIDES[personId] ? '' : undefined}
         />
       )}
     </span>

@@ -1,123 +1,301 @@
 /* ── Header ────────────────────────────────────────────────── */
 .divisionHeader {
-  padding-top: var(--spacing-xl);
-  padding-bottom: var(--s-6);
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: var(--s-10);
+  padding-block: var(--s-6) var(--s-8);
+  border-bottom: 1px solid var(--sw-accent);
+  margin-bottom: var(--sw-space-9);
 }
 
-@media (max-width: 767px) {
+@media (max-width: 640px) {
   .divisionHeader {
-    padding-top: var(--spacing-lg);
-    padding-bottom: var(--s-4);
-    margin-bottom: var(--s-8);
-  }
-
-  .title {
-    font-size: clamp(32px, 8vw, 48px);
-    letter-spacing: -0.04em;
-  }
-
-  .metaStrip {
-    padding-top: var(--s-4);
-    margin-top: var(--s-2);
+    padding-block: var(--s-5) var(--s-6);
+    margin-bottom: var(--s-10);
   }
 }
 
-.tags {
+/* Bordered card, matching Bills'/MLA's .titleCard — houses the title block and tags together. */
+.titleCard {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
+}
+
+.eyebrow {
+  display: block;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+  margin-bottom: 4px;
+}
+
+/* Mobile-only exception: the h1 icon moves into the eyebrow instead, so the
+   title itself carries no icon on narrow screens (see .titleIconDesktopOnly). */
+.eyebrowIconMobile {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .eyebrowIconMobile {
+    display: inline-flex;
+    flex-shrink: 0;
+    position: relative;
+    top: -1px;
+  }
+
+  .titleIconDesktopOnly {
+    display: none;
+  }
+}
+
+/* Footer row — identifying chip (Division id) left, descriptive/status chips right,
+   matching Bills' .titleCardFoot exactly (bill-number chip left, status chips right). */
+.titleCardFoot {
   display: flex;
-  gap: var(--s-2);
-  align-items: center;
   flex-wrap: wrap;
-  margin-bottom: var(--s-4);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-4);
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--sw-border);
 }
 
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Division/Amendment chips: mobile shows them directly under the title, desktop
+   keeps them in the bottom footer alongside date/outcome — only one copy is
+   ever visible at a time. */
+.idBadgeRow {
+  margin-top: var(--s-3);
+}
+
+.idBadgeRowMobile {
+  display: none;
+}
+
+/* Division/Amendment as icon+prose meta rows — mobile only, hidden on desktop
+   where the chip version above (.idBadgeRowDesktop) is shown instead.
+   .metaStrip.metaStripMobile (compound selector) so this always beats the
+   plain .metaStrip display:flex rule declared later in this file, regardless
+   of source order. */
+.metaStrip.metaStripMobile {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .idBadgeRowMobile {
+    display: flex;
+  }
+
+  .idBadgeRowDesktop {
+    display: none;
+  }
+
+  .metaStrip.metaStripMobile {
+    display: flex;
+  }
+
+  /* Date/cross-community/outcome chips stretch to fill the row edge-to-edge on
+     mobile instead of size-to-content, so the footer reads as one solid band. */
+  .statusBadgeRow {
+    width: 100%;
+  }
+
+  .statusBadgeRow .chip {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* One chip box model for every pill in the header — matches Bills' .chip exactly.
+   Colour comes entirely from the modifier classes below, not from separate
+   differently-sized pill classes (outcomePill/tagCrossCommunity/subtitlePill). */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  font-size: var(--sw-fs-caption);
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.chipNeutral {
+  color: var(--sw-text-secondary);
+  background: var(--sw-surface-subtle);
+  border-color: var(--sw-border);
+}
+
+.chipPass {
+  background: var(--sw-success-solid);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.chipFail {
+  background: var(--sw-error-solid);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+/* Solid indigo — matches Bills' .pillCrossCommunity (§9 one-off hue). */
+.chipCrossCommunity {
+  background: #6366f1;
+  color: #ffffff;
+  border-color: transparent;
+}
+
+/* Matches Bills' own detail-page <h1>.title exactly (§3.1 — 22px, not the unreached 29px display size). */
 .title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: clamp(36px, 5vw, 72px);
-  letter-spacing: -0.045em;
-  line-height: 0.96;
-  color: var(--ink);
-  margin: 0 0 var(--s-6);
+  font-weight: 700;
+  font-size: var(--sw-fs-h2);
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--sw-text-primary);
+  margin: 0;
+}
+
+.titleIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
 }
 
 .titleWithSub {
-  margin-bottom: var(--s-3);
-}
-
-.subtitlePill {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--paper-3);
-  color: var(--ink-2);
-  border: 1px solid var(--rule);
-  margin-bottom: var(--s-4);
-  font-family: var(--font-sans);
+  margin-bottom: 0;
 }
 
 .metaStrip {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding-top: var(--s-5);
-  border-top: 1px solid var(--rule);
-  margin-top: var(--s-2);
+  gap: 6px;
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--sw-border);
+  margin-top: var(--s-4);
 }
 
+/* Same hairline/spacing as the standard .metaStrip below it, so every section
+   break in the card reads consistently, including the one right under the title. */
+.metaStrip.metaStripMobile {
+  border-top: 1px solid var(--sw-border);
+  padding-top: var(--s-4);
+  margin-top: var(--s-4);
+}
+
+/* center, not baseline — an inline-flex label containing an icon doesn't report
+   a stable text baseline, which threw the label/value rows out of alignment. */
 .metaRow {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--s-3);
 }
 
+/* Fixed width, not min-width — "Amendment" is the longest label ("AMENDMENT" at
+   this uppercase/tracked size needs ~108px); a min-width let that one row's
+   label grow past the others and knock its value column out of alignment. */
 .metaLabel {
-  font-size: 11px;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  min-width: 90px;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-tertiary);
+  width: 108px;
   flex-shrink: 0;
 }
 
+.metaLabelIcon {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
+}
+
 .metaValue {
-  font-size: 13px;
-  color: var(--ink-2);
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-secondary);
   line-height: 1.4;
 }
 
 .metaValue a {
-  font-size: 13px;
-  color: var(--ink-3);
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-accent);
   text-decoration: none;
   white-space: nowrap;
-  padding-bottom: 2px;
-  border-bottom: 1px solid var(--rule);
-  transition: color 150ms, border-color 150ms;
+  transition: color 150ms;
 }
 
 .metaValue a:hover {
-  color: var(--ink);
-  border-color: var(--ink);
-  text-decoration: none;
+  color: var(--sw-accent-strong);
+  text-decoration: underline;
+}
+
+/* Standard §1.1.7 section spacing — applied per-section since several are conditional. */
+.pageSection {
+  margin-top: var(--sw-space-9);
+}
+
+.pageSection:first-child {
+  margin-top: 0;
+}
+
+.sectionLast {
+  margin-bottom: var(--sw-space-9);
+}
+
+@media (max-width: 640px) {
+  .pageSection { margin-top: var(--s-10); }
+  .sectionLast { margin-bottom: var(--s-10); }
 }
 
 /* ── Section headings ──────────────────────────────────────── */
+/* Eyebrow + h2 wrapper, matching Bills'/MLA's .sectionHead. */
+.sectionHead {
+  margin-bottom: var(--s-4);
+}
+
+.sectionHead .eyebrow {
+  margin-bottom: 4px;
+}
+
+.sectionHead h2 {
+  margin: 0;
+}
+
 .sectionHeading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-sans);
-  font-style: normal;
-  font-size: clamp(28px, 3.4vw, 42px);
-  font-weight: 500;
-  letter-spacing: -0.035em;
-  line-height: 1;
-  color: var(--ink);
-  margin-bottom: var(--s-5);
-  margin-top: 0;
+  font-weight: 700;
+  font-size: var(--sw-fs-h2);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  color: var(--sw-text-primary);
+  margin: 0;
+}
+
+.sectionHeadingIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
 }
 
 /* ── Motion text ───────────────────────────────────────────── */
@@ -126,196 +304,236 @@
 }
 
 .amendmentNote {
-  color: var(--ink-3);
+  color: var(--sw-text-tertiary);
   font-style: italic;
+  font-size: var(--sw-fs-body-sm);
   margin-bottom: var(--s-3);
-  padding: 0;
+  line-height: 1.5;
 }
 
 .motionSubheading {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--sw-fs-caption);
+  font-weight: 700;
+  color: var(--sw-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin: 0 0 8px 0;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  margin: 0 0 var(--s-2);
+}
+
+.motionSubheadingIcon {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
 }
 
 .motionColumns {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0;
-  border-radius: 6px;
-  overflow: hidden;
-  margin-top: 16px;
+  gap: var(--s-4);
+  margin-top: var(--s-4);
 }
 
 .motionColumn {
-  padding: 20px;
+  padding: var(--s-5);
+  border: 1px solid var(--sw-border);
+  border-top: 3px solid var(--sw-text-tertiary);
 }
 
 .motionColumnOriginal {
-  background: var(--paper);
+  background: var(--sw-surface);
 }
 
 .motionColumnAmended {
-  background: var(--paper-2);
+  background: var(--sw-surface-subtle);
 }
 
 .motionColumn .motionText {
   max-width: none;
 }
 
+/* Bordered card for the plain (no-amendment) motion text case — matches .motionColumns' framing. */
+.motionCard {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
+  margin-top: var(--s-4);
+}
+
+.motionCard .motionText {
+  max-width: none;
+}
+
 @media (max-width: 767px) {
   .motionColumns {
     grid-template-columns: 1fr;
-    gap: 16px;
-    overflow: visible;
+    gap: var(--s-3);
   }
 
   .motionColumn {
-    border-radius: 6px;
+    padding: var(--s-4);
   }
 }
 
+/* Matches .metaValue ("Tabled by" value) exactly — --sw-fs-body-sm, not the larger body size. */
 .motionText {
-  font-size: 15px;
-  color: var(--ink-2);
-  line-height: 1.7;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-secondary);
+  line-height: 1.65;
   white-space: pre-wrap;
-  max-width: 60ch;
-  margin-bottom: 0;
+  max-width: 72ch;
+  margin: 0;
+}
+
+@media (max-width: 767px) {
+  .motionText {
+    line-height: 1.6;
+  }
 }
 
 /* ── Results section ───────────────────────────────────────── */
 .resultsSection {
-  margin-bottom: var(--s-8);
+  margin-bottom: 0;
 }
 
-/* Tally bars */
-.tallyRow {
-  display: flex;
-  align-items: center;
-  gap: var(--s-4);
-  margin-bottom: var(--s-3);
+/* One card holds the whole result: big numbers first, one combined bar for
+   context underneath — replaces the old separate tally-bars + count-cards
+   split, which showed the same four numbers twice in two visual languages. */
+.resultsCard {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
 }
 
-.tallyLabel {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  width: 32px;
-  flex-shrink: 0;
-}
-
-.tallyLabelAye { color: var(--forest); }
-.tallyLabelNo  { color: var(--crimson); }
-.tallyLabelAbs { color: var(--ink-3); }
-
-.tallyBar {
-  flex: 1;
-  height: 12px;
-  border-radius: 2px;
-  background: var(--paper-3);
-  overflow: hidden;
-}
-
-.tallyBarFill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.4s ease;
-}
-
-.tallyBarAye { background: var(--forest); }
-.tallyBarNo  { background: var(--crimson); }
-.tallyBarAbs { background: var(--ink-3); }
-
-.tallyVal {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
-  width: 28px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.tallyValAye { color: var(--forest); }
-.tallyValNo  { color: var(--crimson); }
-.tallyValAbs { color: var(--ink-3); }
-
-/* Counts grid */
+/* Key figures strip — Pattern A tinted top-border cards (§4.1), matches the
+   votes list page's .statStrip/.statCell exactly. */
 .counts {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--s-4);
-  margin-top: var(--s-6);
-}
-
-@media (max-width: 480px) {
-  .counts {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  margin-bottom: var(--s-5);
 }
 
 .countItem {
+  border: 1px solid var(--sw-border);
+  border-top: 1px solid var(--sw-text-tertiary);
+  background: var(--sw-surface-subtle);
+  padding: var(--s-4);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--s-1);
-  padding: var(--s-4);
-  background: var(--paper);
-  border-radius: var(--r-3);
-  border: 1px solid var(--rule);
-  text-align: center;
+  gap: var(--s-2);
+  text-align: left;
 }
 
-.countNum {
-  font-family: var(--font-mono);
-  font-size: 2.5rem;
-  font-weight: 600;
-  line-height: 1;
+.countLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.countIcon {
+  color: var(--sw-text-tertiary);
+}
+
+.countItemAye .countIcon { color: var(--sw-success-solid); }
+.countItemNo .countIcon  { color: var(--sw-error-solid); }
+
+.countItemAye {
+  border-top-color: var(--sw-success);
+  background: color-mix(in srgb, var(--sw-success) 12%, var(--sw-surface));
+}
+
+.countItemNo {
+  border-top-color: var(--sw-error);
+  background: color-mix(in srgb, var(--sw-error) 12%, var(--sw-surface));
 }
 
 .countLabel {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-secondary);
 }
 
-.countItemAye .countNum { color: var(--forest); }
-.countItemNo .countNum  { color: var(--crimson); }
-.countItemAbs .countNum { color: var(--ink-3); }
-.countItemNs .countNum  { color: var(--ink-3); }
+.countNum {
+  font-size: var(--sw-fs-stat);
+  font-weight: var(--sw-fw-stat);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--sw-text-primary);
+}
 
-/* ── Party breakdown table (used inside designationLayout card) ─ */
+.countItemAye .countNum { color: var(--sw-success-solid); }
+.countItemNo .countNum  { color: var(--sw-error-solid); }
+
+@media (max-width: 1024px) {
+  .counts { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .counts { gap: var(--s-3); }
+  .countNum { font-size: 24px; }
+}
+
+/* Single combined proportional bar — matches the votes list page's .divBarTrack
+   exactly (8px, --sw-radius-sm, --sw-surface-subtle track, no border), extended
+   with Abstain/No Show segments since this view needs all four, not just two. */
+.resultsBarTrack {
+  display: flex;
+  min-width: 0;
+  height: 8px;
+  border-radius: var(--sw-radius-sm);
+  overflow: hidden;
+  background: var(--sw-surface-subtle);
+}
+
+.resultsBarAye,
+.resultsBarNo,
+.resultsBarAbs,
+.resultsBarNs {
+  display: block;
+  min-width: 0;
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.resultsBarAye { background: var(--sw-success-solid); }
+.resultsBarNo  { background: var(--sw-error-solid); }
+.resultsBarAbs { background: var(--sw-text-tertiary); }
+.resultsBarNs  { background: var(--sw-border-strong); }
+
+/* ── Party / designation breakdown card ───────────────────────── */
 .partyBlocGrid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0;
   border: none;
-  background: var(--paper);
+  background: var(--sw-surface);
   overflow: hidden;
   min-width: 0;
 }
 
+/* Label column is a fixed width matching the pill exactly (no dead space); the four
+   numeric columns share the row's remaining width equally via 1fr, so the table
+   always fills the card edge-to-edge instead of a handful of fixed pixel guesses
+   that only happen to fit at one particular card width. */
 .partyBlocHeaderRow {
   display: grid;
-  grid-template-columns: 1fr repeat(4, minmax(36px, auto));
-  padding: var(--s-2) var(--s-4);
-  border-bottom: 1px solid var(--rule);
+  grid-template-columns: 100px repeat(4, 1fr);
+  column-gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--sw-border);
 }
 
 .partyBlocItem {
   display: grid;
-  grid-template-columns: 1fr repeat(4, minmax(36px, auto));
+  grid-template-columns: 100px repeat(4, 1fr);
+  column-gap: var(--s-3);
   align-items: center;
-  padding: var(--s-2) var(--s-4);
-  border-bottom: 1px solid var(--rule);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--sw-border);
 }
 
 .partyBlocItem:last-child {
@@ -328,29 +546,87 @@
   min-width: 0;
 }
 
+/* Fixed width here only — the shared .party-pill class elsewhere stays fit-content (§7.6). */
 .partyBlocLabel :global(.party-pill) {
   align-self: center;
   line-height: normal;
+  width: 100px;
+  justify-content: center;
+  text-align: center;
+  font-size: 11px;
+  padding: 5px 9px;
+}
+
+/* Hairline between the label and the count columns — matches the votes list page's
+   .divTitle/.divOutcomePillCol convention (border-left + 12px padding on the data side).
+   Sibling combinator (not :first-of-type, which can't distinguish the header row's
+   unlabelled first <span/> from the labelled ones — all are the same element type). */
+.partyBlocHeaderRow > span:first-child + .blocColHead,
+.partyBlocLabel + .blocCell {
+  border-left: 1px solid var(--sw-border);
+  padding-left: 12px;
+}
+
+@media (max-width: 640px) {
+  .partyBlocHeaderRow {
+    grid-template-columns: 84px repeat(4, 1fr);
+    column-gap: var(--s-2);
+    padding: var(--s-2) var(--s-3);
+  }
+
+  .partyBlocItem {
+    grid-template-columns: 84px repeat(4, 1fr);
+    column-gap: var(--s-2);
+    padding: var(--s-2) var(--s-3);
+  }
+
+  .partyBlocLabel :global(.party-pill) {
+    width: 84px;
+    padding: 4px 8px;
+  }
+
+  /* Unlike .divTitle's mobile behaviour (which stacks its pill above the title,
+     removing the divider entirely), this row stays side-by-side at every width —
+     the hairline stays too, just with tighter padding to fit the narrower columns. */
+  .partyBlocHeaderRow > span:first-child + .blocColHead,
+  .partyBlocLabel + .blocCell {
+    padding-left: var(--s-2);
+  }
+}
+
+/* Dedicated canvas wrapper — matches the MLA detail page's .chartCanvasWrap exactly.
+   Chart.js's maintainAspectRatio:false needs a position:relative parent with a fixed,
+   non-flex-computed height; the legend must live outside this wrapper, not inside it. */
+.chartCanvasWrap {
+  position: relative;
+  width: 100%;
+  height: 180px;
 }
 
 /* ── Roll call chart canvas wrapper ─────────────────────────── */
+/* Stretched by .designationLayout's grid (align-items: stretch) — fills that full height
+   rather than the fixed 180px other .chartCanvasWrap usages default to. */
 .rollCallChart {
   min-width: 0;
-  min-height: 180px;
+  height: 100%;
   padding: var(--s-3) var(--s-4) var(--s-4);
   display: flex;
   flex-direction: column;
 }
 
-.rollCallChart canvas {
+.rollCallChart .chartCanvasWrap {
   flex: 1;
-  min-height: 0;
+  height: auto;
+  min-height: 220px;
 }
 
 @media (max-width: 640px) {
   .rollCallChart {
-    padding: var(--s-3) var(--s-3) var(--s-4);
-    min-height: 200px;
+    height: auto;
+  }
+
+  .rollCallChart .chartCanvasWrap {
+    flex: none;
     height: 200px;
   }
 }
@@ -364,75 +640,89 @@
   display: grid;
   grid-template-columns: auto 1px 1fr;
   align-items: stretch;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  background: var(--paper);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
   overflow: hidden;
 }
 
 .designationSep {
-  background: var(--rule);
+  background: var(--sw-border);
   width: 1px;
 }
 
 .designationChart {
   min-width: 0;
-  height: 100%;
-  min-height: 160px;
   padding: var(--s-4);
+}
+
+.designationChart .chartCanvasWrap {
+  height: 160px;
 }
 
 @media (max-width: 640px) {
   .designationLayout {
     grid-template-columns: 1fr;
-    border: 1px solid var(--rule);
-    border-radius: var(--r-3);
-    background: var(--paper);
+    border: 1px solid var(--sw-border);
+    background: var(--sw-surface);
     overflow: hidden;
   }
   .designationSep {
     display: block;
     width: auto;
     height: 1px;
-    background: var(--rule);
+    background: var(--sw-border);
   }
-  .designationChart { padding: var(--s-4); height: 200px; min-height: 200px; }
+  .designationChart { padding: var(--s-4); }
+  .designationChart .chartCanvasWrap { height: 200px; }
 }
-
 
 .blocGrid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  background: var(--paper);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
   overflow: hidden;
   max-width: 420px;
 }
 
+/* Variant for use inside .designationLayout, which already supplies its own border/background. */
+.blocGridPlain {
+  border: none;
+  border-radius: 0;
+  max-width: none;
+}
+
+/* Label column is a fixed width matching the pill exactly; the numeric columns
+   share the row's remaining width equally via 1fr — same approach as .partyBlocItem.
+   --data-cols (3 or 4, set inline from the NS-present count) only controls how many
+   1fr tracks exist, so the split stays even whether NS is shown or not. */
 .blocHeaderRow {
   display: grid;
-  grid-template-columns: 1fr repeat(3, minmax(40px, auto));
+  grid-template-columns: 100px repeat(var(--data-cols, 4), 1fr);
+  column-gap: var(--s-3);
   padding: var(--s-2) var(--s-4);
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--sw-border);
 }
 
 .blocColHead {
-  font-size: 11px;
-  font-weight: 600;
+  display: block;
+  width: 100%;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-3);
-  text-align: right;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-tertiary);
+  text-align: center;
 }
 
 .blocItem {
   display: grid !important;
-  grid-template-columns: 1fr repeat(3, minmax(40px, auto));
+  grid-template-columns: 100px repeat(var(--data-cols, 4), 1fr);
+  column-gap: var(--s-3);
   align-items: center;
   padding: var(--s-3) var(--s-4);
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--sw-border);
 }
 
 .blocItem:last-child {
@@ -441,76 +731,143 @@
 
 .blocCell {
   display: block;
-  font-size: 14px;
-  color: var(--ink);
-  text-align: right;
+  width: 100%;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-primary);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Used by the party breakdown table only — dims the zero-placeholder dash so real
+   values carry the visual weight instead of every cell reading with equal emphasis. */
+.blocCellZero {
+  color: var(--sw-text-tertiary);
+}
+
+.blocCellValue {
+  font-weight: 700;
+  color: var(--sw-text-primary);
 }
 
 .blocValueDesktop { display: none; }
 
 .blocLabel {
-  font-size: 12px;
+  font-size: var(--sw-fs-body-sm);
   font-weight: 500;
-  color: var(--ink-2);
+  color: var(--sw-text-secondary);
 }
 
+/* Fixed width here only — the shared .designation-pill class stays fit-content elsewhere. */
 .blocLabel :global(.designation-pill) {
   line-height: normal;
+  width: 100px;
+  justify-content: center;
+  text-align: center;
+  padding: 5px 9px;
 }
 
-.blocAye { color: var(--forest); }
-.blocNo  { color: var(--crimson); }
-.blocNs  { color: var(--ink-3); }
-.blocSep { color: var(--ink-3); }
-
-/* ── Party pill ────────────────────────────────────────────── */
-.partyPill {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 3px;
-  white-space: nowrap;
-  flex-shrink: 0;
-  border: none;
+/* Hairline between the label and the count columns — matches the votes list page's
+   .divTitle/.divOutcomePillCol convention (border-left + 12px padding on the data side).
+   Sibling combinator (not :first-of-type, which can't distinguish the header row's
+   unlabelled first <span/> from the labelled ones — all are the same element type). */
+.blocHeaderRow > span:first-child + .blocColHead,
+.blocLabel + .blocCell {
+  border-left: 1px solid var(--sw-border);
+  padding-left: 12px;
 }
 
-.partyPill[data-party="Sinn Féin"] { background: #326760; color: white; }
-.partyPill[data-party="DUP"]       { background: #C41E3A; color: white; }
-.partyPill[data-party="Alliance"]  { background: #F6C135; color: #1a1a1a; }
-.partyPill[data-party="UUP"]       { background: #5B8DD9; color: white; }
-.partyPill[data-party="SDLP"]      { background: #2E8B57; color: white; }
-.partyPill[data-party="TUV"]       { background: #1a1a6e; color: white; }
-.partyPill[data-party="PBP"]       { background: #c0392b; color: white; }
-.partyPill[data-party="Ind"]       { background: #888;    color: white; }
+@media (max-width: 640px) {
+  .blocHeaderRow {
+    grid-template-columns: 84px repeat(var(--data-cols, 4), 1fr);
+    column-gap: var(--s-2);
+    padding: var(--s-2) var(--s-3);
+  }
+
+  .blocItem {
+    grid-template-columns: 84px repeat(var(--data-cols, 4), 1fr);
+    column-gap: var(--s-2);
+    padding: var(--s-2) var(--s-3);
+  }
+
+  .blocLabel :global(.designation-pill) {
+    width: 84px;
+    padding: 4px 8px;
+  }
+
+  /* Unlike .divTitle's mobile behaviour (which stacks its pill above the title,
+     removing the divider entirely), this row stays side-by-side at every width —
+     the hairline stays too, just with tighter padding to fit the narrower columns. */
+  .blocHeaderRow > span:first-child + .blocColHead,
+  .blocLabel + .blocCell {
+    padding-left: var(--s-2);
+  }
+}
+
+.blocAye { color: var(--sw-success-solid); }
+.blocNo  { color: var(--sw-error-solid); }
+.blocNs  { color: var(--sw-text-tertiary); }
+.blocSep { color: var(--sw-text-tertiary); }
 
 /* ── Roll call ─────────────────────────────────────────────── */
+/* No outer shell — each column below is its own fully independent bordered card,
+   not one shared card with internal dividers. */
+.rollCallCard {
+  border: none;
+  background: transparent;
+}
+
 .rollCall {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--s-10);
+  gap: var(--sw-space-9);
   margin-top: 0;
 }
 
 @media (min-width: 768px) {
   .rollCall {
     grid-template-columns: repeat(4, 1fr);
+    gap: var(--s-5);
+  }
+
+  .rollCallCol {
+    border: 1px solid var(--sw-border);
+    background: var(--sw-surface);
+    padding: var(--s-4);
   }
 }
 
+/* Real sub-heading, matching the MLA detail page's .chartTitle/.financesSectionHeading
+   exactly (16px/700/-0.01em, primary-strength text) — not the eyebrow's tiny uppercase
+   caption scale, which read as decoration rather than each column's actual heading.
+   Colour-coded per vote type (Aye = success, No = error, Abstain/No Show = neutral). */
 .columnHeading {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  margin-bottom: var(--s-3);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-h3);
+  letter-spacing: -0.01em;
+  color: var(--sw-text-primary);
+  margin: 0 0 var(--s-4);
 }
+
+.columnHeadingIcon {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
+}
+
+.columnHeadingAye  { color: var(--sw-success-solid); }
+.columnHeadingAye .columnHeadingIcon { color: var(--sw-success-solid); }
+.columnHeadingNo   { color: var(--sw-error-solid); }
+.columnHeadingNo .columnHeadingIcon { color: var(--sw-error-solid); }
 
 .nameList {
   list-style: none;
   display: flex;
   flex-direction: column;
+  padding: 0;
+  margin: 0;
 }
 
 .nameItem {
@@ -519,41 +876,41 @@
   justify-content: space-between;
   gap: var(--s-3);
   padding-block: var(--s-2);
-  border-bottom: 1px solid var(--rule);
-  font-size: 14px;
+  border-bottom: 1px solid var(--sw-border);
+  font-size: var(--sw-fs-body-sm);
+}
+
+.nameItem:last-child {
+  border-bottom: none;
 }
 
 .nameItem a {
-  color: var(--ink);
+  color: var(--sw-text-primary);
   text-decoration: none;
 }
 
 .nameItem a:hover {
-  color: var(--teal);
+  color: var(--sw-accent-strong);
+  text-decoration: underline;
 }
 
+/* Contained unit — party pill + its members read as one boxed group, not a pill
+   floating above plain list text. Top border is tinted per-party (inline style,
+   same technique as the count cards' Pattern A) instead of one flat grey box
+   with no relationship to the party's own identity/colour. */
 .partyGroup {
-  margin-bottom: var(--s-8);
+  margin-bottom: var(--s-4);
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border);
+  border-top: 3px solid var(--sw-border);
+}
+
+.partyGroup:last-child {
+  margin-bottom: 0;
 }
 
 .partyGroupHeading {
   margin-bottom: var(--s-3);
 }
 
-/* Legacy compat — used by RollCallClient */
-.rollCallHeading {
-  font-family: var(--font-sans);
-  font-style: normal;
-  font-size: clamp(28px, 3.4vw, 42px);
-  font-weight: 500;
-  letter-spacing: -0.035em;
-  line-height: 1;
-  color: var(--ink);
-  margin-bottom: var(--s-5);
-  margin-top: 0;
-}
-
-.breadcrumb { }
-.pillPassed { }
-.pillFailed { }
-.pillCross  { }

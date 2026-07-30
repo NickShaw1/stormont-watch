@@ -4,15 +4,17 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { Home, Users, Users2, Scale, Vote, BarChart3, Building2 } from 'lucide-react'
 import MandateSwitcher from './MandateSwitcher'
+import ThemeToggle from './ThemeToggle'
 import styles from './Nav.module.css'
 
 function EyeLogo() {
   return (
     <svg
       className={styles.navLogo}
-      width="18"
-      height="18"
+      width="31"
+      height="31"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -20,21 +22,44 @@ function EyeLogo() {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <path d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z" strokeLinejoin="round"/>
-      <circle cx="12" cy="12" r="4"/>
-      <circle cx="12" cy="12" r="2" fill="currentColor"/>
+      <g className={styles.navLogoBlink}>
+        <path d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z" strokeLinejoin="round"/>
+        <circle cx="12" cy="12" r="4"/>
+        <circle cx="12" cy="12" r="2" fill="currentColor"/>
+      </g>
     </svg>
   )
 }
 
 const navLinks = [
-  { href: '/assembly/structure', label: 'Assembly' },
   { href: '/assembly/mlas', label: 'MLAs' },
   { href: '/assembly/parties', label: 'Parties' },
   { href: '/assembly/bills', label: 'Legislation' },
   { href: '/assembly/votes', label: 'Votes' },
   { href: '/assembly/stats', label: 'Stats' },
+  { href: '/assembly/structure', label: 'Assembly' },
 ]
+
+const navIcons: Record<string, typeof Home> = {
+  '/': Home,
+  '/assembly/mlas': Users,
+  '/assembly/parties': Users2,
+  '/assembly/bills': Scale,
+  '/assembly/votes': Vote,
+  '/assembly/stats': BarChart3,
+  '/assembly/structure': Building2,
+}
+
+// Cycles through the system's three sanctioned semantic colours (§4.1).
+const navIconColors: Record<string, string> = {
+  '/': 'var(--sw-accent)',
+  '/assembly/mlas': 'var(--sw-accent-warm)',
+  '/assembly/parties': 'var(--sw-success)',
+  '/assembly/bills': 'var(--sw-accent)',
+  '/assembly/votes': 'var(--sw-accent-warm)',
+  '/assembly/stats': 'var(--sw-success)',
+  '/assembly/structure': 'var(--sw-accent)',
+}
 
 const allLinks = [
   { href: '/', label: 'Home' },
@@ -124,9 +149,11 @@ export default function Nav() {
           ))}
         </ul>
 
-        <MandateSwitcher />
-
         <div className={styles.navRight}>
+          <span className={styles.navThemeToggle}><ThemeToggle /></span>
+
+          <MandateSwitcher />
+
           <button
             className={styles.hamburger}
             aria-expanded={open}
@@ -136,7 +163,11 @@ export default function Nav() {
           >
             {open
               ? <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" fill="none" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-              : <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+              : (
+                <span className={styles.hamburgerBars} aria-hidden="true">
+                  <span /><span /><span />
+                </span>
+              )
             }
           </button>
         </div>
@@ -148,18 +179,23 @@ export default function Nav() {
           <div id="mobile-menu" ref={drawerRef} className={styles.sidebar} role="dialog" aria-modal="true" aria-label="Navigation menu" onKeyDown={handleDrawerKeyDown}>
             <div className={styles.sidebarBody}>
             <ul className={styles.sidebarLinks} role="list">
-              {allLinks.map(({ href, label }) => {
+              {allLinks.map(({ href, label }, i) => {
                 const target = href === '/' ? homeHref : `${basePath}${href}`
+                const isCurrent = pathname === target || (href !== '/' && pathname.startsWith(target))
+                const Icon = navIcons[href]
                 return (
-                <li key={href}>
+                <li key={href} style={{ '--i': i } as React.CSSProperties}>
                   <Link
                     href={target}
                     className={styles.sidebarLink}
-                    aria-current={pathname === target ? 'page' : href !== '/' && pathname.startsWith(target) ? 'page' : undefined}
+                    style={{ '--icon-color': navIconColors[href] } as React.CSSProperties}
+                    aria-current={isCurrent ? 'page' : undefined}
                     onClick={handleNavClick}
                   >
-                    <span>{label}</span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                    <span className={styles.sidebarLinkIconWrap}>
+                      <Icon size={18} strokeWidth={1.75} aria-hidden="true" />
+                    </span>
+                    <span className={styles.sidebarLinkLabel}>{label}</span>
                   </Link>
                 </li>
                 )

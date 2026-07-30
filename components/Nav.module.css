@@ -2,64 +2,77 @@
   position: sticky;
   top: 0;
   z-index: 80;
-  background: oklch(99.4% 0.002 250 / 0.82);
-  border-bottom: 1px solid var(--rule);
-  backdrop-filter: saturate(180%) blur(14px);
-  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  background: var(--sw-surface);
+  border-bottom: 1px solid var(--sw-border);
+  height: 68px;
 }
 
-.inner {
-  height: 68px;
+/* Brand + links grouped left; navRight pushed right via margin-left: auto. */
+.nav .inner.inner {
+  height: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--s-5);
+  gap: 32px;
+  padding-inline: var(--sw-gutter-desktop);
 }
 
-.inner .links {
-  margin-left: auto;
+@media (max-width: 1024px) {
+  .nav .inner.inner { padding-inline: var(--sw-gutter-tablet); }
+}
+
+@media (max-width: 640px) {
+  .nav .inner.inner { padding-inline: var(--sw-gutter-mobile); }
 }
 
 /* Brand */
 .navBrand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 600;
-  font-size: 17px;
-  letter-spacing: -0.025em;
-  color: var(--ink);
+  gap: 11px;
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--sw-text-primary);
   text-decoration: none;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
 }
 
-.navBrand:hover { text-decoration: none; }
+.navBrand:hover { text-decoration: none; color: var(--sw-text-primary); }
 
 .navLogoWrap {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: var(--ink);
-  display: grid;
-  place-items: center;
-  color: var(--paper);
+  width: 40px;
+  height: 40px;
+  border-radius: 3px;
+  background: var(--sw-text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sw-surface);
   flex-shrink: 0;
-  transition: background 200ms;
 }
 
-.navBrand:hover .navLogoWrap {
-  background: var(--teal);
+.navLogo { display: block; flex-shrink: 0; color: currentColor; }
+
+.navLogoBlink {
+  transform-origin: center;
+  transform-box: fill-box;
 }
 
-.navLogo { color: currentColor; }
+.navBrand:hover .navLogoBlink {
+  animation: eyeBlink 500ms ease-in-out;
+}
+
+@keyframes eyeBlink {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.05); }
+}
 
 .navWordmark {
-  font-family: var(--font-sans);
+  font-family: var(--sw-font-family);
 }
 
-.navStormont { color: var(--ink); }
-.navWatch { color: var(--ink-3); font-weight: 400; }
+.navStormont { color: var(--sw-text-primary); }
+.navWatch { color: var(--sw-text-secondary); }
 
 /* Marks the desktop title when an archived mandate is being browsed. */
 .archiveBadge {
@@ -67,19 +80,20 @@
   font-weight: 500;
   font-size: 14px;
   letter-spacing: 0;
-  color: var(--teal);
+  color: var(--sw-accent);
 }
 
 @media (max-width: 767px) {
   .archiveBadge { display: none; }
 }
 
-/* Desktop nav links */
+/* Desktop nav links, left-aligned immediately after the brand. */
 .links {
   display: flex;
-  gap: 2px;
+  gap: 4px;
   align-items: center;
   list-style: none;
+  min-width: 0;
 }
 
 @media (max-width: 767px) {
@@ -89,33 +103,42 @@
 .links a {
   display: inline-flex;
   align-items: center;
-  padding: 8px 14px;
-  font-size: 14px;
+  padding: 7px 10px;
+  font-size: 13.5px;
   font-weight: 500;
-  color: var(--ink-2);
-  border-radius: var(--r-pill);
+  color: var(--sw-text-secondary);
+  border-radius: 3px;
   text-decoration: none;
-  transition: background 120ms, color 120ms;
+  transition: color 120ms;
 }
 
 .links a:hover {
-  color: var(--ink);
-  background: var(--paper-2);
-  text-decoration: none;
+  color: var(--sw-accent-strong);
+  text-decoration: underline;
+}
+
+.links a:active {
+  color: var(--sw-accent-strong);
 }
 
 .links a[aria-current='page'] {
-  color: var(--ink);
-  background: var(--paper-3);
+  color: var(--sw-text-primary);
+  font-weight: 600;
 }
 
-/* Mandate switcher (desktop, to the right of the nav links) — styled to match the
-   constituency selector, with a FIXED width so it never resizes with the label. */
+/* Right-anchored cluster: theme toggle, mandate switcher (desktop) / hamburger (mobile) */
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+/* Fixed width so it never resizes with the label. */
 .mandateSwitch {
   position: relative;
   display: flex;
   align-items: center;
-  margin-left: 0.75rem;
 }
 @media (max-width: 767px) {
   .mandateSwitch { display: none; }
@@ -126,14 +149,15 @@
   justify-content: space-between;
   gap: 0.5rem;
   width: 194px;
-  height: 38px;
-  padding: 0 12px;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-2);
-  background: var(--paper);
-  color: var(--ink);
+  height: 34px;
+  padding: 7px 11px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  background: var(--sw-surface-subtle);
+  color: var(--sw-text-primary);
   font: inherit;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 12.5px;
   cursor: pointer;
   text-align: left;
   transition: border-color 150ms;
@@ -143,9 +167,9 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.mandateBtn:hover { border-color: var(--rule-strong); }
-.mandateBtn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
-.mandateBtn svg { color: var(--ink-3); flex-shrink: 0; }
+.mandateBtn:hover { border-color: var(--sw-accent); }
+.mandateBtn:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+.mandateBtn svg { color: var(--sw-text-tertiary); flex-shrink: 0; }
 .mandateMenu {
   position: absolute;
   top: calc(100% + 4px);
@@ -154,60 +178,66 @@
   z-index: 200;
   list-style: none;
   margin: 0;
-  padding: 0;
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-2);
-  box-shadow: 0 4px 16px oklch(16% 0.015 250 / 0.08);
+  padding: 5px;
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  box-shadow: var(--sw-elevation-overlay);
   overflow: hidden;
 }
 .mandateMenu a {
   display: block;
-  padding: 10px 14px;
-  font-size: 14px;
-  color: var(--ink-2);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sw-text-primary);
   text-decoration: none;
-  border-bottom: 1px solid var(--rule);
+  border-radius: 3px;
   white-space: nowrap;
   transition: background 100ms, color 100ms;
 }
-.mandateMenu li:last-child a { border-bottom: none; }
-.mandateMenu a:hover { background: var(--paper-2); color: var(--ink); }
-.mandateMenu a[aria-current='true'] { background: var(--paper-3); color: var(--ink); font-weight: 500; }
+.mandateMenu a:hover { background: var(--sw-surface-subtle); color: var(--sw-accent-strong); }
+.mandateMenu a[aria-current='true'] { font-weight: 700; }
 
-/* Nav right group — desktop: hidden (no children visible); mobile: hamburger */
-.navRight {
-  display: none;
-}
-
-@media (max-width: 767px) {
-  .navRight {
-    display: flex;
-    align-items: center;
-    gap: var(--s-3);
-  }
+/* Stays visible on mobile, unlike the mandate switcher (which moves into the drawer). */
+.navThemeToggle {
+  display: inline-flex;
+  align-items: center;
 }
 
 /* Hamburger — mobile/tablet only */
 .hamburger {
   display: none;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   padding: 0;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-pill);
-  color: var(--ink);
-  background: var(--paper);
+  border: none;
+  color: var(--sw-text-primary);
+  background: transparent;
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+.hamburger:hover {
+  color: var(--sw-accent-strong);
+}
+
+.hamburgerBars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hamburgerBars span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: currentColor;
 }
 
 @media (max-width: 767px) {
   .hamburger { display: inline-grid; }
-  .inner { height: 60px; }
-  .navBrand { font-size: 16px; }
-  .navLogoWrap { width: 28px; height: 28px; }
-  .navHidden { display: none; }
 }
 
 /* Mobile drawer backdrop */
@@ -215,12 +245,11 @@
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: oklch(16% 0.015 250 / 0.32);
-  backdrop-filter: blur(2px);
-  animation: fade 180ms ease;
+  background: rgba(20, 22, 26, 0.32);
+  animation: fade 220ms ease;
 }
 
-/* Mobile drawer — slides in from right */
+/* Mobile drawer — full-height panel sliding in from the right. */
 .sidebar {
   position: fixed;
   right: 0;
@@ -228,22 +257,42 @@
   bottom: 0;
   z-index: 70;
   width: 100%;
-  background: var(--paper);
-  border-left: 1px solid var(--rule);
-  padding: 72px 20px 24px;
+  background: var(--sw-surface);
+  border-left: 1px solid var(--sw-border);
+  padding: 88px 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  box-shadow: -20px 0 40px -20px oklch(16% 0.015 250 / 0.25);
-  animation: slidein 220ms cubic-bezier(.2,.8,.2,1);
+  box-shadow: var(--sw-elevation-overlay);
+  animation: slidein 280ms cubic-bezier(.2,.8,.2,1);
+  overflow-y: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar { animation: none; }
+  .mobileDrawerBackdrop { animation: none; }
+  .sidebarLinks li { animation: none !important; opacity: 1; }
 }
 
 .sidebarBody {
-  display: contents;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 @keyframes slidein {
-  from { transform: translateX(20px); opacity: 0; }
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+/* Staggered fade+slide entrance, same idea as the constituency-selector MLA list. */
+.sidebarLinks li {
+  animation: linkIn 280ms cubic-bezier(.2,.8,.2,1) both;
+  animation-delay: calc(80ms + var(--i, 0) * 35ms);
+}
+
+@keyframes linkIn {
+  from { transform: translateX(14px); opacity: 0; }
   to   { transform: none; opacity: 1; }
 }
 
@@ -255,44 +304,66 @@
 .sidebarLinks {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-top: 4px;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
   list-style: none;
 }
 
 .sidebarLink {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 8px;
-  font-size: 17px;
-  font-weight: 500;
-  color: var(--ink);
-  border-bottom: 1px solid var(--rule);
-  letter-spacing: -0.01em;
+  gap: 14px;
+  padding: 12px;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--sw-text-primary);
+  border: 1px solid var(--sw-border);
+  border-radius: var(--sw-radius-none);
   text-decoration: none;
-  transition: color 150ms;
+  transition: border-color 150ms, background 150ms, transform 150ms;
 }
 
-.sidebarLink:hover { color: var(--ink); text-decoration: none; }
-.sidebarLink[aria-current='page'] { color: var(--teal); }
-.sidebarLink svg { color: var(--ink-4); }
+.sidebarLink:active { transform: scale(0.98); }
+
+.sidebarLinkIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--sw-radius-sm);
+  color: var(--icon-color, var(--sw-accent));
+  background: color-mix(in srgb, var(--icon-color, var(--sw-accent)) 20%, var(--sw-surface));
+  border: 1px solid color-mix(in srgb, var(--icon-color, var(--sw-accent)) 35%, transparent);
+}
+
+.sidebarLinkLabel { flex: 1; }
+
+.sidebarLink:hover { border-color: var(--sw-border-strong); text-decoration: none; background: var(--sw-surface-subtle); }
+
+.sidebarLink[aria-current='page'] {
+  background: var(--sw-surface-subtle);
+  color: var(--sw-accent-strong);
+}
+
 .sidebarLink:focus { outline: none; }
-.sidebarLink:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; border-radius: var(--r-2); }
+.sidebarLink:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; border-radius: 2px; }
 
 .hamburger:focus { outline: none; }
-.hamburger:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.hamburger:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
 
 
 .mobileMeta {
   margin-top: auto;
+  padding-top: 20px;
   display: flex;
   gap: 10px;
   align-items: center;
-  font-size: 12px;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
 }
 
-.mobileMeta a { color: var(--ink-3); text-decoration: none; }
-.mobileMeta a:hover { color: var(--teal); }
+.mobileMeta a { color: var(--sw-text-tertiary); text-decoration: none; }
+.mobileMeta a:hover { color: var(--sw-accent-strong); }

@@ -1,380 +1,614 @@
-
-/* ── Page header ──────────────────────────────────────────────── */
+/* Page header — matches MLAs list page pattern. */
 .pageHeader {
-  padding-block: var(--s-12) var(--s-4);
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: var(--s-10);
+  padding-block: var(--s-8) var(--s-6);
+  border-bottom: 1px solid var(--sw-accent);
+  margin-bottom: var(--sw-space-9);
 }
 
-.pageHeader h1 {
+.pageHeaderEyebrow {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+}
+
+.pageHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: clamp(48px, 6vw, 96px);
-  letter-spacing: -0.045em;
-  line-height: 0.96;
-  margin-top: var(--s-2);
+  font-weight: 700;
+  font-size: var(--sw-fs-display);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: var(--s-1) 0 0;
 }
 
-.pageHeader .lede {
-  font-size: 15px;
-  color: var(--ink-2);
-  /* max-width: 60ch; */
+.pageHeaderIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+.lede {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  max-width: 68ch;
   margin-top: var(--s-4);
   line-height: 1.5;
 }
 
-/* ── Meta bar ─────────────────────────────────────────────────── */
-.metaBar {
-  display: flex;
-  align-items: center;
-  gap: var(--s-5);
+@media (max-width: 600px) {
+  .lede {
+    font-size: var(--sw-fs-body-sm);
+  }
+}
+
+@media (max-width: 640px) {
+  .pageHeader { padding-block: var(--s-6) var(--s-5); }
+  .pageHeaderTitle { font-size: var(--sw-fs-h2); }
+}
+
+/* Key figures strip — Pattern A tinted top-border cards (§4.1). */
+.statStrip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-4);
   margin-top: var(--s-6);
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--rule);
-  flex-wrap: wrap;
 }
 
-.metaBarItem {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.metaBarKey {
-  color: var(--ink-3);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 11px;
-}
-
-.metaBarVal {
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 13px;
-}
-
-/* ── Progress bar key ─────────────────────────────────────────── */
-.progressKey {
-  margin-bottom: var(--s-6);
-}
-
-.progressKeyHeading {
-  font-size: 24px;
-  font-weight: 500;
-  font-family: var(--font-serif);
-  color: var(--ink);
-  letter-spacing: -0.02em;
-  margin-bottom: var(--s-2);
-}
-
-.progressKeyHeading em {
-  font-family: var(--font-serif);
-  font-style: italic;
-  color: var(--teal);
-}
-
-.progressKeyDesc {
-  font-size: 15px;
-  color: var(--ink-2);
-  /* max-width: 60ch; */
-  line-height: 1.5;
-  margin-bottom: var(--s-4);
-}
-
-.progressKeyLegend {
+.statCell {
+  border: 1px solid var(--sw-border);
+  border-top: 1px solid var(--sw-accent);
+  background: color-mix(in srgb, var(--sw-accent) 11%, var(--sw-surface));
+  padding: var(--s-4);
   display: flex;
-  gap: var(--s-5);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.statCell[data-tone="warm"] {
+  border-top-color: var(--sw-accent-warm);
+  background: color-mix(in srgb, var(--sw-accent-warm) 14%, var(--sw-surface));
+}
+
+.statCell[data-tone="success"] {
+  border-top-color: var(--sw-success);
+  background: color-mix(in srgb, var(--sw-success) 12%, var(--sw-surface));
+}
+
+.statCell[data-tone="neutral"] {
+  border-top-color: var(--sw-text-tertiary);
+  background: var(--sw-surface-subtle);
+}
+
+.statLabelRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.statLabel {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-secondary);
+}
+
+.statIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+.statCell[data-tone="warm"] .statIcon { color: var(--sw-accent-warm); }
+.statCell[data-tone="success"] .statIcon { color: var(--sw-success); }
+.statCell[data-tone="neutral"] .statIcon { color: var(--sw-text-tertiary); }
+
+/* Matches the homepage's "This week" .twVal exactly (22px), not the larger .kfigNum (31px). */
+.statVal {
+  font-size: var(--sw-fs-h2);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--sw-text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+@media (max-width: 1024px) {
+  .statStrip { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .statStrip { grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+}
+
+/* Notice — quiet footnote block below the bill list. */
+.noticeBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--sw-space-9);
   padding-top: var(--s-4);
-  padding-bottom: var(--s-4);
+  border-top: 1px solid var(--sw-border);
+}
+
+@media (max-width: 640px) {
+  .noticeBlock { margin-top: var(--s-10); }
+}
+
+.notice {
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-tertiary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.notice a {
+  color: var(--sw-accent);
+  text-decoration: none;
+}
+
+.notice a:hover {
+  color: var(--sw-accent-strong);
+  text-decoration: underline;
+}
+
+.sectionLast {
+  margin-bottom: var(--sw-space-9);
+}
+
+@media (max-width: 640px) {
+  .sectionLast { margin-bottom: var(--s-10); }
+}
+
+/* Section head (standard §3.1 shape). */
+.sectionHead {
+  margin-top: var(--sw-space-9);
+  margin-bottom: var(--s-5);
+}
+
+.sectionEyebrow {
+  display: block;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+  margin-bottom: 4px;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-h2);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: 0;
+}
+
+.sectionTitleIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+.sectionSubtitle {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  line-height: 1.5;
+  margin: var(--s-2) 0 0;
+}
+
+@media (max-width: 640px) {
+  .sectionHead { margin-top: var(--s-10); }
+}
+
+/* Progress key — colour legend, then numbered stage list. */
+.progressKey {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface-subtle);
+  margin-bottom: var(--s-5);
+}
+
+.progressKeyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-5);
+}
+
+.progressKeyLabel {
+  font-size: var(--sw-fs-caption);
+  font-weight: 600;
+  color: var(--sw-text-secondary);
 }
 
 .progressKeyItem {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
 }
 
 .progressKeyDot {
   display: inline-block;
-  width: 24px;
-  height: 6px;
+  width: 18px;
+  height: 5px;
   border-radius: 2px;
   flex-shrink: 0;
 }
 
+/* Not chips — must not look like the .billTabBtn/.yearBtn buttons below it. */
+.progressKeyStagesRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px var(--s-4);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--sw-border);
+}
+
+.progressKeyStagesRow .progressKeyLabel {
+  flex-shrink: 0;
+}
+
+.progressKeyStages {
+  display: contents;
+}
+
+.progressKeyStageItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--sw-fs-caption);
+  font-weight: 500;
+  color: var(--sw-text-secondary);
+  white-space: nowrap;
+}
+
+.progressKeyStageNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sw-accent) 55%, var(--sw-surface));
+  color: #ffffff;
+  font-size: 9.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 @media (max-width: 640px) {
-  .progressKeyLegend {
+  .progressKeyRow {
     flex-direction: column;
     align-items: flex-start;
-    width: 100%;
-    background: var(--paper);
-    border: 1px solid var(--rule);
-    border-radius: var(--r-3);
-    padding: var(--s-4);
-    gap: var(--s-3);
+    gap: var(--s-2);
+  }
+
+  /* Each numbered stage on its own row, starting after the "Stages:" label. */
+  .progressKeyStagesRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-2);
+  }
+
+  .progressKeyStageItem {
+    white-space: normal;
   }
 }
 
-/* ── Notice (ochre left-border callout) ───────────────────────── */
-.notice {
-  border: 1px solid var(--rule);
-  border-left: 3px solid var(--ochre);
-  background: var(--ochre-wash);
-  border-radius: 0 var(--r-2) var(--r-2) 0;
-  padding: var(--s-3) var(--s-4);
-  font-size: 13px;
-  color: var(--ink-2);
-  line-height: 1.5;
-  margin-block: var(--s-3);
-}
-
-.notice a {
-  color: var(--teal);
-  text-decoration: none;
-}
-
-.notice a:hover {
-  text-decoration: underline;
-}
-
-/* ── This week section ────────────────────────────────────────── */
-.weekSection {
-  margin-top: var(--s-10);
-  margin-bottom: var(--s-10);
-}
-
-.weekSubtitle {
-  font-size: 15px;
-  color: var(--ink-2);
-  margin-top: var(--s-2);
+/* Filter panel — one bordered frame holding tabs, year filter and search. */
+.filterPanel {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
   margin-bottom: var(--s-5);
-  /* max-width: 72ch; */
-  line-height: 1.5;
 }
 
-.thisWeekList {
-  display: flex;
-  flex-direction: column;
-  border-top: 2px solid var(--ink);
-}
-
-.thisWeekRow {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--s-4);
-  align-items: start;
-  padding: 24px 0;
-  border-top: 1px solid var(--rule);
-  text-decoration: none !important;
-  color: inherit;
-}
-
-.thisWeekRow:hover,
-.thisWeekRow:active,
-.thisWeekRow:visited,
-.thisWeekRow:focus {
-  text-decoration: none !important;
-}
-
-.thisWeekRow:hover {
-  background: var(--paper-2);
-}
-
-.thisWeekRow:hover .thisWeekBillName,
-.thisWeekRow:active .thisWeekBillName {
-  color: var(--teal);
-}
-
-.thisWeekRowLeft {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.thisWeekBillName {
-  font-family: var(--font-sans);
-  font-size: 19px;
-  font-weight: 400;
-  color: var(--ink);
-  letter-spacing: -0.02em;
-  line-height: 1.3;
-  transition: color 150ms;
-}
-
-.thisWeekPills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  align-items: center;
-}
-
-.thisWeekRow :global(.pill) {
-  border-radius: 999px;
-  padding: 2px 10px;
-}
-
-.thisWeekDate {
-  font-size: 12px;
-  font-family: var(--font-mono);
-  color: var(--ink-3);
-  white-space: nowrap;
-  flex-shrink: 0;
-  padding-top: 4px;
-}
-
-/* ── Bill tabs ────────────────────────────────────────────────── */
 .billTabs {
   display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: var(--s-5);
-  overflow-x: auto;
-  overflow-y: clip;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  padding-bottom: var(--s-4);
+  margin-bottom: var(--s-4);
+  border-bottom: 1px solid var(--sw-border);
 }
 
 .billTabBtn {
   display: inline-flex;
   align-items: center;
-  padding: var(--s-3) var(--s-4);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  color: var(--ink-3);
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  flex-shrink: 0;
-  background: transparent;
-  border-top: none;
-  border-left: none;
-  border-right: none;
+  gap: 6px;
+  padding: 8px 12px;
+  min-height: 38px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-surface);
+  color: var(--sw-text-secondary);
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
+  font-family: var(--font-sans);
   cursor: pointer;
-  transition: color 120ms ease;
+  white-space: nowrap;
+  transition: border-color 150ms, color 150ms, background 150ms;
 }
 
 .billTabBtn:hover {
-  color: var(--ink);
+  border-color: var(--sw-accent);
+  color: var(--sw-text-primary);
+}
+
+.billTabBtn:focus-visible {
+  outline: 2px solid var(--sw-focus);
+  outline-offset: 2px;
 }
 
 .billTabBtnActive {
-  color: var(--ink);
+  background: var(--sw-accent);
+  color: #ffffff;
+  border-color: var(--sw-accent);
 }
 
-@media (min-width: 768px) {
-  .billTabBtnActive {
-    border-bottom-color: var(--ink);
-  }
+.billTabBtnActive:hover {
+  background: var(--sw-accent-strong);
+  border-color: var(--sw-accent-strong);
+  color: #ffffff;
 }
 
 .billTabN {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  margin-left: 6px;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: var(--paper-3);
-  color: var(--ink-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: var(--sw-surface-subtle);
+  font-size: var(--sw-fs-eyebrow);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--sw-text-tertiary);
 }
 
-/* ── Year filter ──────────────────────────────────────────────── */
+.billTabBtnActive .billTabN {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Mobile-only dropdowns (tab selector, year filter) — hidden on desktop, same
+   trigger/list shape as the homepage constituency selector's .trigger/.dropdownList
+   (ConstituencySelector.module.css) so both read as the site's one dropdown pattern. */
+.tabDropdownWrap,
+.yearDropdownWrap {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .billTabs { display: none; }
+
+  .tabDropdownWrap {
+    display: block;
+    padding-bottom: var(--s-4);
+    margin-bottom: var(--s-4);
+    border-bottom: 1px solid var(--sw-border);
+  }
+}
+
+.dropdownWrap {
+  position: relative;
+}
+
+.dropdownTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  background: var(--sw-surface);
+  color: var(--sw-text-primary);
+  font-size: var(--sw-fs-body);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 150ms;
+}
+
+.dropdownTrigger:hover { border-color: var(--sw-accent); }
+.dropdownTrigger:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+
+.dropdownTriggerChevron {
+  color: var(--sw-text-tertiary);
+  transition: transform 150ms ease;
+  flex-shrink: 0;
+}
+
+.dropdownTriggerChevronOpen { transform: rotate(180deg); }
+
+.dropdownList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  max-height: 260px;
+  overflow-y: auto;
+  box-shadow: var(--sw-elevation-overlay);
+}
+
+.dropdownList::-webkit-scrollbar { width: 4px; }
+.dropdownList::-webkit-scrollbar-track { background: transparent; }
+.dropdownList::-webkit-scrollbar-thumb { background: var(--sw-border); border-radius: 4px; }
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: 10px 14px;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-secondary);
+  border-bottom: 1px solid var(--sw-border);
+  cursor: pointer;
+  transition: background 100ms, color 100ms;
+  user-select: none;
+}
+
+.dropdownItem:last-child { border-bottom: none; }
+.dropdownItem:hover { background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItem:focus { outline: none; background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItemSelected { background: var(--sw-surface-subtle); color: var(--sw-text-primary); font-weight: 600; }
+
+.dropdownItemCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: var(--sw-surface-subtle);
+  font-size: var(--sw-fs-eyebrow);
+  font-variant-numeric: tabular-nums;
+  color: var(--sw-text-tertiary);
+  flex-shrink: 0;
+}
+
+.dropdownItemSelected .dropdownItemCount {
+  background: var(--sw-surface);
+}
+
 .yearFilter {
   display: flex;
   align-items: center;
   gap: var(--s-2);
   flex-wrap: wrap;
-  margin-bottom: var(--s-5);
+  padding-bottom: var(--s-4);
+  margin-bottom: var(--s-4);
+  border-bottom: 1px solid var(--sw-border);
 }
 
 .yearBtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  min-height: 44px;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink-2);
-  font-size: 0.875rem;
+  padding: 7px 12px;
+  min-height: 34px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-surface);
+  color: var(--sw-text-secondary);
+  font-size: var(--sw-fs-body-sm);
   font-weight: 600;
   font-family: var(--font-sans);
   cursor: pointer;
   white-space: nowrap;
-  transition: background 120ms, color 120ms;
+  transition: border-color 150ms, color 150ms, background 150ms;
 }
 
 .yearBtn:hover {
-  background: var(--paper-2);
-  color: var(--ink);
+  border-color: var(--sw-accent);
+  color: var(--sw-text-primary);
 }
 
 .yearBtnActive {
-  background: var(--teal);
-  color: #fff;
-  border-color: var(--teal);
+  background: var(--sw-accent);
+  color: #ffffff;
+  border-color: var(--sw-accent);
 }
 
 .yearBtnActive:hover {
-  background: var(--teal);
-  color: #fff;
+  background: var(--sw-accent-strong);
+  border-color: var(--sw-accent-strong);
+  color: #ffffff;
 }
 
-/* ── Search ───────────────────────────────────────────────────── */
-.searchWrap {
-  margin-bottom: var(--s-10);
+@media (max-width: 640px) {
+  .yearFilter { display: none; }
+
+  .yearDropdownWrap {
+    display: block;
+    padding-bottom: var(--s-4);
+    margin-bottom: var(--s-4);
+    border-bottom: 1px solid var(--sw-border);
+  }
 }
+
+.searchWrap { }
 
 .search {
+  -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   max-width: 480px;
   padding: 9px 14px;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-2);
-  background: var(--paper);
-  color: var(--ink);
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-surface);
+  color: var(--sw-text-primary);
   font-size: 16px;
-  outline: none;
-  transition: border-color 120ms;
-}
-
-.search:focus {
-  border-color: var(--teal);
-}
-
-/* ── Result count ─────────────────────────────────────────────── */
-.resultCount {
   font-family: var(--font-sans);
-  font-size: 13px;
-  color: var(--ink-3);
+  outline: none;
+  box-shadow: none;
+  transition: border-color 150ms;
+}
+
+.search::-webkit-search-decoration,
+.search::-webkit-search-cancel-button,
+.search::-webkit-search-results-button,
+.search::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+}
+
+.search::placeholder {
+  color: var(--sw-text-tertiary);
+}
+
+.search:focus-visible {
+  outline: 1px solid var(--sw-focus);
+  outline-offset: 0;
+}
+
+.resultCount {
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-tertiary);
   margin-bottom: var(--s-5);
 }
 
-/* ── Bill list ────────────────────────────────────────────────── */
 .billList {
   display: flex;
   flex-direction: column;
+  gap: var(--s-3);
 }
 
-/* ── Bill row ─────────────────────────────────────────────────── */
+/* Bill row — Pattern B plain bordered card (§4.2): number block + content. */
 .billRow {
   display: grid;
-  grid-template-columns: 100px 1fr 160px;
-  gap: var(--s-4);
-  align-items: start;
-  padding: 24px 0;
-  border-top: 1px solid var(--rule);
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: var(--s-5);
+  align-items: stretch;
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
   text-decoration: none !important;
   color: inherit;
-}
-
-.billRow:first-child {
-  border-top: 2px solid var(--ink);
+  transition: border-color 150ms;
 }
 
 .billRow:hover,
@@ -385,297 +619,335 @@
 }
 
 .billRow:hover {
-  background: var(--paper-2);
+  border-color: var(--sw-accent);
 }
 
-.billRow:hover .billTitle,
-.billRow:active .billTitle {
-  color: var(--teal);
+.billRow:hover .billTitle {
+  color: var(--sw-accent-strong);
 }
 
-/* Number column */
 .billNum {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-3);
-  letter-spacing: 0.04em;
-  line-height: 1.3;
-  padding-top: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: var(--s-2);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface-subtle);
+  text-align: center;
 }
 
 .billNumMain {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink);
-  letter-spacing: 0;
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 700;
+  color: var(--sw-text-primary);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 
 .billNumSession {
-  font-size: 10px;
-  color: var(--ink-3);
+  font-size: 10.5px;
+  color: var(--sw-text-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 
 .billNumType {
-  font-size: 10px;
-  color: var(--ink-3);
-  margin-top: 4px;
+  font-size: 9.5px;
+  font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sw-text-tertiary);
+  padding-top: 3px;
+  margin-top: 2px;
+  border-top: 1px solid var(--sw-border);
 }
 
-/* Center column */
 .billCenter {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
   min-width: 0;
 }
 
+/* Title left, badge(s) right, same line. */
+.billTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.billBadgeRow {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+  padding-top: 1px;
+}
+
 .billTitle {
-  font-family: var(--font-sans);
-  font-size: 19px;
-  font-weight: 400;
-  color: var(--ink);
-  letter-spacing: -0.02em;
+  font-size: var(--sw-fs-body);
+  font-weight: 600;
+  color: var(--sw-text-primary);
   line-height: 1.3;
   transition: color 150ms;
+  min-width: 0;
+  flex: 1;
 }
 
 .billStageLine {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  color: var(--ink-3);
-  font-style: italic;
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
+}
+
+@media (max-width: 640px) {
+  .billStageLineSep {
+    display: none;
+  }
+
+  .billStageLineDate {
+    display: block;
+    margin-top: 2px;
+  }
+}
+
+.billProgressWrap {
   margin-top: 4px;
-}
-
-.billProgress {
-  margin-top: 12px;
-  display: flex;
-  gap: 2px;
-  height: 6px;
-  border-radius: 3px;
-  overflow: hidden;
-  background: var(--paper-3);
-}
-
-.billProgressSeg {
-  flex: 1;
 }
 
 .billProgressLabels {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  margin-top: 6px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--ink-3);
-  letter-spacing: 0.04em;
+  margin-bottom: 5px;
+  font-size: var(--sw-fs-caption);
 }
 
-/* Override global pill radius for bill rows */
-.billRight :global(.pill) {
-  border-radius: 999px;
-  padding: 2px 10px;
+.billProgressStageCount {
+  font-weight: 600;
+  color: var(--sw-text-secondary);
 }
 
-/* Pills row within right column */
-.billPills {
+.billProgressPct {
+  font-weight: 700;
+  color: var(--sw-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.billProgress {
   display: flex;
-  flex-wrap: nowrap;
+  gap: 3px;
+  height: 8px;
+}
+
+.billProgressSeg {
+  flex: 1;
+  border-radius: 2px;
+  background: var(--sw-surface-subtle);
+  border: 1px solid var(--sw-border);
+}
+
+.billProgressSeg[data-state="done"] {
+  background: var(--sw-success);
+  border-color: var(--sw-success);
+}
+
+.billProgressSeg[data-state="scheduled"] {
+  background: var(--sw-accent-warm);
+  border-color: var(--sw-accent-warm);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
   gap: 4px;
-  align-self: flex-end;
-}
-
-/* Right column */
-.billRight {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  padding-top: 3px;
-  flex-shrink: 0;
-}
-
-.billPct {
-  font-family: var(--font-sans);
+  padding: 3px 9px;
+  border-radius: var(--sw-radius-sm);
   font-size: 11px;
-  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
   white-space: nowrap;
 }
 
-/* ── Search section headings ──────────────────────────────────── */
-.sectionTitle {
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  margin-top: var(--s-8);
-  margin-bottom: var(--s-3);
+/* Palette from "By the numbers" (no blue/green); Failed stays error-red; Became law/Awaiting Royal Assent are deliberate lime/yellow exceptions. */
+.statusBadgeScheduled { background: var(--sw-text-tertiary); color: #ffffff; }
+.statusBadgeActive    { background: var(--sw-text-tertiary); color: #ffffff; }
+.statusBadgeBecameLaw { background: #4d9900; color: #ffffff; }
+.statusBadgeWarn      { background: #f2c200; color: #3d2b00; }
+.statusBadgeError     { background: var(--sw-error-solid); color: #ffffff; }
+.statusBadgeFlag      {
+  background: color-mix(in srgb, var(--sw-accent) 14%, var(--sw-surface));
+  color: var(--sw-accent-strong);
 }
 
-.sectionTitle:first-child {
-  margin-top: 0;
-}
-
-/* ── Empty state ──────────────────────────────────────────────── */
-.emptyState {
-  font-size: 14px;
-  color: var(--ink-3);
-  padding: var(--s-6) 0;
-  font-style: italic;
-}
-
-/* ── Load more ────────────────────────────────────────────────── */
-.loadMore {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-2);
-  background: transparent;
-  color: var(--ink-2);
-  font-size: 14px;
+.statusBadgeLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--sw-radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  background: var(--sw-accent);
+  color: #ffffff;
+  text-decoration: none;
+  transition: background-color 150ms;
   cursor: pointer;
-  margin-top: var(--s-5);
-  transition: border-color 150ms, color 150ms;
 }
 
-@media (max-width: 640px) { .loadMore { display: none; } }
-
-.loadMore:hover {
-  border-color: var(--teal);
-  color: var(--teal);
+.statusBadgeLink,
+.statusBadgeLink:hover,
+.statusBadgeLink:active,
+.statusBadgeLink:visited {
+  text-decoration: none !important;
+  color: #ffffff;
 }
 
-/* ── Mobile ───────────────────────────────────────────────────── */
+.statusBadgeLink:hover {
+  background: var(--sw-accent-strong);
+}
+
+/* Chip — matches .divChip (§4.3). */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: var(--sw-fs-caption);
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.chipAccent {
+  color: var(--sw-accent-strong);
+  background: color-mix(in srgb, var(--sw-accent) 14%, var(--sw-surface));
+}
+
+.chipNeutral {
+  color: var(--sw-text-secondary);
+  background: var(--sw-surface-subtle);
+}
+
+.chipPass {
+  color: var(--sw-success-solid);
+  background: color-mix(in srgb, var(--sw-success) 14%, var(--sw-surface));
+}
+
+.chipFail {
+  color: var(--sw-error-solid);
+  background: color-mix(in srgb, var(--sw-error) 14%, var(--sw-surface));
+}
+
+.chipWarn {
+  color: var(--sw-warning);
+  background: color-mix(in srgb, var(--sw-accent-warm) 18%, var(--sw-surface));
+}
+
+.weekRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  text-decoration: none !important;
+  color: inherit;
+  transition: border-color 150ms;
+}
+
+.weekRow:hover {
+  border-color: var(--sw-accent);
+}
+
+.weekRow:hover .billTitle {
+  color: var(--sw-accent-strong);
+}
+
+.weekRowHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.eventList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.eventLine {
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-secondary);
+}
+
+.searchGroupTitle {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-h3);
+  color: var(--sw-text-primary);
+  margin: 0 0 var(--s-3);
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--sw-fs-body-sm);
+  font-style: italic;
+  color: var(--sw-text-tertiary);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface-subtle);
+  padding: var(--s-5);
+}
+
+.emptyStateIcon {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
+}
+
 @media (max-width: 640px) {
-  .metaBar {
-    display: none;
-  }
-
-  .pageHeader {
-    padding-block: var(--s-8) var(--s-6);
-  }
-
-  .pageHeader h1 {
-    font-size: 44px;
-    letter-spacing: -0.045em;
-  }
-
-  .lede {
-    font-size: 15px;
-  }
-
-  .metaBar {
-    gap: var(--s-3) var(--s-6);
-  }
-
-  .yearBtn {
-    flex: 1;
-    justify-content: center;
-  }
-
-  /* Tabs → pill filters on mobile */
-  .billTabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: var(--s-2);
-    border-bottom: none;
-    margin-bottom: var(--s-2);
-    overflow: visible;
-  }
-
-  .billTabBtn {
-    justify-content: center;
-    flex-direction: column;
-    gap: 2px;
-    padding: 8px 6px;
-    min-height: 44px;
-    border: 1px solid var(--rule);
-    border-radius: 999px;
-    border-bottom: 1px solid var(--rule);
-    margin-bottom: 0;
-    font-size: 0.875rem;
-    font-weight: 600;
-    font-family: var(--font-sans);
-    color: var(--ink-2);
-    background: transparent;
-    white-space: normal;
-    text-align: center;
-    word-break: break-word;
-  }
-
-  .billTabBtn:hover {
-    background: var(--paper-2);
-    color: var(--ink);
-  }
-
-  .billTabBtn.billTabBtnActive {
-    background: var(--teal);
-    color: #fff;
-    border-color: var(--teal);
-  }
-
-  .billTabN {
-    display: none;
-  }
-
   .billRow {
     grid-template-columns: 1fr;
-    gap: 6px;
-    padding: 20px 0;
+    gap: var(--s-3);
   }
 
   .billNum {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    padding-top: 0;
-    flex-wrap: wrap;
-  }
-
-  .billNumMain {
-    display: inline;
-    font-size: 13px;
-  }
-
-  .billNumSession {
-    display: inline;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--s-2);
+    padding: var(--s-2) var(--s-3);
+    text-align: left;
   }
 
   .billNumType {
     margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    margin-left: auto;
   }
 
-  .billRight {
+  /* Badge(s) above the title on their own row, never squeezed beside it. */
+  .billTitleRow {
     flex-direction: column;
     align-items: flex-start;
-    justify-content: flex-start;
-    padding-top: 0;
-  }
-
-  .billPills {
-    flex-wrap: wrap;
-    align-self: auto;
-  }
-
-  .billTitle {
-    font-size: 15px;
-    font-weight: 400;
-    letter-spacing: -0.01em;
-  }
-
-  .thisWeekRow {
-    grid-template-columns: 1fr;
     gap: 6px;
-    padding: 20px 0;
   }
 
-  .thisWeekBillName {
-    font-size: 15px;
-    font-weight: 400;
-    letter-spacing: -0.01em;
+  .billBadgeRow {
+    align-self: flex-start;
   }
 
-  .thisWeekDate {
-    font-size: 11px;
-    padding-top: 0;
+  .statusBadgeLink {
+    display: none;
   }
 }

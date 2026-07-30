@@ -1,10 +1,10 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Landmark, Users, Gavel, ShieldCheck, MessageCircleQuestion, FileText, Mic, TrendingUp } from 'lucide-react'
 import MlaPhoto from '@/components/MlaPhoto'
-import { partyBorderColor, abbreviateParty, formatMemberName, formatConstituency } from '@/lib/format'
+import { abbreviateParty, formatMemberName, formatConstituency } from '@/lib/format'
 import styles from './partyDetail.module.css'
 import { useMandate } from '@/components/MandateContext'
 
@@ -36,6 +36,7 @@ type Mla = {
   constituency: string | null
   assemblyRole?: string | null
   assemblyRoleEnd?: string | null
+  attendancePct?: number | null
 }
 
 interface Props {
@@ -48,13 +49,68 @@ interface Props {
 
 type QuestionStatRow = { personId: string; year: number; month: number; writtenCount: number; oralCount: number }
 
-const tabs = ['stats', 'expenses', 'questions', 'chamber'] as const
+const tabs = ['members', 'stats', 'expenses', 'questions', 'chamber'] as const
 type Tab = typeof tabs[number]
 
+const TAB_LABELS: Record<Tab, string> = {
+  members: 'Members',
+  stats: 'Attendance',
+  expenses: 'Expenses',
+  questions: 'Questions',
+  chamber: 'Chamber',
+}
+
+function abbreviateRole(role: string): string {
+  return role.replace(/\bPrincipal\b/g, 'Pr.')
+}
+
+// Mobile-only tab dropdown — same shape as MlasListClient.tsx's local hook.
+function useDropdown() {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const list = listRef.current
+    if (list) {
+      const sel = list.querySelector<HTMLLIElement>('[aria-selected="true"]') ?? list.querySelector<HTMLLIElement>('li')
+      sel?.focus()
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    function onOutside(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [open])
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLLIElement>, onSelect: () => void) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onSelect()
+    } else if (e.key === 'Escape') {
+      setOpen(false)
+      triggerRef.current?.focus()
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      const items = Array.from(listRef.current?.querySelectorAll<HTMLLIElement>('li') ?? [])
+      items[items.indexOf(e.currentTarget) + 1]?.focus()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      const items = Array.from(listRef.current?.querySelectorAll<HTMLLIElement>('li') ?? [])
+      items[items.indexOf(e.currentTarget) - 1]?.focus()
+    }
+  }
+
+  return { open, setOpen, wrapRef, triggerRef, listRef, handleKeyDown }
+}
+
 interface FullProps extends Props {
-  description?: string
-  wikiUrl?: string
-  partyUrl?: string
   statsContent?: React.ReactNode
   expensesContent?: React.ReactNode
   chamberContent?: React.ReactNode
@@ -80,6 +136,10 @@ function QuestionsYearChart({ questionStats, partyColor }: { questionStats: Ques
     const years = [...yearTotals.keys()].sort()
     const data = years.map(y => yearTotals.get(y) ?? 0)
 
+    const root = getComputedStyle(document.documentElement)
+    const tickColor = root.getPropertyValue('--sw-text-tertiary').trim() || '#656b72'
+    const gridColor = root.getPropertyValue('--sw-border').trim() || '#dcded9'
+
     let chart: { destroy: () => void } | null = null
     import('chart.js/auto').then(({ default: Chart }) => {
       if (!canvasRef.current) return
@@ -96,8 +156,8 @@ function QuestionsYearChart({ questionStats, partyColor }: { questionStats: Ques
           maintainAspectRatio: false,
           plugins: { legend: { display: false }, tooltip: { mode: 'index' } },
           scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-            y: { beginAtZero: true, ticks: { precision: 0, font: { size: 11 } } },
+            x: { grid: { display: false }, ticks: { color: tickColor, font: { size: 11 } } },
+            y: { beginAtZero: true, ticks: { color: tickColor, precision: 0, font: { size: 11 } }, grid: { color: gridColor } },
           },
         },
       })
@@ -106,16 +166,16 @@ function QuestionsYearChart({ questionStats, partyColor }: { questionStats: Ques
   }, [questionStats, partyColor])
 
   return (
-    <div style={{ height: 180, marginTop: '1rem' }}>
+    <div className={styles.chartAreaSm}>
       <canvas ref={canvasRef} />
     </div>
   )
 }
 
-export default function PartyDetailClient({ party, mlas, ministers, chairs, borderColor, description, statsContent, expensesContent, chamberContent, totalQuestions = 0, writtenCount = 0, oralCount = 0, questionStats = [] }: FullProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('stats')
-  const router = useRouter()
+export default function PartyDetailClient({ party, mlas, ministers, chairs, borderColor, statsContent, expensesContent, chamberContent, totalQuestions = 0, writtenCount = 0, oralCount = 0, questionStats = [] }: FullProps) {
+  const [activeTab, setActiveTab] = useState<Tab>('members')
   const { mandate, basePath } = useMandate()
+  const tabDropdown = useDropdown()
 
   const execMinisters = ministers.filter((m) => m.department === 'The Executive Office')
   const deptMinisters = ministers.filter((m) => m.department !== 'The Executive Office')
@@ -124,6 +184,15 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
   )
 
   const abbr = abbreviateParty(party)
+
+  // Same "role badge" concept as the MLA search page's roleLookup.
+  const roleLookup: Record<string, string> = {}
+  for (const m of ministers) {
+    if (m.roleTitle) roleLookup[m.personId] = m.roleTitle.charAt(0).toUpperCase() + m.roleTitle.slice(1)
+  }
+  for (const c of chairs) {
+    roleLookup[c.personId] = 'Chair'
+  }
 
   const ministerIds = new Set(ministers.map(m => m.personId))
   const qTotals = new Map<string, number>()
@@ -141,274 +210,362 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
 
   return (
     <>
-      {/* Description — always visible above tabs */}
-      {description && (
-        <div className={styles.descriptionBlock}>
-          <p className={styles.description}>{description}</p>
-        </div>
-      )}
-
       {/* Tab bar */}
       <div className={styles.tabSection}>
-        <div className={styles.billTabs} role="tablist" aria-label="Party sections">
-          {tabs.filter(tab => tab !== 'questions' || totalQuestions > 0).map((tab) => {
-            const label = tab === 'stats' ? 'Attendance' : tab === 'expenses' ? 'Expenses' : tab === 'questions' ? 'Questions' : 'Chamber'
+        <div className={styles.tabPanel}>
+          {(() => {
+            const visibleTabs = tabs.filter(tab => tab !== 'questions' || totalQuestions > 0)
             return (
-              <button
-                key={tab}
-                role="tab"
-                aria-selected={activeTab === tab}
-                aria-controls={`tabpanel-${tab}`}
-                id={`tab-${tab}`}
-                className={`${styles.billTabBtn} ${activeTab === tab ? styles.billTabBtnActive : ''}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {label}
-              </button>
-            )
-          })}
-        </div>
+              <>
+                <div className={styles.tabStrip} role="tablist" aria-label="Party sections">
+                  {visibleTabs.map((tab) => (
+                    <button
+                      key={tab}
+                      role="tab"
+                      aria-selected={activeTab === tab}
+                      aria-controls={`tabpanel-${tab}`}
+                      id={`tab-${tab}`}
+                      className={`${styles.tabBtn} ${activeTab === tab ? styles.tabBtnActive : ''}`}
+                      onClick={() => setActiveTab(tab)}
+                    >
+                      {TAB_LABELS[tab]}
+                    </button>
+                  ))}
+                </div>
 
-        <div
-          id="tabpanel-stats"
-          role="tabpanel"
-          aria-labelledby="tab-stats"
-          hidden={activeTab !== 'stats'}
-          className={styles.tabContent}
-        >
-          {statsContent ?? (
-            <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>Assembly stats coming soon.</p>
-          )}
-        </div>
-        <div
-          id="tabpanel-expenses"
-          role="tabpanel"
-          aria-labelledby="tab-expenses"
-          hidden={activeTab !== 'expenses'}
-          className={styles.tabContent}
-        >
-          {expensesContent ?? (
-            <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>No expenses data available.</p>
-          )}
-        </div>
-        <div
-          id="tabpanel-chamber"
-          role="tabpanel"
-          aria-labelledby="tab-chamber"
-          hidden={activeTab !== 'chamber'}
-          className={styles.tabContent}
-        >
-          {chamberContent ?? (
-            <p style={{ color: 'var(--ink-3)', padding: '2rem 0' }}>No chamber data available.</p>
-          )}
-        </div>
-        {totalQuestions > 0 && (
-          <div
-            id="tabpanel-questions"
-            role="tabpanel"
-            aria-labelledby="tab-questions"
-            hidden={activeTab !== 'questions'}
-            className={styles.tabContent}
-          >
-            <div className={styles.questionsPanel}>
-              <div className={styles.questionsCard}>
-                <div className={styles.questionsSummary}>
-                  <div className={styles.questionsSummaryCell}>
-                    <span className={styles.questionsSummaryLabel}>Total questions</span>
-                    <span className={styles.questionsSummaryValue}>{totalQuestions.toLocaleString()}</span>
-                    <span className={styles.questionsSummaryMeta}>Since {mandate.start.slice(0, 4)}</span>
-                  </div>
-                  <div className={styles.questionsSummaryCell}>
-                    <span className={styles.questionsSummaryLabel}>Written</span>
-                    <span className={styles.questionsSummaryValue}>{writtenCount.toLocaleString()}</span>
-                    <span className={styles.questionsSummaryMeta}>{pct(writtenCount, totalQuestions)}% of total</span>
-                  </div>
-                  <div className={styles.questionsSummaryCell}>
-                    <span className={styles.questionsSummaryLabel}>Oral</span>
-                    <span className={styles.questionsSummaryValue}>{oralCount.toLocaleString()}</span>
-                    <span className={styles.questionsSummaryMeta}>{pct(oralCount, totalQuestions)}% of total</span>
+                <div className={styles.tabDropdownWrap}>
+                  <div className={styles.dropdownWrap} ref={tabDropdown.wrapRef}>
+                    <button
+                      ref={tabDropdown.triggerRef}
+                      type="button"
+                      className={styles.dropdownTrigger}
+                      onClick={() => tabDropdown.setOpen((o) => !o)}
+                      aria-haspopup="listbox"
+                      aria-expanded={tabDropdown.open}
+                    >
+                      {TAB_LABELS[activeTab]}
+                      <svg
+                        className={`${styles.dropdownTriggerChevron} ${tabDropdown.open ? styles.dropdownTriggerChevronOpen : ''}`}
+                        width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+                      >
+                        <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    </button>
+
+                    {tabDropdown.open && (
+                      <ul ref={tabDropdown.listRef} className={styles.dropdownList} role="listbox">
+                        {visibleTabs.map((tab) => (
+                          <li
+                            key={tab}
+                            role="option"
+                            tabIndex={0}
+                            aria-selected={tab === activeTab}
+                            className={`${styles.dropdownItem} ${tab === activeTab ? styles.dropdownItemSelected : ''}`}
+                            onClick={() => { setActiveTab(tab); tabDropdown.setOpen(false) }}
+                            onKeyDown={(e) => tabDropdown.handleKeyDown(e, () => { setActiveTab(tab); tabDropdown.setOpen(false) })}
+                          >
+                            {TAB_LABELS[tab]}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </div>
-              </div>
-              <div className={styles.statsSection} style={{ marginTop: '2rem' }}>
-                <h3 className={styles.expensesSectionHeading} style={{ marginBottom: 'var(--s-2)' }}>Questions <em>by Year</em></h3>
-                <p style={{ fontSize: '15px', color: 'var(--ink-2)', margin: '0.25rem 0 0.75rem' }}>Total written and oral questions submitted to ministers each year since the mandate began in {mandate.startLabel}.</p>
-                <QuestionsYearChart questionStats={questionStats} partyColor={borderColor} />
-              </div>
-            </div>
+              </>
+            )
+          })()}
 
-            {rankedMlaQuestions.length > 0 && (
-              <div className={styles.qRankWrap}>
-                <table className={styles.qRankTable} aria-label="MLA questions ranking">
-                  <colgroup>
-                    <col className={styles.qColRank} />
-                    <col className={styles.qColMla} />
-                    <col className={`${styles.qColConstituency} ${styles.qHideMobile}`} />
-                    <col className={styles.qColQuestions} />
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th scope="col">#</th>
-                      <th scope="col">MLA</th>
-                      <th scope="col" className={styles.qHideMobile}>Constituency</th>
-                      <th scope="col" className={styles.qThQuestions}>Questions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+          <div
+            id="tabpanel-members"
+            role="tabpanel"
+            aria-labelledby="tab-members"
+            hidden={activeTab !== 'members'}
+            className={styles.tabContent}
+          >
+            {/* Executive Office */}
+            {sortedExec.length > 0 && (
+              <section className={`${styles.section} ${styles.sectionFirst}`} aria-labelledby="exec-heading">
+                <div className={styles.sectionHead}>
+                  <span className={styles.sectionEyebrow}>Power sharing</span>
+                  <h2 id="exec-heading" className={styles.sectionHeading}>
+                    <Landmark className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                    Executive Office
+                  </h2>
+                </div>
+                <div className={styles.execTop}>
+                  {sortedExec.map((m) => (
+                    <Link
+                      key={m.personId}
+                      href={`${basePath}/assembly/mlas/${m.personId}`}
+                      className={styles.execCard}
+                    >
+                      <div className={styles.execMain}>
+                        <div className={styles.execPhoto}>
+                          <MlaPhoto name={m.fullName} imgUrl={m.imgUrl ?? ''} size={72} decorative square personId={m.personId} />
+                        </div>
+                        <div className={styles.execInfo}>
+                          <span className={styles.execRole}>
+                            {m.roleTitle ? m.roleTitle.charAt(0).toUpperCase() + m.roleTitle.slice(1) : ''}
+                          </span>
+                          <span className={styles.execName}>{formatMemberName(m.fullName)}</span>
+                        </div>
+                      </div>
+                      <span className="party-pill" data-party={abbr}>{abbr}</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Ministers */}
+            {deptMinisters.length > 0 && (
+              <section className={`${styles.section} ${sortedExec.length === 0 ? styles.sectionFirst : ''}`} aria-labelledby="ministers-heading">
+                <div className={styles.sectionHead}>
+                  <span className={styles.sectionEyebrow}>Assembly business</span>
+                  <h2 id="ministers-heading" className={styles.sectionHeading}>
+                    <Gavel className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                    Ministers
+                  </h2>
+                </div>
+                <div className={styles.deptGrid}>
+                  {deptMinisters.map((m) => (
+                    <div key={m.personId} className={styles.deptBlock}>
+                      <div className={styles.deptBlockHead}>
+                        <span className={styles.deptName}>{m.department ?? ''}</span>
+                      </div>
+                      <Link href={`${basePath}/assembly/mlas/${m.personId}`} className={styles.deptItem}>
+                        <div className={styles.deptMain}>
+                          <div className={styles.deptPhoto}>
+                            <MlaPhoto name={m.fullName} imgUrl={m.imgUrl ?? ''} size={56} decorative square personId={m.personId} />
+                          </div>
+                          <div className={styles.deptInfo}>
+                            <span className={styles.deptLabel}>Minister</span>
+                            <span className={styles.deptMlaName}>{formatMemberName(m.fullName)}</span>
+                          </div>
+                        </div>
+                        <span className="party-pill" data-party={abbr}>{abbr}</span>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Committee Chairs */}
+            {chairs.length > 0 && (
+              <section className={`${styles.section} ${sortedExec.length === 0 && deptMinisters.length === 0 ? styles.sectionFirst : ''}`} aria-labelledby="chairs-heading">
+                <div className={styles.sectionHead}>
+                  <span className={styles.sectionEyebrow}>Scrutiny</span>
+                  <h2 id="chairs-heading" className={styles.sectionHeading}>
+                    <ShieldCheck className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                    Committee Chairs
+                  </h2>
+                </div>
+                <div className={styles.deptGrid}>
+                  {chairs.map((c) => (
+                    <div key={c.personId} className={styles.deptBlock}>
+                      <div className={styles.deptBlockHead}>
+                        <span className={styles.deptName}>{c.committeeName}</span>
+                      </div>
+                      <Link href={`${basePath}/assembly/mlas/${c.personId}`} className={styles.deptItem}>
+                        <div className={styles.deptMain}>
+                          <div className={styles.deptPhoto}>
+                            <MlaPhoto name={c.fullName} imgUrl={c.imgUrl ?? ''} size={56} decorative square personId={c.personId} />
+                          </div>
+                          <div className={styles.deptInfo}>
+                            <span className={styles.deptLabel}>Chair</span>
+                            <span className={styles.deptMlaName}>{formatMemberName(c.fullName)}</span>
+                          </div>
+                        </div>
+                        <span className="party-pill" data-party={abbr}>{abbr}</span>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* MLAs */}
+            <section
+              className={`${styles.section} ${sortedExec.length === 0 && deptMinisters.length === 0 && chairs.length === 0 ? styles.sectionFirst : ''}`}
+              aria-labelledby="mlas-heading"
+            >
+              <div className={styles.sectionHead}>
+                <span className={styles.sectionEyebrow}>Full roster</span>
+                <h2 id="mlas-heading" className={styles.sectionHeading}>
+                  <Users className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                  MLAs <span className={styles.mlaCount}>{mlas.length}</span>
+                </h2>
+              </div>
+              <ul className={styles.mlaGrid} role="list">
+                {mlas.map((mla) => {
+                  const badgeLabel = mla.assemblyRole && !mla.assemblyRoleEnd
+                    ? abbreviateRole(mla.assemblyRole)
+                    : roleLookup[mla.personId]
+                  const isPresidingOfficer = mla.assemblyRole === 'Speaker' && !mla.assemblyRoleEnd
+                  return (
+                    <li key={mla.personId}>
+                      <div className={styles.mlaCard}>
+                        <div className={styles.mlaMain}>
+                          <div className={styles.mlaPhoto}>
+                            <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={56} decorative square personId={mla.personId} />
+                          </div>
+                          <div className={styles.mlaInfo}>
+                            <Link
+                              href={`${basePath}/assembly/mlas/${mla.personId}`}
+                              className={styles.mlaName}
+                              aria-label={`View profile for ${formatMemberName(mla.fullName)}`}
+                            >
+                              {formatMemberName(mla.fullName)}
+                            </Link>
+                            <span className={styles.mlaConstituency}>{formatConstituency(mla.constituency)}</span>
+                            <span className={`${styles.mlaAtt} ${styles.mlaAttRow}`}>
+                              Att. <strong>{isPresidingOfficer ? 'n/a' : (mla.attendancePct ?? 'n/a')}%</strong>
+                            </span>
+                          </div>
+                        </div>
+                        <div className={styles.mlaFoot}>
+                          <span className="party-pill" data-party={abbr}>{abbr}</span>
+                          {badgeLabel && (
+                            <span className={styles.roleBadge}>{badgeLabel}</span>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          </div>
+
+          <div
+            id="tabpanel-stats"
+            role="tabpanel"
+            aria-labelledby="tab-stats"
+            hidden={activeTab !== 'stats'}
+            className={styles.tabContent}
+          >
+            {statsContent ?? (
+              <p className={styles.sectionNote}>Assembly stats coming soon.</p>
+            )}
+          </div>
+          <div
+            id="tabpanel-expenses"
+            role="tabpanel"
+            aria-labelledby="tab-expenses"
+            hidden={activeTab !== 'expenses'}
+            className={styles.tabContent}
+          >
+            {expensesContent ?? (
+              <p className={styles.sectionNote}>No expenses data available.</p>
+            )}
+          </div>
+          <div
+            id="tabpanel-chamber"
+            role="tabpanel"
+            aria-labelledby="tab-chamber"
+            hidden={activeTab !== 'chamber'}
+            className={styles.tabContent}
+          >
+            {chamberContent ?? (
+              <p className={styles.sectionNote}>No chamber data available.</p>
+            )}
+          </div>
+          {totalQuestions > 0 && (
+            <div
+              id="tabpanel-questions"
+              role="tabpanel"
+              aria-labelledby="tab-questions"
+              hidden={activeTab !== 'questions'}
+              className={styles.tabContent}
+            >
+              <div className={styles.statStrip}>
+                <div className={styles.statCard}>
+                  <div className={styles.statCardLabelRow}>
+                    <span className={styles.statCardLabel}>Total questions</span>
+                    <MessageCircleQuestion className={styles.statCardIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+                  </div>
+                  <span className={styles.statCardValue}>{totalQuestions.toLocaleString()}</span>
+                  <span className={styles.statCardSub}>Since {mandate.start.slice(0, 4)}</span>
+                </div>
+                <div className={styles.statCard} data-tone="amber">
+                  <div className={styles.statCardLabelRow}>
+                    <span className={styles.statCardLabel}>Written</span>
+                    <FileText className={styles.statCardIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+                  </div>
+                  <span className={styles.statCardValue}>{writtenCount.toLocaleString()}</span>
+                  <span className={styles.statCardSub}>{pct(writtenCount, totalQuestions)}% of total</span>
+                </div>
+                <div className={styles.statCard} data-tone="neutral">
+                  <div className={styles.statCardLabelRow}>
+                    <span className={styles.statCardLabel}>Oral</span>
+                    <Mic className={styles.statCardIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+                  </div>
+                  <span className={styles.statCardValue}>{oralCount.toLocaleString()}</span>
+                  <span className={styles.statCardSub}>{pct(oralCount, totalQuestions)}% of total</span>
+                </div>
+              </div>
+
+              <div className={`${styles.sectionHead} ${styles.sectionHeadSpaced} ${styles.sectionHeadWithSubtitle}`}>
+                <span className={styles.sectionEyebrow}>By year</span>
+                <h3 className={styles.sectionHeading}>
+                  <MessageCircleQuestion className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                  Questions by year
+                </h3>
+                <p className={styles.sectionSubtitle}>Total written and oral questions submitted to ministers each year since the mandate began in {mandate.startLabel}.</p>
+              </div>
+              <QuestionsYearChart questionStats={questionStats} partyColor={borderColor} />
+
+              {rankedMlaQuestions.length > 0 && (
+                <>
+                  <div className={`${styles.sectionHead} ${styles.sectionHeadSpaced}`}>
+                    <span className={styles.sectionEyebrow}>Rankings</span>
+                    <h3 className={styles.sectionHeading}>
+                      <TrendingUp className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                      MLA questions ranking
+                    </h3>
+                  </div>
+                  <div className={styles.barRowList}>
                     {rankedMlaQuestions.map((mla, i) => {
                       const barPct = qMaxTotal > 0 ? Math.round(mla.total / qMaxTotal * 100) : 0
                       return (
-                        <tr
+                        <Link
                           key={mla.personId}
-                          onClick={() => router.push(`${basePath}/assembly/mlas/${mla.personId}`)}
-                          style={{ cursor: 'pointer' }}
+                          href={`${basePath}/assembly/mlas/${mla.personId}`}
+                          className={styles.barRow}
                         >
-                          <td className={styles.qTdRank}>{i + 1}</td>
-                          <td>
-                            <div className={styles.qMlaCell}>
-                              <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={36} decorative square />
-                              <div className={styles.qMlaInfo}>
-                                <Link href={`${basePath}/assembly/mlas/${mla.personId}`} className={styles.qMlaName}>
-                                  {formatMemberName(mla.fullName)}
-                                </Link>
-                              </div>
+                          <span className={styles.barRowRank}>{i + 1}</span>
+                          <div className={styles.barRowPhoto}>
+                            <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={36} decorative square personId={mla.personId} />
+                          </div>
+                          <div className={styles.barRowInfo}>
+                            <span className={styles.barRowName}>{formatMemberName(mla.fullName)}</span>
+                            {mla.constituency && (
+                              <span className={`${styles.barRowConstituency} ${styles.barRowConstituencyHideMobile}`}>
+                                {formatConstituency(mla.constituency)}
+                              </span>
+                            )}
+                          </div>
+                          <div className={styles.barRowBarWrap}>
+                            <div className={styles.barRowTrack} aria-hidden="true">
+                              <div
+                                className={styles.barRowFill}
+                                style={{ width: `${barPct}%`, background: borderColor }}
+                              />
                             </div>
-                          </td>
-                          <td className={`${styles.qTdConstituency} ${styles.qHideMobile}`}>
-                            {mla.constituency ? formatConstituency(mla.constituency) : '—'}
-                          </td>
-                          <td className={styles.qTdQuestions}>
-                            <div className={styles.qQuestionsInner}>
-                              <div className={styles.qBarTrack} aria-hidden="true">
-                                <div
-                                  className={styles.qBarFill}
-                                  style={{ width: `${barPct}%`, background: borderColor }}
-                                />
-                              </div>
-                              <span className={styles.qQuestionsValue}>{mla.total.toLocaleString()}</span>
-                            </div>
-                          </td>
-                        </tr>
+                            <span className={styles.barRowValue}>{mla.total.toLocaleString()}</span>
+                          </div>
+                        </Link>
                       )
                     })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      <hr className="section-rule" />
-
-      {/* Executive Office */}
-      {sortedExec.length > 0 && (
-        <section className={styles.section} aria-labelledby="exec-heading">
-          <h2 id="exec-heading" className={styles.sectionHeading}>Executive Office</h2>
-          <div className={styles.execTop}>
-            {sortedExec.map((m) => (
-              <Link
-                key={m.personId}
-                href={`${basePath}/assembly/mlas/${m.personId}`}
-                className={styles.execCard}
-                style={{ '--party-c': partyBorderColor(party) } as React.CSSProperties}
-              >
-                <div className={styles.execPhoto}>
-                  <MlaPhoto name={m.fullName} imgUrl={m.imgUrl ?? ''} size={72} decorative square />
-                </div>
-                <div className={styles.execInfo}>
-                  <span className={styles.execMinistry}>
-                    {m.roleTitle ? m.roleTitle.charAt(0).toUpperCase() + m.roleTitle.slice(1) : ''}
-                  </span>
-                  <span className={styles.execName}>{formatMemberName(m.fullName)}</span>
-                  <span className="party-pill" data-party={abbr}>{abbr}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Ministers */}
-      {deptMinisters.length > 0 && (
-        <section className={styles.section} aria-labelledby="ministers-heading">
-          <h2 id="ministers-heading" className={styles.sectionHeading}>Ministers</h2>
-          <div className={styles.deptGrid}>
-            {deptMinisters.map((m) => (
-              <div key={m.personId} className={styles.deptBlock}>
-                <div className={styles.deptBlockHead}>
-                  <span className={styles.deptName}>{m.department ?? ''}</span>
-                </div>
-                <Link href={`${basePath}/assembly/mlas/${m.personId}`} className={styles.deptItem}>
-                  <div className={styles.deptPhoto}>
-                    <MlaPhoto name={m.fullName} imgUrl={m.imgUrl ?? ''} size={56} decorative square />
-                  </div>
-                  <div className={styles.deptInfo}>
-                    <span className={styles.deptLabel}>Minister</span>
-                    <span className={styles.deptMlaName}>{formatMemberName(m.fullName)}</span>
-                    <span className="party-pill" data-party={abbr}>{abbr}</span>
-                  </div>
-                  <span className={styles.deptArrow}>→</span>
-                </Link>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Committee Chairs */}
-      {chairs.length > 0 && (
-        <section className={styles.section} aria-labelledby="chairs-heading">
-          <h2 id="chairs-heading" className={styles.sectionHeading}>Committee Chairs</h2>
-          <div className={styles.deptGrid}>
-            {chairs.map((c) => (
-              <div key={c.personId} className={styles.deptBlock}>
-                <div className={styles.deptBlockHead}>
-                  <span className={styles.deptName}>{c.committeeName}</span>
-                </div>
-                <Link href={`${basePath}/assembly/mlas/${c.personId}`} className={styles.deptItem}>
-                  <div className={styles.deptPhoto}>
-                    <MlaPhoto name={c.fullName} imgUrl={c.imgUrl ?? ''} size={56} decorative square />
-                  </div>
-                  <div className={styles.deptInfo}>
-                    <span className={styles.deptLabel}>Chair</span>
-                    <span className={styles.deptMlaName}>{formatMemberName(c.fullName)}</span>
-                    <span className="party-pill" data-party={abbr}>{abbr}</span>
-                  </div>
-                  <span className={styles.deptArrow}>→</span>
-                </Link>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* MLAs */}
-      <section className={styles.section} aria-labelledby="mlas-heading">
-        <h2 id="mlas-heading" className={styles.sectionHeading}>
-          MLAs <span className={styles.mlaCount}>{mlas.length}</span>
-        </h2>
-        <ul className={styles.mlaGrid} role="list">
-          {mlas.map((mla) => (
-            <li key={mla.personId} className={styles.mlaCardWrapper}>
-              <div className={styles.mlaCard} style={{ '--party-c': borderColor } as React.CSSProperties}>
-
-                <div className={styles.mlaPhoto}>
-                  <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={64} decorative square />
-                </div>
-                <Link
-                  href={`${basePath}/assembly/mlas/${mla.personId}`}
-                  className={styles.mlaName}
-                  aria-label={`View profile for ${formatMemberName(mla.fullName)}`}
-                >
-                  {formatMemberName(mla.fullName)}
-                </Link>
-                <span className={styles.mlaConstituency}>{formatConstituency(mla.constituency)}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
     </>
   )
 }

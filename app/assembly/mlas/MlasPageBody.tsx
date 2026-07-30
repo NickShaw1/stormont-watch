@@ -1,25 +1,24 @@
-import Link from 'next/link'
-import { getMembersGroupedByParty, getAllMinisters, getAllCommitteeChairs } from '@/lib/db/queries'
+import { UsersRound } from 'lucide-react'
+import { getMembersGroupedByParty, getAllMinisters, getAllCommitteeChairs, getFormerMembers } from '@/lib/db/queries'
 import MlasListClient from './MlasListClient'
 import styles from './mlas.module.css'
 import type { Mandate } from '@/lib/constants/mandates'
 
 /**
- * Shared body for the MLA list — rendered by both the live route (current mandate,
- * basePath '') and the archive route (`/archive/<id>`). `mandate` drives the queries
- * and copy; `basePath` prefixes internal links.
+ * Shared body for the MLA list, rendered by both the live route (current mandate)
+ * and the archive route. Also fetches former members so the client can offer a
+ * "Former MLAs" toggle alongside By Party/By Constituency.
  */
 export default async function MlasPageBody({
   mandate,
-  basePath,
 }: {
   mandate: Mandate
-  basePath: string
 }) {
-  const [partyGroups, ministers, chairs] = await Promise.all([
+  const [partyGroups, ministers, chairs, formerGroups] = await Promise.all([
     getMembersGroupedByParty(mandate.id),
     getAllMinisters(mandate.id),
     getAllCommitteeChairs(mandate.id),
+    getFormerMembers(mandate.id),
   ])
 
   const roleLookup: Record<string, string> = {}
@@ -44,15 +43,15 @@ export default async function MlasPageBody({
     <div>
       <div className="container">
         <header className={styles.pageHeader}>
-          <span className="eyebrow">The Assembly</span>
-          <h1>All {total} MLAs</h1>
+          <span className={styles.pageHeaderEyebrow}>The Assembly</span>
+          <h1 className={styles.pageHeaderTitle}>
+            <UsersRound className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
+            All {total} MLAs
+          </h1>
           <p className={styles.lede}>Every Member of the Legislative Assembly elected to the {mandate.label} mandate.</p>
-          <p className={styles.formerMlasLink}>
-            <Link href={`${basePath}/assembly/former-mlas`}>Former MLAs from this mandate ↗</Link>
-          </p>
         </header>
       </div>
-      <MlasListClient partyGroups={partyGroups} roleLookup={roleLookup} />
+      <MlasListClient partyGroups={partyGroups} roleLookup={roleLookup} formerGroups={formerGroups} />
     </div>
   )
 }

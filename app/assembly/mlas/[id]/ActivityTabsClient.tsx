@@ -1,6 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import {
+  MessageCircleQuestion, FileText, Mic, CalendarCheck, MessagesSquare, TrendingUp,
+  Wallet, CalendarRange, PoundSterling, BarChart3, Award, Newspaper, Users, MapPin,
+} from 'lucide-react'
 import styles from './mlaDetail.module.css'
 import type { RoleInterval } from '@/lib/salaries'
 import { useMandate } from '@/components/MandateContext'
@@ -74,6 +78,12 @@ function formatInterestDate(date: string | null): string {
 
 type Tab = 'questions' | 'finances' | 'interests' | 'speeches'
 
+// Register categories are data-driven, so colours cycle by index, not by name.
+const CATEGORY_ICON_COLORS = [
+  'tileIconIndigo', 'tileIconGreen', 'tileIconCoral', 'tileIconTeal',
+  'tileIconPurple', 'tileIconPink', 'tileIconOrange', 'tileIconBlue',
+]
+
 
 function gbpSalary(val: number): string {
   return `£${val.toLocaleString('en-GB')}`
@@ -109,6 +119,9 @@ function QuestionsChart({ questionStats, partyColor }: { questionStats: Question
     const labels = months.map(m => m.label)
 
     let chart: { destroy: () => void } | null = null
+    const root = getComputedStyle(document.documentElement)
+    const tickColor = root.getPropertyValue('--sw-text-tertiary').trim() || '#656b72'
+    const gridColor = root.getPropertyValue('--sw-border').trim() || '#dcded9'
 
     import('chart.js/auto').then(({ default: Chart }) => {
       if (!canvasRef.current) return
@@ -142,8 +155,8 @@ function QuestionsChart({ questionStats, partyColor }: { questionStats: Question
               },
             },
           scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#888780' } },
-            y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 }, color: '#888780' }, grid: { color: 'rgba(136,135,128,0.15)' } },
+            x: { grid: { display: false }, ticks: { font: { size: 10 }, color: tickColor } },
+            y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 }, color: tickColor }, grid: { color: gridColor } },
           },
         },
       })
@@ -153,10 +166,13 @@ function QuestionsChart({ questionStats, partyColor }: { questionStats: Question
   }, [questionStats, partyColor])
 
   return (
-    <div style={{ marginTop: '2rem' }}>
-      <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--ink)', marginBottom: 'var(--spacing-sm)', marginTop: 0 }}>Questions asked by month</h3>
-      <p style={{ fontSize: '15px', fontWeight: 400, fontStyle: 'normal', color: 'var(--ink-2)', marginBottom: '0.75rem', fontFamily: 'var(--font-sans)' }}>Total written and oral questions submitted to ministers each month over the last 12 months.</p>
-      <div style={{ position: 'relative', width: '100%', height: 180 }}>
+    <div className={styles.chartSection}>
+      <h3 className={styles.chartTitle}>
+        <BarChart3 className={styles.financesSectionHeadingIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+        Questions asked by month
+      </h3>
+      <p className={styles.chartDesc}>Total written and oral questions submitted to ministers each month over the last 12 months.</p>
+      <div className={styles.chartCanvasWrap}>
         <canvas ref={canvasRef} />
       </div>
     </div>
@@ -202,6 +218,12 @@ function SpeechesChart({ hansardRows, hansardSittingsByMonth, partyColor }: {
     const labels = months.map(m => m.label)
 
     let chart: { destroy: () => void } | null = null
+    const root = getComputedStyle(document.documentElement)
+    const tickColor = root.getPropertyValue('--sw-text-tertiary').trim() || '#656b72'
+    const gridColor = root.getPropertyValue('--sw-border').trim() || '#dcded9'
+    const neutralBarColor = root.getPropertyValue('--sw-surface-subtle').trim() || '#eceef0'
+    const tooltipBg = root.getPropertyValue('--sw-text-primary').trim() || '#1a1d21'
+    const tooltipFg = root.getPropertyValue('--sw-surface').trim() || '#ffffff'
 
     import('chart.js/auto').then(({ default: Chart }) => {
       if (!canvasRef.current) return
@@ -215,7 +237,7 @@ function SpeechesChart({ hansardRows, hansardSittingsByMonth, partyColor }: {
             {
               label: 'Total sittings that month',
               data: totalData,
-              backgroundColor: '#E2E8F0',
+              backgroundColor: neutralBarColor,
               borderRadius: 3,
             },
             {
@@ -232,13 +254,12 @@ function SpeechesChart({ hansardRows, hansardSittingsByMonth, partyColor }: {
           plugins: {
             legend: { display: false },
             tooltip: {
-              backgroundColor: '#1a2a3a',
-              titleColor: '#ffffff',
-              bodyColor: '#a0b8c8',
-              borderColor: 'rgba(255,255,255,0.08)',
-              borderWidth: 1,
+              backgroundColor: tooltipBg,
+              titleColor: tooltipFg,
+              bodyColor: tooltipFg,
+              borderWidth: 0,
               padding: 12,
-              cornerRadius: 6,
+              cornerRadius: 3,
               titleFont: { size: 13, weight: 'bold' },
               bodyFont: { size: 12 },
               bodySpacing: 4,
@@ -252,8 +273,8 @@ function SpeechesChart({ hansardRows, hansardSittingsByMonth, partyColor }: {
             },
           },
           scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#888780', maxRotation: 45, autoSkip: true, maxTicksLimit: 12 } },
-            y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 }, color: '#888780', stepSize: 5 }, grid: { color: 'rgba(136,135,128,0.15)' } },
+            x: { grid: { display: false }, ticks: { font: { size: 10 }, color: tickColor, maxRotation: 45, autoSkip: true, maxTicksLimit: 12 } },
+            y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 }, color: tickColor, stepSize: 5 }, grid: { color: gridColor } },
           },
         },
       })
@@ -263,20 +284,23 @@ function SpeechesChart({ hansardRows, hansardSittingsByMonth, partyColor }: {
   }, [hansardRows, hansardSittingsByMonth, partyColor])
 
   return (
-    <div style={{ marginTop: '2rem' }}>
-      <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--ink)', marginBottom: 'var(--spacing-sm)', marginTop: 0 }}>Plenary participation by month</h3>
-      <p style={{ fontSize: '15px', fontWeight: 400, fontStyle: 'normal', color: 'var(--ink-2)', marginBottom: '0.75rem', fontFamily: 'var(--font-sans)' }}>How many plenary sittings this MLA spoke in each month, compared to the total sittings that month.</p>
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '11px', color: 'var(--ink-3)' }}>
-          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: '#E2E8F0', border: '1px solid #cbd5e1' }} />
+    <div className={styles.chartSection}>
+      <h3 className={styles.chartTitle}>
+        <BarChart3 className={styles.financesSectionHeadingIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+        Plenary participation by month
+      </h3>
+      <p className={styles.chartDesc}>How many plenary sittings this MLA spoke in each month, compared to the total sittings that month.</p>
+      <div className={styles.chartLegend}>
+        <span className={styles.chartLegendItem}>
+          <span className={styles.chartLegendSwatch} style={{ background: 'var(--sw-surface-subtle)', border: '1px solid var(--sw-border-strong)' }} />
           Total sittings that month
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '11px', color: 'var(--ink-3)' }}>
-          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: partyColor }} />
+        <span className={styles.chartLegendItem}>
+          <span className={styles.chartLegendSwatch} style={{ background: partyColor }} />
           Sittings spoken in
         </span>
       </div>
-      <div style={{ position: 'relative', width: '100%', height: 180 }}>
+      <div className={styles.chartCanvasWrap}>
         <canvas ref={canvasRef} />
       </div>
     </div>
@@ -286,8 +310,7 @@ function SpeechesChart({ hansardRows, hansardSittingsByMonth, partyColor }: {
 export default function ActivityTabsClient(props: Props) {
   const { allExpenses, interests, totalQuestions, writtenCount, oralCount, questionStats, hideQuestionsTab, partyColor, questionRank, currentSalary, mandateEarnings, mandateExpensesRank, mandateExpensesTotalMembers, hansardRows, hansardRank, hansardDebateRank, hansardSittingsByMonth } = props
   const { mandate } = useMandate()
-  const participationVisible = (!hideQuestionsTab && totalQuestions > 0) || hansardRows.length > 0
-  const [activeTab, setActiveTab] = useState<Tab>(participationVisible ? 'questions' : 'finances')
+  const [activeTab, setActiveTab] = useState<Tab>('finances')
   const [selectedYear, setSelectedYear] = useState<string>(allExpenses[0]?.financial_year ?? '')
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false)
   const yearDropdownRef = useRef<HTMLDivElement>(null)
@@ -317,7 +340,19 @@ export default function ActivityTabsClient(props: Props) {
 
   return (
     <div className={styles.financesCard}>
+      <div className={styles.financesTabPanel}>
       <div className={styles.financesTabs} role="tablist" aria-label="Activity sections">
+        <button
+          role="tab"
+          id="tab-finances"
+          aria-selected={activeTab === 'finances'}
+          aria-controls="panel-finances"
+          className={`${styles.financesTab} ${activeTab === 'finances' ? styles.financesTabActive : ''}`}
+          onClick={() => setActiveTab('finances')}
+        >
+          <span className={styles.tabLabelDesktop}>Finances</span>
+          <span className={styles.tabLabelMobile} aria-hidden="true">Finances</span>
+        </button>
         {(!hideQuestionsTab && totalQuestions > 0) || hansardRows.length > 0 ? (
           <button
             role="tab"
@@ -331,17 +366,6 @@ export default function ActivityTabsClient(props: Props) {
             <span className={styles.tabLabelMobile} aria-hidden="true">Activity</span>
           </button>
         ) : null}
-        <button
-          role="tab"
-          id="tab-finances"
-          aria-selected={activeTab === 'finances'}
-          aria-controls="panel-finances"
-          className={`${styles.financesTab} ${activeTab === 'finances' ? styles.financesTabActive : ''}`}
-          onClick={() => setActiveTab('finances')}
-        >
-          <span className={styles.tabLabelDesktop}>Finances</span>
-          <span className={styles.tabLabelMobile} aria-hidden="true">Finances</span>
-        </button>
         <button
           role="tab"
           id="tab-interests"
@@ -360,37 +384,44 @@ export default function ActivityTabsClient(props: Props) {
 
           {!hideQuestionsTab && totalQuestions > 0 && (
             <>
-              <h3 className={styles.financesSectionHeading}>Questions to <em>Ministers</em></h3>
-              <p className={styles.salaryFootnote} style={{ fontSize: '15px', color: 'var(--ink-2)', fontStyle: 'normal', marginBottom: 0 }}>Written and oral questions formally submitted to ministers since mandate start.</p>
-              <div className="note-card" style={{ marginTop: 'var(--spacing-md)', marginBottom: 0 }}>
-                <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
-                  <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
-                  <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
-                </svg>
-                <p>Rankings exclude current ministers and the Speaker.</p>
+              <div className={`${styles.sectionHead} ${styles.sectionHeadWithSubtitle}`}>
+                <span className={styles.sectionEyebrow}>To ministers</span>
+                <h3 className={styles.sectionHeading}>
+                  <MessageCircleQuestion className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                  Questions to Ministers
+                </h3>
+                <p className={styles.sectionSubtitle}>Written and oral questions formally submitted to ministers since mandate start. Rankings exclude current ministers and the Speaker.</p>
               </div>
-              <div className={styles.questionsCard} style={{ marginTop: 'var(--spacing-md)' }}>
+              <div className={styles.questionsCard}>
                 <div className={styles.questionsSummary}>
                   <div className={styles.questionsSummaryCell}>
+                    <MessageCircleQuestion className={`${styles.tileIcon} ${styles.tileIconBlue}`} size={17} strokeWidth={1.75} aria-hidden="true" />
                     <span className={styles.questionsSummaryLabel}>Total questions</span>
-                    <span className={styles.questionsSummaryValue}>{totalQuestions.toLocaleString()}</span>
-                    {questionRank && (() => {
-                      const { rank, totalEligible } = questionRank
-                      const pctile = totalEligible > 1 ? (rank - 1) / (totalEligible - 1) : 0
-                      const color = pctile <= 0.33 ? 'var(--forest)' : pctile <= 0.66 ? '#92400E' : 'var(--crimson)'
-                      return <span className={styles.questionsSummaryMeta} style={{ color }}>Ranked {rank}/{totalEligible}</span>
-                    })()}
+                    <div className={styles.questionsSummaryValueCol}>
+                      <span className={styles.questionsSummaryValue}>{totalQuestions.toLocaleString()}</span>
+                      {questionRank && (() => {
+                        const { rank, totalEligible } = questionRank
+                        const pctile = totalEligible > 1 ? (rank - 1) / (totalEligible - 1) : 0
+                        const color = pctile <= 0.33 ? 'var(--sw-success)' : pctile <= 0.66 ? 'var(--sw-warning)' : 'var(--sw-error)'
+                        return <span className={styles.questionsSummarySubtitle} style={{ color }}>Ranked {rank}/{totalEligible}</span>
+                      })()}
+                    </div>
                   </div>
                   <div className={styles.questionsSummaryCell}>
+                    <FileText className={`${styles.tileIcon} ${styles.tileIconTeal}`} size={17} strokeWidth={1.75} aria-hidden="true" />
                     <span className={styles.questionsSummaryLabel}>Written</span>
-                    <span className={styles.questionsSummaryValue}>{writtenCount.toLocaleString()}</span>
-                    <span className={styles.questionsSummaryMeta}>{pct(writtenCount, totalQuestions)}% of total</span>
+                    <div className={styles.questionsSummaryValueCol}>
+                      <span className={styles.questionsSummaryValue}>{writtenCount.toLocaleString()}</span>
+                      <span className={styles.questionsSummarySubtitle}>{pct(writtenCount, totalQuestions)}% of total</span>
+                    </div>
                   </div>
                   <div className={styles.questionsSummaryCell}>
+                    <Mic className={`${styles.tileIcon} ${styles.tileIconPurple}`} size={17} strokeWidth={1.75} aria-hidden="true" />
                     <span className={styles.questionsSummaryLabel}>Oral</span>
-                    <span className={styles.questionsSummaryValue}>{oralCount.toLocaleString()}</span>
-                    <span className={styles.questionsSummaryMeta}>{pct(oralCount, totalQuestions)}% of total</span>
+                    <div className={styles.questionsSummaryValueCol}>
+                      <span className={styles.questionsSummaryValue}>{oralCount.toLocaleString()}</span>
+                      <span className={styles.questionsSummarySubtitle}>{pct(oralCount, totalQuestions)}% of total</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -404,39 +435,43 @@ export default function ActivityTabsClient(props: Props) {
             const recentFive = hansardRows.slice(0, 5)
             return (
               <>
-                <h3 className={styles.financesSectionHeading} style={{ marginTop: (!hideQuestionsTab && totalQuestions > 0) ? 'var(--spacing-xl)' : undefined }}>Plenary <em>Participation</em></h3>
-                <p className={styles.salaryFootnote} style={{ fontSize: '15px', color: 'var(--ink-2)', fontStyle: 'normal', marginBottom: 0 }}>Sittings and debates this MLA has spoken in during plenary sessions since mandate start.</p>
-                <div className="note-card" style={{ marginTop: 'var(--spacing-md)', marginBottom: 0 }}>
-                  <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
-                    <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
-                    <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
-                  </svg>
-                  <p>Rankings exclude presiding officers only. Ministers are included as they participate in plenary debates in their capacity as MLAs.</p>
+                <div className={`${styles.sectionHead} ${(!hideQuestionsTab && totalQuestions > 0) ? styles.sectionHeadSpaced : ''} ${styles.sectionHeadWithSubtitle}`}>
+                  <span className={styles.sectionEyebrow}>Plenary</span>
+                  <h3 className={styles.sectionHeading}>
+                    <CalendarCheck className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                    Plenary Participation
+                  </h3>
+                  <p className={styles.sectionSubtitle}>Sittings and debates this MLA has spoken in during plenary sessions since mandate start. Rankings exclude presiding officers only: ministers are included as they participate in plenary debates in their capacity as MLAs.</p>
                 </div>
-                <div className={styles.questionsCard} style={{ marginTop: 'var(--spacing-md)' }}>
+                <div className={styles.questionsCard}>
                   <div className={styles.questionsSummary}>
                     <div className={styles.questionsSummaryCell}>
+                      <CalendarCheck className={`${styles.tileIcon} ${styles.tileIconGreen}`} size={17} strokeWidth={1.75} aria-hidden="true" />
                       <span className={styles.questionsSummaryLabel}>Sittings</span>
-                      <span className={styles.questionsSummaryValue}>{distinctSittings.toLocaleString()}/{hansardSittingsByMonth.reduce((acc, row) => acc + Number(row.totalSittings), 0).toLocaleString()}</span>
-                      {hansardRank && (() => {
-                        const { rank, eligibleCount } = hansardRank
-                        const pctile = eligibleCount > 1 ? (rank - 1) / (eligibleCount - 1) : 0
-                        const color = pctile <= 0.33 ? 'var(--forest)' : pctile <= 0.66 ? '#92400E' : 'var(--crimson)'
-                        return <span className={styles.questionsSummaryMeta} style={{ color }}>Ranked {rank}/{eligibleCount}</span>
-                      })()}
-                      {!hansardRank && <span className={styles.questionsSummarySubtitle}>spoken in this mandate</span>}
+                      <div className={styles.questionsSummaryValueCol}>
+                        <span className={styles.questionsSummaryValue}>{distinctSittings.toLocaleString()}/{hansardSittingsByMonth.reduce((acc, row) => acc + Number(row.totalSittings), 0).toLocaleString()}</span>
+                        {hansardRank && (() => {
+                          const { rank, eligibleCount } = hansardRank
+                          const pctile = eligibleCount > 1 ? (rank - 1) / (eligibleCount - 1) : 0
+                          const color = pctile <= 0.33 ? 'var(--sw-success)' : pctile <= 0.66 ? 'var(--sw-warning)' : 'var(--sw-error)'
+                          return <span className={styles.questionsSummarySubtitle} style={{ color }}>Ranked {rank}/{eligibleCount}</span>
+                        })()}
+                        {!hansardRank && <span className={styles.questionsSummarySubtitle}>spoken in this mandate</span>}
+                      </div>
                     </div>
                     <div className={styles.questionsSummaryCell}>
+                      <MessagesSquare className={`${styles.tileIcon} ${styles.tileIconCoral}`} size={17} strokeWidth={1.75} aria-hidden="true" />
                       <span className={styles.questionsSummaryLabel}>Debates Contributed To</span>
-                      <span className={styles.questionsSummaryValue}>{distinctDebates.toLocaleString()}</span>
-                      {hansardDebateRank && (() => {
-                        const { rank, eligibleCount } = hansardDebateRank
-                        const pctile = eligibleCount > 1 ? (rank - 1) / (eligibleCount - 1) : 0
-                        const color = pctile <= 0.33 ? 'var(--forest)' : pctile <= 0.66 ? '#92400E' : 'var(--crimson)'
-                        return <span className={styles.questionsSummaryMeta} style={{ color }}>Ranked {rank}/{eligibleCount}</span>
-                      })()}
-                      {!hansardDebateRank && <span className={styles.questionsSummarySubtitle}>times spoken in the chamber</span>}
+                      <div className={styles.questionsSummaryValueCol}>
+                        <span className={styles.questionsSummaryValue}>{distinctDebates.toLocaleString()}</span>
+                        {hansardDebateRank && (() => {
+                          const { rank, eligibleCount } = hansardDebateRank
+                          const pctile = eligibleCount > 1 ? (rank - 1) / (eligibleCount - 1) : 0
+                          const color = pctile <= 0.33 ? 'var(--sw-success)' : pctile <= 0.66 ? 'var(--sw-warning)' : 'var(--sw-error)'
+                          return <span className={styles.questionsSummarySubtitle} style={{ color }}>Ranked {rank}/{eligibleCount}</span>
+                        })()}
+                        {!hansardDebateRank && <span className={styles.questionsSummarySubtitle}>times spoken in the chamber</span>}
+                      </div>
                     </div>
                     {(() => {
                       const monthMap = new Map<string, Set<string>>()
@@ -459,35 +494,52 @@ export default function ActivityTabsClient(props: Props) {
                       const label = new Date(year, month - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
                       return (
                         <div className={styles.questionsSummaryCell}>
+                          <TrendingUp className={`${styles.tileIcon} ${styles.tileIconOrange}`} size={17} strokeWidth={1.75} aria-hidden="true" />
                           <span className={styles.questionsSummaryLabel}>Most Active Month</span>
-                          <span className={styles.questionsSummaryValue}>{label}</span>
-                          <span className={styles.questionsSummarySubtitle}>{bestCount} sittings spoken in</span>
+                          <div className={styles.questionsSummaryValueCol}>
+                            <span className={styles.questionsSummaryValue}>{label}</span>
+                            <span className={styles.questionsSummarySubtitle}>{bestCount} sittings spoken in</span>
+                          </div>
                         </div>
                       )
                     })()}
                   </div>
                 </div>
                 <SpeechesChart hansardRows={hansardRows} hansardSittingsByMonth={hansardSittingsByMonth} partyColor={partyColor} />
-                <h3 className={styles.financesSectionHeading} style={{ marginTop: 'var(--spacing-xl)', marginBottom: 'var(--spacing-md)' }}>Recent <em>Activity</em></h3>
+                <div className={`${styles.sectionHead} ${styles.sectionHeadSpaced}`}>
+                  <span className={styles.sectionEyebrow}>Latest</span>
+                  <h3 className={styles.sectionHeading}>
+                    <Newspaper className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                    Recent Activity
+                  </h3>
+                </div>
 
                 <div className={styles.speechDebateWrap}>
-                  <ul className={styles.speechDebateList}>
-                    {recentFive.map((row, i) => (
-                      <li key={i} className={styles.speechDebateRow}>
-                        <a
-                          href={`https://aims.niassembly.gov.uk/officialreport/report.aspx?&eveDate=${row.plenaryDate}&docID=${row.reportDocId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.speechDebateLink}
-                        >
-                          <span className={styles.speechDebateTitle}>{row.debateTitle}</span>
-                          <span className={styles.speechDebateDate}>
-                            {new Date(row.plenaryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </span>
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
+                  {recentFive.map((row, i) => {
+                    const d = new Date(`${row.plenaryDate}T12:00:00Z`)
+                    const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'UTC' }).format(d).toUpperCase()
+                    const month = new Intl.DateTimeFormat('en-GB', { month: 'short', timeZone: 'UTC' }).format(d)
+                    return (
+                      <div key={i} className={styles.speechDebateRow}>
+                        <div className={styles.speechDebateDateBlock}>
+                          <span className={styles.speechDebateWeekday}>{weekday}</span>
+                          <span className={styles.speechDebateDayNum}>{d.getUTCDate()}</span>
+                          <span className={styles.speechDebateMonth}>{month}</span>
+                        </div>
+                        <div className={styles.speechDebateCard}>
+                          <a
+                            href={`https://aims.niassembly.gov.uk/officialreport/report.aspx?&eveDate=${row.plenaryDate}&docID=${row.reportDocId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.speechDebateLink}
+                          >
+                            <span className={styles.speechDebateTitle}>{row.debateTitle}</span>
+                            <span className={styles.speechDebateType}>Hansard</span>
+                          </a>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </>
             )
@@ -498,129 +550,165 @@ export default function ActivityTabsClient(props: Props) {
 
       {activeTab === 'finances' && (
         <div id="panel-finances" role="tabpanel" aria-labelledby="tab-finances" className={styles.financesPanel}>
-          <div className={styles.salaryPanel}>
-            <h3 className={styles.financesSectionHeading}>Salary &amp; <em>earnings</em></h3>
-            {currentSalary === null && mandateEarnings === null ? (
-              <p className={styles.salaryNotice}>Salary figures for the {mandate.label} mandate are not yet available: the Assembly&apos;s published pay rates for this mandate have not been released.</p>
-            ) : (
-              <>
-                <p className={styles.salaryNotice}>Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</p>
-                <div className={styles.salaryCards}>
+          <div className={styles.financesColumns}>
+            <div className={styles.salaryPanel}>
+              <h3 className={styles.financesSectionHeading}>
+                <Wallet className={styles.financesSectionHeadingIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+                Salary &amp; earnings
+              </h3>
+              {currentSalary === null && mandateEarnings === null ? (
+                <p className={styles.salaryNotice}>Salary figures for the {mandate.label} mandate are not yet available: the Assembly&apos;s published pay rates for this mandate have not been released.</p>
+              ) : (
+                <>
+                  <p className={styles.salaryNotice}>Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</p>
+                  <div className={styles.salaryCardsSingle}>
+                    <div className={styles.salaryCard}>
+                      <CalendarRange className={`${styles.tileIcon} ${styles.tileIconIndigo}`} size={17} strokeWidth={1.75} aria-hidden="true" />
+                      <span className={styles.questionsSummaryLabel}>Mandate</span>
+                      <span className={styles.questionsSummaryValue}>{mandate.label}</span>
+                    </div>
+                    <div className={styles.salaryCard}>
+                      <Wallet className={`${styles.tileIcon} ${styles.tileIconGreen}`} size={17} strokeWidth={1.75} aria-hidden="true" />
+                      <span className={styles.questionsSummaryLabel}>Current annual salary</span>
+                      <span className={styles.questionsSummaryValue}>{currentSalary === null ? 'N/A' : gbpSalary(currentSalary)}</span>
+                    </div>
+                    <div className={styles.salaryCard}>
+                      <TrendingUp className={`${styles.tileIcon} ${styles.tileIconTeal}`} size={17} strokeWidth={1.75} aria-hidden="true" />
+                      <span className={styles.questionsSummaryLabel}>Estimated mandate earnings</span>
+                      <span className={styles.questionsSummaryValue}>{mandateEarnings === null ? 'N/A' : gbpSalary(mandateEarnings)}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {allExpenses.length > 0 && (
+              <div className={styles.salaryPanel}>
+                <h3 className={styles.financesSectionHeading}>
+                  <PoundSterling className={styles.financesSectionHeadingIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+                  Costs and Ranking
+                </h3>
+                <p className={styles.salaryNotice}>Costs claimed for staffing, constituency office running costs and other approved allowances, published quarterly by the Assembly.</p>
+
+                <div className={styles.salaryCardsSingle}>
                   <div className={styles.salaryCard}>
-                    <span className={styles.questionsSummaryLabel}>Current annual salary</span>
-                    <span className={styles.questionsSummaryValue}>{currentSalary === null ? 'N/A' : gbpSalary(currentSalary)}</span>
+                    <PoundSterling className={`${styles.tileIcon} ${styles.tileIconBlue}`} size={17} strokeWidth={1.75} aria-hidden="true" />
+                    <span className={styles.questionsSummaryLabel}>Total mandate expenses</span>
+                    <span className={styles.questionsSummaryValue}>{gbp(mandateTotalExpenses.toFixed(2))}</span>
                   </div>
                   <div className={styles.salaryCard}>
-                    <span className={styles.questionsSummaryLabel}>Estimated mandate earnings</span>
-                    <span className={styles.questionsSummaryValue}>{mandateEarnings === null ? 'N/A' : gbpSalary(mandateEarnings)}</span>
+                    <BarChart3 className={styles.tileIcon} size={17} strokeWidth={1.75} aria-hidden="true" />
+                    <span className={styles.questionsSummaryLabel}>{(selectedExpenses?.period ?? selectedYear).replace(/\b(January|February|March|April|May|June|July|August|September|October|November|December)\b/g, m => m.slice(0, 3))} expenses rank</span>
+                    <span className={styles.questionsSummaryValue}>
+                      {selectedExpenses ? (() => {
+                        const pctile = selectedExpenses.total_members > 1 ? (selectedExpenses.rank - 1) / (selectedExpenses.total_members - 1) : 0
+                        const color = pctile <= 0.33 ? 'var(--sw-error)' : pctile <= 0.66 ? 'var(--sw-warning)' : 'var(--sw-success)'
+                        return <span style={{ color }}>{selectedExpenses.rank}<span className={styles.expenseFraction}>/{selectedExpenses.total_members}</span></span>
+                      })() : <span className={styles.statMuted}>N/A</span>}
+                    </span>
                   </div>
                   <div className={styles.salaryCard}>
-                    <span className={styles.questionsSummaryLabel}>Mandate</span>
-                    <span className={styles.questionsSummaryValue}>{mandate.label}</span>
+                    <Award className={styles.tileIcon} size={17} strokeWidth={1.75} aria-hidden="true" />
+                    <span className={styles.questionsSummaryLabel}>Overall mandate expenses rank</span>
+                    <span className={styles.questionsSummaryValue}>
+                      {mandateExpensesRank !== null && mandateExpensesTotalMembers !== null ? (() => {
+                        const pctile = mandateExpensesTotalMembers > 1 ? (mandateExpensesRank - 1) / (mandateExpensesTotalMembers - 1) : 0
+                        const color = pctile <= 0.33 ? 'var(--sw-error)' : pctile <= 0.66 ? 'var(--sw-warning)' : 'var(--sw-success)'
+                        return <span style={{ color }}>{mandateExpensesRank}<span className={styles.expenseFraction}>/{mandateExpensesTotalMembers}</span></span>
+                      })() : <span className={styles.statMuted}>N/A</span>}
+                    </span>
                   </div>
                 </div>
-              </>
+              </div>
+            )}
+
+            {allExpenses.length === 0 && (
+              <div className={styles.salaryPanel}>
+                <h3 className={styles.financesSectionHeading}>
+                  <PoundSterling className={styles.financesSectionHeadingIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+                  Costs and Ranking
+                </h3>
+                <p className={styles.interestsEmpty}>No expenses data available.</p>
+              </div>
             )}
           </div>
 
-          {allExpenses.length > 0 ? (
-            <>
-<h3 className={styles.financesSectionHeading} style={{ marginTop: 'var(--spacing-xl)', marginBottom: 'var(--s-4)' }}>Office <em>expenses</em></h3>
+          {allExpenses.length > 0 && selectedExpenses && (
+            <div className={`${styles.salaryPanel} ${styles.expensesBreakdownPanel}`}>
+              <div className={styles.expensesBreakdownHead}>
+                <div>
+                  <h3 className={styles.financesSectionHeading}>
+                    <FileText className={styles.financesSectionHeadingIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+                    Expenses breakdown
+                  </h3>
+                  <p className={styles.salaryNotice}>How {selectedExpenses.period ?? selectedYear} expenses split across staffing, office and other approved costs.</p>
+                </div>
 
-              <div className={styles.salaryCards}>
-                <div className={styles.salaryCard}>
-                  <span className={styles.questionsSummaryLabel}>Total mandate expenses</span>
-                  <span className={styles.questionsSummaryValue}>{gbp(mandateTotalExpenses.toFixed(2))}</span>
-                </div>
-                <div className={styles.salaryCard}>
-                  <span className={styles.questionsSummaryLabel}>{(selectedExpenses?.period ?? selectedYear).replace(/\b(January|February|March|April|May|June|July|August|September|October|November|December)\b/g, m => m.slice(0, 3))} expenses rank</span>
-                  <span className={styles.questionsSummaryValue}>
-                    {selectedExpenses ? (() => {
-                      const pctile = selectedExpenses.total_members > 1 ? (selectedExpenses.rank - 1) / (selectedExpenses.total_members - 1) : 0
-                      const color = pctile <= 0.33 ? 'var(--crimson)' : pctile <= 0.66 ? '#92400E' : 'var(--forest)'
-                      return <span style={{ color }}>{selectedExpenses.rank}<span className={styles.expenseFraction}>/{selectedExpenses.total_members}</span></span>
-                    })() : <span className={styles.statMuted}>—</span>}
-                  </span>
-                </div>
-                <div className={styles.salaryCard}>
-                  <span className={styles.questionsSummaryLabel}>Overall mandate expenses rank</span>
-                  <span className={styles.questionsSummaryValue}>
-                    {mandateExpensesRank !== null && mandateExpensesTotalMembers !== null ? (() => {
-                      const pctile = mandateExpensesTotalMembers > 1 ? (mandateExpensesRank - 1) / (mandateExpensesTotalMembers - 1) : 0
-                      const color = pctile <= 0.33 ? 'var(--crimson)' : pctile <= 0.66 ? '#92400E' : 'var(--forest)'
-                      return <span style={{ color }}>{mandateExpensesRank}<span className={styles.expenseFraction}>/{mandateExpensesTotalMembers}</span></span>
-                    })() : <span className={styles.statMuted}>—</span>}
-                  </span>
-                </div>
+                {allExpenses.length > 1 && (
+                  <div className={styles.expensesYearDropdownWrap} ref={yearDropdownRef}>
+                    <button
+                      className={styles.expensesYearTrigger}
+                      onClick={() => setYearDropdownOpen(o => !o)}
+                      aria-haspopup="listbox"
+                      aria-expanded={yearDropdownOpen}
+                      aria-label={`Select financial year, currently ${selectedYear}`}
+                    >
+                      <span>{selectedYear}</span>
+                      <svg
+                        className={`${styles.expensesYearChevron} ${yearDropdownOpen ? styles.expensesYearChevronOpen : ''}`}
+                        width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+                      >
+                        <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </button>
+                    {yearDropdownOpen && (
+                      <ul className={styles.expensesYearDropdownList} role="listbox">
+                        {allExpenses.map(e => (
+                          <li
+                            key={e.financial_year}
+                            role="option"
+                            tabIndex={0}
+                            aria-selected={e.financial_year === selectedYear}
+                            className={`${styles.expensesYearDropdownItem} ${e.financial_year === selectedYear ? styles.expensesYearDropdownItemSelected : ''}`}
+                            onClick={() => { setSelectedYear(e.financial_year); setYearDropdownOpen(false) }}
+                          >
+                            {e.financial_year}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {allExpenses.length > 1 && (
-                <div className={styles.expensesYearDropdownWrap} ref={yearDropdownRef}>
-                  <button
-                    className={styles.expensesYearTrigger}
-                    onClick={() => setYearDropdownOpen(o => !o)}
-                    aria-haspopup="listbox"
-                    aria-expanded={yearDropdownOpen}
-                    aria-label={`Select financial year, currently ${selectedYear}`}
-                  >
-                    <span>{selectedYear}</span>
-                    <svg
-                      className={`${styles.expensesYearChevron} ${yearDropdownOpen ? styles.expensesYearChevronOpen : ''}`}
-                      width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
-                    >
-                      <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                  {yearDropdownOpen && (
-                    <ul className={styles.expensesYearDropdownList} role="listbox">
-                      {allExpenses.map(e => (
-                        <li
-                          key={e.financial_year}
-                          role="option"
-                          aria-selected={e.financial_year === selectedYear}
-                          className={`${styles.expensesYearDropdownItem} ${e.financial_year === selectedYear ? styles.expensesYearDropdownItemSelected : ''}`}
-                          onClick={() => { setSelectedYear(e.financial_year); setYearDropdownOpen(false) }}
-                        >
-                          {e.financial_year}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+              <div className={styles.expensesGrid}>
+                <div className={styles.expensesCard}>
+                  <Users className={`${styles.tileIcon} ${styles.tileIconCoral}`} size={17} strokeWidth={1.75} aria-hidden="true" />
+                  <span className={styles.expenseLabel}>Staff costs</span>
+                  <span className={styles.expenseValue}>{gbp(selectedExpenses.staff_costs)}</span>
                 </div>
-              )}
-
-              {selectedExpenses && (
-                <div className={styles.expensesPanel} style={{ marginTop: allExpenses.length <= 1 ? 'var(--s-6)' : undefined }}>
-                  <div className={styles.expensesGrid}>
-                    <div className={styles.expensesCard}>
-                      <span className={styles.expenseLabel}>Staff costs</span>
-                      <span className={styles.expenseValue}>{gbp(selectedExpenses.staff_costs)}</span>
-                    </div>
-                    <div className={styles.expensesCard}>
-                      <span className={styles.expenseLabel}>Constituency office</span>
-                      <span className={styles.expenseValue}>{gbp(selectedExpenses.constituency_office)}</span>
-                    </div>
-                    <div className={styles.expensesCard}>
-                      <span className={styles.expenseLabel}>Allowances</span>
-                      <span className={styles.expenseValue}>{gbp(selectedExpenses.allowances)}</span>
-                    </div>
-                    <div className={styles.expensesCard}>
-                      <span className={styles.expenseLabel}>Other expenses</span>
-                      <span className={styles.expenseValue}>{gbp(selectedExpenses.other_expenses)}</span>
-                    </div>
-                    <div className={styles.expensesCard}>
-                      <span className={styles.expenseLabel}>Total</span>
-                      <span className={styles.expenseValue}>{gbp(selectedExpenses.total)}</span>
-                    </div>
-                  </div>
+                <div className={styles.expensesCard}>
+                  <MapPin className={`${styles.tileIcon} ${styles.tileIconPink}`} size={17} strokeWidth={1.75} aria-hidden="true" />
+                  <span className={styles.expenseLabel}>Constituency office</span>
+                  <span className={styles.expenseValue}>{gbp(selectedExpenses.constituency_office)}</span>
                 </div>
-              )}
-            </>
-          ) : (
-            <>
-              <h3 className={styles.financesSectionHeading} style={{ marginTop: 'var(--spacing-xl)', marginBottom: 'var(--s-4)' }}>Office <em>expenses</em></h3>
-              <p className={styles.interestsEmpty}>No expenses data available.</p>
-            </>
+                <div className={styles.expensesCard}>
+                  <Wallet className={`${styles.tileIcon} ${styles.tileIconOrange}`} size={17} strokeWidth={1.75} aria-hidden="true" />
+                  <span className={styles.expenseLabel}>Allowances</span>
+                  <span className={styles.expenseValue}>{gbp(selectedExpenses.allowances)}</span>
+                </div>
+                <div className={styles.expensesCard}>
+                  <FileText className={`${styles.tileIcon} ${styles.tileIconPurple}`} size={17} strokeWidth={1.75} aria-hidden="true" />
+                  <span className={styles.expenseLabel}>Other expenses</span>
+                  <span className={styles.expenseValue}>{gbp(selectedExpenses.other_expenses)}</span>
+                </div>
+              </div>
+              <div className={styles.expensesTotalRow}>
+                <PoundSterling className={`${styles.tileIcon} ${styles.tileIconBlue}`} size={17} strokeWidth={1.75} aria-hidden="true" />
+                <span className={styles.expenseLabel}>Total</span>
+                <span className={styles.expenseValue}>{gbp(selectedExpenses.total)}</span>
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -630,14 +718,11 @@ export default function ActivityTabsClient(props: Props) {
           {interests.length === 0 ? (
             <p className={styles.interestsEmpty}>No interests currently registered.</p>
           ) : (
-            Object.entries(grouped).map(([category, entries]) => (
+            Object.entries(grouped).map(([category, entries], i) => (
               <div key={category} className={styles.interestCategory}>
-                <h3 className={styles.interestCategoryHeading}>
-                  {(() => {
-                    const words = toSentenceCase(category).split(' ')
-                    const last = words.pop()
-                    return words.length ? <>{words.join(' ')} <em>{last}</em></> : <em>{last}</em>
-                  })()}
+                <h3 className={styles.sectionHeading}>
+                  <FileText className={`${styles.sectionHeadingIcon} ${styles[CATEGORY_ICON_COLORS[i % CATEGORY_ICON_COLORS.length]]}`} size={22} strokeWidth={1.75} aria-hidden="true" />
+                  {toSentenceCase(category)}
                 </h3>
                 <ul className={styles.interestList}>
                   {entries.map((entry) => (
@@ -666,7 +751,7 @@ export default function ActivityTabsClient(props: Props) {
           </p>
         </div>
       )}
-
+      </div>
     </div>
   )
 }

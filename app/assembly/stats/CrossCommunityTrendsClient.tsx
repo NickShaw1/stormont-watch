@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import type { TooltipItem } from 'chart.js'
+import { CalendarRange, Trophy, Clock3, Percent } from 'lucide-react'
 import styles from './stats.module.css'
 import { useMandate } from '@/components/MandateContext'
 
@@ -35,7 +36,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
       const totals = data.map(r => r.total_divisions)
       const agreed = data.map(r => r.agreed_divisions)
       const radii = data.map(r => r.total_divisions >= 3 ? 4 : r.total_divisions > 0 ? 2 : 0)
-      const colors = data.map(r => r.total_divisions >= 3 ? '#6366F1' : r.total_divisions > 0 ? 'rgba(99,102,241,0.4)' : 'transparent')
+      const colors = data.map(r => r.total_divisions >= 3 ? '#3a5a7a' : r.total_divisions > 0 ? 'rgba(58,90,122,0.4)' : 'transparent')
 
       if (c1.current) {
         chart1.current = new Chart(c1.current, {
@@ -45,8 +46,8 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
             datasets: [
               {
                 data: pcts,
-                borderColor: '#6366F1',
-                backgroundColor: 'rgba(99,102,241,0.07)',
+                borderColor: '#3a5a7a',
+                backgroundColor: 'rgba(58,90,122,0.07)',
                 borderWidth: 2,
                 pointRadius: radii,
                 pointHoverRadius: radii.map(r => r + 2),
@@ -66,13 +67,13 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
             plugins: {
               legend: { display: false },
               tooltip: {
-                backgroundColor: '#1a2a3a',
+                backgroundColor: '#1a1d21',
                 titleColor: '#ffffff',
-                bodyColor: '#a0b8c8',
+                bodyColor: '#b4b8bd',
                 borderColor: 'rgba(255,255,255,0.08)',
                 borderWidth: 1,
                 padding: 12,
-                cornerRadius: 6,
+                cornerRadius: 3,
                 titleFont: { size: 13, weight: 'bold' },
                 bodyFont: { size: 12 },
                 bodySpacing: 4,
@@ -97,8 +98,8 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
               },
             },
             scales: {
-              x: { ticks: { font: { size: 10 }, color: '#888780', maxRotation: 45, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
-              y: { min: 0, max: 100, title: { display: true, text: 'Voted same way (%)', font: { size: 10 }, color: '#888780' }, ticks: { font: { size: 10 }, color: '#888780', callback: (v: number | string) => Number(v) % 25 === 0 ? v + '%' : '', stepSize: 25 }, grid: { color: 'rgba(136,135,128,0.15)' } },
+              x: { ticks: { font: { size: 10 }, color: '#656b72', maxRotation: 45, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+              y: { min: 0, max: 100, title: { display: true, text: 'Voted same way (%)', font: { size: 10 }, color: '#656b72' }, ticks: { font: { size: 10 }, color: '#656b72', callback: (v: number | string) => Number(v) % 25 === 0 ? v + '%' : '', stepSize: 25 }, grid: { color: 'rgba(101,107,114,0.15)' } },
             },
           },
         })
@@ -110,8 +111,8 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
           data: {
             labels,
             datasets: [
-              { label: 'Total divisions that month', data: totals, backgroundColor: '#E2E8F0', borderRadius: 3 },
-              { label: 'Both blocs voted same way', data: agreed, backgroundColor: '#34D399', borderRadius: 3 },
+              { label: 'Total divisions that month', data: totals, backgroundColor: '#eceef0', borderRadius: 0 },
+              { label: 'Both blocs voted same way', data: agreed, backgroundColor: '#2f6a4f', borderRadius: 0 },
             ],
           },
           options: {
@@ -120,13 +121,13 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
             plugins: {
               legend: { display: false },
               tooltip: {
-                backgroundColor: '#1a2a3a',
+                backgroundColor: '#1a1d21',
                 titleColor: '#ffffff',
-                bodyColor: '#a0b8c8',
+                bodyColor: '#b4b8bd',
                 borderColor: 'rgba(255,255,255,0.08)',
                 borderWidth: 1,
                 padding: 12,
-                cornerRadius: 6,
+                cornerRadius: 3,
                 titleFont: { size: 13, weight: 'bold' },
                 bodyFont: { size: 12 },
                 bodySpacing: 4,
@@ -148,8 +149,8 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
               },
             },
             scales: {
-              x: { ticks: { font: { size: 10 }, color: '#888780', maxRotation: 45, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
-              y: { ticks: { font: { size: 10 }, color: '#888780', stepSize: 5 }, grid: { color: 'rgba(136,135,128,0.15)' }, beginAtZero: true },
+              x: { ticks: { font: { size: 10 }, color: '#656b72', maxRotation: 45, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+              y: { ticks: { font: { size: 10 }, color: '#656b72', stepSize: 5 }, grid: { color: 'rgba(101,107,114,0.15)' }, beginAtZero: true },
             },
           },
         })
@@ -162,10 +163,10 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
   }, [data])
 
   function getAgreementColor(pct: number | null): string {
-    if (pct === null) return 'var(--text-primary)'
-    if (pct >= 60) return '#065F46'
-    if (pct >= 30) return '#92400E'
-    return '#9B2626'
+    if (pct === null) return 'var(--sw-text-primary)'
+    if (pct >= 60) return 'var(--sw-success)'
+    if (pct >= 30) return 'var(--sw-warning)'
+    return 'var(--sw-error)'
   }
 
   const peakMonth = data
@@ -178,27 +179,39 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
 
   return (
     <div>
-      <div className={styles.overviewGridThree}>
-        <div className={styles.overviewCard}>
-          <span className={styles.overviewLabel}>Period</span>
-          <span className={styles.overviewValue}>{data.length}</span>
-          <span className={styles.overviewMeta}>months since {mandate.startLabel}</span>
+      <div className={styles.glanceBarThree}>
+        <div className={styles.glanceCell}>
+          <div className={styles.glanceCellLabelRow}>
+            <span className={styles.glanceCellLabel}>Period</span>
+            <CalendarRange className={styles.glanceCellIcon} size={19} strokeWidth={1.75} aria-hidden="true" />
+          </div>
+          <span className={styles.glanceCellValue}>{data.length}</span>
+          <span className={styles.glanceCellMeta}>months since {mandate.startLabel}</span>
         </div>
-        <div className={styles.overviewCard}>
-          <span className={styles.overviewLabel}>Highest agreement month</span>
-          <span className={styles.overviewValue}>{peakMonth?.agreement_pct ?? '—'}%</span>
-          <span className={styles.overviewMeta}>{peakLabel} ({peakMonth?.agreed_divisions}/{peakMonth?.total_divisions} divisions agreed)</span>
+        <div className={styles.glanceCell}>
+          <div className={styles.glanceCellLabelRow}>
+            <span className={styles.glanceCellLabel}>Highest agreement month</span>
+            <Trophy className={styles.glanceCellIcon} size={19} strokeWidth={1.75} aria-hidden="true" />
+          </div>
+          <span className={styles.glanceCellValue}>{peakMonth?.agreement_pct ?? '-'}%</span>
+          <span className={styles.glanceCellMeta}>{peakLabel} ({peakMonth?.agreed_divisions}/{peakMonth?.total_divisions} divisions agreed)</span>
         </div>
-        <div className={styles.overviewCard}>
-          <span className={styles.overviewLabel}>Most recent month</span>
-          <span className={styles.overviewValue} style={{ color: getAgreementColor(latestWithData?.agreement_pct ?? null) }}>
-            {latestWithData?.agreement_pct ?? '—'}%
+        <div className={styles.glanceCell}>
+          <div className={styles.glanceCellLabelRow}>
+            <span className={styles.glanceCellLabel}>Most recent month</span>
+            <Clock3 className={styles.glanceCellIcon} size={19} strokeWidth={1.75} aria-hidden="true" />
+          </div>
+          <span className={styles.glanceCellValue} style={{ color: getAgreementColor(latestWithData?.agreement_pct ?? null) }}>
+            {latestWithData?.agreement_pct ?? '-'}%
           </span>
-          <span className={styles.overviewMeta}>{latestLabel} ({latestWithData?.agreed_divisions}/{latestWithData?.total_divisions} divisions agreed)</span>
+          <span className={styles.glanceCellMeta}>{latestLabel} ({latestWithData?.agreed_divisions}/{latestWithData?.total_divisions} divisions agreed)</span>
         </div>
       </div>
 
-      <h3 className={styles.chartTitle}>Percentage of divisions where both blocs voted the same way</h3>
+      <h3 className={styles.chartTitle} style={{ marginTop: 'var(--sw-space-9)' }}>
+        <Percent className={styles.chartTitleIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+        Percentage of divisions where both blocs voted the same way
+      </h3>
       <div className={styles.trendLegend}>
         <span className={styles.trendLegendItem}><span className={styles.trendDotLg} />3+ divisions</span>
         <span className={styles.trendLegendItem}><span className={styles.trendDotSm} />Fewer than 3 divisions</span>
@@ -206,7 +219,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
       <div style={{ position: 'relative', width: '100%', height: '260px', marginBottom: '0.5rem' }}>
         <canvas ref={c1} role="img" aria-label={`Line chart showing monthly unionist nationalist agreement rate since ${mandate.startLabel}`} />
       </div>
-      <div className="note-card">
+      <div className={`note-card ${styles.crossCommunityNote}`}>
         <svg className="note-card-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="10" cy="10" r="10" fill="#9ca3af"/>
           <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
@@ -215,7 +228,10 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
         <p>Percentage of divisions in each month where more unionist MLAs voted Aye than No, and more nationalist MLAs voted Aye than No (or both majority No). Abstentions and no-shows are excluded from the comparison, so a bloc with many abstentions may still register a majority direction from a small number of directional votes. Smaller points indicate months with fewer than 3 divisions, which are less statistically reliable.</p>
       </div>
 
-      <h3 className={styles.chartTitle}>Bloc voting agreement by month</h3>
+      <h3 className={styles.chartTitle}>
+        <CalendarRange className={styles.chartTitleIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+        Bloc voting agreement by month
+      </h3>
       <p className={styles.trendNote} style={{ marginBottom: '0.75rem' }}>How many divisions each month saw both unionist and nationalist MLAs vote the same way, compared to the total number of divisions that month.</p>
       <div className={styles.trendLegend}>
         <span className={styles.trendLegendItem}><span className={styles.trendDotTotal} />Total divisions that month</span>

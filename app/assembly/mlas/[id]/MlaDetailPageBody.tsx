@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { CalendarDays, CalendarX, Vote, Activity, MessageCircleQuestion, Users, Mail, MapPin, ClipboardList, AlertTriangle } from 'lucide-react'
 import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getAllMemberExpenses, getMandateExpensesRank, getRegisteredInterestsByMember, getQuestionStatsByMember, getQuestionRankForMember, getMemberRoleHistory, getHansardStatsByMember, getHansardRankForMember, getHansardSittingsByMonth, getHansardDebateRankForMember } from '@/lib/db/queries'
 import { formatDate, formatMemberName, formatRoleTitle, partyBorderColor, abbreviateParty } from '@/lib/format'
 import type { Mandate } from '@/lib/constants/mandates'
@@ -12,13 +13,7 @@ import styles from './mlaDetail.module.css'
 const VotingRecordClient = dynamic(() => import('./VotingRecordClient'), { loading: () => <div /> })
 const ActivityTabsClient = dynamic(() => import('./ActivityTabsClient'), { loading: () => <div /> })
 
-/**
- * Shared body for the MLA detail page — rendered by both the live route (current
- * mandate, basePath '') and the archive route (`/archive/<id>`). `mandate` drives the
- * queries; `basePath` prefixes internal links.
- *
- * Note: lib/salaries.ts is not mandate-aware — salary calls are left as-is.
- */
+// Shared by the live route and the archive route; lib/salaries.ts is not mandate-aware.
 export default async function MlaDetailPageBody({
   id,
   mandate,
@@ -66,8 +61,7 @@ export default async function MlaDetailPageBody({
     .filter((r): r is RoleInterval => r !== null)
 
   const today = new Date().toISOString().slice(0, 10)
-  // number | null — null when the mandate's pay rates aren't published (shown as "rates
-  // pending" rather than a misleading £0) or when no band covers today (archived mandate).
+  // null when pay rates aren't published or no band covers today.
   const currentSalary = getCurrentAnnualSalary(roleIntervals, today, mandate.id)
   const mandateEarnings = calculateMandateEarnings(roleIntervals, today, mandate.id)
 
@@ -144,12 +138,6 @@ export default async function MlaDetailPageBody({
 
   const isSpecialRole = eyebrow !== 'Member of the Legislative Assembly'
 
-  const mobileBadgeLabel = member.assemblyRole
-    ? member.assemblyRole.replace(/\bPrincipal\b/g, 'Pr.')
-    : structureRole?.type === 'minister' ? 'Minister'
-    : structureRole?.type === 'committeeChair' ? 'Chair'
-    : eyebrow
-
   return (
     <div className="container">
       <script
@@ -159,140 +147,162 @@ export default async function MlaDetailPageBody({
       <header className={styles.header}>
         <nav aria-label="Breadcrumb" className="breadcrumb">
           <ol>
-            <li><Link href={member.isCurrent ? `${basePath}/assembly/mlas` : `${basePath}/assembly/former-mlas`}>{member.isCurrent ? 'MLAs' : 'Former MLAs'}</Link></li>
+            <li><Link href={`${basePath}/assembly/mlas`}>MLAs</Link></li>
             <li aria-current="page">{formatMemberName(member.fullName)}</li>
           </ol>
         </nav>
 
-        <div
-          className={styles.mlaHero}
-          style={{ '--party-color': partyBorderColor(member.party) } as React.CSSProperties}
-        >
-          <div className={styles.heroPhoto}>
-            <MlaPhoto
-              name={member.fullName}
-              imgUrl={member.imgUrl ?? ''}
-              size={112}
-              decorative
-              priority
-            />
-          </div>
+        <div className={styles.mlaHero}>
+          <div className={styles.heroIdentity}>
+            <div className={styles.heroPhoto}>
+              <MlaPhoto
+                name={member.fullName}
+                imgUrl={member.imgUrl ?? ''}
+                size={148}
+                decorative
+                priority
+                noOutline
+                personId={member.personId}
+              />
+            </div>
 
-          <div className={styles.heroInfo}>
-            <span className={`eyebrow${isSpecialRole ? ` ${styles.specialRoleEyebrow}` : ` ${styles.defaultRoleEyebrow}`}`}>
-              <span className={styles.eyebrowDesktop}>{eyebrow}</span>
-              <span className={styles.eyebrowMobile}>{mobileBadgeLabel}</span>
-            </span>
-            <h1 className={styles.heroName}>{formatMemberName(member.fullName)}</h1>
-            <div className={styles.heroRoleLine}>
-              {member.party && (
-                <span className="party-pill" data-party={abbreviateParty(member.party)}>
-                  <PartyName party={member.party} />
-                </span>
+            <div className={styles.heroInfo}>
+              <span className={`${styles.heroEyebrow}${isSpecialRole ? '' : ` ${styles.defaultRoleEyebrow}`}`}>
+                {eyebrow}
+              </span>
+              <h1 className={styles.heroName}>{formatMemberName(member.fullName)}</h1>
+              {(member.party || !member.isCurrent || member.constituency) && (
+                <div className={styles.heroRow}>
+                  {member.party && (
+                    <span className="party-pill" data-party={abbreviateParty(member.party)}>
+                      <PartyName party={member.party} />
+                    </span>
+                  )}
+                  {!member.isCurrent && (
+                    <span className={styles.formerPill}>Former MLA</span>
+                  )}
+                  {member.constituency && (
+                    <span className={styles.heroMetaRow}>
+                      <MapPin className={styles.heroRowIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
+                      <span>{member.constituency}</span>
+                    </span>
+                  )}
+                </div>
               )}
-              {!member.isCurrent && (
-                <span className={styles.formerPill}>Former MLA</span>
-              )}
-              {member.constituency && (
-                <>
-                  <span className={styles.roleDot} aria-hidden>·</span>
-                  <span>{member.constituency}</span>
-                </>
+              {member.email && member.isCurrent && (
+                <div className={styles.heroMeta}>
+                  <a href={`mailto:${member.email}`} className={styles.emailLink}>
+                    <Mail size={14} strokeWidth={1.75} aria-hidden="true" />
+                    Contact MLA
+                  </a>
+                </div>
               )}
             </div>
-            {member.email && member.isCurrent && (
-              <div className={styles.emailRow}>
-                <a href={`mailto:${member.email}`} className={styles.emailLink}>
-                  <span className={styles.emailFull}>{member.email}</span>
-                  <span className={styles.emailMobile}>Contact MLA</span>
-                </a>
-                {member.party && (
-                  <span className={`party-pill ${styles.emailRowPill}`} data-party={abbreviateParty(member.party)}>
-                    {abbreviateParty(member.party)}
-                  </span>
+          </div>
+
+          <div className={styles.profileStats}>
+          <div className={styles.statRows}>
+            {member.mandateStart && (
+              <div className={styles.statCell}>
+                <CalendarDays className={styles.statIcon} size={17} strokeWidth={1.75} aria-hidden="true" />
+                <span className={styles.statLbl}>Mandate start</span>
+                <div className={styles.statValCol}>
+                  <span className={styles.statVal}>{formatDate(member.mandateStart)}</span>
+                </div>
+              </div>
+            )}
+            {!member.isCurrent && member.mandateEnd && (
+              <div className={styles.statCell}>
+                <CalendarX className={styles.statIcon} size={17} strokeWidth={1.75} aria-hidden="true" />
+                <span className={styles.statLbl}>Left Assembly</span>
+                <div className={styles.statValCol}>
+                  <span className={styles.statVal}>{formatDate(member.mandateEnd)}</span>
+                </div>
+              </div>
+            )}
+            <div className={styles.statCell}>
+              <Vote className={styles.statIcon} size={17} strokeWidth={1.75} aria-hidden="true" />
+              <span className={styles.statLbl}>Divisions present</span>
+              <div className={styles.statValCol}>
+                <span className={styles.statVal}>
+                  {isPresidingOfficer
+                    ? <span className={styles.statMuted}>N/A</span>
+                    : <>{present}<span className={styles.statFraction}>/{totalDivisions}</span></>}
+                </span>
+              </div>
+            </div>
+            <div className={styles.statCell}>
+              <Activity className={styles.statIcon} size={17} strokeWidth={1.75} aria-hidden="true" />
+              <span className={styles.statLbl}>Vote attendance</span>
+              <div className={styles.statValCol}>
+                {isPresidingOfficer ? (
+                  <span className={styles.statMuted}>Does not vote</span>
+                ) : totalDivisions === 0 ? (
+                  <span className={styles.statMuted}>N/A</span>
+                ) : (
+                  <>
+                    <span
+                      className={styles.statVal}
+                      style={{
+                        color: attendancePct >= 80 ? 'var(--sw-success)' : attendancePct >= 60 ? 'var(--sw-warning)' : 'var(--sw-error)',
+                      }}
+                    >
+                      {attendancePct}%
+                    </span>
+                    <span className={styles.statSub}>
+                      {attendancePct >= 80 ? 'Above average' : attendancePct >= 60 ? 'Below average' : 'Significantly below average'}
+                    </span>
+                  </>
                 )}
               </div>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.profileStats}>
-          {member.mandateStart && (
-            <div className={styles.statCell}>
-              <div className={styles.statLbl}>Mandate start</div>
-              <div className={styles.statVal}>{formatDate(member.mandateStart)}</div>
             </div>
-          )}
-          {!member.isCurrent && member.mandateEnd && (
-            <div className={styles.statCell}>
-              <div className={styles.statLbl}>Left Assembly</div>
-              <div className={styles.statVal}>{formatDate(member.mandateEnd)}</div>
-            </div>
-          )}
-          <div className={styles.statCell}>
-            <div className={styles.statLbl}>Divisions present</div>
-            <div className={styles.statVal}>
-              {isPresidingOfficer
-                ? <span className={styles.statMuted}>—</span>
-                : <>{present}<span className={styles.statFraction}>/{totalDivisions}</span></>}
-            </div>
-          </div>
-          <div className={styles.statCell}>
-            <div className={styles.statLbl}>Vote attendance</div>
-            {isPresidingOfficer ? (
-              <div className={styles.statMuted}>Does not vote</div>
-            ) : totalDivisions === 0 ? (
-              <div className={styles.statMuted}>N/A</div>
-            ) : (
-              <>
-                <div
-                  className={styles.statVal}
-                  style={{
-                    color: attendancePct >= 80 ? 'var(--forest)' : attendancePct >= 60 ? '#92400E' : 'var(--crimson)',
-                  }}
-                >
-                  {attendancePct}%
+            {totalQuestions > 0 && (
+              <div className={styles.statCell}>
+                <MessageCircleQuestion className={styles.statIcon} size={17} strokeWidth={1.75} aria-hidden="true" />
+                <span className={styles.statLbl}>Questions asked</span>
+                <div className={styles.statValCol}>
+                  <span className={styles.statVal}>{totalQuestions.toLocaleString()}</span>
+                  {questionRank && (() => {
+                    const { rank, totalEligible } = questionRank
+                    const pctile = totalEligible > 1 ? (rank - 1) / (totalEligible - 1) : 0
+                    const color = pctile <= 0.33 ? 'var(--sw-success)' : pctile <= 0.66 ? 'var(--sw-warning)' : 'var(--sw-error)'
+                    return (
+                      <span className={styles.statSub} style={{ color }}>
+                        Ranked {rank}/{totalEligible}
+                      </span>
+                    )
+                  })()}
                 </div>
-                <div className={styles.statSub}>
-                  {attendancePct >= 80 ? 'Above average' : attendancePct >= 60 ? 'Below average' : 'Significantly below average'}
-                </div>
-              </>
-            )}
-          </div>
-          {totalQuestions > 0 && (
-            <div className={styles.statCell}>
-              <div className={styles.statLbl}>Questions asked</div>
-              <div className={styles.statVal}>{totalQuestions.toLocaleString()}</div>
-              {questionRank && (() => {
-                const { rank, totalEligible } = questionRank
-                const pctile = totalEligible > 1 ? (rank - 1) / (totalEligible - 1) : 0
-                const color = pctile <= 0.33 ? 'var(--forest)' : pctile <= 0.66 ? '#92400E' : 'var(--crimson)'
-                return (
-                  <div className={styles.statSub} style={{ color }}>
-                    Ranked {rank}/{totalEligible}
-                  </div>
-                )
-              })()}
-            </div>
-          )}
-          {member.isCurrent && (
-            <div className={styles.statCell}>
-              <div className={styles.statLbl}>Family employed</div>
-              <div
-                className={styles.statVal}
-                style={{ color: employsFamily ? 'var(--crimson)' : 'var(--forest)' }}
-              >
-                {employsFamily ? 'Yes' : 'No'}
               </div>
-            </div>
-          )}
+            )}
+            {member.isCurrent && (
+              <div className={styles.statCell}>
+                <Users className={styles.statIcon} size={17} strokeWidth={1.75} aria-hidden="true" />
+                <span className={styles.statLbl}>Family employed</span>
+                <div className={styles.statValCol}>
+                  <span
+                    className={styles.statVal}
+                    style={{ color: employsFamily ? 'var(--sw-error)' : 'var(--sw-success)' }}
+                  >
+                    {employsFamily ? 'Yes' : 'No'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+          </div>
         </div>
       </header>
 
-      {(latestExpenses || interests.length > 0 || totalQuestions > 0) && <hr className="section-rule" />}
       {(latestExpenses || interests.length > 0 || totalQuestions > 0) && (
         <section className={styles.expensesSection} aria-labelledby="activity-heading">
-          <h2 id="activity-heading" className={styles.sectionHeading}>Activity &amp; Finances</h2>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionEyebrow}>This MLA</span>
+            <h2 id="activity-heading" className={styles.sectionHeading}>
+              <ClipboardList className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+              Activity &amp; Finances
+            </h2>
+          </div>
           <ActivityTabsClient
             expenses={latestExpenses}
             allExpenses={allExpenses}
@@ -317,25 +327,30 @@ export default async function MlaDetailPageBody({
         </section>
       )}
 
-      <hr className="section-rule" />
-      {relevantVotes.length === 0 ? (
-        <p className={styles.noVotes}>
-          {isPresidingOfficer
-            ? 'Presiding officers do not participate in divisions.'
-            : totalDivisions === 0
-              ? 'No divisions were held during this MLA\'s tenure.'
-              : 'No voting record available.'}
-        </p>
-      ) : (
-        <>
-          {isPresidingOfficer && (
-            <p className={styles.noVotes}>
-              * As {member.assemblyRole}, {formatMemberName(member.fullName)} no longer participates in Assembly divisions. The voting record below reflects divisions held prior to taking up this role.
-            </p>
-          )}
-          <VotingRecordClient votes={relevantVotes} memberName={formatMemberName(member.fullName)} noExpensesTab={!latestExpenses && interests.length === 0 && totalQuestions === 0} />
-        </>
-      )}
+      <section className={`${styles.votingSection} ${styles.sectionLast}`}>
+        {relevantVotes.length === 0 ? (
+          <p className={styles.noVotes}>
+            <Vote className={styles.noVotesIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+            {isPresidingOfficer
+              ? 'Presiding officers do not participate in divisions.'
+              : totalDivisions === 0
+                ? 'No divisions were held during this MLA\'s tenure.'
+                : 'No voting record available.'}
+          </p>
+        ) : (
+          <>
+            {isPresidingOfficer && (
+              <div className={styles.presidingOfficerNote}>
+                <AlertTriangle className={styles.presidingOfficerNoteIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+                <p className={styles.presidingOfficerNoteText}>
+                  As {member.assemblyRole}, {formatMemberName(member.fullName)} no longer participates in Assembly divisions. The voting record below reflects divisions held prior to taking up this role.
+                </p>
+              </div>
+            )}
+            <VotingRecordClient votes={relevantVotes} noExpensesTab={!latestExpenses && interests.length === 0 && totalQuestions === 0} />
+          </>
+        )}
+      </section>
     </div>
   )
 }

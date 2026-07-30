@@ -1,68 +1,285 @@
-
-/* ── Page top spacing (matches MLA profile) ────────────────── */
-.pageTop {
-  padding-top: var(--spacing-xl);
-}
-
-@media (max-width: 767px) {
-  .pageTop {
-    padding-top: var(--spacing-lg);
-  }
-}
-
-/* ── Header ────────────────────────────────────────────────── */
+/* Matches the MLA detail page's .header — breadcrumb lives inside, no separate top-padding wrapper. */
 .header {
-  padding-bottom: var(--s-8);
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: var(--s-10);
+  padding-block: var(--s-6) var(--s-8);
+  border-bottom: 1px solid var(--sw-accent);
 }
 
-.tags {
+/* Bordered card, matching .summaryCard (§4.2) — houses the title block and long title together. */
+.titleCard {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
+}
+
+.titleBlock {
+  min-width: 0;
+}
+
+.eyebrow {
+  display: block;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+  margin-bottom: 4px;
+}
+
+/* Footer row — bill-number chip left, descriptive/status chips right, matching .kfigMlaFoot. */
+.titleCardFoot {
   display: flex;
-  gap: var(--s-2);
-  align-items: center;
   flex-wrap: wrap;
-  margin-bottom: var(--s-4);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-4);
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--sw-border);
 }
 
-.tags :global(.pill) {
-  font-weight: 400;
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  font-size: var(--sw-fs-caption);
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.chipNeutral {
+  color: var(--sw-text-secondary);
+  background: var(--sw-surface-subtle);
+  border-color: var(--sw-border);
+}
+
+.chipAccent {
+  color: var(--sw-accent-strong);
+  background: color-mix(in srgb, var(--sw-accent) 14%, var(--sw-surface));
+}
+
+/* Solid neutral fill, matching the bills list page's .statusBadge* (every status but Failed is neutral gray there). */
+.chipStatus {
+  background: var(--sw-text-tertiary);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.chipFail {
+  background: var(--sw-error-solid);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.chipAwaiting {
+  background: #f2c200;
+  color: #3d2b00;
+  border-color: transparent;
+}
+
+.chipLaw {
+  background: #4d9900;
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.chipLink {
+  background: var(--sw-accent);
+  color: #ffffff;
+  border-color: transparent;
+  text-decoration: none;
+  transition: background-color 150ms;
+}
+
+.chipLink,
+.chipLink:hover,
+.chipLink:active,
+.chipLink:visited {
+  text-decoration: none !important;
+  color: #ffffff;
+}
+
+.chipLink:hover {
+  background: var(--sw-accent-strong);
 }
 
 .title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: clamp(36px, 5vw, 72px);
-  letter-spacing: -0.045em;
-  line-height: 0.96;
-  color: var(--ink);
+  font-weight: 700;
+  font-size: var(--sw-fs-h2);
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--sw-text-primary);
   margin: 0;
 }
 
-.lede {
-  font-size: 15px;
-  color: var(--ink-2);
-  /* max-width: 60ch; */
-  margin-top: var(--s-4);
-  line-height: 1.55;
+.titleIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
 }
 
-/* ── Stage tracker ─────────────────────────────────────────── */
+.lede {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  margin-top: var(--s-4);
+  max-width: 68ch;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .lede {
+    font-size: var(--sw-fs-body-sm);
+  }
+}
+
+@media (max-width: 640px) {
+  /* Status/type are already covered elsewhere on the page; keep the mobile footer row to just the Bill ID chip. */
+  .chipStatus,
+  .chipFail,
+  .chipAccent {
+    display: none;
+  }
+
+  .titleCard {
+    padding-bottom: var(--s-3);
+  }
+
+  .titleCardFoot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-2);
+  }
+
+  /* Bill ID chip spans the full row on mobile; the badges below it stay sized to content. */
+  .titleCardFoot > .chip {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .badgeRow {
+    width: 100%;
+  }
+
+  .badgeRow > .chip {
+    flex: 1 1 calc(50% - 4px);
+    justify-content: center;
+  }
+}
+
+/* Squared step row; accent for scheduled step, success for completed. */
 .stagesSection {
-  margin-bottom: var(--s-10);
+  margin-top: var(--sw-space-9);
 }
 
 .stagesSectionHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-sans);
-  font-style: normal;
-  font-size: clamp(28px, 3.4vw, 42px);
-  font-weight: 500;
-  letter-spacing: -0.035em;
-  line-height: 1;
-  color: var(--ink);
+  font-weight: 700;
+  font-size: var(--sw-fs-h2);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: 0 0 var(--s-4);
+}
+
+.stagesSectionHeadIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+/* Bordered card, matching .summaryCard (§4.2) — houses the legend, count and stage tiles. */
+.stagesCard {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
+}
+
+/* Current-stage callout — Pattern A tinted top-border card (§4.1), the clearest answer to "what stage is this bill at now". */
+.currentStageBanner {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--sw-border);
+  border-top: 2px solid var(--sw-accent-warm);
+  background: color-mix(in srgb, var(--sw-accent-warm) 12%, var(--sw-surface));
   margin-bottom: var(--s-4);
 }
 
+.currentStageBanner[data-tone="pass"] {
+  border-top-color: var(--sw-success);
+  background: color-mix(in srgb, var(--sw-success) 12%, var(--sw-surface));
+}
+
+.currentStageBanner[data-tone="active"] {
+  border-top-color: var(--sw-accent);
+  background: color-mix(in srgb, var(--sw-accent) 11%, var(--sw-surface));
+}
+
+.currentStageBanner[data-tone="awaiting"] {
+  border-top-color: var(--sw-accent-warm);
+  background: color-mix(in srgb, var(--sw-accent-warm) 12%, var(--sw-surface));
+}
+
+@media (max-width: 640px) {
+  .currentStageBanner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}
+
+.currentStageBannerLabel {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-secondary);
+  flex-shrink: 0;
+}
+
+.currentStageBannerValue {
+  font-size: var(--sw-fs-h3);
+  font-weight: 700;
+  color: var(--sw-text-primary);
+}
+
+.stagesLabels {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--s-2);
+  font-size: var(--sw-fs-caption);
+}
+
+.stagesStageCount {
+  font-weight: 600;
+  color: var(--sw-text-secondary);
+}
+
+.stagesPassed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: var(--sw-success-solid);
+}
+
+/* Numbered stage tiles — same done/scheduled/not-yet-reached mapping as .billProgressSeg. */
 .stages {
   display: flex;
   gap: 4px;
@@ -71,96 +288,181 @@
 
 .stage {
   flex: 1;
-  min-width: 80px;
-  padding: 8px 10px;
-  background: var(--paper-3);
-  color: var(--ink-3);
-  font-size: 11px;
-  border-radius: 3px;
-  border-left: 3px solid var(--rule);
-  font-weight: 500;
+  min-width: 88px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 11px;
+  background: var(--sw-surface-subtle);
+  color: var(--sw-text-tertiary);
+  font-size: var(--sw-fs-caption);
+  border-radius: var(--sw-radius-sm);
+  border: 1px solid var(--sw-border);
+  border-top: 2px solid var(--sw-border-strong);
+  font-weight: 600;
   line-height: 1.3;
 }
 
-.stageDone {
-  background: var(--forest-wash);
-  color: var(--forest);
-  border-left-color: var(--forest);
+.stage[data-state="done"] {
+  background: color-mix(in srgb, var(--sw-success) 12%, var(--sw-surface));
+  color: var(--sw-success-solid);
+  border-top-color: var(--sw-success);
 }
 
-.stageCurrent {
-  background: var(--teal-wash);
-  color: var(--teal);
-  border-left-color: var(--teal);
+.stage[data-state="scheduled"] {
+  background: color-mix(in srgb, var(--sw-accent-warm) 14%, var(--sw-surface));
+  color: var(--sw-warning);
+  border-top-color: var(--sw-accent-warm);
 }
 
-.stageDate {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  margin-top: 2px;
-  opacity: 0.7;
+.stageNum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sw-accent) 55%, var(--sw-surface));
+  color: #ffffff;
+  font-size: 9.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ── Two-column layout ─────────────────────────────────────── */
-.twocol {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s-10);
-  margin-bottom: var(--s-10);
-  align-items: start;
+.stage[data-state="done"] .stageNum {
+  background: var(--sw-success);
 }
 
-/* ── Section headings ──────────────────────────────────────── */
-.sectionHeading {
-  font-family: var(--font-sans);
-  font-style: normal;
-  font-size: clamp(28px, 3.4vw, 42px);
-  font-weight: 500;
-  letter-spacing: -0.035em;
-  line-height: 1;
-  color: var(--ink);
+.stage[data-state="scheduled"] .stageNum {
+  background: var(--sw-accent-warm);
+}
+
+/* Eyebrow + h2 wrapper, matching the homepage's .sectionHead (§3.1). */
+.sectionHead {
   margin-bottom: var(--s-4);
-  margin-top: 0;
 }
 
-/* ── Summary ───────────────────────────────────────────────── */
+.sectionHead .eyebrow {
+  margin-bottom: 4px;
+}
+
+.sectionHead h2 {
+  margin: 0;
+}
+
+/* Section head + right-aligned button, matching the homepage's "Recent divisions" row. */
+.sectionHeadRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-4);
+}
+
+.sectionHeadRow .sectionHead {
+  margin-bottom: 0;
+}
+
+/* Matches the homepage's .viewAllBtn. */
+.viewAllBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--sw-accent-solid);
+  color: #ffffff;
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 3px;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: background 150ms;
+}
+
+.viewAllBtn:hover {
+  background: var(--sw-accent-strong-solid);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.viewAllBtn:focus-visible {
+  outline: 2px solid var(--sw-focus);
+  outline-offset: 2px;
+}
+
+/* Matches the MLA detail page's .sectionHeading. */
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-h2);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: 0 0 var(--s-4);
+}
+
+.sectionHeadingIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+/* Bordered card, matching .salaryPanel. */
 .summarySection {
-  margin-bottom: var(--s-8);
-  margin-top: var(--s-10);
+  margin-top: var(--sw-space-9);
+}
+
+.summaryCard {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
 }
 
 .summaryText {
-  font-size: 16px;
-  line-height: 1.7;
-  color: var(--ink-2);
-  /* max-width: 60ch; */
+  font-size: var(--sw-fs-body);
+  line-height: 1.6;
+  color: var(--sw-text-secondary);
+  max-width: 72ch;
 }
 
-/* ── Impact ────────────────────────────────────────────────── */
+/* Fact-list of hairline-divided rows, matching .statRows/.statCell. */
 .impactSection {
-  margin-bottom: var(--s-6);
+  margin-top: var(--sw-space-9);
+}
+
+.impactCard {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
 }
 
 .impactList {
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
 }
 
 .impactItem {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-5);
+  border-bottom: 1px solid var(--sw-border);
   flex-wrap: wrap;
 }
 
+.impactItem:last-child {
+  border-bottom: none;
+}
+
 .impactLabel {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-2);
+  flex: 1;
   min-width: 160px;
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
+  color: var(--sw-text-primary);
 }
 
 .dotsWrap {
@@ -173,73 +475,73 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--paper-3);
-  border: 1px solid var(--rule);
+  background: var(--sw-surface-subtle);
+  border: 1px solid var(--sw-border-strong);
 }
 
-.dot[data-active='true'][data-level='low']    { background: var(--impact-low); border-color: var(--impact-low); }
-.dot[data-active='true'][data-level='medium'] { background: var(--impact-medium); border-color: var(--impact-medium); }
-.dot[data-active='true'][data-level='high']   { background: var(--impact-high); border-color: var(--impact-high); }
+.dot[data-active='true'][data-level='low']    { background: var(--sw-accent); border-color: var(--sw-accent); }
+.dot[data-active='true'][data-level='medium'] { background: var(--sw-accent-warm); border-color: var(--sw-accent-warm); }
+.dot[data-active='true'][data-level='high']   { background: var(--sw-error-solid); border-color: var(--sw-error-solid); }
 
 .impactValue {
-  font-size: 12px;
-  font-family: var(--font-mono);
-  color: var(--ink-3);
+  font-size: var(--sw-fs-caption);
+  font-weight: 600;
+  color: var(--sw-text-tertiary);
   min-width: 56px;
+  text-align: right;
 }
 
-.impactValue[data-level='low']    { color: var(--impact-low); }
-.impactValue[data-level='medium'] { color: var(--impact-medium); }
-.impactValue[data-level='high']   { color: var(--impact-high); }
+.impactValue[data-level='low']    { color: var(--sw-accent-strong); }
+.impactValue[data-level='medium'] { color: var(--sw-warning); }
+.impactValue[data-level='high']   { color: var(--sw-error); }
 
-/* ── Guide prompt ──────────────────────────────────────────── */
-.guidePrompt {
-  font-size: 15px;
-  margin: 0;
-  margin-bottom: var(--s-4);
+/* Quiet inline pointer to the legislation guide, matching .formerMlasLink. */
+.timelineSection {
+  margin-top: var(--sw-space-9);
 }
 
-.guidePrompt a {
-  color: var(--teal);
-  text-decoration: none;
+.timelineNote {
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-tertiary);
+  margin: 0 0 var(--s-4);
 }
 
-.guidePrompt a:hover {
-  text-decoration: underline;
+/* Bordered card, matching .summaryCard (§4.2) — houses the stage-by-stage timeline. */
+.timelineCard {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: 0 var(--s-5);
 }
 
-/* ── Timeline (stage list) ─────────────────────────────────── */
 .stageList {
   list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
 }
 
 .stageGroup {
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--sw-border);
   padding-block: var(--s-5);
 }
 
 .stageGroup:first-child {
-  border-top: 2px solid var(--ink);
-}
-
-.stageGroup:last-child {
-  border-bottom: 1px solid var(--rule);
+  border-top: none;
 }
 
 .stageHeader {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  gap: 4px;
 }
 
 .stageDate {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink-2);
-  letter-spacing: 0.04em;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-tertiary);
 }
 
 .stageLabelRow {
@@ -250,118 +552,173 @@
 }
 
 .stageLabel {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--ink);
+  font-size: var(--sw-fs-h3);
+  font-weight: 700;
+  color: var(--sw-text-primary);
   line-height: 1.3;
-}
-
-.stageLabel a {
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.stageLabel a:hover {
-  color: var(--teal);
 }
 
 .groupMeta {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
-  margin-top: var(--s-2);
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-3);
+  margin-top: var(--s-4);
 }
 
+/* Disclosure control, not a link — bordered pill + rotating chevron, matching the site's dropdown-trigger chevron pattern. */
 .expandBtn {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--teal);
-  background: none;
-  border: none;
-  padding: 4px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
+  color: var(--sw-text-secondary);
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  padding: 6px 12px;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  transition: border-color 150ms, color 150ms;
+}
+
+/* Reserves room for the longer "Not voted on (NN)" label so the button doesn't resize when the text swaps to "Hide". */
+.expandBtnLabel {
+  min-width: 17ch;
 }
 
 .expandBtn:hover {
-  opacity: 0.8;
+  border-color: var(--sw-accent);
+  color: var(--sw-text-primary);
 }
 
-/* ── Division tables ───────────────────────────────────────── */
+.expandBtn:focus-visible {
+  outline: 2px solid var(--sw-focus);
+  outline-offset: 2px;
+}
+
+.expandBtnChevron {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
+  transition: transform 150ms ease;
+}
+
+.expandBtnChevronOpen {
+  transform: rotate(180deg);
+}
+
+/* ── Division item lists (voted on / not voted on) — Pattern B row cards (§4.2), matching .rowCard/.rowCardList. */
 .itemColumn {
   margin-top: var(--s-4);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-2);
-  overflow: hidden;
 }
 
 .itemColumnHeader {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ink-3);
-  background: var(--paper-2);
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--rule);
-  font-family: var(--font-mono);
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-tertiary);
+  margin-bottom: var(--s-2);
 }
 
 .itemColumnCount {
   font-weight: 700;
-  color: var(--ink-2);
+  color: var(--sw-text-secondary);
 }
 
 .itemColumnList {
   list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
 }
 
 .itemColumnRowWrap {
-  border-bottom: 1px solid var(--rule);
-}
-
-.itemColumnRowWrap:last-child {
-  border-bottom: none;
+  min-width: 0;
 }
 
 .itemColumnRow {
   display: grid;
   grid-template-areas: "title date pill";
-  grid-template-columns: 1fr auto auto;
-  gap: 0 8px;
-  align-items: center;
-  padding: 8px 12px;
+  grid-template-columns: 1fr 96px 80px;
+  gap: 4px 0;
+  align-items: stretch;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
   text-decoration: none;
   color: inherit;
-  transition: background 100ms;
 }
 
-.itemColumnRow:hover {
-  background: var(--paper-2);
+/* Only the "Voted on" rows link through to a division — hover-to-accent is reserved for those. */
+.itemColumnRowLink {
+  transition: border-color 150ms;
+}
+
+.itemColumnRowLink:hover {
+  border-color: var(--sw-accent);
   text-decoration: none;
 }
 
-.itemColumnRow:hover .itemLabel {
-  color: var(--teal);
+.itemColumnRowLink:hover .itemLabel {
+  color: var(--sw-accent-strong);
 }
 
 .itemColumnDate {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--ink-3);
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
-.votedTitle { grid-area: title; font-size: 13px; color: var(--ink); }
-.votedDate  { grid-area: date; white-space: nowrap; }
-.votedPill  { grid-area: pill; }
-.votedLink  { display: none; }
+.votedTitle {
+  grid-area: title;
+  display: flex;
+  align-items: center;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-primary);
+}
 
-.itemLabel { font-size: 13px; color: var(--ink); font-family: var(--font-sans); }
-.itemLabelMuted { font-size: 13px; color: var(--ink-3); padding: 8px 12px; display: block; font-family: var(--font-sans); }
+.votedDate {
+  grid-area: date;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  padding-inline: 12px;
+  border-left: 1px solid var(--sw-border);
+}
 
-/* ── Outcome pills ─────────────────────────────────────────── */
+/* Badge centered in the remaining space so the gap either side reads even
+   (not left-hugged against the hairline). */
+.votedPill {
+  grid-area: pill;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 12px;
+  border-left: 1px solid var(--sw-border);
+}
+
+.votedPill .pillPassed,
+.votedPill .pillFailed {
+  justify-content: center;
+  min-width: 58px;
+}
+
+.itemLabel { font-size: var(--sw-fs-body-sm); color: var(--sw-text-primary); }
+
+.itemLabelMuted {
+  grid-template-areas: "title";
+  grid-template-columns: 1fr;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-tertiary);
+}
+
+/* Solid-fill badge, matching the homepage's .divOutcomeBadge. */
 .pillPassed,
 .pillFailed,
 .pillBecameLaw,
@@ -370,67 +727,52 @@
   display: inline-flex;
   align-items: center;
   font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  padding: 3px 9px;
+  border-radius: 3px;
+  color: #ffffff;
   white-space: nowrap;
 }
 
-.pillPassed    { background: var(--forest-wash); color: var(--forest); }
-.pillFailed    { background: var(--crimson-wash); color: var(--crimson); }
-.pillBecameLaw { background: var(--forest-wash); color: var(--forest); }
-.pillAgreed    { background: var(--paper-3); color: var(--ink-2); }
-.pillCrossCommunity {
-  background: var(--xc-wash);
-  color: var(--xc);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
+.pillPassed    { background: var(--sw-success-solid); }
+.pillFailed    { background: var(--sw-error-solid); }
+.pillBecameLaw { background: #4d9900; }
+.pillAgreed    { background: var(--sw-success-solid); }
 
-/* ── Mobile stage bar ──────────────────────────────────────── */
+/* Indigo, matching the homepage's "By the numbers" RotatingFact.indigo (§9) — a deliberate one-off hue outside the site's normal accent palette. */
+.pillCrossCommunity { background: #6366f1; }
+
+/* Compact segmented bar replacing the full step row below 768px. */
 .stagesMobileBar {
   display: none;
-  height: 8px;
-  border-radius: 4px;
+  height: 6px;
+  border-radius: 3px;
   overflow: hidden;
   gap: 2px;
-  background: var(--paper-3);
+  background: var(--sw-surface-subtle);
 }
 
 .stagesMobileSeg {
   flex: 1;
-  background: var(--paper-3);
+  background: transparent;
 }
 
-.stagesMobileSeg.stageDone    { background: var(--forest); }
-.stagesMobileSeg.stageCurrent { background: var(--teal); }
+.stagesMobileSeg[data-state="done"]      { background: var(--sw-success); }
+.stagesMobileSeg[data-state="scheduled"] { background: var(--sw-accent-warm); }
 
-.stagesMobileLabel {
-  display: none;
-  font-size: 13px;
-  color: var(--ink-2);
-  margin-top: var(--s-2);
-  font-family: var(--font-mono);
-  letter-spacing: 0.02em;
+/* ── Whichever section renders last (§1.1 point 7) ── */
+.sectionLast {
+  margin-bottom: var(--sw-space-9);
 }
 
-.stagesMobileCount {
-  color: var(--ink-3);
+@media (max-width: 640px) {
+  .sectionLast { margin-bottom: var(--s-10); }
 }
 
-/* ── Mobile ────────────────────────────────────────────────── */
+/* ── Mobile ────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .twocol {
-    grid-template-columns: 1fr;
-    gap: var(--s-8);
-  }
-
-  .title {
-    font-size: clamp(32px, 8vw, 48px);
-    letter-spacing: -0.04em;
-  }
-
   .stages {
     display: none;
   }
@@ -438,8 +780,35 @@
   .stagesMobileBar {
     display: flex;
   }
+}
 
-  .stagesMobileLabel {
-    display: block;
+@media (max-width: 640px) {
+  .header { padding-block: var(--s-5) var(--s-6); }
+  .stagesSection,
+  .summarySection,
+  .impactSection,
+  .timelineSection {
+    margin-top: var(--s-10);
+  }
+
+  /* Title on its own row; date left, pill right on the row below. */
+  .itemColumnRow {
+    grid-template-areas:
+      "title title"
+      "date  pill";
+    grid-template-columns: 1fr auto;
+    gap: 6px 0;
+  }
+
+  .votedDate {
+    justify-content: flex-start;
+    padding-inline: 0;
+    border-left: none;
+  }
+
+  .votedPill {
+    justify-content: flex-end;
+    padding-left: 0;
+    border-left: none;
   }
 }

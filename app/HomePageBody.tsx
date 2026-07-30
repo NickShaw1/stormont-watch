@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { Scale, CheckCircle2, CalendarDays, Users, Activity, CalendarX, Trophy, TrendingDown, BarChart3, Telescope, MapPin, Vote, FileText, Megaphone, PenLine, Lightbulb } from 'lucide-react'
 import {
   getHomepageStats,
   getAverageAttendance,
@@ -38,11 +39,7 @@ function formatLondonTime(input: string): string {
   return `${hour12}:${m} ${period}`
 }
 
-/**
- * Shared body for the home page — rendered by both the live route (current mandate,
- * basePath '') and the archive route (`/archive/<id>`). `mandate` drives the queries
- * and copy; `basePath` prefixes internal links.
- */
+// Shared by the live route and the archive route; mandate/basePath vary per route.
 export default async function HomePageBody({
   mandate,
   basePath,
@@ -53,7 +50,6 @@ export default async function HomePageBody({
   const now = new Date()
   const weekStartDate = new Date(now)
   const todayDay = now.getDay()
-  const isWeekend = todayDay === 6 || todayDay === 0
   if (todayDay === 6) weekStartDate.setDate(now.getDate() + 2)       // Saturday → next Monday
   else if (todayDay === 0) weekStartDate.setDate(now.getDate() + 1)  // Sunday → next Monday
   else weekStartDate.setDate(now.getDate() + (1 - todayDay))         // Mon–Fri → this Monday
@@ -143,6 +139,7 @@ export default async function HomePageBody({
           <div className={styles.heroBottom}>
             <div className={styles.heroStats}>
               <div className={styles.heroStat}>
+                <Vote className={`${styles.heroStatIcon} ${styles.heroStatIconBlue}`} strokeWidth={1.6} aria-hidden="true" />
                 <span className={styles.heroStatNum}>{stats.totalDivisions}</span>
                 <div className={styles.heroStatMeta}>
                   <span className={styles.heroStatLabel}>Divisions</span>
@@ -150,6 +147,7 @@ export default async function HomePageBody({
                 </div>
               </div>
               <div className={styles.heroStat}>
+                <Scale className={`${styles.heroStatIcon} ${styles.heroStatIconAmber}`} strokeWidth={1.6} aria-hidden="true" />
                 <span className={styles.heroStatNum}>{inProgressBillsCount}</span>
                 <div className={styles.heroStatMeta}>
                   <span className={styles.heroStatLabel}>Bills active</span>
@@ -157,6 +155,7 @@ export default async function HomePageBody({
                 </div>
               </div>
               <div className={styles.heroStat}>
+                <Users className={`${styles.heroStatIcon} ${styles.heroStatIconGreen}`} strokeWidth={1.6} aria-hidden="true" />
                 <span className={styles.heroStatNum}>{avgAttendance}<span className={styles.heroStatPct}>%</span></span>
                 <div className={styles.heroStatMeta}>
                   <span className={styles.heroStatLabel}>Attendance</span>
@@ -164,7 +163,7 @@ export default async function HomePageBody({
                 </div>
               </div>
             </div>
-            <Link href={`${basePath}/assembly/votes`} className={styles.heroBrowseBtn}>Browse all votes <span aria-hidden="true">→</span></Link>
+            <Link href={`${basePath}/assembly/votes`} className={styles.heroBrowseBtn}>Browse all votes</Link>
           </div>
         </div>
         <p className={styles.heroCredit}>
@@ -172,167 +171,75 @@ export default async function HomePageBody({
         </p>
       </section>
 
-      {/* Key figures strip */}
-      <div className={styles.kfigs}>
-        <div className={styles.kfig}>
-          <div className={styles.kfigLabel}>Divisions this month ({currentMonthName})</div>
-          <div className={styles.kfigNum}>{Number(divisionsThisMonth)}</div>
-          <div className={styles.kfigSub}>
-            <span style={{ color: divisionsDelta > 0 ? 'var(--forest)' : divisionsDelta < 0 ? 'var(--crimson)' : 'inherit' }}>
-              {divisionsDelta > 0 ? `↑ ${divisionsDelta}` : divisionsDelta < 0 ? `↓ ${Math.abs(divisionsDelta)}` : '='}
-            </span>{' '}vs last month
-          </div>
-          <div className={styles.kfigSpark}>
-            <Sparkline data={divisionsSparkline} color="var(--teal)" />
-          </div>
-        </div>
-        <div className={styles.kfig}>
-          <div className={styles.kfigLabel}>Bills passed this year</div>
-          <div className={`${styles.kfigNum} ${styles.amber}`}>{billsThisYear}</div>
-          <div className={styles.kfigSub}>
-            <span style={{ color: billsYearDelta > 0 ? 'var(--forest)' : billsYearDelta < 0 ? 'var(--crimson)' : 'inherit' }}>
-              {billsYearDelta > 0 ? `↑ ${billsYearDelta}` : billsYearDelta < 0 ? `↓ ${Math.abs(billsYearDelta)}` : '='}
-            </span>{' '}vs last year
-          </div>
-          <div className={styles.kfigSpark}>
-            <Sparkline data={billsPassedSparkline} color="var(--ochre)" />
-          </div>
-        </div>
-        {mostEngaged ? (
-          <Link href={`${basePath}/assembly/mlas/${mostEngaged.personId}`} className={`${styles.kfig} ${styles.kfigMlaCard}`}>
-            <div className={styles.kfigLabel}>Top Voter</div>
-            <div className={styles.kfigMlaPhoto}>
-              {mostEngaged.imgUrl && <Image src={mostEngaged.imgUrl} alt={mostEngaged.fullName} fill sizes="96px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
-            </div>
-            <div className={styles.kfigMlaBody}>
-              <span className={styles.kfigMlaName}>{mostEngaged.fullName}</span>
-              <span className="party-pill" data-party={abbreviateParty(mostEngaged.party)}>{abbreviateParty(mostEngaged.party)}</span>
-            </div>
-            <div className={styles.kfigMlaFoot}>
-              <span className={styles.kfigSub}>{mostEngaged.attendancePct}%<span className={styles.attFull}> attendance</span><span className={styles.attShort}> att.</span></span>
-              <span className={styles.kfigSubMono}>{mostEngaged.attended}/{mostEngaged.total}</span>
-            </div>
-          </Link>
-        ) : <div className={`${styles.kfig} ${styles.kfigMlaCard}`} />}
-        {leastEngaged ? (
-          <Link href={`${basePath}/assembly/mlas/${leastEngaged.personId}`} className={`${styles.kfig} ${styles.kfigMlaCard}`}>
-            <div className={styles.kfigLabel}>Lowest Voter</div>
-            <div className={styles.kfigMlaPhoto}>
-              {leastEngaged.imgUrl && <Image src={leastEngaged.imgUrl} alt={leastEngaged.fullName} fill sizes="96px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
-            </div>
-            <div className={styles.kfigMlaBody}>
-              <span className={styles.kfigMlaName}>{leastEngaged.fullName}</span>
-              <span className="party-pill" data-party={abbreviateParty(leastEngaged.party)}>{abbreviateParty(leastEngaged.party)}</span>
-            </div>
-            <div className={styles.kfigMlaFoot}>
-              <span className={styles.kfigSub}>{leastEngaged.attendancePct}%<span className={styles.attFull}> attendance</span><span className={styles.attShort}> att.</span></span>
-              <span className={styles.kfigSubMono}>{leastEngaged.attended}/{leastEngaged.total}</span>
-            </div>
-          </Link>
-        ) : <div className={`${styles.kfig} ${styles.kfigMlaCard}`} />}
-      </div>
-
-      {/* Explore Statistics hub */}
-      <section className={styles.section}>
-        <div className={styles.sectionHead} style={{ marginBottom: 'var(--s-2)' }}>
-          <div>
-            <span className={styles.sectionEyebrow}>Statistics</span>
-            <h2 className={styles.sectionTitle}>Explore Statistics</h2>
-          </div>
-          <Link href={`${basePath}/assembly/stats`} className={styles.viewAll}>All stats <span aria-hidden="true">↗</span></Link>
-        </div>
-        <p className={styles.sectionSubtitle} style={{ marginBottom: 'var(--s-4)' }}>Voting, spending and parliamentary activity across the {mandate.label} mandate.</p>
-        <div className={styles.hubGrid}>
-          <Link href={`${basePath}/assembly/stats/spending`} className={styles.hubCard}>
-            <div className={styles.hubCardInner}>
-              <span className={styles.hubCardEyebrow}>Public spending</span>
-              <span className={styles.hubCardTitle}>Spending</span>
-              <span className={styles.hubCardDesc}>Salaries, office expenses and overall public cost of the Assembly since {mandate.startLabel}.</span>
-            </div>
-            <span className={styles.hubCardArrow} aria-hidden="true">View spending ↗</span>
-          </Link>
-          <Link href={`${basePath}/assembly/stats/activity`} className={styles.hubCard}>
-            <div className={styles.hubCardInner}>
-              <span className={styles.hubCardEyebrow}>Parliamentary activity</span>
-              <span className={styles.hubCardTitle}>Activity</span>
-              <span className={styles.hubCardDesc}>Questions to ministers and chamber participation across the {mandate.label} mandate.</span>
-            </div>
-            <span className={styles.hubCardArrow} aria-hidden="true">View activity ↗</span>
-          </Link>
-          <Link href={`${basePath}/assembly/stats/voting`} className={styles.hubCard}>
-            <div className={styles.hubCardInner}>
-              <span className={styles.hubCardEyebrow}>Voting and attendance</span>
-              <span className={styles.hubCardTitle}>Voting</span>
-              <span className={styles.hubCardDesc}>How MLAs and parties vote. Attendance records, party cohesion, rebellion rates and cross-community trends since {mandate.startLabel}.</span>
-            </div>
-            <span className={styles.hubCardArrow} aria-hidden="true">View voting ↗</span>
-          </Link>
-        </div>
-      </section>
-
-      <hr className={`section-rule ${styles.mobileRule}`} />
-
-      {/* Find your MLAs */}
-      <section className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div>
-            <span className={styles.sectionEyebrow}>Your representatives</span>
-            <h2 className={styles.sectionTitle}>Find your MLAs</h2>
-          </div>
-        </div>
-        <ConstituencySelector mlasByConstituency={mlasByConstituency} />
-      </section>
-
-      <hr className={`section-rule ${styles.mobileRule}`} />
-
       {/* This week strip */}
       <section className={`${styles.section} ${styles.agendaSection}`}>
         <div className={styles.sectionHead}>
           <div>
             <span className={styles.sectionEyebrow}>Assembly activity</span>
-            <h2 className={styles.sectionTitle}>This week at Stormont</h2>
+            <h2 className={styles.sectionTitle}>
+              <Activity className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+              This week at Stormont
+            </h2>
           </div>
         </div>
         <div className={styles.twStrip}>
           <div className={styles.twCell}>
-            <div className={styles.twLabel}>Divisions</div>
+            <div className={styles.twLabelRow}>
+              <div className={styles.twLabel}>Divisions held</div>
+              <Vote className={styles.twIcon} size={19} strokeWidth={1.75} aria-hidden="true" />
+            </div>
             <div className={styles.twVal}>{stats.thisWeekDivisions}</div>
           </div>
           <div className={styles.twCell}>
-            <div className={styles.twLabel}>Bills progressed</div>
+            <div className={styles.twLabelRow}>
+              <div className={styles.twLabel}>Bills progressed</div>
+              <Scale className={styles.twIcon} size={19} strokeWidth={1.75} aria-hidden="true" />
+            </div>
             <div className={styles.twVal}>{stats.thisWeekBills}</div>
           </div>
           <div className={styles.twCell}>
-            <div className={styles.twLabel}>Pass rate</div>
-            <div className={styles.twVal}>{stats.thisWeekPassRate !== null ? `${stats.thisWeekPassRate}%` : '—'}</div>
+            <div className={styles.twLabelRow}>
+              <div className={styles.twLabel}>Division Pass %</div>
+              <CheckCircle2 className={styles.twIcon} size={19} strokeWidth={1.75} aria-hidden="true" />
+            </div>
+            <div className={styles.twVal}>{stats.thisWeekPassRate !== null ? `${stats.thisWeekPassRate}%` : 'N/A'}</div>
           </div>
           <div className={styles.twCell}>
-            <div className={styles.twLabel}>Last sat</div>
-            <div className={`${styles.twVal} ${styles.twValSm}`}>{stats.lastSat ? formatDate(stats.lastSat) : '—'}</div>
+            <div className={styles.twLabelRow}>
+              <div className={styles.twLabel}>
+                <span className={styles.twLabelFull}>Last sat</span>
+                <span className={styles.twLabelShort}>Assembly Last Sat</span>
+              </div>
+              <CalendarDays className={styles.twIcon} size={19} strokeWidth={1.75} aria-hidden="true" />
+            </div>
+            <div className={styles.twVal}>{stats.lastSat ? formatDate(stats.lastSat) : '-'}</div>
           </div>
         </div>
 
         {(() => {
-          const mondayLabel = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${weekStart}T12:00:00Z`))
           const BILL_ID_RE = /\s*\(NIA Bill [^)]*\)?$/
 
           const weekdays = weeklyDiary.filter(d => d.weekday !== 'Saturday' && d.weekday !== 'Sunday')
           const hasContent = (d: typeof weekdays[0]) => d.plenary !== null || d.agenda.length > 0 || d.billStages.length > 0 || d.committees.length > 0
-          const pastDays = weekdays.filter(d => d.isPast)
-          const futureDays = weekdays.filter(d => !d.isPast && !d.isToday)
-          const todayDay = weekdays.find(d => d.isToday)
+          const pastDays = weekdays.filter(d => d.isPast && hasContent(d))
+          const futureDays = weekdays.filter(d => !d.isPast && !d.isToday && hasContent(d))
+          const todayDay = weekdays.find(d => d.isToday && hasContent(d))
 
           const renderDay = (day: typeof weekdays[0]) => {
-            const dateLabel = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'short' }).format(new Date(`${day.date}T12:00:00Z`))
+            const dayDate = new Date(`${day.date}T12:00:00Z`)
+            const weekdayShort = new Intl.DateTimeFormat('en-GB', { weekday: 'short' }).format(dayDate).toUpperCase()
+            const monthShort = new Intl.DateTimeFormat('en-GB', { month: 'short' }).format(dayDate)
+            const dayNum = dayDate.getUTCDate()
             const startTime = day.plenary?.startTime
               ? formatLondonTime(day.plenary.startTime)
               : null
-            const dayHasContent = hasContent(day)
 
             return (
-              <div key={day.date} className={`${styles.agendaDayGroup}${day.isToday ? ` ${styles.agendaDayToday}` : ''}`}>
-                <div className={styles.agendaDayLabel}>
-                  <span className={styles.agendaDayDot} aria-hidden="true">•</span>{dateLabel}
+              <div key={day.date} className={`${styles.diaryRow}${day.isToday ? ` ${styles.diaryRowToday}` : ''}`}>
+                <div className={styles.diaryDate}>
+                  <span className={styles.diaryDateWeekday}>{weekdayShort}</span>
+                  <span className={styles.diaryDateNum}>{dayNum}</span>
+                  <span className={styles.diaryDateMonth}>{monthShort}</span>
                 </div>
 
                 <div className={styles.agendaDayCard}>
@@ -352,10 +259,6 @@ export default async function HomePageBody({
                     </div>
                   </div>
                 ) : null}
-
-                {!dayHasContent && (
-                  <p className={styles.agendaEmpty}>No business scheduled</p>
-                )}
 
                 {day.plenary !== null && day.agenda.length === 0 && day.billStages.length === 0 && (
                   <p className={styles.agendaEmpty}>Agenda details not available</p>
@@ -428,12 +331,27 @@ export default async function HomePageBody({
           return (
             <>
               <div className={styles.agendaHeader}>
-                <span>On the <em style={{ color: 'var(--teal)', fontStyle: 'italic' }}>floor</em>{isWeekend && <><span style={{ color: 'var(--ink)', margin: '0 0.35em' }}>·</span><em style={{ fontStyle: 'italic', color: 'var(--teal)' }}>coming week</em></>}</span>
-                <span><span className={styles.agendaWc}>Week commencing </span><span className={styles.agendaWcShort}>w/c </span>{mondayLabel}</span>
+                <span className={styles.agendaHeaderTitle}>
+                  <CalendarDays className={styles.agendaHeaderIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                  Schedule
+                </span>
               </div>
-              {pastDays.map(renderDay)}
-              {todayDay && renderDay(todayDay)}
-              {futureDays.map(renderDay)}
+              {pastDays.length === 0 && !todayDay && futureDays.length === 0 ? (
+                <div className={`${styles.diaryRow} ${styles.diaryRowToday}`}>
+                  <div className={styles.agendaWeekEmptyIconPanel}>
+                    <CalendarX className={styles.agendaWeekEmptyIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                  </div>
+                  <div className={`${styles.agendaDayCard} ${styles.agendaWeekEmpty}`}>
+                    <span>Nothing scheduled this week.</span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {pastDays.map(renderDay)}
+                  {todayDay && renderDay(todayDay)}
+                  {futureDays.map(renderDay)}
+                </>
+              )}
             </>
           )
         })()}
@@ -441,32 +359,160 @@ export default async function HomePageBody({
 
       <hr className={`section-rule ${styles.mobileRule}`} />
 
-      {/* Latest votes + Bills in progress */}
-      <div className={styles.twoCol}>
-        {/* Headers — each occupies one column in the shared grid */}
+      {/* Explore Statistics hub */}
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <div>
+            <span className={styles.sectionEyebrow}>Statistics</span>
+            <h2 className={styles.sectionTitle}>
+              <BarChart3 className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+              Dig into the numbers
+            </h2>
+            <p className={styles.sectionSubtitle}>Voting, spending and parliamentary activity across the {mandate.label} mandate.</p>
+          </div>
+        </div>
+        <Link href={`${basePath}/assembly/stats`} className={styles.hubCardAll}>
+          <Telescope className={styles.hubCardAllIcon} size={48} strokeWidth={1.5} aria-hidden="true" />
+          <div className={styles.hubCardInner}>
+            <span className={styles.hubCardTitle}>All Statistics</span>
+            <span className={styles.hubCardDesc}>Every chart, ranking and breakdown in one place. Start here to explore the full picture.</span>
+          </div>
+        </Link>
+        <div className={styles.hubGrid}>
+          <Link href={`${basePath}/assembly/stats/spending`} className={styles.hubCard}>
+            <div className={styles.hubCardInner}>
+              <span className={styles.hubCardTitle}>Spending</span>
+              <span className={styles.hubCardDesc}>Salaries, office expenses and overall public cost of the Assembly since {mandate.startLabel}.</span>
+            </div>
+          </Link>
+          <Link href={`${basePath}/assembly/stats/activity`} className={styles.hubCard}>
+            <div className={styles.hubCardInner}>
+              <span className={styles.hubCardTitle}>Activity</span>
+              <span className={styles.hubCardDesc}>Questions to ministers and chamber participation across the {mandate.label} mandate.</span>
+            </div>
+          </Link>
+          <Link href={`${basePath}/assembly/stats/voting`} className={styles.hubCard}>
+            <div className={styles.hubCardInner}>
+              <span className={styles.hubCardTitle}>Voting</span>
+              <span className={styles.hubCardDesc}>How MLAs and parties vote. Attendance records, party cohesion, rebellion rates and cross-community trends since {mandate.startLabel}.</span>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      <hr className={`section-rule ${styles.mobileRule}`} />
+
+      {/* Key figures strip */}
+      <div className={styles.kfigs}>
+        <div className={styles.kfig}>
+          <div className={styles.kfigLabelRow}>
+            <div className={styles.kfigLabel}>Divisions this month ({currentMonthName})</div>
+            <Vote className={styles.kfigIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+          </div>
+          <div className={styles.kfigNum}>{Number(divisionsThisMonth)}</div>
+          <div className={styles.kfigSub}>
+            <span style={{ color: divisionsDelta > 0 ? 'var(--sw-success)' : divisionsDelta < 0 ? 'var(--sw-error)' : 'inherit' }}>
+              {divisionsDelta > 0 ? `↑ ${divisionsDelta}` : divisionsDelta < 0 ? `↓ ${Math.abs(divisionsDelta)}` : '='}
+            </span>{' '}vs last month
+          </div>
+          <div className={styles.kfigSpark}>
+            <Sparkline data={divisionsSparkline} color="var(--sw-accent)" />
+          </div>
+        </div>
+        <div className={styles.kfig}>
+          <div className={styles.kfigLabelRow}>
+            <div className={styles.kfigLabel}>Bills passed this year</div>
+            <Scale className={styles.kfigIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+          </div>
+          <div className={`${styles.kfigNum} ${styles.amber}`}>{billsThisYear}</div>
+          <div className={styles.kfigSub}>
+            <span style={{ color: billsYearDelta > 0 ? 'var(--sw-success)' : billsYearDelta < 0 ? 'var(--sw-error)' : 'inherit' }}>
+              {billsYearDelta > 0 ? `↑ ${billsYearDelta}` : billsYearDelta < 0 ? `↓ ${Math.abs(billsYearDelta)}` : '='}
+            </span>{' '}vs last year
+          </div>
+          <div className={styles.kfigSpark}>
+            <Sparkline data={billsPassedSparkline} color="var(--sw-accent-warm)" />
+          </div>
+        </div>
+        {mostEngaged ? (
+          <Link href={`${basePath}/assembly/mlas/${mostEngaged.personId}`} className={`${styles.kfig} ${styles.kfigMlaCard}`}>
+            <div className={styles.kfigLabelRow}>
+              <div className={styles.kfigLabel}>Top Voter</div>
+              <Trophy className={styles.kfigIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+            </div>
+            <div className={styles.kfigMlaRow}>
+              <div className={styles.kfigMlaPhoto}>
+                {mostEngaged.imgUrl && <Image src={mostEngaged.imgUrl} alt={mostEngaged.fullName} fill sizes="72px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
+              </div>
+              <div className={styles.kfigMlaBody}>
+                <span className={styles.kfigMlaName}>{mostEngaged.fullName}</span>
+                {mostEngaged.constituency && <span className={styles.kfigMlaConstituency}>{mostEngaged.constituency}</span>}
+                <span className="party-pill" data-party={abbreviateParty(mostEngaged.party)}>{abbreviateParty(mostEngaged.party)}</span>
+              </div>
+            </div>
+            <div className={styles.kfigMlaFoot}>
+              <span className={styles.kfigSub}>{mostEngaged.attendancePct}% attendance</span>
+              <span className={styles.kfigSubMono}>{mostEngaged.attended}/{mostEngaged.total}</span>
+            </div>
+          </Link>
+        ) : <div className={`${styles.kfig} ${styles.kfigMlaCard}`} />}
+        {leastEngaged ? (
+          <Link href={`${basePath}/assembly/mlas/${leastEngaged.personId}`} className={`${styles.kfig} ${styles.kfigMlaCard}`}>
+            <div className={styles.kfigLabelRow}>
+              <div className={styles.kfigLabel}>Lowest Voter</div>
+              <TrendingDown className={styles.kfigIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+            </div>
+            <div className={styles.kfigMlaRow}>
+              <div className={styles.kfigMlaPhoto}>
+                {leastEngaged.imgUrl && <Image src={leastEngaged.imgUrl} alt={leastEngaged.fullName} fill sizes="72px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
+              </div>
+              <div className={styles.kfigMlaBody}>
+                <span className={styles.kfigMlaName}>{leastEngaged.fullName}</span>
+                {leastEngaged.constituency && <span className={styles.kfigMlaConstituency}>{leastEngaged.constituency}</span>}
+                <span className="party-pill" data-party={abbreviateParty(leastEngaged.party)}>{abbreviateParty(leastEngaged.party)}</span>
+              </div>
+            </div>
+            <div className={styles.kfigMlaFoot}>
+              <span className={styles.kfigSub}>{leastEngaged.attendancePct}% attendance</span>
+              <span className={styles.kfigSubMono}>{leastEngaged.attended}/{leastEngaged.total}</span>
+            </div>
+          </Link>
+        ) : <div className={`${styles.kfig} ${styles.kfigMlaCard}`} />}
+      </div>
+
+      <hr className={`section-rule ${styles.mobileRule}`} />
+
+      {/* Find your MLAs */}
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <div>
+            <span className={styles.sectionEyebrow}>Your representatives</span>
+            <h2 className={styles.sectionTitle}>
+              <MapPin className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+              Find your MLAs
+            </h2>
+          </div>
+        </div>
+        <ConstituencySelector mlasByConstituency={mlasByConstituency} />
+      </section>
+
+      <hr className={`section-rule ${styles.mobileRule}`} />
+
+      {/* Recent divisions */}
+      <section className={styles.section}>
         <div className={styles.sectionHead}>
           <div>
             <span className={styles.sectionEyebrow}>Assembly floor</span>
-            <h2 className={styles.sectionTitle}>Recent divisions</h2>
+            <h2 className={styles.sectionTitle}>
+              <Vote className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+              Recent divisions
+            </h2>
           </div>
-          <Link href={`${basePath}/assembly/votes`} className={styles.viewAll}>All divisions <span aria-hidden="true">↗</span></Link>
+          <Link href={`${basePath}/assembly/votes`} className={styles.viewAllBtn}>All divisions</Link>
         </div>
-        <div className={`${styles.sectionHead} ${styles.sectionHeadBills}`}>
-          <div>
-            <span className={styles.sectionEyebrow}>Legislation</span>
-            <h2 className={styles.sectionTitle}>Active legislation</h2>
-          </div>
-          <Link href={`${basePath}/assembly/bills`} className={styles.viewAll}>All bills <span aria-hidden="true">↗</span></Link>
-        </div>
-
-        {/* Paired rows — div + bill share the same grid row so border lines align */}
-        {Array.from({ length: Math.max(latestDivisions.length, inProgressBills.length) }, (_, i) => {
-          const div = latestDivisions[i]
-          const bill = inProgressBills[i]
-          const isLast = i === Math.max(latestDivisions.length, inProgressBills.length) - 1
-
-          const divEl = div ? (() => {
-            const { title: rawTitle, subtitle } = formatDivisionSubject(div.title ?? div.subject)
+        <div className={styles.rowCardList}>
+          {latestDivisions.map((div) => {
+            const { title: rawTitle } = formatDivisionSubject(div.title ?? div.subject)
             const displayTitle = rawTitle.trim()
             const passed = /carried/i.test(div.outcome ?? '')
               || /passed/i.test(div.outcome ?? '')
@@ -478,41 +524,74 @@ export default async function HomePageBody({
             const isBill = !isStatutory && (/NIA Bill/i.test(s) || /(?:First|Second|Committee|Consideration|Further Consideration|Final) Stage:/i.test(s))
             const billAmendMatch = isBill ? t.match(/^Amendment (\d+) -/i) : null
             const motionAmendMatch = !isBill && !isStatutory ? (div.title ?? '').match(/ - Amendment (\d+)$/i) : null
-            const typeLabel = isStatutory
-              ? 'Regulations'
-              : isBill && billAmendMatch
-                ? `Bill · ${subtitle ? `${subtitle} · ` : ''}Amendment ${billAmendMatch[1]}`
-                : isBill
-                  ? (subtitle ?? 'Bill')
-                  : motionAmendMatch
-                    ? `Amendment ${motionAmendMatch[1]}`
-                    : 'Motion'
+            const amendmentNum = billAmendMatch?.[1] ?? motionAmendMatch?.[1] ?? null
+            const category = isStatutory ? 'Regulations' : isBill ? 'Bill' : 'Motion'
+            const CategoryIcon = isStatutory ? FileText : isBill ? Scale : Megaphone
+            const categoryClass = isStatutory ? styles.chipRegulations : isBill ? styles.chipBill : styles.chipMotion
             return (
-              <Link key={`div-${div.documentId}`} href={`${basePath}/assembly/divisions/${div.documentId}`}
-                className={`${styles.divCard}${isLast ? ` ${styles.rowLast}` : ''}`}>
-                <div className={styles.divTitle}>{displayTitle}</div>
-                <span className={passed ? styles.pillPass : styles.pillFail}>{passed ? 'Passed' : 'Failed'}</span>
-                <div className={styles.divMeta}>
-                  <span className={styles.divSub}>
-                    {d ? `${d.getDate()} ${d.toLocaleString('en',{month:'short'})} ${d.getFullYear()} · ${typeLabel}` : typeLabel}
-                  </span>
+              <div key={div.documentId} className={styles.divRow}>
+                <div className={styles.divRowDate}>
+                  {d ? (
+                    <>
+                      <span className={styles.divRowDateWeekday}>{d.toLocaleString('en-GB', { weekday: 'short' }).toUpperCase()}</span>
+                      <span className={styles.divRowDateNum}>{d.getDate()}</span>
+                      <span className={styles.divRowDateMonth}>{d.toLocaleString('en', { month: 'short' })}</span>
+                    </>
+                  ) : <span className={styles.divRowDateMonth}>-</span>}
                 </div>
-              </Link>
+                <Link href={`${basePath}/assembly/divisions/${div.documentId}`} className={styles.rowCard}>
+                  <div className={styles.rowCardMain}>
+                    <div className={styles.divTitle}>{displayTitle}</div>
+                    <div className={styles.divChips}>
+                      <span className={`${styles.divChip} ${categoryClass}`}>
+                        <CategoryIcon size={12} strokeWidth={2} aria-hidden="true" />
+                        {category}
+                      </span>
+                      {amendmentNum && (
+                        <span className={`${styles.divChip} ${styles.chipAmendment}`}>
+                          <PenLine size={12} strokeWidth={2} aria-hidden="true" />
+                          Amendment {amendmentNum}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className={styles.divOutcome}>
+                    <span className={styles.divOutcomeLabel}>Result</span>
+                    <span className={`${styles.divOutcomeBadge} ${passed ? styles.divOutcomeBadgePass : styles.divOutcomeBadgeFail}`}>
+                      {passed ? 'Passed' : 'Failed'}
+                    </span>
+                  </span>
+                </Link>
+              </div>
             )
-          })() : <div key={`div-empty-${i}`} className={`${styles.divCard}${isLast ? ` ${styles.rowLast}` : ''}`} />
+          })}
+        </div>
+      </section>
 
-          const billEl = bill ? (() => {
+      <hr className={`section-rule ${styles.mobileRule}`} />
+
+      {/* Active legislation */}
+      <section className={styles.section}>
+        <div className={styles.sectionHead}>
+          <div>
+            <span className={styles.sectionEyebrow}>Legislation</span>
+            <h2 className={styles.sectionTitle}>
+              <Scale className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+              Active legislation
+            </h2>
+          </div>
+          <Link href={`${basePath}/assembly/bills`} className={styles.viewAllBtn}>All bills</Link>
+        </div>
+        <div className={styles.rowCardList}>
+          {inProgressBills.map((bill) => {
             const slug = bill.billId.toLowerCase().replace(/\//g, '-').replace(/\s+/g, '-')
             return (
-              <Link key={`bill-${bill.billId}`} href={`${basePath}/assembly/bills/${slug}`}
-                className={`${styles.billCard}${isLast ? ` ${styles.rowLast}` : ''}`}>
-                <div>
+              <Link key={bill.billId} href={`${basePath}/assembly/bills/${slug}`} className={styles.rowCard}>
+                <div className={styles.rowCardMain}>
                   <div className={styles.billTitle}>{bill.shortTitle}</div>
-                  <div className={styles.billPills}>
-                    <span className={styles.pillType}>
-                      {[bill.latestDate ? formatDate(String(bill.latestDate)) : null, bill.billType].filter(Boolean).join(' · ')}
-                    </span>
-                  </div>
+                  <span className={styles.pillType}>
+                    {[bill.latestDate ? formatDate(String(bill.latestDate)) : null, bill.billType].filter(Boolean).join(' · ')}
+                  </span>
                 </div>
                 <BillStagePill
                   category={bill.latestDate && new Date(bill.latestDate) > now ? 'scheduled' : 'in-progress'}
@@ -521,44 +600,21 @@ export default async function HomePageBody({
                 />
               </Link>
             )
-          })() : <div key={`bill-empty-${i}`} className={`${styles.billCard}${isLast ? ` ${styles.rowLast}` : ''}`} />
-
-          return [divEl, billEl]
-        })}
-      </div>
-
-      <hr className={`section-rule ${styles.mobileRule}`} />
-
-      {/* Expenses promo */}
-      <section className={styles.section}>
-        <div className={`${styles.sectionHead} ${styles.sectionHeadWithSubtitle}`}>
-          <div>
-            <span className={styles.sectionEyebrow}>Public spending</span>
-            <h2 className={styles.sectionTitle}>Expenses league table</h2>
-            <p className={styles.sectionSubtitle}>Expense claims for each MLA across all published financial years.</p>
-          </div>
+          })}
         </div>
-        <Link href={`${basePath}/assembly/expenses`} className={styles.expensesCard}>
-          <span className={styles.expensesCardLeft}>
-            <svg className={styles.expensesCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
-              <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
-              <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
-            </svg>
-            <span className={styles.expensesCardText}>View full MLA expenses rankings</span>
-          </span>
-          <span className={styles.expensesCardArrow} aria-hidden="true">↗</span>
-        </Link>
       </section>
 
       <hr className={`section-rule ${styles.mobileRule}`} />
 
       {/* Did you know */}
-      <section className={styles.section}>
+      <section className={`${styles.section} ${styles.sectionLast}`}>
         <div className={styles.sectionHead}>
           <div>
             <span className={styles.sectionEyebrow}>Did you know</span>
-            <h2 className={styles.sectionTitle}>By the numbers</h2>
+            <h2 className={styles.sectionTitle}>
+              <Lightbulb className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+              By the numbers
+            </h2>
           </div>
         </div>
         <RotatingFact

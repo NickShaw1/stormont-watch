@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'MLAs',
   description: 'All current Members of the Northern Ireland Legislative Assembly. View voting records, expenses and registered interests for every MLA.',
   openGraph: {
-    title: 'MLAs — Stormont Watch',
+    title: 'MLAs - Stormont Watch',
     description: 'All current Members of the Northern Ireland Legislative Assembly. View voting records, expenses and registered interests for every MLA.',
     images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },
@@ -16,5 +16,5 @@ export const metadata: Metadata = {
 }
 
 export default function MlasPage() {
-  return <MlasPageBody mandate={CURRENT_MANDATE} basePath="" />
+  return <MlasPageBody mandate={CURRENT_MANDATE} />
 }

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'Votes',
   description: `Every recorded division in the Northern Ireland Assembly since the ${CURRENT_MANDATE.label} mandate. Search and filter by date, outcome and subject.`,
   openGraph: {
-    title: 'Votes — Stormont Watch',
+    title: 'Votes - Stormont Watch',
     description: `Every recorded division in the Northern Ireland Assembly since the ${CURRENT_MANDATE.label} mandate. Search and filter by date, outcome and subject.`,
     images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
   },

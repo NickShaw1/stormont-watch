@@ -89,6 +89,75 @@
   /* Layout */
   --container: 1180px;
 
+  /* Register design system tokens. */
+  --sw-bg:              #f5f6f7;
+  --sw-surface:         #ffffff;
+  --sw-surface-subtle:  #eceef0;
+  --sw-border:          #dcded9;
+  --sw-border-strong:   #c3c6c0;
+  --sw-text-primary:    #1a1d21;
+  --sw-text-secondary:  #474c52;
+  --sw-text-tertiary:   #656b72;
+
+  --sw-accent:          #3a5a7a;
+  --sw-accent-strong:   #274563;
+  --sw-accent-warm:     #e0a72a;
+
+  --sw-success:         #2f6a4f;
+  --sw-success-surface: #e7f0ea;
+  --sw-warning:         #8a5a12;
+  --sw-warning-surface: #f6efdd;
+  --sw-error:           #a4301f;
+  --sw-error-surface:   #f6e5e1;
+
+  /* Theme-invariant fills for white text on solid chips/badges/buttons. */
+  --sw-accent-solid:        #3a5a7a;
+  --sw-accent-strong-solid: #274563;
+  --sw-success-solid:       #2f6a4f;
+  --sw-error-solid:         #a4301f;
+
+  /* Muted NI-green wash for unselected map regions; not a party colour. */
+  --sw-map-fill:        #a8c9b0;
+  --sw-map-fill-hover:  #92b89c;
+  --sw-map-stroke:      #1a1d21;
+  --sw-map-label:       #1a1d21;
+  --sw-map-sea:         #cfe3ee;
+  --sw-map-selected:    var(--sw-success-solid);
+
+  --sw-focus:           var(--sw-accent);
+  --sw-overlay-shadow:  0 8px 24px rgba(20,22,26,0.16);
+
+  --sw-font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --sw-fs-display:  29px;  --sw-lh-display:  1.15; --sw-fw-display:  700;
+  --sw-fs-h2:       22px;  --sw-lh-h2:       1.2;  --sw-fw-h2:       700;
+  --sw-fs-h3:       16px;  --sw-lh-h3:       1.3;  --sw-fw-h3:       700;
+  --sw-fs-h4:       14px;  --sw-lh-h4:       1.35; --sw-fw-h4:       700;
+  --sw-fs-body:     15px;  --sw-lh-body:     1.5;  --sw-fw-body:     400;
+  --sw-fs-body-sm:  13px;  --sw-lh-body-sm:  1.5;  --sw-fw-body-sm:  400;
+  --sw-fs-caption:  12.5px;  --sw-lh-caption:  1.45; --sw-fw-caption:  500;
+  --sw-fs-eyebrow:  11px;  --sw-lh-eyebrow:  1.2;  --sw-fw-eyebrow:  700;
+  --sw-fs-data:     14px;  --sw-lh-data:     1.4;  --sw-fw-data:     400;
+  --sw-fs-data-th:  10.5px;--sw-lh-data-th:  1.2;  --sw-fw-data-th:  600;
+  --sw-fs-stat:     31px;  --sw-lh-stat:     1.05; --sw-fw-stat:     700;
+  --sw-eyebrow-tracking: 0.09em;
+  --sw-th-tracking:      0.07em;
+
+  --sw-space-1: 4px;  --sw-space-2: 8px;  --sw-space-3: 12px; --sw-space-4: 16px;
+  --sw-space-5: 20px; --sw-space-6: 24px; --sw-space-7: 32px; --sw-space-8: 40px;
+  --sw-space-9: 48px; --sw-space-10: 64px;
+  --sw-gutter-desktop: 26px;
+  --sw-gutter-tablet:  22px;
+  --sw-gutter-mobile:  18px;
+
+  --sw-radius-none: 0;
+  --sw-radius-sm:   3px;
+  --sw-radius-md:   3px;
+
+  --sw-elevation-0: none;
+  --sw-elevation-overlay: var(--sw-overlay-shadow);
+
+  --sw-transition: 150ms ease;
+
   /* Legacy aliases — keeps existing component CSS working */
   --background:    var(--paper);
   --text-primary:  var(--ink);
@@ -113,6 +182,72 @@
   --spacing-2xl:   var(--s-16);
 }
 
+/* ── Register design system: dark mode (Phase 1 — additive) ──────────
+   Manual override (data-theme="dark") always wins. Absent an override,
+   prefers-color-scheme applies the same values via the media query below.
+   Legacy tokens (--paper/--ink/--teal/etc.) are NOT touched here — they
+   keep their light-mode values until Phase 2+ repoints components onto
+   --sw-* tokens, so most of the page will still look light-themed even
+   with data-theme="dark" set until that migration lands. ─────────── */
+:root[data-theme="dark"] {
+  --sw-bg:              #15171a;
+  --sw-surface:         #1d2024;
+  --sw-surface-subtle:  #25282d;
+  --sw-border:          #31353a;
+  --sw-border-strong:   #41464c;
+  --sw-text-primary:    #e9eaec;
+  --sw-text-secondary:  #b4b8bd;
+  --sw-text-tertiary:   #8b9197;
+
+  --sw-accent:          #8fb2d6;
+  --sw-accent-strong:   #b2cbe6;
+  --sw-accent-warm:     #e0a72a;
+
+  --sw-success:         #7cc4a0; --sw-success-surface: #1c2b24;
+  --sw-warning:         #d8ab5c; --sw-warning-surface: #2c2617;
+  --sw-error:           #e58a76; --sw-error-surface:   #2e1e1a;
+
+  /* Dark mode: dark map regions with white outlines/labels. */
+  --sw-map-fill:        #3a3f47;
+  --sw-map-fill-hover:  #474d57;
+  --sw-map-stroke:      #ffffff;
+  --sw-map-label:       #ffffff;
+  --sw-map-sea:         var(--sw-surface-subtle);
+  --sw-map-selected:    var(--sw-accent-solid);
+
+  --sw-overlay-shadow:  0 10px 28px rgba(0,0,0,0.55);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --sw-bg:              #15171a;
+    --sw-surface:         #1d2024;
+    --sw-surface-subtle:  #25282d;
+    --sw-border:          #31353a;
+    --sw-border-strong:   #41464c;
+    --sw-text-primary:    #e9eaec;
+    --sw-text-secondary:  #b4b8bd;
+    --sw-text-tertiary:   #8b9197;
+
+    --sw-accent:          #8fb2d6;
+    --sw-accent-strong:   #b2cbe6;
+    --sw-accent-warm:     #e0a72a;
+
+    --sw-success:         #7cc4a0; --sw-success-surface: #1c2b24;
+    --sw-warning:         #d8ab5c; --sw-warning-surface: #2c2617;
+    --sw-error:           #e58a76; --sw-error-surface:   #2e1e1a;
+
+    --sw-map-fill:        #3a3f47;
+    --sw-map-fill-hover:  #474d57;
+    --sw-map-stroke:      #ffffff;
+    --sw-map-label:       #ffffff;
+    --sw-map-sea:         var(--sw-surface-subtle);
+    --sw-map-selected:    var(--sw-accent-solid);
+
+    --sw-overlay-shadow:  0 10px 28px rgba(0,0,0,0.55);
+  }
+}
+
 /* ── Reset ─────────────────────────────────────────────────── */
 *,
 *::before,
@@ -135,8 +270,8 @@ html {
 }
 
 body {
-  background-color: var(--paper);
-  color: var(--ink);
+  background-color: var(--sw-bg);
+  color: var(--sw-text-primary);
   font-family: var(--font-sans);
   font-size: var(--fs-base);
   line-height: 1.55;
@@ -227,19 +362,47 @@ h4 { font-size: 1.125rem; }
 
 /* p { max-width: 65ch; } */
 
+/* Colour change + underline on hover, everywhere — the only link affordance. */
 a {
-  color: var(--link);
+  color: var(--sw-accent);
   text-decoration: none;
+  transition: color var(--sw-transition);
 }
 
 a:hover {
-  text-decoration: none;
+  color: var(--sw-accent-strong);
+  text-decoration: underline;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--sw-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+a:active {
+  color: var(--sw-accent-strong);
+}
+
+/* Net-new — inert until Phase 2+ apply .card-link to real card markup */
+.card-link:hover {
+  background: var(--sw-surface-subtle);
+  border-color: var(--sw-accent);
+}
+
+.card-link:hover .card-title {
+  color: var(--sw-accent-strong);
+}
+
+.card-link:focus-visible {
+  outline: 2px solid var(--sw-focus);
+  outline-offset: 2px;
 }
 
 /* ── Focus ─────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline: 1px solid var(--sw-focus);
+  outline-offset: 2px;
   border-radius: 2px;
 }
 
@@ -275,14 +438,14 @@ a:hover {
   display: inline-flex;
   align-items: center;
   font-size: 11px;
-  color: var(--ink-2);
+  color: var(--sw-text-secondary);
   padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--rule);
-  background: var(--paper);
+  border-radius: var(--sw-radius-sm);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
 }
 
-/* ── Pill / status badge ───────────────────────────────────── */
+/* pass/fail/warn use the vote-outcome colour family, distinct from --sw-accent. */
 .pill {
   display: inline-flex;
   align-items: center;
@@ -291,74 +454,66 @@ a:hover {
   font-weight: 600;
   letter-spacing: 0.04em;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--sw-radius-sm);
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .pill.pass    { background: var(--forest-wash); color: var(--forest); min-width: 62px; justify-content: center; }
 .pill.fail    { background: var(--crimson-wash); color: var(--crimson); min-width: 62px; justify-content: center; }
-.pill.accent  { background: var(--teal-wash); color: var(--teal); }
+.pill.accent  { background: var(--sw-surface-subtle); color: var(--sw-accent); }
 .pill.warn    { background: var(--ochre-wash); color: var(--ochre); }
-.pill.neutral { background: var(--paper-3); color: var(--ink-3); }
+.pill.neutral { background: var(--sw-surface-subtle); color: var(--sw-text-secondary); }
 .pill .dot    { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 
-/* ── Party pills — global canonical definition ─────────────── */
+/* Canonical party colour source (§7.6) — never used elsewhere as UI chrome. */
 .party-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  line-height: 1;
+  line-height: 1.2;
   vertical-align: middle;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 0;
-  background: none;
-  border: none;
-  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: 3px;
+  background: var(--party-bg, #6f6f6f);
+  color: var(--party-fg, #ffffff);
   white-space: nowrap;
   flex-shrink: 0;
   align-self: flex-start;
   width: fit-content;
 }
-.party-pill::before {
-  content: '';
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  background: var(--dot-c, #888);
-  flex-shrink: 0;
-}
-.party-pill[data-party="Sinn Féin"] { --dot-c: #326760; }
-.party-pill[data-party="DUP"]       { --dot-c: #C41E3A; }
-.party-pill[data-party="Alliance"]  { --dot-c: #d4a017; }
-.party-pill[data-party="UUP"]       { --dot-c: #5B8DD9; }
-.party-pill[data-party="SDLP"]      { --dot-c: #2E8B57; }
-.party-pill[data-party="TUV"]       { --dot-c: #1a1a6e; }
-.party-pill[data-party="PBP"]       { --dot-c: #c0392b; }
-.party-pill[data-party="Ind"]       { --dot-c: #888;    }
+.party-pill[data-party="Sinn Féin"] { --party-bg: #326760; --party-fg: #ffffff; }
+.party-pill[data-party="DUP"]       { --party-bg: #C41E3A; --party-fg: #ffffff; }
+.party-pill[data-party="Alliance"]  { --party-bg: #F6C135; --party-fg: #1c1c1c; }
+.party-pill[data-party="UUP"]       { --party-bg: #5B8DD9; --party-fg: #0e2340; }
+.party-pill[data-party="SDLP"]      { --party-bg: #2A7D4D; --party-fg: #ffffff; }
+.party-pill[data-party="TUV"]       { --party-bg: #1a1a6e; --party-fg: #ffffff; }
+.party-pill[data-party="PBP"]       { --party-bg: #c0392b; --party-fg: #ffffff; }
+.party-pill[data-party="Ind"]       { --party-bg: #6f6f6f; --party-fg: #ffffff; }
 
+/* Matches .party-pill's solid-fill badge shape exactly, same box model. */
 .designation-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  line-height: 1;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-2);
+  line-height: 1.2;
+  vertical-align: middle;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: 3px;
+  background: var(--designation-bg, #888);
+  color: var(--designation-fg, #ffffff);
   white-space: nowrap;
-}
-.designation-pill::before {
-  content: '';
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  background: var(--dot-c, #888);
   flex-shrink: 0;
+  align-self: flex-start;
+  width: fit-content;
 }
-.designation-pill[data-designation='unionist']    { --dot-c: #e67e22; }
-.designation-pill[data-designation='nationalist'] { --dot-c: #2e7d32; }
-.designation-pill[data-designation='other']       { --dot-c: #9e9e9e; }
+.designation-pill[data-designation='unionist']    { --designation-bg: #f97316; --designation-fg: #ffffff; }
+.designation-pill[data-designation='nationalist'] { --designation-bg: #15803d; --designation-fg: #ffffff; }
+.designation-pill[data-designation='other']       { --designation-bg: #9e9e9e; --designation-fg: #1c1c1c; }
 
 /* ── Section head ──────────────────────────────────────────── */
 .section-head {
@@ -382,13 +537,13 @@ a:hover {
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
-  color: var(--teal);
+  color: var(--sw-accent);
   letter-spacing: -0.02em;
 }
 
 .section-head .actions { display: flex; gap: var(--s-3); align-items: center; }
-.section-head a.view-all { font-size: 13px; color: var(--ink-2); border-bottom: 1px solid var(--rule); padding-bottom: 1px; }
-.section-head a.view-all:hover { color: var(--teal); border-color: var(--teal); }
+.section-head a.view-all { font-size: 13px; color: var(--sw-text-secondary); border-bottom: 1px solid var(--sw-border); padding-bottom: 1px; }
+.section-head a.view-all:hover { color: var(--sw-accent-strong); border-color: var(--sw-accent-strong); }
 
 /* ── Section divider ───────────────────────────────────────── */
 .section-rule {
@@ -400,11 +555,11 @@ a:hover {
 
 /* ── Card ──────────────────────────────────────────────────── */
 .card {
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-2);
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border);
+  border-radius: var(--sw-radius-sm);
   padding: var(--s-6);
-  box-shadow: var(--shadow-1);
+  box-shadow: var(--sw-elevation-0);
 }
 
 /* ── Badge ─────────────────────────────────────────────────── */
@@ -412,13 +567,13 @@ a:hover {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-xs);
-  font-family: var(--font-body), system-ui, sans-serif;
+  font-family: var(--sw-font-family);
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   padding: 2px 10px;
-  border-radius: var(--r-pill);
+  border-radius: var(--sw-radius-sm);
   white-space: nowrap;
 }
 
@@ -453,15 +608,15 @@ a:hover {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   padding: 2px 8px;
-  border-radius: var(--r-pill);
+  border-radius: var(--sw-radius-sm);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-.vote-aye     { color: var(--forest);  background: var(--forest-wash); }
-.vote-no      { color: var(--crimson); background: var(--crimson-wash); }
-.vote-noshow  { color: var(--ink-2);   background: var(--paper-3); }
-.vote-abstain { color: var(--ink-2);   background: var(--paper-3); }
+.vote-aye     { color: var(--sw-success); background: color-mix(in srgb, var(--sw-success) 14%, var(--sw-surface)); }
+.vote-no      { color: var(--sw-error);   background: color-mix(in srgb, var(--sw-error) 14%, var(--sw-surface)); }
+.vote-noshow  { color: var(--sw-text-secondary);   background: var(--sw-surface-subtle); }
+.vote-abstain { color: var(--sw-text-secondary);   background: var(--sw-surface-subtle); }
 
 /* ── Page heading block ────────────────────────────────────── */
 .page-header {
@@ -560,8 +715,8 @@ a:hover {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
-  background: #f5f5f5;
-  border-left: 3px solid #9ca3af;
+  background: var(--sw-surface-subtle);
+  border-left: 3px solid var(--sw-border-strong);
   border-radius: 0 6px 6px 0;
   padding: 0.5rem 0.75rem;
   margin-top: var(--spacing-md);
@@ -578,6 +733,10 @@ a:hover {
   .note-card-icon {
     margin-top: 0.2rem;
   }
+
+  .note-card p {
+    font-size: var(--sw-fs-body-sm);
+  }
 }
 
 .note-card-icon {
@@ -590,7 +749,7 @@ a:hover {
 
 .note-card p {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--sw-text-secondary);
   margin: 0;
   /* max-width: 65ch; */
   line-height: 1.5;
@@ -665,12 +824,8 @@ a:hover {
   color: var(--text-secondary);
 }
 
-.breadcrumb a {
-  color: var(--accent);
-}
-
 .breadcrumb a:hover {
-  color: var(--accent);
+  color: var(--sw-accent-strong);
 }
 
 /* ── Mobile spacing scale ───────────────────────────────────── */
@@ -699,5 +854,186 @@ input[type="search"]::-webkit-search-cancel-button {
 /* ── Main layout ───────────────────────────────────────────── */
 main {
   padding-bottom: 0;
+}
+
+/* ── Not-found page ────────────────────────────────────────── */
+.notFoundPageHeader {
+  padding-block: var(--s-8) var(--s-6);
+  border-bottom: 1px solid var(--sw-accent);
+  margin-bottom: var(--sw-space-9);
+}
+
+.notFoundPageHeaderEyebrow {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+}
+
+.notFoundPageHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-h2);
+  letter-spacing: -0.015em;
+  color: var(--sw-text-primary);
+  margin: var(--s-1) 0 0;
+}
+
+.notFoundPageHeaderIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+.notFoundPageHeaderError {
+  border-bottom-color: var(--sw-error);
+}
+
+.notFoundPageHeaderIconError {
+  color: var(--sw-error);
+}
+
+.notFoundPageHeaderEyebrowError {
+  color: var(--sw-error);
+}
+
+.notFoundLede {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  max-width: 68ch;
+  margin-top: var(--s-4);
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .notFoundPageHeader { padding-block: var(--s-6) var(--s-5); }
+}
+
+.notFoundPanel {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: var(--s-5);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-6);
+  margin-bottom: var(--sw-space-9);
+}
+
+.notFoundCodePanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sw-accent);
+  background: color-mix(in srgb, var(--sw-accent) 11%, var(--sw-surface));
+}
+
+.notFoundCodePanelError {
+  border-color: var(--sw-error);
+  background: color-mix(in srgb, var(--sw-error) 11%, var(--sw-surface));
+}
+
+.notFoundCodePanelError .notFoundCode {
+  color: var(--sw-error);
+}
+
+.notFoundCode {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--sw-accent-strong);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.notFoundPanelBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-2);
+}
+
+.notFoundPanelHeading {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-h3);
+  color: var(--sw-text-primary);
+  margin: 0;
+}
+
+.notFoundPanelText {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .notFoundPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .notFoundCodePanel {
+    padding-block: var(--s-4);
+  }
+}
+
+.notFoundLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-bottom: var(--sw-space-9);
+}
+
+.notFoundLinkBtn,
+.notFoundResetBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  min-height: 44px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-surface);
+  color: var(--sw-text-secondary);
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: border-color 150ms, color 150ms, background 150ms;
+}
+
+.notFoundLinkBtn:hover,
+.notFoundResetBtn:hover {
+  border-color: var(--sw-accent);
+  color: var(--sw-text-primary);
+  text-decoration: none !important;
+}
+
+.notFoundLinkBtnPrimary {
+  background: var(--sw-accent);
+  color: #ffffff;
+  border-color: var(--sw-accent);
+}
+
+.notFoundLinkBtnPrimary:hover {
+  background: var(--sw-accent-strong);
+  border-color: var(--sw-accent-strong);
+  color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .notFoundLinks {
+    flex-direction: column;
+  }
+
+  .notFoundLinkBtn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 

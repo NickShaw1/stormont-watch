@@ -23,9 +23,7 @@ function EyeLogo() {
 }
 
 export default function Footer() {
-  const year = new Date().getFullYear()
-  // Footer sits in the root layout, outside the archive's MandateProvider, so derive
-  // the active mandate from the URL (same approach as Nav) rather than useMandate().
+  // Footer sits outside the archive's MandateProvider, so derive mandate from the URL.
   const pathname = usePathname()
   const archiveMatch = pathname.match(/^\/archive\/([^/]+)/)
   const mandate = (archiveMatch ? mandateById(archiveMatch[1]) : null) ?? CURRENT_MANDATE
@@ -46,62 +44,53 @@ export default function Footer() {
               </span>
             </Link>
             <p className={styles.brandTagline}>
-              Every vote, every MLA, every bill in the Northern Ireland Assembly since {mandate.startLabel}. An independent public-interest project.
+              An independent public record of the Northern Ireland Assembly: votes, expenses, attendance and legislation, for every mandate.
             </p>
-            <div className={styles.brandBadges}>
-              <span className={styles.badge}>{mandate.label} mandate</span>
+          </div>
+
+          <div className={styles.colGroup}>
+            {/* Assembly column */}
+            <div className={styles.col}>
+              <p className={styles.colHeading}>Assembly</p>
+              <ul className={styles.colLinks} role="list">
+                <li><Link href={`${basePath}/assembly/mlas`}>MLAs</Link></li>
+                <li><Link href={`${basePath}/assembly/parties`}>Parties</Link></li>
+                <li><Link href={`${basePath}/assembly/votes`}>Divisions</Link></li>
+                <li><Link href={`${basePath}/assembly/bills`}>Bills</Link></li>
+              </ul>
             </div>
-          </div>
 
-          {/* Explore column */}
-          <div className={styles.col}>
-            <p className={styles.colHeading}>Explore</p>
-            <ul className={styles.colLinks} role="list">
-              <li><Link href={`${basePath}/assembly/structure`}>Assembly</Link></li>
-              <li><Link href={`${basePath}/assembly/mlas`}>MLAs</Link></li>
-              <li><Link href={`${basePath}/assembly/bills`}>Legislation</Link></li>
-              <li><Link href={`${basePath}/assembly/votes`}>Votes</Link></li>
-              <li><Link href={`${basePath}/assembly/stats`}>Statistics</Link></li>
-            </ul>
-          </div>
+            {/* Accountability column */}
+            <div className={styles.col}>
+              <p className={styles.colHeading}>Accountability</p>
+              <ul className={styles.colLinks} role="list">
+                <li><Link href={`${basePath}/assembly/expenses`}>Expenses</Link></li>
+                <li><Link href={`${basePath}/assembly/salaries`}>Salaries</Link></li>
+                <li><Link href={`${basePath}/assembly/questions`}>Questions</Link></li>
+                <li><Link href={`${basePath}/assembly/sittings`}>Sittings</Link></li>
+              </ul>
+            </div>
 
-          {/* Data column */}
-          <div className={styles.col}>
-            <p className={styles.colHeading}>Data</p>
-            <ul className={styles.colLinks} role="list">
-              <li><Link href={`${basePath}/assembly/expenses`}>Expenses</Link></li>
-              <li><Link href={`${basePath}/assembly/questions`}>Questions</Link></li>
-              <li>
-                <a
-                  href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  Source: NI Assembly API
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* About column */}
-          <div className={styles.col}>
-            <p className={styles.colHeading}>About</p>
-            <ul className={styles.colLinks} role="list">
-              <li><Link href="/about">About the project</Link></li>
-              <li><Link href="/privacy">Privacy</Link></li>
-              <li><Link href="/terms">Terms</Link></li>
-            </ul>
+            {/* About column */}
+            <div className={styles.col}>
+              <p className={styles.colHeading}>About</p>
+              <ul className={styles.colLinks} role="list">
+                <li><Link href="/about">Methodology</Link></li>
+                <li><Link href="/privacy">Privacy</Link></li>
+                <li><Link href="/terms">Terms</Link></li>
+              </ul>
+            </div>
           </div>
         </div>
 
         <div className={styles.bottom}>
-          <p>
-            &copy; {year} Stormont Watch. Parliamentary information under the{' '}
+          <span>&copy; {mandate.label} mandate</span>
+          <span>
+            Contains public sector information licensed under the{' '}
             <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank" rel="noreferrer noopener">
               Open Government Licence v3.0
             </a>.
-          </p>
-          <span className={styles.colophon}>Updated daily · NI Assembly API</span>
+          </span>
         </div>
       </div>
     </footer>

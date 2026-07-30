@@ -2,6 +2,8 @@
 
 import { useRef, useState } from 'react'
 import Link from 'next/link'
+import { ArrowUpWideNarrow, ArrowDownWideNarrow, ThumbsUp, ThumbsDown } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import MlaPhoto from '@/components/MlaPhoto'
 import { formatMemberName, abbreviateParty } from '@/lib/format'
 import PartyName from '@/components/PartyName'
@@ -29,15 +31,16 @@ const TABS: {
   id: string
   label: string
   title: string
+  icon: LucideIcon
   key: keyof Pick<MlaRow, 'attendancePct' | 'ayes' | 'noes'>
   suffix: string
   desc: boolean
   showVoteCounts: boolean
 }[] = [
-  { id: 'highest-attendance', label: 'Top Attended',   title: 'Highest Voting Attendance', key: 'attendancePct', suffix: '%', desc: true,  showVoteCounts: true },
-  { id: 'lowest-attendance',  label: 'Least Attended', title: 'Lowest Voting Attendance',  key: 'attendancePct', suffix: '%', desc: false, showVoteCounts: true },
-  { id: 'most-ayes',          label: 'Most Ayes',      title: 'Most Ayes cast',            key: 'ayes',          suffix: '',  desc: true,  showVoteCounts: false },
-  { id: 'most-noes',          label: 'Most Noes',      title: 'Most Noes cast',            key: 'noes',          suffix: '',  desc: true,  showVoteCounts: false },
+  { id: 'highest-attendance', label: 'Top Attended',   title: 'Highest Voting Attendance', icon: ArrowUpWideNarrow,   key: 'attendancePct', suffix: '%', desc: true,  showVoteCounts: true },
+  { id: 'lowest-attendance',  label: 'Least Attended', title: 'Lowest Voting Attendance',  icon: ArrowDownWideNarrow, key: 'attendancePct', suffix: '%', desc: false, showVoteCounts: true },
+  { id: 'most-ayes',          label: 'Most Ayes',      title: 'Most Ayes cast',            icon: ThumbsUp,            key: 'ayes',          suffix: '',  desc: true,  showVoteCounts: false },
+  { id: 'most-noes',          label: 'Most Noes',      title: 'Most Noes cast',            icon: ThumbsDown,          key: 'noes',          suffix: '',  desc: true,  showVoteCounts: false },
 ]
 
 function sortRows(
@@ -50,12 +53,14 @@ function sortRows(
 
 function StatCard({
   title,
+  icon: Icon,
   rows,
   valueKey,
   valueSuffix = '',
   showVoteCounts = false,
 }: {
   title: string
+  icon: LucideIcon
   rows: MlaRow[]
   valueKey: keyof Pick<MlaRow, 'attendancePct' | 'ayes' | 'noes'>
   valueSuffix?: string
@@ -64,7 +69,10 @@ function StatCard({
   const { basePath } = useMandate()
   return (
     <div className={styles.card}>
-      <h3 className={styles.cardTitle}>{title}</h3>
+      <h3 className={styles.cardTitle}>
+        {title}
+        <Icon className={styles.cardTitleIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+      </h3>
       <ol className={styles.list}>
         {rows.map((m, i) => (
           <li key={m.personId} className={styles.row}>
@@ -75,6 +83,7 @@ function StatCard({
               size={48}
               decorative
               square
+              personId={m.personId}
             />
             <div className={styles.info}>
               <Link href={`${basePath}/assembly/mlas/${m.personId}`} className={styles.name}>
@@ -100,8 +109,7 @@ function StatCard({
 }
 
 export default function StatsRankingTabs({ data }: Props) {
-  // activeTab: the tab whose content is currently displayed
-  // fadingOutTab: the previous tab, kept mounted briefly while its panel animates out
+  // fadingOutTab: the previous tab, kept mounted briefly while its panel animates out.
   const [activeTab, setActiveTab] = useState(0)
   const [fadingOutTab, setFadingOutTab] = useState<number | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -159,6 +167,7 @@ export default function StatsRankingTabs({ data }: Props) {
             >
               <StatCard
                 title={panel.title}
+                icon={panel.icon}
                 rows={panel.rows}
                 valueKey={panel.key}
                 valueSuffix={panel.suffix}

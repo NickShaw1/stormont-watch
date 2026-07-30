@@ -100,18 +100,6 @@ export function formatPartyName(party: string | null | undefined, abbreviated = 
   return abbreviateParty(party)
 }
 
-// Keyed by abbreviated name (must match what abbreviateParty() returns)
-const PARTY_COLORS: Record<string, { bg: string; color: string; border: string; countBg: string }> = {
-  'Sinn Féin': { bg: '#D5ECEA', color: '#1E4E49', border: '#5AA39C', countBg: 'rgba(50,103,96,0.18)' },
-  'DUP':      { bg: '#FDEAEA', color: '#7B0D1E', border: '#F4A0A8', countBg: 'rgba(196,30,58,0.12)' },
-  'Alliance': { bg: '#FEF3C7', color: '#78350F', border: '#FDE68A', countBg: 'rgba(120,53,15,0.12)' },
-  'UUP':      { bg: '#DBEAFE', color: '#1E3A8A', border: '#93C5FD', countBg: 'rgba(30,58,138,0.12)' },
-  'SDLP':     { bg: '#C8F0D4', color: '#14532D', border: '#22863A', countBg: 'rgba(20,83,45,0.20)' },
-  'TUV':      { bg: '#E0E7FF', color: '#1E1B4B', border: '#A5B4FC', countBg: 'rgba(30,27,75,0.12)' },
-  'PBP':      { bg: '#FEE2E2', color: '#991B1B', border: '#FCA5A5', countBg: 'rgba(153,27,27,0.12)' },
-  'Ind':      { bg: '#F3F4F6', color: '#374151', border: '#9CA3AF', countBg: 'rgba(55,65,81,0.12)' },
-}
-
 const PARTY_SOLID_COLORS: Record<string, { bg: string; color: string }> = {
   'Sinn Féin':                      { bg: '#326760', color: 'white' },
   'DUP':                            { bg: '#C41E3A', color: 'white' },
@@ -128,25 +116,6 @@ export function partyPillStyleSolid(party: string | null | undefined): { backgro
   const colors = PARTY_SOLID_COLORS[abbr]
   if (!colors) return { background: '#888', color: 'white', border: 'none' }
   return { background: colors.bg, color: colors.color, border: 'none' }
-}
-
-export function partyPillStyle(party: string | null | undefined): { background: string; color: string; border: string } {
-  const abbr = abbreviateParty(party)
-  const colors = PARTY_COLORS[abbr]
-  if (!colors) return { background: '#E2E3E5', color: '#383D41', border: '1px solid #C6C8CA' }
-  return { background: colors.bg, color: colors.color, border: `1px solid ${colors.border}` }
-}
-
-export function partyFilterActiveStyle(party: string | null | undefined): { background: string; color: string; borderColor: string; countBg: string; countColor: string } | null {
-  const c = partyBorderColor(party)
-  if (!c) return null
-  return {
-    background: 'transparent',
-    color: c,
-    borderColor: c,
-    countBg: 'transparent',
-    countColor: c,
-  }
 }
 
 export function partyBorderColor(party: string | null | undefined): string {
@@ -219,14 +188,6 @@ const CONSTITUENCY_ABBREVIATIONS: Record<string, string> = {
 export function formatConstituency(constituency: string | null | undefined): string {
   if (!constituency) return ''
   return CONSTITUENCY_ABBREVIATIONS[constituency] ?? constituency
-}
-
-export function stripPreamble(text: string): string {
-  const stripped = text.replace(
-    /^To ask the (?:First Minister and deputy First Minister|First Minister|deputy First Minister|Minister (?:of|for)(?: the)? [A-Za-z,& ]+?)\s+/i,
-    ''
-  ).trim()
-  return stripped.charAt(0).toUpperCase() + stripped.slice(1)
 }
 
 const NI_PARTY_ORDER = [

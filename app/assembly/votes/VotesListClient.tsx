@@ -1,11 +1,58 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { Vote, CheckCircle2, XCircle, Users, Scale, Megaphone, Stamp, Calendar, SearchX } from 'lucide-react'
 import { formatMonthGroup, monthKey } from '@/lib/format'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import styles from './votes.module.css'
-import { useMandate } from '@/components/MandateContext'
+
+// Same open/close + outside-click + focus-on-open + arrow-key nav behavior as
+// the bills/MLAs list pages' mobile dropdowns (mirrors BillsListClient.tsx's hook).
+function useDropdown() {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const list = listRef.current
+    if (list) {
+      const sel = list.querySelector<HTMLLIElement>('[aria-selected="true"]') ?? list.querySelector<HTMLLIElement>('li')
+      sel?.focus()
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    function onOutside(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [open])
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLLIElement>, onSelect: () => void) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onSelect()
+    } else if (e.key === 'Escape') {
+      setOpen(false)
+      triggerRef.current?.focus()
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      const items = Array.from(listRef.current?.querySelectorAll<HTMLLIElement>('li') ?? [])
+      items[items.indexOf(e.currentTarget) + 1]?.focus()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      const items = Array.from(listRef.current?.querySelectorAll<HTMLLIElement>('li') ?? [])
+      items[items.indexOf(e.currentTarget) - 1]?.focus()
+    }
+  }
+
+  return { open, setOpen, wrapRef, triggerRef, listRef, handleKeyDown }
+}
 
 function getBaseTitle(rawTitle: string): string {
   // Trailing suffix: "Title - Amendment N"
@@ -81,7 +128,6 @@ interface Props {
 }
 
 export default function VotesListClient({ allItems }: Props) {
-  const { mandate } = useMandate()
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [yearFilter, setYearFilter] = useState('ALL')
@@ -90,6 +136,22 @@ export default function VotesListClient({ allItems }: Props) {
 
   const years = Array.from(new Set(allItems.map(i => i.latestDate.slice(0, 4)))).sort((a, b) => b.localeCompare(a))
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const yearDropdown = useDropdown()
+  const typeDropdown = useDropdown()
+  const resultDropdown = useDropdown()
+
+  const typeLabels: Record<typeof typeFilter, string> = {
+    ALL: 'All types',
+    BILLS: 'Bills',
+    MOTIONS: 'Motions',
+    REGULATIONS: 'Regulations',
+  }
+  const resultLabels: Record<typeof resultFilter, string> = {
+    ALL: 'All outcomes',
+    PASSED: 'Passed',
+    FAILED: 'Failed',
+  }
 
   function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value
@@ -118,6 +180,10 @@ export default function VotesListClient({ allItems }: Props) {
     })
     .filter(item => !q || formatDivisionSubject(item.rawTitle ?? item.subject).title.toLowerCase().includes(q))
 
+  const passedCount = filteredItems.filter(i => i.passed === true).length
+  const failedCount = filteredItems.filter(i => i.passed === false).length
+  const crossCommunityCount = filteredItems.filter(i => i.isCrossCommunity).length
+
   const totalByMonth = new Map<string, number>()
   for (const item of filteredItems) {
     const key = monthKey(item.latestDate)
@@ -141,175 +207,345 @@ export default function VotesListClient({ allItems }: Props) {
 
   return (
     <div>
-      {/* Filters */}
-      <div className={styles.filterRow}>
-        <button
-          className={`${styles.filterBtn} ${styles.filterBtnAll} ${yearFilter === 'ALL' && resultFilter === 'ALL' && typeFilter === 'ALL' ? styles.filterBtnActive : ''}`}
-          onClick={() => { setYearFilter('ALL'); setResultFilter('ALL'); setTypeFilter('ALL') }}
-          aria-pressed={yearFilter === 'ALL' && resultFilter === 'ALL' && typeFilter === 'ALL'}
-        >
-          All
-        </button>
-        <div role="group" aria-label="Filter by year" className={styles.yearFilters}>
-          {years.map((y) => (
+      <div className={styles.filterPanel}>
+        {/* Filters */}
+        <div className={styles.filterRow}>
+          <button
+            className={`${styles.filterBtn} ${styles.filterBtnAll} ${yearFilter === 'ALL' && resultFilter === 'ALL' && typeFilter === 'ALL' ? styles.filterBtnActive : ''}`}
+            onClick={() => { setYearFilter('ALL'); setResultFilter('ALL'); setTypeFilter('ALL') }}
+            aria-pressed={yearFilter === 'ALL' && resultFilter === 'ALL' && typeFilter === 'ALL'}
+          >
+            All
+          </button>
+          <div role="group" aria-label="Filter by year" className={styles.yearFilters}>
+            {years.map((y) => (
+              <button
+                key={y}
+                aria-pressed={yearFilter === y}
+                className={`${styles.filterBtn} ${yearFilter === y ? styles.filterBtnActive : ''}`}
+                onClick={() => setYearFilter(y)}
+              >
+                {y}
+              </button>
+            ))}
+          </div>
+          <div className={`${styles.filterDivider} ${styles.yearDivider}`} aria-hidden="true" />
+          <div role="group" aria-label="Filter by type" className={styles.resultGroup}>
             <button
-              key={y}
-              aria-pressed={yearFilter === y}
-              className={`${styles.filterBtn} ${yearFilter === y ? styles.filterBtnActive : ''}`}
-              onClick={() => setYearFilter(y)}
+              aria-pressed={typeFilter === 'BILLS'}
+              className={`${styles.filterBtn} ${typeFilter === 'BILLS' ? styles.filterBtnActive : ''}`}
+              onClick={() => setTypeFilter(f => f === 'BILLS' ? 'ALL' : 'BILLS')}
             >
-              {y}
+              Bills
             </button>
-          ))}
+            <button
+              aria-pressed={typeFilter === 'MOTIONS'}
+              className={`${styles.filterBtn} ${typeFilter === 'MOTIONS' ? styles.filterBtnActive : ''}`}
+              onClick={() => setTypeFilter(f => f === 'MOTIONS' ? 'ALL' : 'MOTIONS')}
+            >
+              Motions
+            </button>
+            <button
+              aria-pressed={typeFilter === 'REGULATIONS'}
+              className={`${styles.filterBtn} ${typeFilter === 'REGULATIONS' ? styles.filterBtnActive : ''}`}
+              onClick={() => setTypeFilter(f => f === 'REGULATIONS' ? 'ALL' : 'REGULATIONS')}
+            >
+              Regulations
+            </button>
+          </div>
+          <div className={styles.filterDivider} aria-hidden="true" />
+          <div role="group" aria-label="Filter by outcome" className={styles.resultGroup}>
+            <button
+              aria-pressed={resultFilter === 'PASSED'}
+              className={`${styles.filterBtn} ${resultFilter === 'PASSED' ? styles.filterBtnActive : ''}`}
+              data-filter="PASSED"
+              onClick={() => setResultFilter(r => r === 'PASSED' ? 'ALL' : 'PASSED')}
+            >
+              Passed
+            </button>
+            <button
+              aria-pressed={resultFilter === 'FAILED'}
+              className={`${styles.filterBtn} ${resultFilter === 'FAILED' ? styles.filterBtnActive : ''}`}
+              data-filter="FAILED"
+              onClick={() => setResultFilter(r => r === 'FAILED' ? 'ALL' : 'FAILED')}
+            >
+              Failed
+            </button>
+          </div>
         </div>
-        <div className={`${styles.filterDivider} ${styles.yearDivider}`} aria-hidden="true" />
-        <div role="group" aria-label="Filter by type" className={styles.resultGroup}>
-          <button
-            aria-pressed={typeFilter === 'BILLS'}
-            className={`${styles.filterBtn} ${typeFilter === 'BILLS' ? styles.filterBtnActive : ''}`}
-            onClick={() => setTypeFilter(f => f === 'BILLS' ? 'ALL' : 'BILLS')}
-          >
-            Bills
-          </button>
-          <button
-            aria-pressed={typeFilter === 'MOTIONS'}
-            className={`${styles.filterBtn} ${typeFilter === 'MOTIONS' ? styles.filterBtnActive : ''}`}
-            onClick={() => setTypeFilter(f => f === 'MOTIONS' ? 'ALL' : 'MOTIONS')}
-          >
-            Motions
-          </button>
-          <button
-            aria-pressed={typeFilter === 'REGULATIONS'}
-            className={`${styles.filterBtn} ${typeFilter === 'REGULATIONS' ? styles.filterBtnActive : ''}`}
-            onClick={() => setTypeFilter(f => f === 'REGULATIONS' ? 'ALL' : 'REGULATIONS')}
-          >
-            Regulations
-          </button>
+
+        {/* Mobile-only dropdowns — same trigger/list shape as the bills/MLAs pages' mobile dropdowns. */}
+        <div className={styles.mobileFilterDropdowns}>
+          <div className={styles.dropdownWrap} ref={yearDropdown.wrapRef}>
+            <button
+              ref={yearDropdown.triggerRef}
+              type="button"
+              className={styles.dropdownTrigger}
+              onClick={() => yearDropdown.setOpen(o => !o)}
+              aria-haspopup="listbox"
+              aria-expanded={yearDropdown.open}
+            >
+              {yearFilter === 'ALL' ? 'All years' : yearFilter}
+              <svg
+                className={`${styles.dropdownTriggerChevron} ${yearDropdown.open ? styles.dropdownTriggerChevronOpen : ''}`}
+                width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+              >
+                <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+            {yearDropdown.open && (
+              <ul ref={yearDropdown.listRef} className={styles.dropdownList} role="listbox">
+                {['ALL', ...years].map(y => {
+                  const select = () => { setYearFilter(y); yearDropdown.setOpen(false) }
+                  return (
+                    <li
+                      key={y}
+                      role="option"
+                      tabIndex={0}
+                      aria-selected={yearFilter === y}
+                      className={`${styles.dropdownItem} ${yearFilter === y ? styles.dropdownItemSelected : ''}`}
+                      onClick={select}
+                      onKeyDown={e => yearDropdown.handleKeyDown(e, select)}
+                    >
+                      {y === 'ALL' ? 'All years' : y}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+
+          <div className={styles.dropdownWrap} ref={typeDropdown.wrapRef}>
+            <button
+              ref={typeDropdown.triggerRef}
+              type="button"
+              className={styles.dropdownTrigger}
+              onClick={() => typeDropdown.setOpen(o => !o)}
+              aria-haspopup="listbox"
+              aria-expanded={typeDropdown.open}
+            >
+              {typeLabels[typeFilter]}
+              <svg
+                className={`${styles.dropdownTriggerChevron} ${typeDropdown.open ? styles.dropdownTriggerChevronOpen : ''}`}
+                width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+              >
+                <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+            {typeDropdown.open && (
+              <ul ref={typeDropdown.listRef} className={styles.dropdownList} role="listbox">
+                {(['ALL', 'BILLS', 'MOTIONS', 'REGULATIONS'] as const).map(t => {
+                  const select = () => { setTypeFilter(t); typeDropdown.setOpen(false) }
+                  return (
+                    <li
+                      key={t}
+                      role="option"
+                      tabIndex={0}
+                      aria-selected={typeFilter === t}
+                      className={`${styles.dropdownItem} ${typeFilter === t ? styles.dropdownItemSelected : ''}`}
+                      onClick={select}
+                      onKeyDown={e => typeDropdown.handleKeyDown(e, select)}
+                    >
+                      {typeLabels[t]}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+
+          <div className={styles.dropdownWrap} ref={resultDropdown.wrapRef}>
+            <button
+              ref={resultDropdown.triggerRef}
+              type="button"
+              className={styles.dropdownTrigger}
+              onClick={() => resultDropdown.setOpen(o => !o)}
+              aria-haspopup="listbox"
+              aria-expanded={resultDropdown.open}
+            >
+              {resultLabels[resultFilter]}
+              <svg
+                className={`${styles.dropdownTriggerChevron} ${resultDropdown.open ? styles.dropdownTriggerChevronOpen : ''}`}
+                width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+              >
+                <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+            {resultDropdown.open && (
+              <ul ref={resultDropdown.listRef} className={styles.dropdownList} role="listbox">
+                {(['ALL', 'PASSED', 'FAILED'] as const).map(r => {
+                  const select = () => { setResultFilter(r); resultDropdown.setOpen(false) }
+                  return (
+                    <li
+                      key={r}
+                      role="option"
+                      tabIndex={0}
+                      aria-selected={resultFilter === r}
+                      className={`${styles.dropdownItem} ${resultFilter === r ? styles.dropdownItemSelected : ''}`}
+                      onClick={select}
+                      onKeyDown={e => resultDropdown.handleKeyDown(e, select)}
+                    >
+                      {resultLabels[r]}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
         </div>
-        <div className={styles.filterDivider} aria-hidden="true" />
-        <div role="group" aria-label="Filter by outcome" className={styles.resultGroup}>
-          <button
-            aria-pressed={resultFilter === 'PASSED'}
-            className={`${styles.filterBtn} ${resultFilter === 'PASSED' ? styles.filterBtnActive : ''}`}
-            data-filter="PASSED"
-            onClick={() => setResultFilter(r => r === 'PASSED' ? 'ALL' : 'PASSED')}
-          >
-            Passed
-          </button>
-          <button
-            aria-pressed={resultFilter === 'FAILED'}
-            className={`${styles.filterBtn} ${resultFilter === 'FAILED' ? styles.filterBtnActive : ''}`}
-            data-filter="FAILED"
-            onClick={() => setResultFilter(r => r === 'FAILED' ? 'ALL' : 'FAILED')}
-          >
-            Failed
-          </button>
+
+        {/* Search */}
+        <div className={styles.searchWrap}>
+          <label htmlFor="vote-search" className="sr-only">Search votes</label>
+          <input
+            id="vote-search"
+            type="search"
+            placeholder="Search divisions…"
+            value={query}
+            onChange={handleSearch}
+            className={styles.search}
+          />
         </div>
       </div>
 
-      {/* Search */}
-      <div className={styles.searchWrap}>
-        <label htmlFor="vote-search" className="sr-only">Search votes</label>
-        <input
-          id="vote-search"
-          type="search"
-          placeholder="Search divisions…"
-          value={query}
-          onChange={handleSearch}
-          className={styles.search}
-        />
+      {/* Key figures — live totals for the current filter/search selection. */}
+      <div className={styles.statStrip}>
+        <div className={styles.statCell}>
+          <div className={styles.statLabelRow}>
+            <span className={styles.statLabel}>Total divisions</span>
+            <Vote className={styles.statIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+          </div>
+          <div className={styles.statVal}>{filteredItems.length}</div>
+        </div>
+        <div className={styles.statCell} data-tone="success">
+          <div className={styles.statLabelRow}>
+            <span className={styles.statLabel}>Passed</span>
+            <CheckCircle2 className={styles.statIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+          </div>
+          <div className={styles.statVal}>{passedCount}</div>
+        </div>
+        <div className={styles.statCell} data-tone="error">
+          <div className={styles.statLabelRow}>
+            <span className={styles.statLabel}>Failed</span>
+            <XCircle className={styles.statIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+          </div>
+          <div className={styles.statVal}>{failedCount}</div>
+        </div>
+        <div className={styles.statCell} data-tone="warm">
+          <div className={styles.statLabelRow}>
+            <span className={styles.statLabel}>Cross-community</span>
+            <Users className={styles.statIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+          </div>
+          <div className={styles.statVal}>{crossCommunityCount}</div>
+        </div>
       </div>
-
-      {/* Result count */}
-      <p className={styles.resultCount}>
-        <strong>{filteredItems.length}</strong> division{filteredItems.length !== 1 ? 's' : ''}
-        {yearFilter !== 'ALL' ? ` in ${yearFilter}` : <> since <strong>{mandate.startLabel}</strong></>}
-        {q ? ` matching "${q}"` : ''}
-      </p>
 
       {filteredItems.length === 0 && (
-        <p className={styles.emptyState}>No divisions match your search.</p>
+        <p className={styles.emptyState}>
+          <SearchX className={styles.emptyStateIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+          No divisions match your search.
+        </p>
       )}
 
-      {monthGroups.map((group, gi) => (
-        <React.Fragment key={group.label}>
-          {gi > 0 && <hr className={styles.monthRule} />}
-          <section className={styles.monthSection} aria-label={`${group.label} — ${group.totalCount} division${group.totalCount !== 1 ? 's' : ''}`}>
-            <h2 className={styles.monthHeading}>
-              {group.label}
-              <span className={styles.monthCount} aria-hidden="true">{group.totalCount}</span>
-            </h2>
-            <div className={styles.divList}>
-              {buildGroups(group.items).map((g) => {
-                const { mainItem, baseTitle, items: divItems } = g
-                const d = new Date(mainItem.latestDate)
-                const day = d.getDate()
-                const monthYear = `${d.toLocaleString('en', { month: 'short' }).toUpperCase()} · ${d.getFullYear()}`
-                return (
-                  <div key={g.mainItem.key} className={`${styles.divRow} ${styles.divGrouped}`}>
-                    <div className={styles.divDate}>
-                      <strong className={styles.divDay}>{day}</strong>
-                      <span className={styles.divMonthYear}>{monthYear}</span>
-                    </div>
-                    <div className={styles.divMain}>
-                      <div className={styles.divTitle}>{formatDivisionSubject(baseTitle).title}</div>
-                      {(mainItem.isBill || mainItem.isCrossCommunity || mainItem.isStatutory) && (
-                        <div className={styles.divSub}>
-                          {mainItem.isBill && <span className={styles.billTag}>Bill</span>}
-                          {mainItem.isStatutory && <span className={styles.srPill}>Statutory Rules</span>}
-                          {mainItem.isCrossCommunity && <span className={styles.flexBreak} />}
-                          {mainItem.isCrossCommunity && <span className={styles.xcPill}>Cross-community</span>}
+      {monthGroups.map((group) => (
+        <section key={group.label} className={styles.monthSection} aria-label={`${group.label} — ${group.totalCount} division${group.totalCount !== 1 ? 's' : ''}`}>
+          <h2 className={styles.monthHeading}>
+            <Calendar className={styles.monthHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+            {group.label}
+            <span className={styles.monthCount} aria-hidden="true">{group.totalCount}</span>
+          </h2>
+          <div className={styles.divList}>
+            {buildGroups(group.items).map((g) => {
+              const { mainItem, baseTitle, items: divItems } = g
+              const d = new Date(mainItem.latestDate)
+              const day = d.getDate()
+              const month = d.toLocaleString('en', { month: 'short' }).toUpperCase()
+              const year = d.getFullYear()
+              return (
+                <div key={g.mainItem.key} className={`${styles.divRow} ${styles.divGrouped}`}>
+                  <div className={styles.divDate}>
+                    <strong className={styles.divDay}>{day}</strong>
+                    <span className={styles.divMonthYear}>
+                      <span>{month}</span>
+                      <span>{year}</span>
+                    </span>
+                  </div>
+                  <div className={styles.divMain}>
+                    <div className={styles.divTitleRow}>
+                      <div className={styles.divTitleMain}>
+                        {mainItem.isBill ? (
+                          <span className={styles.billTag}>Bill</span>
+                        ) : mainItem.isStatutory ? (
+                          <span className={styles.srPill}>Statutory Rules</span>
+                        ) : (
+                          <span className={styles.motionTag}>Motion</span>
+                        )}
+                        <div className={styles.divTitle}>
+                          {mainItem.isBill ? (
+                            <Scale className={styles.divTitleIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+                          ) : mainItem.isStatutory ? (
+                            <Stamp className={styles.divTitleIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+                          ) : (
+                            <Megaphone className={styles.divTitleIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+                          )}
+                          {formatDivisionSubject(baseTitle).title}
                         </div>
-                      )}
-                      <div className={styles.divOutcomeList}>
-                        {(() => {
-                          const anyAmendmentPassed = divItems.some(
-                            i => getAmendmentNumber(i.rawTitle ?? i.subject) !== null && i.passed === true
-                          )
-                          return divItems.map((item) => {
-                          const amendNum = getAmendmentNumber(item.rawTitle ?? item.subject)
-                          const { subtitle: itemSubtitle } = formatDivisionSubject(item.rawTitle ?? item.subject)
-                          const isAsAmended = amendNum === null && (anyAmendmentPassed || /as amended/i.test(item.outcome ?? ''))
-                          const label = amendNum !== null ? `Amendment ${amendNum}` : (isAsAmended ? 'Motion (as amended)' : (itemSubtitle ?? 'Motion'))
-                          const ayes = item.totalAyes ?? 0
-                          const noes = item.totalNoes ?? 0
-                          const total = ayes + noes
-                          const ayePct = total > 0 ? (ayes / total) * 100 : 50
-                          const noePct = total > 0 ? (noes / total) * 100 : 50
-                          return (
-                            <Link key={item.key} href={item.href} className={`${styles.divOutcomeRow} div-outcome-row`}>
-                              <span className={styles.divOutcomeLabel}>{label}</span>
-
-                              {total > 0 && (
-                                <div className={styles.divOutcomeBar}>
-                                  <div className={styles.divBarTrack}>
-                                    <div className={styles.divBarAye} style={{ width: `${ayePct}%` }}>
-                                      {ayePct >= 15 && <span className={styles.divBarAyeLabel}>{ayes} Aye</span>}
-                                    </div>
-                                    <div className={styles.divBarNo} style={{ width: `${noePct}%` }}>
-                                      {noePct >= 15 && <span className={styles.divBarNoLabel}>{noes} No</span>}
-                                    </div>
-                                  </div>
-                                  <div className={styles.divCounts}>
-                                    <span className={styles.divCountAye}>AYE {ayes}</span>
-                                    <span className={styles.divCountNo}>NO {noes}</span>
-                                  </div>
-                                </div>
-                              )}
-                              {item.passed === true && <span className="pill pass">Passed</span>}
-                              {item.passed === false && <span className="pill fail">Failed</span>}
-                            </Link>
-                          )
-                        })
-                        })()}
                       </div>
                     </div>
+                    <div className={styles.divOutcomeList}>
+                      {(() => {
+                        const anyAmendmentPassed = divItems.some(
+                          i => getAmendmentNumber(i.rawTitle ?? i.subject) !== null && i.passed === true
+                        )
+                        return divItems.map((item) => {
+                        const amendNum = getAmendmentNumber(item.rawTitle ?? item.subject)
+                        const { subtitle: itemSubtitle } = formatDivisionSubject(item.rawTitle ?? item.subject)
+                        const isAsAmended = amendNum === null && (anyAmendmentPassed || /as amended/i.test(item.outcome ?? ''))
+                        const label = amendNum !== null ? `Amendment ${amendNum}` : (isAsAmended ? 'Motion (as amended)' : (itemSubtitle ?? 'Motion'))
+                        const ayes = item.totalAyes ?? 0
+                        const noes = item.totalNoes ?? 0
+                        const total = ayes + noes
+                        const ayePct = total > 0 ? (ayes / total) * 100 : 50
+                        const noePct = total > 0 ? (noes / total) * 100 : 50
+                        return (
+                          <Link key={item.key} href={item.href} className={styles.divOutcomeRow}>
+                            <span className={styles.divOutcomeLabel}>
+                              {label}
+                              {item.isCrossCommunity && (
+                                <span className={styles.xcBadge} title="Cross-community vote">
+                                  <Users size={11} strokeWidth={2} aria-hidden="true" />
+                                  <span className="sr-only">Cross-community</span>
+                                </span>
+                              )}
+                            </span>
+
+                            {total > 0 && (
+                              <div className={styles.divOutcomeBar}>
+                                <div className={styles.divBarWrap}>
+                                  <span className={styles.divCountAye}>{ayes}</span>
+                                  <div className={styles.divBarTrack}>
+                                    <div className={styles.divBarAye} style={{ width: `${ayePct}%` }} />
+                                    <div className={styles.divBarNo} style={{ width: `${noePct}%` }} />
+                                  </div>
+                                  <span className={styles.divCountNo}>{noes}</span>
+                                </div>
+                              </div>
+                            )}
+                            <div className={styles.divOutcomePillCol}>
+                              {item.passed === true && <span className={`${styles.outcomePill} ${styles.outcomePass}`}>Passed</span>}
+                              {item.passed === false && <span className={`${styles.outcomePill} ${styles.outcomeFail}`}>Failed</span>}
+                            </div>
+                          </Link>
+                        )
+                      })
+                      })()}
+                    </div>
                   </div>
-                )
-              })}
-            </div>
-          </section>
-        </React.Fragment>
+                </div>
+              )
+            })}
+          </div>
+        </section>
       ))}
 
     </div>

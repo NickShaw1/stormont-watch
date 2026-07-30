@@ -12,5 +12,5 @@ export const metadata: Metadata = {
 }
 
 export default function ArchiveMlasPage() {
-  return <MlasPageBody mandate={mandate} basePath="/archive/2027-2032" />
+  return <MlasPageBody mandate={mandate} />
 }

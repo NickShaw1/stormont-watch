@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Scale, CalendarClock, Activity, CheckCircle2 } from 'lucide-react'
 import { getAllBills, getBillsProgressedThisWeek } from '@/lib/db/queries'
 import { groupProgressedBills } from '@/lib/bills/progressedThisWeekProgress'
 import BillsListClient from './BillsListClient'
@@ -17,6 +18,7 @@ export interface BillItem {
   passed: boolean | null
   royalAssentDate: string | null
   actTitle: string | null
+  legislationUrl: string | null
   category: 'scheduled' | 'in-progress' | 'completed'
 }
 
@@ -32,11 +34,7 @@ function hasFinalStageFailed(b: { final_stage_has_division: boolean | null; fina
   return b.final_stage_has_division === true && /negatived|fell/i.test(b.final_stage_outcome ?? '')
 }
 
-/**
- * Shared body for the bills list — rendered by both the live route (current mandate,
- * basePath '') and the archive route (`/archive/<id>`). `mandate` drives the queries
- * and copy; `basePath` prefixes internal links.
- */
+// Shared by the live route and the archive route; mandate/basePath vary per route.
 export default async function BillsPageBody({
   mandate,
   basePath,
@@ -71,6 +69,7 @@ const isCompleted = (b: typeof allBills[number]) =>
       passed,
       royalAssentDate: b.royal_assent_date,
       actTitle: b.act_title,
+      legislationUrl: b.legislation_url,
       category,
     }
   }
@@ -100,26 +99,42 @@ const isCompleted = (b: typeof allBills[number]) =>
 
   return (
     <div className="container">
-      <header className={`page-header ${styles.pageHeader}`}>
-        <span className="eyebrow">Legislation</span>
-        <h1>Bills &amp; Legislation</h1>
+      <header className={styles.pageHeader}>
+        <span className={styles.pageHeaderEyebrow}>Legislation</span>
+        <h1 className={styles.pageHeaderTitle}>
+          <Scale className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
+          Bills &amp; Legislation
+        </h1>
         <p className={styles.lede}>Tracking every Executive, Private Member and Committee bill introduced since {mandate.startLabel}, from First Reading through to Royal Assent.</p>
-        <div className={styles.metaBar}>
-          <div className={styles.metaBarItem}>
-            <span className={styles.metaBarKey}>Total bills</span>
-            <span className={styles.metaBarVal}>{total}</span>
+
+        <div className={styles.statStrip}>
+          <div className={styles.statCell}>
+            <div className={styles.statLabelRow}>
+              <span className={styles.statLabel}>Total bills</span>
+              <Scale className={styles.statIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+            </div>
+            <div className={styles.statVal}>{total}</div>
           </div>
-          <div className={styles.metaBarItem}>
-            <span className={styles.metaBarKey}>Scheduled</span>
-            <span className={styles.metaBarVal}>{scheduled.length}</span>
+          <div className={styles.statCell} data-tone="warm">
+            <div className={styles.statLabelRow}>
+              <span className={styles.statLabel}>Scheduled</span>
+              <CalendarClock className={styles.statIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+            </div>
+            <div className={styles.statVal}>{scheduled.length}</div>
           </div>
-          <div className={styles.metaBarItem}>
-            <span className={styles.metaBarKey}>In progress</span>
-            <span className={styles.metaBarVal}>{inProgress.length}</span>
+          <div className={styles.statCell} data-tone="success">
+            <div className={styles.statLabelRow}>
+              <span className={styles.statLabel}>In progress</span>
+              <Activity className={styles.statIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+            </div>
+            <div className={styles.statVal}>{inProgress.length}</div>
           </div>
-          <div className={styles.metaBarItem}>
-            <span className={styles.metaBarKey}>Completed</span>
-            <span className={styles.metaBarVal}>{completed.length}</span>
+          <div className={styles.statCell} data-tone="neutral">
+            <div className={styles.statLabelRow}>
+              <span className={styles.statLabel}>Completed</span>
+              <CheckCircle2 className={styles.statIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+            </div>
+            <div className={styles.statVal}>{completed.length}</div>
           </div>
         </div>
       </header>
@@ -131,15 +146,15 @@ const isCompleted = (b: typeof allBills[number]) =>
         progressedThisWeek={progressedThisWeek}
       />
 
-      <hr className="section-rule" />
-
-      {mandate.hadEarlySuspension && (
-        <p className={styles.notice}>The Assembly did not sit between May 2022 and February 2024. No legislation progressed during this period.</p>
-      )}
-      <p className={styles.notice} style={{ marginTop: 'var(--s-3)', marginBottom: 'var(--s-10)' }}>
-        Stage information is sourced from the NI Assembly Open Data API. Some stages may not be reflected immediately.{' '}
-        <Link href={`${basePath}/assembly/legislation-guide`}>Not sure what a stage means?</Link>
-      </p>
+      <div className={`${styles.noticeBlock} ${styles.sectionLast}`}>
+        {mandate.hadEarlySuspension && (
+          <p className={styles.notice}>The Assembly did not sit between May 2022 and February 2024. No legislation progressed during this period.</p>
+        )}
+        <p className={styles.notice}>
+          Stage information is sourced from the NI Assembly Open Data API. Some stages may not be reflected immediately.{' '}
+          <Link href={`${basePath}/assembly/legislation-guide`}>Not sure what a stage means?</Link>
+        </p>
+      </div>
     </div>
   )
 }

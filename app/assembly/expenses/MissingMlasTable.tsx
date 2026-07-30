@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
@@ -18,7 +17,7 @@ interface MissingMla {
 }
 
 function serviceLabel(mandateStart: string | null): string {
-  if (!mandateStart) return '—'
+  if (!mandateStart) return '-'
   const start = new Date(mandateStart)
   const now = new Date()
   const totalMonths = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())
@@ -31,81 +30,63 @@ function serviceLabel(mandateStart: string | null): string {
 
 export default function MissingMlasTable({ missing }: { missing: MissingMla[] }) {
   const { basePath } = useMandate()
-  const router = useRouter()
 
   return (
-    <table className={styles.table} aria-label="MLAs with no expenses">
-      <colgroup>
-        <col className={styles.colRank} />
-        <col className={styles.colMla} />
-        <col className={`${styles.colParty} ${styles.hideMobile}`} />
-        <col className={`${styles.colConstituency} ${styles.hideMobile} ${styles.hideTablet}`} />
-        <col className={`${styles.colService} ${styles.hideMobile} ${styles.hideTablet}`} />
-        <col className={styles.colExpenses} />
-      </colgroup>
-      <thead>
-        <tr>
-          <th scope="col">#</th>
-          <th scope="col">MLA</th>
-          <th scope="col" className={styles.hideMobile}>Party</th>
-          <th scope="col" className={`${styles.hideMobile} ${styles.hideTablet}`}>Constituency</th>
-          <th scope="col" className={`${styles.hideMobile} ${styles.hideTablet}`} title="Years and months of service since mandate start">Service</th>
-          <th scope="col">Expenses</th>
-        </tr>
-      </thead>
-      <tbody>
+    <>
+      <div className={styles.rankCardHead} aria-hidden="true">
+        <span className={styles.rankCardHeadRank}>#</span>
+        <span className={styles.rankCardHeadMain}>MLA</span>
+        <span className={styles.rankCardHeadParty}>Party</span>
+        <span className={styles.rankCardHeadConstituency}>Constituency</span>
+        <span className={styles.rankCardHeadService} title="Years and months of service since mandate start">Service</span>
+        <span className={styles.rankCardHeadValue}>Expenses</span>
+      </div>
+
+      <div className={styles.rankCardList} role="list" aria-label="MLAs with no expenses">
         {missing.map(mla => (
-          <tr
+          <Link
             key={mla.person_id}
-            className={styles.tableRow}
-            style={{ cursor: 'pointer' }}
-            onClick={() => router.push(`${basePath}/assembly/mlas/${mla.person_id}`)}
+            href={`${basePath}/assembly/mlas/${mla.person_id}`}
+            className={styles.rankCard}
+            aria-label={`${formatMemberName(mla.full_name)}${mla.party ? `, ${mla.party}` : ''}${mla.constituency ? `, ${formatConstituency(mla.constituency)}` : ''}`}
           >
-            <td className={styles.tdRank} style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>—</td>
-            <td>
-              <div className={styles.mlaCell}>
-                <span className={styles.photoDesktop}>
-                  <MlaPhoto name={mla.full_name} imgUrl={mla.img_url ?? ''} size={36} decorative square />
-                </span>
-                <span className={styles.photoMobile}>
-                  <MlaPhoto name={mla.full_name} imgUrl={mla.img_url ?? ''} size={50} decorative square />
-                </span>
-                <div style={{ minWidth: 0 }}>
-                  <Link href={`${basePath}/assembly/mlas/${mla.person_id}`} className={styles.mlaName}>
-                    {formatMemberName(mla.full_name)}
-                  </Link>
-                  {mla.party && (
-                    <span
-                      className={`party-pill ${styles.mobilePill}`}
-                      data-party={abbreviateParty(mla.party)}
-                    >
-                      <PartyName party={mla.party} />
-                    </span>
-                  )}
-                </div>
+            <span className={styles.rankCardRank} aria-hidden="true">-</span>
+            <div className={styles.rankCardMain}>
+              <div className={styles.rankCardPhoto}>
+                <MlaPhoto name={mla.full_name} imgUrl={mla.img_url ?? ''} size={44} decorative square personId={mla.person_id} />
               </div>
-            </td>
-            <td className={`${styles.tdParty} ${styles.hideMobile}`}>
+              <div className={styles.rankCardInfo}>
+                <span className={styles.rankCardName}>{formatMemberName(mla.full_name)}</span>
+                {mla.party && (
+                  <span className={`party-pill ${styles.mobilePill}`} data-party={abbreviateParty(mla.party)}>
+                    <PartyName party={mla.party} />
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <span className={styles.rankCardParty}>
               {mla.party && (
                 <span className="party-pill" data-party={abbreviateParty(mla.party)}>
                   <PartyName party={mla.party} />
                 </span>
               )}
-            </td>
-            <td className={`${styles.tdConstituency} ${styles.hideMobile} ${styles.hideTablet}`}>
-              {mla.constituency ? formatConstituency(mla.constituency) : '—'}
-            </td>
-            <td className={`${styles.tdService} ${styles.hideMobile} ${styles.hideTablet}`}>
+            </span>
+
+            <span className={styles.rankCardConstituency}>
+              {mla.constituency ? formatConstituency(mla.constituency) : '-'}
+            </span>
+
+            <span className={styles.rankCardService}>
               {serviceLabel(mla.mandate_start)}
-            </td>
-            <td className={styles.tdExpenses}>
-              <div className={styles.expensesInner}>
-                <span className={styles.expensesValue} style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>No data</span>
-              </div>
-            </td>
-          </tr>
+            </span>
+
+            <span className={styles.rankCardValueCol}>
+              <span className={styles.rankCardValue} style={{ color: 'var(--sw-text-secondary)', fontWeight: 400 }}>No data</span>
+            </span>
+          </Link>
         ))}
-      </tbody>
-    </table>
+      </div>
+    </>
   )
 }

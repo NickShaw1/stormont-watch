@@ -103,59 +103,56 @@ export default function ConstituencySelector({ mlasByConstituency }: { mlasByCon
       </div>
 
       <div className={styles.search}>
-        <div>
-          <h3 className={styles.searchTitle}>Select a <em className={styles.searchTitleEm}>constituency.</em></h3>
+        <div className={styles.searchHead}>
           <p className={styles.searchDesc}>Every constituency in Northern Ireland returns five MLAs.</p>
         </div>
 
-        <div className={styles.dropdownWrap} ref={dropdownRef}>
-          <button
-            ref={triggerRef}
-            className={styles.trigger}
-            onClick={() => setDropdownOpen(o => !o)}
-            aria-haspopup="listbox"
-            aria-expanded={dropdownOpen}
-          >
-            {selected
-              ? <span>{selected}</span>
-              : <span className={styles.triggerPlaceholder}>Select a constituency...</span>
-            }
-            <svg
-              className={`${styles.triggerChevron} ${dropdownOpen ? styles.triggerChevronOpen : ''}`}
-              width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+        <div className={styles.dropdownRow}>
+          <div className={styles.dropdownWrap} ref={dropdownRef}>
+            <button
+              ref={triggerRef}
+              className={styles.trigger}
+              onClick={() => setDropdownOpen(o => !o)}
+              aria-haspopup="listbox"
+              aria-expanded={dropdownOpen}
             >
-              <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
+              {selected
+                ? <span className={styles.triggerLabel}>{selected}</span>
+                : <span className={`${styles.triggerLabel} ${styles.triggerPlaceholder}`}>Select a constituency...</span>
+              }
+              <svg
+                className={`${styles.triggerChevron} ${dropdownOpen ? styles.triggerChevronOpen : ''}`}
+                width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
+              >
+                <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
 
-          {dropdownOpen && (
-            <ul ref={listRef} className={styles.dropdownList} role="listbox">
-              {CONSTITUENCIES.map(c => (
-                <li
-                  key={c}
-                  role="option"
-                  tabIndex={0}
-                  aria-selected={c === selected}
-                  className={`${styles.dropdownItem} ${c === selected ? styles.dropdownItemSelected : ''}`}
-                  onClick={() => handleSelect(c)}
-                  onKeyDown={e => handleKeyDown(e, c)}
-                >
-                  {c}
-                </li>
-              ))}
-            </ul>
+            {dropdownOpen && (
+              <ul ref={listRef} className={styles.dropdownList} role="listbox">
+                {CONSTITUENCIES.map(c => (
+                  <li
+                    key={c}
+                    role="option"
+                    tabIndex={0}
+                    aria-selected={c === selected}
+                    className={`${styles.dropdownItem} ${c === selected ? styles.dropdownItemSelected : ''}`}
+                    onClick={() => handleSelect(c)}
+                    onKeyDown={e => handleKeyDown(e, c)}
+                  >
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {selected && (
+            <button className={styles.clearBtn} onClick={() => setSelected(null)}>Clear</button>
           )}
         </div>
 
-        {selected && (
-          <>
-            <div className={styles.selectedBar}>
-              <span className={styles.selectedName}>{selected}</span>
-              <button className={styles.clearBtn} onClick={() => setSelected(null)}>Clear</button>
-            </div>
-            <MlaResults mlas={mlasByConstituency[selected] ?? []} error={fetchError} />
-          </>
-        )}
+        {selected && <MlaResults mlas={mlasByConstituency[selected] ?? []} error={fetchError} />}
       </div>
     </div>
   )
@@ -181,7 +178,6 @@ function MlaResults({ mlas, error }: { mlas: MLA[]; error: boolean }) {
               {abbreviateParty(mla.party)}
             </span>
           </div>
-          <span className={styles.mlaArrow}>→</span>
         </Link>
       ))}
     </div>

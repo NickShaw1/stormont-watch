@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { TrendingUp, TrendingDown } from 'lucide-react'
 import { partyBorderColor, abbreviateParty } from '@/lib/format'
 import styles from './stats.module.css'
 
@@ -104,8 +105,8 @@ export default function AllPartyAttendanceChart({ data }: { data: TrendPoint[] }
               y: {
                 min: 0,
                 max: 100,
-                grid: { color: 'rgba(0,0,0,0.06)' },
-                ticks: { font: { size: 11 }, callback: (v) => `${v}%` },
+                grid: { color: 'rgba(101,107,114,0.15)' },
+                ticks: { font: { size: 11 }, color: '#656b72', callback: (v) => `${v}%` },
               },
               x: {
                 grid: { display: false },
@@ -148,26 +149,32 @@ export default function AllPartyAttendanceChart({ data }: { data: TrendPoint[] }
     <div>
       {/* Summary cards */}
       {latest && (
-        <div className={styles.overviewGrid} style={{ marginBottom: 'var(--s-5)' }}>
+        <div className={styles.glanceBarTwo} style={{ marginBottom: 'var(--s-5)' }}>
           {latest.highest && (
-            <div className={styles.overviewCard}>
-              <span className={styles.overviewLabel}>Highest attendance</span>
-              <span className={styles.overviewValue} style={{ color: 'var(--forest)' }}>
+            <div className={styles.glanceCell} style={{ borderTopColor: 'var(--sw-success)', background: 'color-mix(in srgb, var(--sw-success) 12%, var(--sw-surface))' }}>
+              <div className={styles.glanceCellLabelRow}>
+                <span className={styles.glanceCellLabel} style={{ color: 'var(--sw-success)' }}>Highest attendance: {latest.month}</span>
+                <TrendingUp className={styles.glanceCellIcon} style={{ color: 'var(--sw-success)' }} size={19} strokeWidth={1.75} aria-hidden="true" />
+              </div>
+              <span className={styles.glanceCellValue} style={{ color: 'var(--sw-success)' }}>
                 {latest.highest.pct}%
               </span>
-              <span className={styles.overviewMeta}>
-                {abbreviateParty(latest.highest.party)} &middot; {latest.month}
+              <span className={styles.glanceCellMeta}>
+                {abbreviateParty(latest.highest.party)}
               </span>
             </div>
           )}
           {latest.lowest && latest.lowest.party !== latest.highest?.party && (
-            <div className={styles.overviewCard}>
-              <span className={styles.overviewLabel}>Lowest attendance</span>
-              <span className={styles.overviewValue} style={{ color: 'var(--crimson)' }}>
+            <div className={styles.glanceCell} style={{ borderTopColor: 'var(--sw-error)', background: 'color-mix(in srgb, var(--sw-error) 12%, var(--sw-surface))' }}>
+              <div className={styles.glanceCellLabelRow}>
+                <span className={styles.glanceCellLabel} style={{ color: 'var(--sw-error)' }}>Lowest attendance: {latest.month}</span>
+                <TrendingDown className={styles.glanceCellIcon} style={{ color: 'var(--sw-error)' }} size={19} strokeWidth={1.75} aria-hidden="true" />
+              </div>
+              <span className={styles.glanceCellValue} style={{ color: 'var(--sw-error)' }}>
                 {latest.lowest.pct}%
               </span>
-              <span className={styles.overviewMeta}>
-                {abbreviateParty(latest.lowest.party)} &middot; {latest.month}
+              <span className={styles.glanceCellMeta}>
+                {abbreviateParty(latest.lowest.party)}
               </span>
             </div>
           )}

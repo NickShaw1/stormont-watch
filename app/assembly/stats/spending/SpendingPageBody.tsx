@@ -1,4 +1,7 @@
 import Link from 'next/link'
+import Image from 'next/image'
+import { PoundSterling, Wallet, Receipt, Landmark, TrendingUp, TrendingDown, Banknote, PiggyBank, ArrowUpWideNarrow, ArrowDownWideNarrow, ScrollText, Users, UserCheck, Coins, Crown, Sigma } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import {
   getMlaLeaderboard,
   getExpensesLeagueTable,
@@ -10,8 +13,7 @@ import {
   getTotalExpensesPerMember,
   getAllMandateMembers,
 } from '@/lib/db/queries'
-import { calculateMandateEarnings, getCurrentAnnualSalary, apiRoleToSalaryRole, salaryRatesPublished, type RoleInterval } from '@/lib/salaries'
-import MlaPhoto from '@/components/MlaPhoto'
+import { calculateMandateEarnings, getCurrentAnnualSalary, apiRoleToSalaryRole, salaryRatesPublished, hasServedOneYear, type RoleInterval } from '@/lib/salaries'
 import { formatMemberName, partyBorderColor, abbreviateParty } from '@/lib/format'
 import PartyName from '@/components/PartyName'
 import StatsBreadcrumb from '../StatsBreadcrumb'
@@ -104,7 +106,7 @@ export default async function SpendingPageBody({
 
   const costRowsForLeaderboard = overallCostRows.filter(r => {
     const m = allMandateMembers.find(m => m.personId === r.personId)
-    return m?.isCurrent && m.mandateStart
+    return m?.isCurrent && m.mandateStart && hasServedOneYear(m.mandateStart, today)
   })
   const mostCostly5 = costRowsForLeaderboard.slice(0, 5)
   const leastCostly5 = [...costRowsForLeaderboard].reverse().slice(0, 5)
@@ -120,14 +122,19 @@ export default async function SpendingPageBody({
   }
   const gbpM = (v: number) => `£${Math.round(v).toLocaleString('en-GB')}`
 
-  const SalaryCard = ({ title, rows, getValue }: { title: string; rows: typeof salaryTop5; getValue: (r: typeof salaryTop5[0]) => number }) => (
+  const SalaryCard = ({ title, icon: Icon, rows, getValue }: { title: string; icon: LucideIcon; rows: typeof salaryTop5; getValue: (r: typeof salaryTop5[0]) => number }) => (
     <div className={styles.card}>
-      <h3 className={styles.cardTitle}>{title}</h3>
+      <h3 className={styles.cardTitle}>
+        {title}
+        <Icon className={styles.cardTitleIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+      </h3>
       <ol className={styles.list}>
         {rows.map((row, i) => (
           <li key={row.personId} className={styles.row}>
             <span className={styles.rank}>{i + 1}</span>
-            <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={52} decorative square />
+            <span className={styles.rowPhoto}>
+              {row.imgUrl && <Image src={row.imgUrl} alt="" fill sizes="52px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
+            </span>
             <div className={styles.info}>
               <Link href={`${basePath}/assembly/mlas/${row.personId}`} className={styles.name}>
                 {formatMemberName(row.fullName)}
@@ -147,43 +154,36 @@ export default async function SpendingPageBody({
 
   return (
     <div className="container">
-      <header className="page-header">
+      <header className={styles.pageHeader}>
         <StatsBreadcrumb label="Public Spending" basePath={basePath} />
-        <h1>Public Spending</h1>
-        <p className="lede">Salaries, office expenses and overall public cost of the Assembly since {mandate.startLabel}.</p>
+        <h1 className={styles.pageHeaderTitle}>
+          <PoundSterling className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
+          Public Spending
+        </h1>
+        <p className={styles.lede}>Salaries, office expenses and overall public cost of the Assembly since {mandate.startLabel}.</p>
       </header>
 
       {/* Salaries — replaced by a notice when the mandate's pay rates aren't published */}
       {ratesPublished ? (
-      <section aria-labelledby="salaries-heading" className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <div className={styles.expensesHeader}>
-            <p className="eyebrow">Public spending</p>
+      <section aria-labelledby="salaries-heading" className={styles.section} style={{ marginTop: 0 }}>
+        <div className={styles.sectionHeadRow}>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionEyebrow}>Public spending</span>
+            <h2 id="salaries-heading" className={styles.sectionTitle}>
+              <Wallet className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+              Salaries
+            </h2>
           </div>
-          <h2 id="salaries-heading" className={styles.sectionTitle}>Salaries</h2>
-          <div className={styles.sectionRule}></div>
+          <Link href={`${basePath}/assembly/salaries`} className={styles.viewAllBtn}>View full rankings</Link>
         </div>
-        <Link href={`${basePath}/assembly/salaries`} className={styles.expensesRankingsCard} style={{ marginTop: 0 }}>
-          <span className={styles.expensesRankingsCardLeft}>
-            <svg className={styles.expensesRankingsCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
-              <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
-              <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
-            </svg>
-            <span className={styles.expensesRankingsCardText}>View full MLA salary rankings</span>
-          </span>
-          <span className={styles.expensesRankingsCardArrow}>↗</span>
-        </Link>
-        <div className={styles.expensesCardGrid}>
-          <SalaryCard title="Highest current salaries" rows={salaryTop5} getValue={r => r.currentSalary} />
-          <SalaryCard title="Highest mandate earnings" rows={earningsTop5} getValue={r => r.mandateEarnings} />
+        <div className={styles.cardGrid}>
+          <SalaryCard title="Highest current salaries" icon={Banknote} rows={salaryTop5} getValue={r => r.currentSalary} />
+          <SalaryCard title="Highest mandate earnings" icon={PiggyBank} rows={earningsTop5} getValue={r => r.mandateEarnings} />
         </div>
       </section>
       ) : (
         <div className="notice-card">Salary and overall-cost figures for the {mandate.label} mandate are not yet available: the Assembly&apos;s published pay rates for this mandate have not been released.</div>
       )}
-
-      <hr className="section-rule" />
 
       {/* Member expenses */}
       {expensesLeague.length > 0 && (() => {
@@ -194,15 +194,20 @@ export default async function SpendingPageBody({
         const latestPeriod = expensesLeague.reduce((latest, row) => row.financialYear > latest ? row.financialYear : latest, '')
         const periodLabel = expensesLeague.find(r => r.financialYear === latestPeriod)?.period ?? ''
 
-        const ExpensesCard = ({ title, rows }: { title: string; rows: typeof top5 }) => (
+        const ExpensesCard = ({ title, icon: Icon, rows }: { title: string; icon: LucideIcon; rows: typeof top5 }) => (
           <div className={styles.partyRankingCard}>
-            <p className={styles.partyRankingTitle}>{title}</p>
+            <p className={styles.partyRankingTitle}>
+              {title}
+              <Icon className={styles.cardTitleIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+            </p>
             {periodLabel && <p className={styles.partyRankingSubtitle}>{periodLabel}</p>}
-            <ol className={styles.list} style={{ marginTop: 'var(--s-2)' }}>
+            <ol className={styles.list}>
               {rows.map((row, i) => (
                 <li key={row.personId} className={styles.row}>
                   <span className={styles.rank}>{i + 1}</span>
-                  <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={52} decorative square />
+                  <span className={styles.rowPhoto}>
+                    {row.imgUrl && <Image src={row.imgUrl} alt="" fill sizes="52px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
+                  </span>
                   <div className={styles.info}>
                     <Link href={`${basePath}/assembly/mlas/${row.personId}`} className={styles.name}>
                       {formatMemberName(row.fullName)}
@@ -222,27 +227,21 @@ export default async function SpendingPageBody({
 
         return (
           <section aria-labelledby="expenses-heading" className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <div className={styles.expensesHeader}>
-                <p className="eyebrow">Public spending</p>
-                <a href="https://www.niassembly.gov.uk/your-mlas/members-salaries-and-expenses/" target="_blank" rel="noopener noreferrer" className={`${styles.expensesSourceLink} ${styles.expensesSourceLinkDesktop}`}>
-                  Official source
-                </a>
+            <div className={styles.sectionHeadRow} style={{ marginBottom: 0 }}>
+              <div>
+                <span className={styles.sectionEyebrow}>Public spending</span>
+                <h2 id="expenses-heading" className={styles.sectionTitle}>
+                  <Receipt className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                  Latest published expenses
+                </h2>
               </div>
-              <h2 id="expenses-heading" className={styles.sectionTitle}>Member expenses</h2>
-              <div className={styles.sectionRule}></div>
+              <Link href={`${basePath}/assembly/expenses`} className={styles.viewAllBtn}>View full rankings</Link>
             </div>
-            <Link href={`${basePath}/assembly/expenses`} className={styles.expensesRankingsCard} style={{ marginTop: 0 }}>
-              <span className={styles.expensesRankingsCardLeft}>
-                <svg className={styles.expensesRankingsCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
-                  <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
-                  <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
-                </svg>
-                <span className={styles.expensesRankingsCardText}>View full MLA expenses rankings</span>
-              </span>
-              <span className={styles.expensesRankingsCardArrow}>↗</span>
-            </Link>
+            {expensesByParty.length >= 2 && (
+              <div className={styles.sectionHead}>
+                <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>Expenses claimed by {sittingAdjective(mandate)} MLAs in the most recently published financial year.</p>
+              </div>
+            )}
 
             {expensesByParty.length >= 2 && (() => {
               const fmt2 = (n: number) => Math.round(n).toLocaleString('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })
@@ -252,15 +251,28 @@ export default async function SpendingPageBody({
               const maxAvg = byAvg[0]?.per_mla_avg ?? 1
 
               type ExpenseRow = { party: string; party_total: number; mla_count: number; per_mla_avg: number }
-              const PartyRankingCard = ({ title, subtitle, rows, getValue, getMax }: { title: string; subtitle: string; rows: ExpenseRow[]; getValue: (r: ExpenseRow) => number; getMax: number }) => (
+              const PartyRankingCard = ({ title, icon: Icon, subtitleList, rows, getValue, getMax }: { title: string; icon: LucideIcon; subtitleList: string[]; rows: ExpenseRow[]; getValue: (r: ExpenseRow) => number; getMax: number }) => (
                 <div className={styles.partyRankingCard}>
-                  <p className={styles.partyRankingTitle}>{title}</p>
-                  <p className={styles.partyRankingSubtitle}>{subtitle}</p>
+                  <p className={styles.partyRankingTitle}>
+                    {title}
+                    <Icon className={styles.cardTitleIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+                  </p>
+                  <ul className={styles.partyRankingSubtitleList}>
+                    {subtitleList.map((s, i) => <li key={i}>{s}</li>)}
+                  </ul>
                   <table className={styles.partyRankingTable}>
+                    <colgroup>
+                      <col className={styles.colRank} />
+                      <col className={styles.colParty} />
+                      <col className={styles.colMbrs} />
+                      <col className={styles.colBar} />
+                      <col className={styles.colTotal} />
+                    </colgroup>
                     <thead>
                       <tr>
+                        <th scope="col" className={styles.thRank} aria-label="Rank"></th>
                         <th scope="col">Party</th>
-                        <th scope="col"><abbr title="Members">Mbrs</abbr></th>
+                        <th scope="col" className={styles.thMbrs}><abbr title="Members">Mbrs</abbr></th>
                         <th scope="col" aria-label="Proportion"></th>
                         <th scope="col">Total</th>
                       </tr>
@@ -268,9 +280,9 @@ export default async function SpendingPageBody({
                     <tbody>
                       {rows.map((row, i) => (
                         <tr key={row.party}>
+                          <td className={styles.partyRankingRank}>{i + 1}</td>
                           <td>
                             <span className={styles.partyRankingParty}>
-                              <span className={styles.partyRankingRank}>{i + 1}</span>
                               <span className={styles.partyDot} style={{ background: partyBorderColor(row.party) }} aria-hidden="true" />
                               <PartyName party={row.party} />
                             </span>
@@ -291,28 +303,25 @@ export default async function SpendingPageBody({
 
               return (
                 <>
-                  <h3 className={styles.chartTitle}>Latest published expenses</h3>
-                  <p className={styles.expensesMeta} style={{ marginTop: 'var(--s-3)', marginBottom: 'var(--s-3)' }}>
-                    <strong className={styles.expensesPeriod}>{periodLabel}</strong>
-                    <span className={styles.expensesMetaSep} aria-hidden="true">|</span>
-                    <span className={styles.expensesStat}>
-                      <strong className={styles.expensesStatValue}>{gbp(String(assemblyTotal))}</strong>
-                      <span className={styles.expensesStatLabel}>total</span>
-                    </span>
-                    <span className={styles.expensesMetaSep} aria-hidden="true">|</span>
-                    <span className={styles.expensesStat}>
-                      <strong className={styles.expensesStatValue}>{gbp(String(assemblyAvg))}</strong>
-                      <span className={styles.expensesStatLabel}>avg per MLA</span>
-                    </span>
-                  </p>
-                  <p className={styles.trendNote} style={{ marginBottom: 'var(--spacing-lg)' }}>Expenses claimed by <strong>{sittingAdjective(mandate)} MLAs</strong> in the most recently published financial year.</p>
-                  <div className={styles.expensesCardGrid}>
-                    <ExpensesCard title="Most expenses claimed" rows={top5} />
-                    <ExpensesCard title="Least expenses claimed" rows={bottom5} />
+                  <div className={styles.glanceStripSmall} style={{ marginTop: 'var(--s-4)' }}>
+                    <div className={styles.glanceCellSmall}>
+                      <span className={styles.glanceCellSmallLabel}>Total claimed</span>
+                      <div className={styles.glanceCellSmallValue}>{gbp(String(assemblyTotal))}</div>
+                      <span className={styles.glanceCellSmallMeta}>{periodLabel}</span>
+                    </div>
+                    <div className={styles.glanceCellSmall}>
+                      <span className={styles.glanceCellSmallLabel}>Avg per MLA</span>
+                      <div className={styles.glanceCellSmallValue}>{gbp(String(assemblyAvg))}</div>
+                      <span className={styles.glanceCellSmallMeta}>{periodLabel}</span>
+                    </div>
                   </div>
-                  <div className={styles.partyRankingGrid}>
-                    <PartyRankingCard title="Total claimed by party" subtitle={`All ${sittingAdjective(mandate)} MLAs · ${periodLabel}`} rows={byTotal} getValue={r => r.party_total} getMax={maxTotal} />
-                    <PartyRankingCard title="Cost per MLA by party" subtitle={`Average claim per MLA within each party · ${periodLabel}`} rows={byAvg} getValue={r => r.per_mla_avg} getMax={maxAvg} />
+                  <div className={styles.cardGrid}>
+                    <ExpensesCard title="Most expenses claimed" icon={ArrowUpWideNarrow} rows={top5} />
+                    <ExpensesCard title="Least expenses claimed" icon={ArrowDownWideNarrow} rows={bottom5} />
+                  </div>
+                  <div className={styles.partyRankingGrid} style={{ marginTop: 'var(--s-5)' }}>
+                    <PartyRankingCard title="Total claimed by party" icon={Users} subtitleList={[`All ${sittingAdjective(mandate)} MLAs`, periodLabel]} rows={byTotal} getValue={r => r.party_total} getMax={maxTotal} />
+                    <PartyRankingCard title="Cost per MLA by party" icon={UserCheck} subtitleList={['Average claim per MLA within each party', periodLabel]} rows={byAvg} getValue={r => r.per_mla_avg} getMax={maxAvg} />
                   </div>
 
                   {/* Total mandate expenses subsection */}
@@ -328,7 +337,7 @@ export default async function SpendingPageBody({
                     const grandTotal = partyExpEntries.reduce((s, [, v]) => s + v, 0)
 
                     const mandateRows = allMandateMembers
-                      .filter(m => m.isCurrent && m.mandateStart)
+                      .filter(m => m.isCurrent && m.mandateStart && hasServedOneYear(m.mandateStart, today))
                       .map(m => ({
                         personId: m.personId,
                         fullName: m.fullName,
@@ -342,9 +351,12 @@ export default async function SpendingPageBody({
                     const mandateTop5 = mandateRows.slice(0, 5)
                     const mandateBottom5 = [...mandateRows].reverse().slice(0, 5)
 
-                    const MandateCard = ({ title, rows }: { title: string; rows: typeof mandateTop5 }) => (
+                    const MandateCard = ({ title, icon: Icon, rows }: { title: string; icon: LucideIcon; rows: typeof mandateTop5 }) => (
                       <div className={styles.partyRankingCard}>
-                        <p className={styles.partyRankingTitle}>{title}</p>
+                        <p className={styles.partyRankingTitle}>
+                          {title}
+                          <Icon className={styles.cardTitleIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+                        </p>
                         <ul className={styles.partyRankingSubtitleList}>
                           <li>{mandate.isCurrent ? 'Current' : 'Sitting'} MLAs only (former MLAs excluded)</li>
                           <li>Expenses across all published years</li>
@@ -354,7 +366,9 @@ export default async function SpendingPageBody({
                           {rows.map((row, i) => (
                             <li key={row.personId} className={styles.row}>
                               <span className={styles.rank}>{i + 1}</span>
-                              <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={52} decorative square />
+                              <span className={styles.rowPhoto}>
+                                {row.imgUrl && <Image src={row.imgUrl} alt="" fill sizes="52px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
+                              </span>
                               <div className={styles.info}>
                                 <Link href={`${basePath}/assembly/mlas/${row.personId}`} className={styles.name}>
                                   {formatMemberName(row.fullName)}
@@ -390,17 +404,28 @@ export default async function SpendingPageBody({
                     const maxTotalMandate = byTotalMandate[0]?.party_total ?? 1
                     const maxAvgMandate = byAvgMandate[0]?.per_mla_avg ?? 1
 
-                    const ExpPartyCard = ({ title, subtitleList, rows, getValue, getMax }: { title: string; subtitleList: string[]; rows: ExpPartyRow[]; getValue: (r: ExpPartyRow) => number; getMax: number }) => (
+                    const ExpPartyCard = ({ title, icon: Icon, subtitleList, rows, getValue, getMax, wideTotal }: { title: string; icon: LucideIcon; subtitleList: string[]; rows: ExpPartyRow[]; getValue: (r: ExpPartyRow) => number; getMax: number; wideTotal?: boolean }) => (
                       <div className={styles.partyRankingCard}>
-                        <p className={styles.partyRankingTitle}>{title}</p>
+                        <p className={styles.partyRankingTitle}>
+                          {title}
+                          <Icon className={styles.cardTitleIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+                        </p>
                         <ul className={styles.partyRankingSubtitleList}>
                           {subtitleList.map((s, i) => <li key={i}>{s}</li>)}
                         </ul>
-                        <table className={styles.partyRankingTable}>
+                        <table className={`${styles.partyRankingTable} ${wideTotal ? styles.partyRankingTableWideTotal : ''}`}>
+                          <colgroup>
+                            <col className={styles.colRank} />
+                            <col className={styles.colParty} />
+                            <col className={styles.colMbrs} />
+                            <col className={styles.colBar} />
+                            <col className={styles.colTotal} />
+                          </colgroup>
                           <thead>
                             <tr>
+                              <th scope="col" className={styles.thRank} aria-label="Rank"></th>
                               <th scope="col">Party</th>
-                              <th scope="col"><abbr title="Members">Mbrs</abbr></th>
+                              <th scope="col" className={styles.thMbrs}><abbr title="Members">Mbrs</abbr></th>
                               <th scope="col" aria-label="Proportion"></th>
                               <th scope="col">Total</th>
                             </tr>
@@ -408,9 +433,9 @@ export default async function SpendingPageBody({
                           <tbody>
                             {rows.map((row, i) => (
                               <tr key={row.party}>
+                                <td className={styles.partyRankingRank}>{i + 1}</td>
                                 <td>
                                   <span className={styles.partyRankingParty}>
-                                    <span className={styles.partyRankingRank}>{i + 1}</span>
                                     <span className={styles.partyDot} style={{ background: partyBorderColor(row.party) }} aria-hidden="true" />
                                     <PartyName party={row.party} />
                                   </span>
@@ -431,36 +456,48 @@ export default async function SpendingPageBody({
 
                     return (
                       <>
-                        <h3 className={styles.chartTitle}>Total mandate expenses</h3>
-                        <p className={styles.trendNote} style={{ marginBottom: 'var(--spacing-lg)' }}>Total expenses claimed by <strong>all current and former MLAs with published expense data</strong> across all published financial years of the {mandate.label} mandate.</p>
-                        <div className={styles.overviewGridThree} style={{ marginBottom: 'var(--spacing-lg)' }}>
-                          <div className={styles.overviewCard}>
-                            <span className={styles.overviewLabel}>Total claimed</span>
-                            <span className={styles.overviewValue}>{gbpShort(grandTotal)}</span>
-                            <span className={styles.overviewMeta}>all published years</span>
+                        <h3 className={styles.chartTitle}>
+                          <ScrollText className={styles.chartTitleIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+                          Total mandate expenses
+                        </h3>
+                        <p className={styles.trendNote} style={{ marginBottom: 'var(--s-4)' }}>Total expenses claimed by all current and former MLAs with published expense data across all published financial years of the {mandate.label} mandate.</p>
+                        <div className={`${styles.glanceStripSmall} ${styles.glanceStripSmallThree}`} style={{ marginBottom: 'var(--s-5)' }}>
+                          <div className={styles.glanceCellSmall}>
+                            <div className={styles.glanceCellSmallLabelRow}>
+                              <span className={styles.glanceCellSmallLabel}>Total claimed</span>
+                              <Coins className={styles.glanceCellSmallIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+                            </div>
+                            <div className={styles.glanceCellSmallValue}>{gbpShort(grandTotal)}</div>
+                            <span className={styles.glanceCellSmallMeta}>all published years</span>
                           </div>
                           {highestParty && (
-                            <div className={styles.overviewCard}>
-                              <span className={styles.overviewLabel}>Highest spending party</span>
-                              <span className={styles.overviewValue}><PartyName party={highestParty[0]} /></span>
-                              <span className={styles.overviewMeta}>{gbpShort(highestParty[1])} total</span>
+                            <div className={styles.glanceCellSmall}>
+                              <div className={styles.glanceCellSmallLabelRow}>
+                                <span className={styles.glanceCellSmallLabel}>Highest spending party</span>
+                                <Crown className={styles.glanceCellSmallIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+                              </div>
+                              <div className={styles.glanceCellSmallValue}><PartyName party={highestParty[0]} /></div>
+                              <span className={styles.glanceCellSmallMeta}>{gbpShort(highestParty[1])} total</span>
                             </div>
                           )}
                           {lowestParty && (
-                            <div className={styles.overviewCard}>
-                              <span className={styles.overviewLabel}>Lowest spending party</span>
-                              <span className={styles.overviewValue}><PartyName party={lowestParty[0]} /></span>
-                              <span className={styles.overviewMeta}>{gbpShort(lowestParty[1])} total</span>
+                            <div className={styles.glanceCellSmall}>
+                              <div className={styles.glanceCellSmallLabelRow}>
+                                <span className={styles.glanceCellSmallLabel}>Lowest spending party</span>
+                                <TrendingDown className={styles.glanceCellSmallIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+                              </div>
+                              <div className={styles.glanceCellSmallValue}><PartyName party={lowestParty[0]} /></div>
+                              <span className={styles.glanceCellSmallMeta}>{gbpShort(lowestParty[1])} total</span>
                             </div>
                           )}
                         </div>
-                        <div className={styles.partyRankingGrid} style={{ marginBottom: 'var(--spacing-lg)' }}>
-                          <ExpPartyCard title="Total expenses by party" subtitleList={['All current and former MLAs with published expense data', 'Expenses across all published years']} rows={byTotalMandate} getValue={r => r.party_total} getMax={maxTotalMandate} />
-                          <ExpPartyCard title="Expenses per MLA by party" subtitleList={['All current and former MLAs with published expense data', 'All published years']} rows={byAvgMandate} getValue={r => r.per_mla_avg} getMax={maxAvgMandate} />
+                        <div className={styles.partyRankingGrid} style={{ marginBottom: 'var(--s-5)' }}>
+                          <ExpPartyCard title="Total expenses by party" icon={Users} subtitleList={['All current and former MLAs with published expense data', 'Expenses across all published years']} rows={byTotalMandate} getValue={r => r.party_total} getMax={maxTotalMandate} wideTotal />
+                          <ExpPartyCard title="Expenses per MLA by party" icon={UserCheck} subtitleList={['All current and former MLAs with published expense data', 'All published years']} rows={byAvgMandate} getValue={r => r.per_mla_avg} getMax={maxAvgMandate} />
                         </div>
-                        <div className={styles.expensesCardGrid}>
-                          <MandateCard title="Highest mandate expenses" rows={mandateTop5} />
-                          <MandateCard title="Lowest mandate expenses" rows={mandateBottom5} />
+                        <div className={styles.cardGrid}>
+                          <MandateCard title="Highest mandate expenses" icon={ScrollText} rows={mandateTop5} />
+                          <MandateCard title="Lowest mandate expenses" icon={ScrollText} rows={mandateBottom5} />
                         </div>
                       </>
                     )
@@ -472,14 +509,15 @@ export default async function SpendingPageBody({
         )
       })()}
 
-      {ratesPublished && <hr className="section-rule" />}
-
       {/* Overall cost */}
       {ratesPublished && overallCostRows.length > 0 && (() => {
-        const CostCard = ({ title, rows }: { title: string; rows: typeof mostCostly5 }) => (
+        const CostCard = ({ title, icon: Icon, rows }: { title: string; icon: LucideIcon; rows: typeof mostCostly5 }) => (
           <div className={styles.card}>
-            <h3 className={styles.cardTitle}>{title}</h3>
-            <ul className={styles.partyRankingSubtitleList} style={{ marginBottom: 'var(--s-3)' }}>
+            <h3 className={styles.cardTitle}>
+              {title}
+              <Icon className={styles.cardTitleIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+            </h3>
+            <ul className={styles.partyRankingSubtitleList}>
               <li>{mandate.isCurrent ? 'Current' : 'Sitting'} MLAs only (former MLAs excluded)</li>
               <li>Excludes MLAs who joined within the last year</li>
             </ul>
@@ -487,7 +525,9 @@ export default async function SpendingPageBody({
               {rows.map((row, i) => (
                 <li key={row.personId} className={styles.row}>
                   <span className={styles.rank}>{i + 1}</span>
-                  <MlaPhoto name={row.fullName} imgUrl={row.imgUrl ?? ''} size={52} decorative square />
+                  <span className={styles.rowPhoto}>
+                    {row.imgUrl && <Image src={row.imgUrl} alt="" fill sizes="52px" style={{ objectFit: 'cover', objectPosition: 'top center' }} />}
+                  </span>
                   <div className={styles.info}>
                     <Link href={`${basePath}/assembly/mlas/${row.personId}`} className={styles.name}>
                       {formatMemberName(row.fullName)}
@@ -530,17 +570,28 @@ export default async function SpendingPageBody({
         const lowestAvgParty = avgEntries[avgEntries.length - 1]
         const grandTotal = overallCostRows.reduce((s, r) => s + r.totalCost, 0)
 
-        const CostPartyCard = ({ title, subtitleList, rows, getValue, getMax }: { title: string; subtitleList: string[]; rows: CostPartyRow[]; getValue: (r: CostPartyRow) => number; getMax: number }) => (
+        const CostPartyCard = ({ title, icon: Icon, subtitleList, rows, getValue, getMax, wideTotal }: { title: string; icon: LucideIcon; subtitleList: string[]; rows: CostPartyRow[]; getValue: (r: CostPartyRow) => number; getMax: number; wideTotal?: boolean }) => (
           <div className={styles.partyRankingCard}>
-            <p className={styles.partyRankingTitle}>{title}</p>
+            <p className={styles.partyRankingTitle}>
+              {title}
+              <Icon className={styles.cardTitleIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+            </p>
             <ul className={styles.partyRankingSubtitleList}>
               {subtitleList.map((s, i) => <li key={i}>{s}</li>)}
             </ul>
-            <table className={styles.partyRankingTable}>
+            <table className={`${styles.partyRankingTable} ${wideTotal ? styles.partyRankingTableExtraWideTotal : ''}`}>
+              <colgroup>
+                <col className={styles.colRank} />
+                <col className={styles.colParty} />
+                <col className={styles.colMbrs} />
+                <col className={styles.colBar} />
+                <col className={styles.colTotal} />
+              </colgroup>
               <thead>
                 <tr>
+                  <th scope="col" className={styles.thRank} aria-label="Rank"></th>
                   <th scope="col">Party</th>
-                  <th scope="col"><abbr title="Members">Mbrs</abbr></th>
+                  <th scope="col" className={styles.thMbrs}><abbr title="Members">Mbrs</abbr></th>
                   <th scope="col" aria-label="Proportion"></th>
                   <th scope="col">Total</th>
                 </tr>
@@ -548,9 +599,9 @@ export default async function SpendingPageBody({
               <tbody>
                 {rows.map((row, i) => (
                   <tr key={row.party}>
+                    <td className={styles.partyRankingRank}>{i + 1}</td>
                     <td>
                       <span className={styles.partyRankingParty}>
-                        <span className={styles.partyRankingRank}>{i + 1}</span>
                         <span className={styles.partyDot} style={{ background: partyBorderColor(row.party) }} aria-hidden="true" />
                         <PartyName party={row.party} />
                       </span>
@@ -570,55 +621,57 @@ export default async function SpendingPageBody({
         )
 
         return (
-          <section aria-labelledby="overall-cost-heading" className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <p className="eyebrow">Public spending</p>
-              <h2 id="overall-cost-heading" className={styles.sectionTitle}>Overall cost</h2>
-              <div className={styles.sectionRule}></div>
-              <p className={styles.sectionDesc}>Estimated mandate salary plus all published expenses for <strong>all current and former MLAs</strong> in the {mandate.label} mandate. Salary is estimated from each MLA&apos;s role history: the published salary rate for their highest-paid role at any given time (minister, committee chair, or base MLA rate), pro-rated across the mandate. Expenses are summed across all published financial years.</p>
+          <section aria-labelledby="overall-cost-heading" className={`${styles.section} ${styles.sectionLast}`}>
+            <div className={styles.sectionHeadRow} style={{ marginBottom: 0 }}>
+              <div>
+                <span className={styles.sectionEyebrow}>Public spending</span>
+                <h2 id="overall-cost-heading" className={styles.sectionTitle}>
+                  <Landmark className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
+                  Overall cost
+                </h2>
+              </div>
+              <Link href={`${basePath}/assembly/overall-cost`} className={styles.viewAllBtn}>View full rankings</Link>
             </div>
-            <Link href={`${basePath}/assembly/overall-cost`} className={styles.expensesRankingsCard} style={{ marginTop: 0 }}>
-              <span className={styles.expensesRankingsCardLeft}>
-                <svg className={styles.expensesRankingsCardIcon} aria-hidden="true" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="10" cy="10" r="10" fill="currentColor" opacity="0.15"/>
-                  <rect x="9" y="9" width="2" height="6" rx="1" fill="currentColor"/>
-                  <rect x="9" y="5" width="2" height="2" rx="1" fill="currentColor"/>
-                </svg>
-                <span className={styles.expensesRankingsCardText}>
-                  <span className={styles.rankingsCardTextDesktop}>View full MLA overall cost rankings</span>
-                  <span className={styles.rankingsCardTextMobile}>View overall cost rankings</span>
-                </span>
-              </span>
-              <span className={styles.expensesRankingsCardArrow}>↗</span>
-            </Link>
-            <div className={styles.overviewGridThree} style={{ marginBottom: 'var(--spacing-lg)' }}>
-              <div className={styles.overviewCard}>
-                <span className={styles.overviewLabel}>Total mandate cost</span>
-                <span className={styles.overviewValue}>{gbpShort(grandTotal)}</span>
-                <span className={styles.overviewMeta}>salary + expenses</span>
+            <div className={styles.sectionHead}>
+              <p className={styles.sectionDesc}>Estimated mandate salary plus all published expenses for all current and former MLAs in the {mandate.label} mandate. Salary is estimated from each MLA&apos;s role history: the published salary rate for their highest-paid role at any given time (minister, committee chair, or base MLA rate), pro-rated across the mandate. Expenses are summed across all published financial years.</p>
+            </div>
+            <div className={`${styles.glanceStripSmall} ${styles.glanceStripSmallThree}`} style={{ marginBottom: 'var(--s-5)' }}>
+              <div className={styles.glanceCellSmall}>
+                <div className={styles.glanceCellSmallLabelRow}>
+                  <span className={styles.glanceCellSmallLabel}>Total mandate cost</span>
+                  <Sigma className={styles.glanceCellSmallIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+                </div>
+                <div className={styles.glanceCellSmallValue}>{gbpShort(grandTotal)}</div>
+                <span className={styles.glanceCellSmallMeta}>salary + expenses</span>
               </div>
               {highestAvgParty && (
-                <div className={styles.overviewCard}>
-                  <span className={styles.overviewLabel}>Highest cost per MLA</span>
-                  <span className={styles.overviewValue}><PartyName party={highestAvgParty[0]} /></span>
-                  <span className={styles.overviewMeta}>{gbpShort(highestAvgParty[1])} avg per MLA</span>
+                <div className={styles.glanceCellSmall}>
+                  <div className={styles.glanceCellSmallLabelRow}>
+                    <span className={styles.glanceCellSmallLabel}>Highest cost per MLA</span>
+                    <Crown className={styles.glanceCellSmallIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+                  </div>
+                  <div className={styles.glanceCellSmallValue}><PartyName party={highestAvgParty[0]} /></div>
+                  <span className={styles.glanceCellSmallMeta}>{gbpShort(highestAvgParty[1])} avg per MLA</span>
                 </div>
               )}
               {lowestAvgParty && (
-                <div className={styles.overviewCard}>
-                  <span className={styles.overviewLabel}>Lowest cost per MLA</span>
-                  <span className={styles.overviewValue}><PartyName party={lowestAvgParty[0]} /></span>
-                  <span className={styles.overviewMeta}>{gbpShort(lowestAvgParty[1])} avg per MLA</span>
+                <div className={styles.glanceCellSmall}>
+                  <div className={styles.glanceCellSmallLabelRow}>
+                    <span className={styles.glanceCellSmallLabel}>Lowest cost per MLA</span>
+                    <TrendingDown className={styles.glanceCellSmallIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
+                  </div>
+                  <div className={styles.glanceCellSmallValue}><PartyName party={lowestAvgParty[0]} /></div>
+                  <span className={styles.glanceCellSmallMeta}>{gbpShort(lowestAvgParty[1])} avg per MLA</span>
                 </div>
               )}
             </div>
-            <div className={styles.partyRankingGrid} style={{ marginBottom: 'var(--spacing-lg)' }}>
-              <CostPartyCard title="Total cost by party" subtitleList={['All current and former MLAs', `Salary and expenses across the ${mandate.label} mandate`, 'Some MLAs have no published expense data and contribute salary estimates only']} rows={byTotal} getValue={r => r.party_total} getMax={maxTotal} />
-              <CostPartyCard title="Cost per MLA by party" subtitleList={['All current and former MLAs', `Salary and expenses across the ${mandate.label} mandate`, 'Some MLAs have no published expense data and contribute salary estimates only']} rows={byAvg} getValue={r => r.per_mla_avg} getMax={maxAvg} />
+            <div className={styles.partyRankingGrid} style={{ marginBottom: 'var(--s-5)' }}>
+              <CostPartyCard title="Total cost by party" icon={Users} subtitleList={['All current and former MLAs', `Salary and expenses across the ${mandate.label} mandate`, 'Some MLAs have no published expense data and contribute salary estimates only']} rows={byTotal} getValue={r => r.party_total} getMax={maxTotal} wideTotal />
+              <CostPartyCard title="Cost per MLA by party" icon={UserCheck} subtitleList={['All current and former MLAs', `Salary and expenses across the ${mandate.label} mandate`, 'Some MLAs have no published expense data and contribute salary estimates only']} rows={byAvg} getValue={r => r.per_mla_avg} getMax={maxAvg} />
             </div>
-            <div className={styles.expensesCardGrid}>
-              <CostCard title="Highest public cost" rows={mostCostly5} />
-              <CostCard title="Lowest public cost" rows={leastCostly5} />
+            <div className={styles.cardGrid}>
+              <CostCard title="Highest public cost" icon={TrendingUp} rows={mostCostly5} />
+              <CostCard title="Lowest public cost" icon={TrendingDown} rows={leastCostly5} />
             </div>
           </section>
         )

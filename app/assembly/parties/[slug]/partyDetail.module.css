@@ -1,298 +1,1223 @@
-/* ── Page header ────────────────────────────────────────────── */
-.partyHeader {
+/* Matches the site's standard detail-page header. */
+.header {
   padding-block: var(--s-8) var(--s-6);
-  margin-bottom: 0;
+  border-bottom: 1px solid var(--sw-accent);
 }
 
-.partyName {
-  font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: clamp(36px, 5vw, 72px);
-  letter-spacing: -0.04em;
-  line-height: 0.96;
-  margin-top: var(--s-4);
-  position: relative;
-  padding-left: var(--s-5);
+@media (max-width: 640px) {
+  .header { padding-block: var(--s-6) var(--s-5); }
 }
 
-.partyNameShort {
-  display: none;
+.pageHeaderEyebrow {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
 }
 
-@media (max-width: 767px) {
-  .partyNameFull {
-    display: none;
-  }
-  .partyNameShort {
-    display: inline;
-  }
-}
-
-.partyName::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.1em;
-  bottom: 0.1em;
-  width: 4px;
-  background: var(--party-c, var(--rule));
-  border-radius: 2px;
-}
-
-.metaRow {
+/* Swatch + name + a quiet MLA-count tag, all inline and vertically centred. */
+.nameRow {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--s-3);
   margin-top: var(--s-3);
 }
 
-.externalLink {
-  font-size: 13px;
-  color: var(--ink-3);
-  text-decoration: none;
-  white-space: nowrap;
-  padding-bottom: 2px;
-  border-bottom: 1px solid var(--rule);
-  transition: color 150ms, border-color 150ms;
+.partyName {
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-display);
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--sw-text-primary);
 }
 
-.metaSep {
-  color: var(--ink-4);
-  font-size: 13px;
+/* Deliberate large party-colour block, matching parties.module.css .partySwatch. */
+.partySwatch {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--sw-radius-sm);
+}
+
+.partyNameShort { display: none; }
+
+.description {
+  font-size: var(--sw-fs-body);
+  line-height: 1.6;
+  color: var(--sw-text-secondary);
+  max-width: 72ch;
+  margin-top: var(--s-4);
+}
+
+@media (max-width: 640px) {
+  .description {
+    font-size: var(--sw-fs-body-sm);
+  }
+}
+
+/* Each link carries its own icon instead of a dot-separated row. */
+.linkRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-4);
+  margin-top: var(--s-3);
+}
+
+.externalLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-accent);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 150ms;
+}
+
+.externalLink,
+.externalLink:hover,
+.externalLink:active,
+.externalLink:visited {
+  text-decoration: none !important;
+}
+
+.externalLink:hover {
+  color: var(--sw-accent-strong);
+}
+
+.externalLinkIcon {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
+  transition: color 150ms;
+}
+
+.externalLink:hover .externalLinkIcon {
+  color: var(--sw-accent-strong);
+}
+
+@media (max-width: 640px) {
+  .partyName { font-size: var(--sw-fs-h2); }
+  .partyNameFull { display: none; }
+  .partyNameShort { display: inline; }
+  .partySwatch { width: 32px; height: 32px; }
+}
+
+/* Squared control row + bordered frame, matching mlaDetail.module.css .financesTabPanel. */
+/* Last element on the page; needs margin-bottom (§1.1 point 7). */
+.tabSection {
+  margin-top: var(--sw-space-9);
+  margin-bottom: var(--sw-space-9);
+}
+
+@media (max-width: 640px) {
+  .tabSection { margin-bottom: var(--s-10); }
+}
+
+.tabPanel {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
+}
+
+.tabStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  padding-bottom: var(--s-5);
+  margin-bottom: var(--s-5);
+  border-bottom: 1px solid var(--sw-border);
+}
+
+.tabBtn {
+  padding: 9px 16px;
+  min-height: 38px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-surface);
+  color: var(--sw-text-secondary);
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 150ms, color 150ms, background 150ms;
+}
+
+.tabBtn:hover {
+  border-color: var(--sw-accent);
+  color: var(--sw-text-primary);
+}
+
+.tabBtn:focus-visible {
+  outline: 2px solid var(--sw-focus);
+  outline-offset: 2px;
+}
+
+.tabBtnActive {
+  background: var(--sw-accent);
+  color: #ffffff;
+  border-color: var(--sw-accent);
+}
+
+.tabBtnActive:hover {
+  background: var(--sw-accent-strong);
+  border-color: var(--sw-accent-strong);
+  color: #ffffff;
+}
+
+/* Mobile-only dropdown, same shape as the MLA list page's mode/party dropdowns. */
+.tabDropdownWrap {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .tabPanel { padding: var(--s-4); }
+
+  .tabStrip { display: none; }
+
+  .tabDropdownWrap {
+    display: block;
+    position: relative;
+    margin-bottom: var(--s-5);
+  }
+}
+
+.dropdownWrap {
+  position: relative;
+}
+
+.dropdownTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  background: var(--sw-surface);
+  color: var(--sw-text-primary);
+  font-size: var(--sw-fs-body);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 150ms;
+}
+
+.dropdownTrigger:hover { border-color: var(--sw-accent); }
+.dropdownTrigger:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+
+.dropdownTriggerChevron {
+  color: var(--sw-text-tertiary);
+  transition: transform 150ms ease;
+  flex-shrink: 0;
+}
+
+.dropdownTriggerChevronOpen { transform: rotate(180deg); }
+
+.dropdownList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border-strong);
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: var(--sw-elevation-overlay);
+}
+
+.dropdownItem {
+  padding: 10px 14px;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-secondary);
+  border-bottom: 1px solid var(--sw-border);
+  cursor: pointer;
+  transition: background 100ms, color 100ms;
   user-select: none;
 }
 
-.externalLinkArrow {
-  display: inline;
+.dropdownItem:last-child { border-bottom: none; }
+.dropdownItem:hover { background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItem:focus { outline: none; background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItemSelected { background: var(--sw-surface-subtle); color: var(--sw-text-primary); font-weight: 600; }
+
+.tabContent { }
+
+/* Generic top-margin utility, reused on a couple of non-heading wrappers below. */
+.subHeadingSpaced {
+  margin-top: var(--s-8);
 }
 
-@media (max-width: 767px) {
-  .externalLinkArrow {
+.sectionNote {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  line-height: 1.5;
+  margin: var(--s-2) 0 var(--s-4);
+}
+
+@media (max-width: 640px) {
+  .sectionNote {
+    font-size: var(--sw-fs-body-sm);
+  }
+}
+
+/* Matches the homepage's .sectionHead/.viewAllBtn exactly (§3.1/§4.2). */
+.subHeadRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+/* Avoids misaligning against the "All divisions" button beside it. */
+.subHeadRow .sectionHead {
+  margin-bottom: 0;
+}
+
+.viewAllBtn {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: var(--sw-accent-solid);
+  color: #ffffff;
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 3px;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: background 150ms;
+}
+
+.viewAllBtn:hover {
+  background: var(--sw-accent-strong-solid);
+  color: #ffffff;
+}
+
+.viewAllBtn:focus-visible {
+  outline: 2px solid var(--sw-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .viewAllBtn { display: none; }
+}
+
+/* Matches mlaDetail.module.css's .voteRow exactly. */
+.voteRowList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+}
+
+.voteRow,
+.voteRow:hover,
+.voteRow:active,
+.voteRow:visited {
+  text-decoration: none !important;
+}
+
+.voteRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-5);
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  color: inherit;
+  transition: border-color 150ms;
+  min-width: 0;
+}
+
+.voteRow:hover {
+  border-color: var(--sw-accent);
+}
+
+.voteRow:hover .voteRowTitle {
+  color: var(--sw-accent-strong);
+}
+
+.voteRowMain {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+  flex: 1;
+}
+
+.voteRowTitle {
+  font-size: var(--sw-fs-body);
+  font-weight: 500;
+  color: var(--sw-text-primary);
+  line-height: 1.35;
+  transition: color 120ms;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.voteRowChips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.divChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: var(--sw-fs-caption);
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.chipBill {
+  color: #8b5cf6;
+  background: color-mix(in srgb, #8b5cf6 14%, var(--sw-surface));
+}
+
+.chipRegulations {
+  color: #ec4899;
+  background: color-mix(in srgb, #ec4899 14%, var(--sw-surface));
+}
+
+.chipMotion {
+  color: #14b8a6;
+  background: color-mix(in srgb, #14b8a6 14%, var(--sw-surface));
+}
+
+@media (max-width: 640px) {
+  .chipBill,
+  .chipRegulations,
+  .chipMotion {
+    display: none;
+  }
+
+  .voteRowChips svg {
     display: none;
   }
 }
 
-.externalLink:hover {
-  color: var(--ink);
-  border-color: var(--ink);
-  text-decoration: none;
+.chipAmendment {
+  color: var(--sw-accent);
+  background: color-mix(in srgb, var(--sw-accent) 14%, var(--sw-surface));
 }
 
-.description {
-  margin-top: 0;
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--ink-2);
-  /* max-width: 72ch; */
-}
-
-
-/* ── Description block ──────────────────────────────────────── */
-.descriptionBlock {
-  padding-top: 0;
-  padding-bottom: var(--s-6);
-}
-
-/* ── Tab section ────────────────────────────────────────────── */
-.tabSection {
-  margin-top: 0;
-}
-
-.tabContent {
-  padding: 0;
-}
-
-/* Questions tab */
-.questionsPanel {
-  padding-top: var(--s-2);
-}
-
-.questionsCard {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: var(--s-4);
-}
-
-.questionsSummary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.questionsSummaryCell {
+.voteRowMeta {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--s-4) var(--s-3);
-  border-right: 1px solid var(--border);
-  text-align: center;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
 }
 
-.questionsSummaryCell:last-child {
-  border-right: none;
+.voteOutcomeLine {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--sw-fs-body-sm);
+  white-space: nowrap;
 }
 
-.questionsSummaryLabel {
+.voteOutcomePair {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.voteOutcomeLabel {
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
+}
+
+.voteOutcomeLine .voteChipAYE,
+.voteOutcomeLine .voteChipNO,
+.voteOutcomeLine .voteChipNO_SHOW,
+.voteOutcomeLine .voteChipABSTAINED,
+.voteOutcomeLine .voteOutcomePass,
+.voteOutcomeLine .voteOutcomeFail {
+  font-weight: 600;
+}
+
+.voteOutcomeSep {
+  color: var(--sw-text-tertiary);
+}
+
+.voteChipAYE       { color: var(--sw-success); }
+.voteChipNO        { color: var(--sw-error); }
+.voteChipNO_SHOW   { color: var(--sw-text-tertiary); }
+.voteChipABSTAINED { color: var(--sw-text-tertiary); }
+
+.voteOutcomePass { color: var(--sw-success); }
+.voteOutcomeFail { color: var(--sw-error); }
+
+.voteRowDateCaption {
+  flex-shrink: 0;
   font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-  font-family: var(--font-sans);
-  margin-bottom: var(--s-1);
-}
-
-.questionsSummaryValue {
-  font-family: var(--font-sans);
-  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
-  font-weight: 500;
-  color: var(--ink);
-  line-height: 1.1;
-}
-
-.questionsSummaryMeta {
-  font-size: 12px;
-  color: var(--ink-3);
-  font-family: var(--font-sans);
-  margin-top: var(--s-1);
-}
-
-.questionsChartArea {
-  padding: var(--s-4) var(--s-5);
+  color: var(--sw-text-tertiary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 640px) {
-  .questionsCard {
-    margin-bottom: 0;
+  .voteRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-3);
+    padding: var(--s-4);
   }
 
-  .questionsSummary {
-    grid-template-columns: 1fr;
+  .voteRowTitle {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    width: 100%;
   }
 
-  .questionsSummaryCell {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
+  .voteRowMeta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+    padding-top: var(--s-3);
+    border-top: 1px solid var(--sw-border);
+  }
+}
+
+/* Bordered card wrapping an eyebrow-labelled stat, matching .salaryPanel. */
+.factPanel {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+}
+
+.factPanelGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+  margin-bottom: var(--s-6);
+}
+
+@media (max-width: 640px) {
+  .factPanelGrid { grid-template-columns: 1fr; }
+}
+
+.factLabel {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-tertiary);
+}
+
+.factValue {
+  font-size: var(--sw-fs-h2);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--sw-text-primary);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  margin-top: 6px;
+}
+
+.factSub {
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.factSub strong {
+  color: var(--sw-text-secondary);
+  font-weight: 600;
+}
+
+/* Bulleted key list — matches .partyRankingSubtitleList on the Spending stats page. */
+.factSubList {
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.factSubList li {
+  position: relative;
+  padding-left: 13px;
+  line-height: 1.4;
+}
+
+.factSubList li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 5px;
+  height: 5px;
+  background: var(--sw-border-strong);
+}
+
+.factDivider {
+  border-top: 1px solid var(--sw-border);
+  margin: var(--s-4) 0;
+}
+
+/* Left accent border links the label to the .factRow beneath it as one unit. */
+.factRankGroup {
+  padding-left: var(--s-3);
+  border-left: 2px solid var(--rank-c, var(--sw-border-strong));
+}
+
+@media (max-width: 640px) {
+  .factRankGroup {
+    padding-left: 0;
+    border-left: none;
+  }
+}
+
+.factRankLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.factRankSep {
+  border-top: 1px solid var(--sw-border);
+  margin: var(--s-4) 0;
+}
+
+/* Person row inside a fact panel, matching .statMlaRow / .qMlaCell. */
+.factRow,
+.factRow:hover,
+.factRow:active,
+.factRow:visited {
+  text-decoration: none !important;
+}
+
+.factRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  color: inherit;
+  padding: var(--s-2) 0;
+}
+
+.factRowPhoto {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--sw-radius-none);
+  overflow: hidden;
+  background: var(--sw-surface-subtle);
+  border: 1px solid var(--sw-border-strong);
+  flex-shrink: 0;
+}
+
+.factRowPhoto > span {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: unset !important;
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
+}
+
+.factRowPhoto img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: top center !important;
+}
+
+.factRowPhoto img[data-photo-position] {
+  object-position: var(--photo-position, top center) !important;
+}
+
+.factRowInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.factRowName {
+  font-size: var(--sw-fs-body);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--sw-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 120ms;
+}
+
+.factRow:hover .factRowName {
+  color: var(--sw-accent-strong);
+}
+
+.factRowConstituency {
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.factRowValueCol {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  text-align: right;
+}
+
+.factRowValue {
+  font-size: var(--sw-fs-h3);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--sw-text-primary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.factRowSub {
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
+  white-space: nowrap;
+}
+
+/* Mobile — stack photo/name full-width, then the value left-aligned below a hairline. */
+@media (max-width: 640px) {
+  .factRow {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+
+  .factRowPhoto {
+    order: 1;
+  }
+
+  .factRowInfo {
+    order: 2;
+    flex-basis: 0;
+  }
+
+  .factRowValueCol {
+    order: 3;
+    width: 100%;
+    flex-basis: 100%;
     align-items: flex-start;
     text-align: left;
-  }
-
-  .questionsSummaryCell:last-child {
-    border-bottom: none;
-  }
-
-  .questionsChartArea {
-    padding-bottom: 0;
+    margin-top: var(--s-3);
+    padding-top: var(--s-3);
+    border-top: 1px solid var(--sw-border);
   }
 }
 
-.billTabs {
+/* Pattern A tinted top-border cards (§4.1), matching the homepage's Key Figures strip. */
+.statStrip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-4);
+}
+
+.statStripTwo {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 640px) {
+  .statStrip,
+  .statStripTwo {
+    grid-template-columns: 1fr;
+  }
+}
+
+.statCard {
+  position: relative;
+  padding: var(--s-5);
+  border: 1px solid var(--sw-border);
+  border-top: 1px solid var(--sw-accent);
+  background: color-mix(in srgb, var(--sw-accent) 11%, var(--sw-surface));
   display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: var(--s-8);
-  overflow-x: auto;
-  overflow-y: clip;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.billTabBtn {
+.statCard[data-tone='amber'] {
+  border-top-color: var(--sw-accent-warm);
+  background: color-mix(in srgb, var(--sw-accent-warm) 14%, var(--sw-surface));
+}
+
+.statCard[data-tone='neutral'] {
+  border-top-color: var(--sw-text-tertiary);
+  background: var(--sw-surface-subtle);
+}
+
+.statCardLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.statCardLabel {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  letter-spacing: var(--sw-eyebrow-tracking);
+  text-transform: uppercase;
+  color: var(--sw-text-tertiary);
+}
+
+.statCardIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+.statCard[data-tone='amber'] .statCardIcon { color: var(--sw-accent-warm); }
+.statCard[data-tone='neutral'] .statCardIcon { color: var(--sw-text-tertiary); }
+
+.statCardValue {
+  font-size: var(--sw-fs-h2);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--sw-text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.statCardSub {
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
+}
+
+/* Highest/Lowest MLA side by side as two half-width plain-bordered cards. */
+.rankPanelGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+}
+
+@media (max-width: 640px) {
+  .rankPanelGrid { grid-template-columns: 1fr; }
+}
+
+.rankPanel {
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+  padding: var(--s-5);
+}
+
+.rankPanelIcon {
+  flex-shrink: 0;
+  color: var(--sw-text-tertiary);
+}
+
+/* ── Chart area ── */
+.chartArea {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  margin-top: var(--s-3);
+}
+
+.chartAreaSm {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  margin-top: var(--s-3);
+}
+
+/* Fixed larger size so this card's height isn't coupled to its neighbour's. */
+.donutArea {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  margin-top: var(--s-3);
+}
+
+/* 2-column x 2-row grid so counts align in a clean block. */
+.donutLegend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--s-5);
+  row-gap: var(--s-3);
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--sw-border);
+}
+
+@media (max-width: 640px) {
+  /* Smaller donut; 260px reads oversized on a full-width mobile card. */
+  .donutArea {
+    height: 200px;
+  }
+
+  /* One column; a two-column split wrapped "No show   1,471   23%". */
+  .donutLegend {
+    grid-template-columns: 1fr;
+    row-gap: var(--s-2);
+  }
+}
+
+.donutLegendItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.donutLegendKey {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-secondary);
+}
+
+.donutLegendSwatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.donutLegendValue {
+  flex-shrink: 0;
+  font-size: var(--sw-fs-body-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.donutLegendCount {
+  color: var(--sw-text-primary);
+  font-weight: 600;
+}
+
+.donutLegendPct {
+  color: var(--sw-text-tertiary);
+}
+
+/* Ranking rows inside a fact panel: bar + value, not a <table>. */
+.barRowList {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--s-4);
+  border-top: 1px solid var(--sw-border);
+}
+
+.barRow,
+.barRow:hover,
+.barRow:active,
+.barRow:visited {
+  text-decoration: none !important;
+}
+
+.barRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--sw-border);
+  color: inherit;
+}
+
+.barRow:last-child { border-bottom: none; }
+
+.barRowRank {
+  flex-shrink: 0;
+  width: 20px;
+  font-size: var(--sw-fs-caption);
+  font-weight: 700;
+  color: var(--sw-text-tertiary);
+  text-align: center;
+}
+
+.barRowPhoto {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--sw-radius-none);
+  overflow: hidden;
+  background: var(--sw-surface-subtle);
+  border: 1px solid var(--sw-border);
+  flex-shrink: 0;
+}
+
+.barRowPhoto > span {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: unset !important;
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
+}
+
+.barRowPhoto img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: top center !important;
+}
+
+.barRowPhoto img[data-photo-position] {
+  object-position: var(--photo-position, top center) !important;
+}
+
+.barRowInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.barRowName {
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--sw-text-primary);
+  text-decoration: none;
+  transition: color 120ms;
+}
+
+.barRow:hover .barRowName {
+  color: var(--sw-accent-strong);
+}
+
+.barRowConstituency {
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barRowConstituencyHideMobile { }
+
+.barRowBarWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  width: 160px;
+}
+
+.barRowTrack {
+  flex: 1;
+  height: 5px;
+  background: var(--sw-border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.barRowFill {
+  height: 100%;
+  border-radius: 99px;
+  opacity: 0.85;
+}
+
+.barRowValue {
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--sw-text-primary);
+  white-space: nowrap;
+  min-width: 56px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .barRowConstituencyHideMobile { display: none; }
+  .barRowBarWrap { width: auto; }
+  .barRowTrack { display: none; }
+}
+
+/* Squared control, matching mlaDetail.module.css .filterBtn. */
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-bottom: var(--s-4);
+}
+
+@media (max-width: 640px) {
+  .filterRow {
+    margin-bottom: var(--s-6);
+  }
+
+  .filterRow .filterBtn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+.filterBtn {
   display: inline-flex;
   align-items: center;
-  padding: var(--s-3) var(--s-4);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  color: var(--ink-3);
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  flex-shrink: 0;
-  background: transparent;
-  border-top: none;
-  border-left: none;
-  border-right: none;
+  gap: 8px;
+  padding: 8px 12px;
+  min-height: 38px;
+  border: 1px solid var(--sw-border-strong);
+  border-radius: var(--sw-radius-sm);
+  background: var(--sw-surface);
+  color: var(--sw-text-secondary);
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 600;
+  font-family: var(--font-sans);
   cursor: pointer;
-  transition: color 120ms ease;
+  white-space: nowrap;
+  transition: border-color 150ms, color 150ms, background 150ms;
 }
 
-.billTabBtn:hover {
-  color: var(--ink);
+.filterBtn:hover {
+  border-color: var(--sw-accent);
+  color: var(--sw-text-primary);
 }
 
-.billTabBtnActive {
-  color: var(--ink);
+.filterBtn:focus-visible {
+  outline: 2px solid var(--sw-focus);
+  outline-offset: 2px;
 }
 
-@media (min-width: 768px) {
-  .billTabBtnActive {
-    border-bottom-color: var(--ink);
-  }
+.filterBtnActive {
+  background: var(--sw-accent);
+  color: #ffffff;
+  border-color: var(--sw-accent);
 }
 
-@media (max-width: 767px) {
-  .billTabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--s-2);
-    border-bottom: none;
-    margin-bottom: var(--s-5);
-    overflow: visible;
-  }
-
-  .billTabBtn {
-    justify-content: center;
-    padding: 8px 6px;
-    min-height: 44px;
-    border: 1px solid var(--rule);
-    border-radius: 999px;
-    margin-bottom: 0;
-    font-size: 0.875rem;
-    font-weight: 600;
-    font-family: var(--font-sans);
-    color: var(--ink-2);
-    background: transparent;
-    white-space: normal;
-    text-align: center;
-  }
-
-  .billTabBtn:hover {
-    background: var(--paper-2);
-    color: var(--ink);
-  }
-
-  .billTabBtn.billTabBtnActive {
-    background: var(--teal);
-    color: #fff;
-    border-color: var(--teal);
-  }
+.filterBtnActive:hover {
+  background: var(--sw-accent-strong);
+  border-color: var(--sw-accent-strong);
+  color: #ffffff;
 }
 
-/* ── Sections ───────────────────────────────────────────────── */
+/* Sections inside the Members tab; the first skips the big top margin. */
 .section {
-  margin-bottom: var(--s-10);
+  margin-top: var(--sw-space-9);
+}
+
+.sectionFirst {
+  margin-top: 0;
+}
+
+@media (max-width: 640px) {
+  .section { margin-top: var(--s-10); }
+}
+
+.sectionHead {
+  margin-bottom: var(--s-5);
+}
+
+/* Extra top margin for a heading following other content mid-tab-panel. */
+.sectionHeadSpaced {
+  margin-top: var(--s-8);
+}
+
+.sectionEyebrow {
+  display: block;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-accent-strong);
+  margin-bottom: 4px;
 }
 
 .sectionHeading {
-  font-size: clamp(22px, 3vw, 32px);
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  color: var(--ink);
-  margin-bottom: var(--s-6);
   display: flex;
-  align-items: baseline;
-  gap: var(--s-2);
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--sw-fs-h2);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  color: var(--sw-text-primary);
+  margin: 0;
+}
+
+.sectionHeadingIcon {
+  flex-shrink: 0;
+  color: var(--sw-accent);
+}
+
+/* Matches the homepage's .sectionSubtitle exactly. */
+.sectionSubtitle {
+  font-size: var(--sw-fs-body);
+  color: var(--sw-text-secondary);
+  line-height: 1.5;
+  margin: var(--s-2) 0 0;
+}
+
+@media (max-width: 640px) {
+  .sectionSubtitle {
+    font-size: var(--sw-fs-body-sm);
+  }
+}
+
+/* Bordered tag variant — for a date-range/period subtitle that should read as metadata, not prose. */
+.sectionSubtitleTag {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--sw-fs-caption);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--sw-text-secondary);
+  padding: 3px 9px;
+  border: 1px solid var(--sw-border-strong);
+  background: var(--sw-surface-subtle);
+  border-radius: 3px;
+  margin: var(--s-2) 0 0;
+}
+
+@media (max-width: 640px) {
+  .sectionSubtitleTagHideMobile { display: none; }
+}
+
+.sectionHeadWithSubtitle {
+  margin-bottom: var(--s-6);
 }
 
 .mlaCount {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ink-3);
+  font-size: var(--sw-fs-body-sm);
+  color: var(--sw-text-tertiary);
   font-weight: 400;
-  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ── Executive cards (copied from structure.module.css) ─────── */
+/* Squared, plain bordered, badge top-right (§4.2.1). */
 .execTop {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -303,35 +1228,46 @@
   .execTop { grid-template-columns: 1fr; }
 }
 
+.execCard,
+.execCard:hover,
+.execCard:active,
+.execCard:visited {
+  text-decoration: none !important;
+}
+
 .execCard {
   padding: var(--s-4);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  display: grid;
-  grid-template-columns: 72px 1fr;
+  border: 1px solid var(--sw-border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: var(--s-4);
-  align-items: center;
-  background: var(--paper);
-  text-decoration: none;
-  transition: border-color 150ms, background 100ms;
+  background: var(--sw-surface);
+  transition: border-color 150ms;
+  min-width: 0;
 }
 
 .execCard:hover {
-  border-color: var(--teal);
-  background: var(--paper-2);
-  text-decoration: none;
+  border-color: var(--sw-accent);
 }
 
 .execCard:hover .execName {
-  color: var(--teal);
+  color: var(--sw-accent-strong);
+}
+
+.execMain {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  min-width: 0;
 }
 
 .execPhoto {
   width: 72px;
   height: 72px;
-  border-radius: var(--r-2);
   overflow: hidden;
-  background: var(--paper-3);
+  background: var(--sw-surface-subtle);
+  border: 1px solid var(--sw-border-strong);
   flex-shrink: 0;
 }
 
@@ -339,7 +1275,9 @@
   width: 100% !important;
   height: 100% !important;
   min-width: unset !important;
-  border-radius: var(--r-2) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
 }
 
 .execPhoto img {
@@ -349,31 +1287,37 @@
   object-position: top center !important;
 }
 
+.execPhoto img[data-photo-position] {
+  object-position: var(--photo-position, top center) !important;
+}
+
 .execInfo {
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+  flex: 1;
 }
 
-.execMinistry {
-  font-size: 11px;
+.execRole {
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-tertiary);
 }
 
 .execName {
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.035em;
-  line-height: 1.1;
-  color: var(--ink);
+  font-size: var(--sw-fs-body);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--sw-text-primary);
+  max-width: 100%;
   transition: color 120ms;
 }
 
-/* ── Dept grid (copied from structure.module.css) ───────────── */
+/* ── Dept grid (Ministers / Committee Chairs) ── */
 .deptGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -389,51 +1333,62 @@
   flex-direction: column;
   gap: var(--s-2);
   min-width: 0;
-  overflow: hidden;
 }
 
 .deptBlockHead {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  padding: 0 var(--s-1);
+  padding: 0 2px;
   min-width: 0;
+}
+
+.deptName {
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 700;
+  color: var(--sw-text-primary);
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.deptItem,
+.deptItem:hover,
+.deptItem:active,
+.deptItem:visited {
+  text-decoration: none !important;
 }
 
 .deptItem {
   padding: var(--s-4);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  display: grid;
-  grid-template-columns: 56px 1fr auto;
+  border: 1px solid var(--sw-border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: var(--s-4);
-  align-items: center;
-  text-decoration: none;
-  background: var(--paper);
-  transition: background 100ms, border-color 100ms;
+  background: var(--sw-surface);
+  transition: border-color 150ms;
 }
 
 .deptItem:hover {
-  background: var(--paper-2);
-  border-color: var(--teal);
-  text-decoration: none;
-}
-
-.deptItem:hover .deptArrow {
-  color: var(--teal);
+  border-color: var(--sw-accent);
 }
 
 .deptItem:hover .deptMlaName {
-  color: var(--teal);
+  color: var(--sw-accent-strong);
+}
+
+.deptMain {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  min-width: 0;
 }
 
 .deptPhoto {
   width: 56px;
   height: 56px;
-  border-radius: var(--r-2);
   overflow: hidden;
-  background: var(--paper-3);
+  background: var(--sw-surface-subtle);
+  border: 1px solid var(--sw-border-strong);
   flex-shrink: 0;
 }
 
@@ -441,7 +1396,9 @@
   width: 100% !important;
   height: 100% !important;
   min-width: unset !important;
-  border-radius: var(--r-2) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
 }
 
 .deptPhoto img {
@@ -451,49 +1408,37 @@
   object-position: top center !important;
 }
 
+.deptPhoto img[data-photo-position] {
+  object-position: var(--photo-position, top center) !important;
+}
+
 .deptInfo {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .deptLabel {
-  font-size: 10px;
+  font-size: var(--sw-fs-eyebrow);
+  font-weight: var(--sw-fw-eyebrow);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  white-space: nowrap;
+  letter-spacing: var(--sw-eyebrow-tracking);
+  color: var(--sw-text-tertiary);
 }
 
 .deptMlaName {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: color 120ms;
-}
-
-.deptName {
-  font-size: 15px;
+  font-size: var(--sw-fs-body);
   font-weight: 600;
-  color: var(--ink);
+  letter-spacing: -0.01em;
+  color: var(--sw-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: block;
-}
-
-.deptArrow {
-  font-size: 14px;
-  color: var(--ink-4);
   transition: color 120ms;
 }
 
-/* ── MLA grid (copied from mlas.module.css) ─────────────────── */
+/* ── MLA grid (all MLAs) — matches mlaCard idiom used site-wide. ── */
 .mlaGrid {
   list-style: none;
   padding: 0;
@@ -509,37 +1454,43 @@
 }
 
 @media (max-width: 640px) {
-  .mlaGrid { grid-template-columns: repeat(2, 1fr); gap: var(--s-3); }
+  .mlaGrid { grid-template-columns: 1fr; }
 }
 
-.mlaCardWrapper {
+.mlaGrid > li {
   display: contents;
 }
 
+/* Matches the MLA search page's .mlaCard exactly. */
 .mlaCard {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
   padding: var(--s-4);
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  overflow: hidden;
-  transition: border-color 150ms, background 100ms;
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border);
+  min-width: 0;
+  transition: border-color 150ms;
 }
 
 .mlaCard:hover {
-  border-color: var(--teal);
-  background: var(--paper-2);
+  border-color: var(--sw-accent);
+}
+
+.mlaMain {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
 }
 
 .mlaPhoto {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--r-2);
+  width: 56px;
+  height: 56px;
   overflow: hidden;
-  background: var(--paper-3);
+  background: var(--sw-surface-subtle);
+  border: 1px solid var(--sw-border-strong);
   flex-shrink: 0;
 }
 
@@ -547,7 +1498,9 @@
   width: 100% !important;
   height: 100% !important;
   min-width: unset !important;
-  border-radius: var(--r-2) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
 }
 
 .mlaPhoto img {
@@ -557,12 +1510,28 @@
   object-position: top center !important;
 }
 
+.mlaPhoto img[data-photo-position] {
+  object-position: var(--photo-position, top center) !important;
+}
+
+.mlaInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
 .mlaName {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink);
+  display: block;
+  font-size: var(--sw-fs-body);
+  font-weight: 600;
+  color: var(--sw-text-primary);
   line-height: 1.2;
-  text-decoration: none;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mlaName::before {
@@ -572,6 +1541,7 @@
 }
 
 .mlaName,
+.mlaName:hover,
 .mlaName:active,
 .mlaName:focus,
 .mlaName:visited {
@@ -579,989 +1549,59 @@
 }
 
 .mlaCard:hover .mlaName {
-  color: var(--teal);
+  color: var(--sw-accent-strong);
 }
 
 .mlaConstituency {
-  font-size: 12px;
-  color: var(--ink-3);
-  line-height: 1.3;
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-tertiary);
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+.mlaAttRow {
+  margin-top: 2px;
+}
 
-/* ── Assembly Stats tab ─────────────────────────────────────── */
-.statsSection {
+.mlaAtt {
+  font-size: var(--sw-fs-caption);
+  color: var(--sw-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.mlaAtt strong {
+  color: var(--sw-text-primary);
+  font-weight: 600;
+}
+
+/* Party pill left, role badge right, matching .mlaFoot on the MLA search page. */
+.mlaFoot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
   padding-top: var(--s-2);
+  border-top: 1px solid var(--sw-border);
 }
 
-.statsGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s-4);
-  margin-bottom: var(--s-6);
-}
-
-@media (max-width: 640px) {
-  .statsGrid { grid-template-columns: 1fr; }
-  .statCard {
-    background: var(--paper);
-    padding: var(--s-4);
-  }
-}
-
-.statCard {
-  background: var(--paper-2);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  padding: var(--s-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-}
-
-.statLabel {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-}
-
-.statValue {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--ink);
-  line-height: 1.1;
-  margin-top: var(--s-1);
-}
-
-.statSub {
-  font-size: 12px;
-  color: var(--ink-3);
-}
-
-.statDivider {
-  border-top: 1px solid var(--rule);
-  margin: var(--s-3) 0;
-}
-
-.statMlaArrow {
-  font-size: 11px;
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.statMlaSep {
-  border-top: 1px solid var(--rule);
-  margin: var(--s-2) 0;
-}
-
-.statMlaRow {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  text-decoration: none;
-  color: inherit;
-  padding: var(--s-2) 0;
-}
-
-.statMlaRow:hover {
-  text-decoration: none;
-}
-
-.statMlaRow:hover .statMlaName {
-  color: var(--teal);
-}
-
-.statMlaPhoto {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--r-2);
-  overflow: hidden;
-  background: var(--paper-3);
-  flex-shrink: 0;
-}
-
-.statMlaPhoto > span {
-  width: 100% !important;
-  height: 100% !important;
-  min-width: unset !important;
-  border-radius: var(--r-2) !important;
-}
-
-.statMlaPhoto img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  object-position: top center !important;
-}
-
-.statMlaInfo {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.statMlaName {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: color 120ms;
-}
-
-.statMlaConstituency {
-  font-size: 12px;
-  color: var(--ink-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.statMlaValueCol {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  flex-shrink: 0;
-}
-
-.statMlaPct {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
-.statMlaCount {
-  font-size: 11px;
-  color: var(--ink-3);
-  white-space: nowrap;
-}
-
-.statNote {
-  font-size: 12px;
-  color: var(--ink-3);
-  margin-top: var(--s-2);
-}
-
-.donutLegend {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s-2);
-  margin-top: var(--s-3);
-}
-
-.donutLegendItem {
-  display: flex;
-  align-items: center;
-  gap: var(--s-1);
-  font-size: 11px;
-  color: var(--ink-2);
-}
-
-.statsHeading {
-  font-size: clamp(22px, 3vw, 32px);
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  color: var(--ink);
-  margin-top: var(--s-6);
-  margin-bottom: var(--s-4);
-}
-
-.expensesSectionHeading {
-  font-size: 24px;
-  font-weight: 500;
-  font-family: var(--font-serif);
-  color: var(--ink);
-  letter-spacing: -0.02em;
-  margin: 0 0 var(--s-2);
-}
-
-.expensesSectionHeading em {
-  font-style: italic;
-  color: var(--teal);
-}
-
-.expensesHeadingDate {
-  font-size: 13px;
-  color: var(--ink-2);
-  margin-bottom: var(--s-4);
-}
-
-.divisionsTable {
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  overflow: hidden;
-}
-
-.divTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  table-layout: fixed;
-}
-
-.divTable th {
-  background: var(--paper-2);
-  border-bottom: 1px solid var(--rule);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-  padding: var(--s-3) var(--s-4);
-  text-align: left;
-  white-space: nowrap;
-}
-
-.divTable th:not(:first-child) {
-  text-align: center;
-}
-
-.divTable td {
-  border-bottom: 1px solid var(--rule);
-  vertical-align: middle;
-  padding: 0 var(--s-4);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.divTable tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.divTable tbody tr:hover {
-  background: var(--paper-2);
-}
-
-.divRowEven {
-  background: var(--paper);
-}
-
-.divSubjectCell {
-  text-align: left !important;
-  max-width: 0;
-}
-
-.divSubjectLink {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--s-3) 0;
-  text-decoration: none;
-}
-
-.divSubjectLink:hover .divSubjectTitle {
-  color: var(--teal);
-}
-
-.divSubjectTitle {
-  font-size: 14px;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: color 120ms;
-}
-
-.divSubjectSub {
-  font-size: 11px;
-  color: var(--ink-3);
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.divResultCell {
-  width: 96px;
-}
-
-.divDateCell {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--ink-3);
-  width: 120px;
-  padding-right: var(--s-8);
-}
-
-/* ── Recent divisions mobile cards ─────────────────────────── */
-.divMobileCards {
-  display: none;
-}
-
-@media (max-width: 640px) {
-  .divisionsTable {
-    display: none;
-  }
-
-  .divMobileCards {
-    display: flex;
-    flex-direction: column;
-    gap: var(--s-3);
-  }
-
-  .divMobileCard {
-    display: block;
-    background: var(--paper);
-    border: 1px solid var(--rule);
-    border-radius: var(--r-3);
-    padding: var(--s-4);
-    text-decoration: none !important;
-    color: inherit;
-  }
-
-  .divMobileCard:active {
-    background: var(--paper-2);
-  }
-
-  .divMobileTitle {
-    font-size: 15px;
-    font-weight: 400;
-    letter-spacing: -0.02em;
-    color: var(--ink);
-    line-height: 1.35;
-    margin-bottom: 5px;
-  }
-
-  .divMobileSub {
-    font-size: 12px;
-    color: var(--ink-3);
-    margin-bottom: 5px;
-    line-height: 1;
-    height: 13px;
-    display: block;
-    overflow: hidden;
-  }
-
-  .divMobilePills {
-    display: flex;
-    align-items: center;
-    margin-top: var(--s-3);
-    width: 100%;
-  }
-
-  .divMobilePillGroup {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .divMobilePillLabel {
-    font-size: 11px;
-    color: var(--ink-3);
-    font-weight: 400;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    white-space: nowrap;
-  }
-
-  .divMobileDate {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--ink-3);
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-    flex: 1;
-    text-align: right;
-  }
-}
-
-/* ── MLA questions ranking table ────────────────────────────── */
-.qRankWrap {
-  width: 100%;
-  overflow: hidden;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  margin-top: var(--s-5);
-}
-
-.qRankTable {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.qColRank       { width: 40px; }
-.qColMla        { width: auto; }
-.qColConstituency { width: 160px; }
-.qColQuestions  { width: 180px; }
-
-.qRankTable thead th {
-  background: var(--paper-2);
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  padding: 10px 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--rule);
-  white-space: nowrap;
-}
-
-.qRankTable thead th:first-child { text-align: center; }
-.qRankTable thead th:last-child  { text-align: right; }
-
-.qRankTable tbody tr {
-  transition: background 100ms ease;
-}
-
-.qRankTable tbody tr:hover td { background: var(--paper-2); }
-
-.qRankTable tbody tr:hover .qMlaName { color: var(--teal); }
-
-.qRankTable tbody td {
-  padding: 10px 12px;
-  font-size: 0.875rem;
-  color: var(--ink);
-  vertical-align: middle;
-  overflow: hidden;
-  background: var(--paper);
-  border-bottom: 1px solid var(--rule);
-}
-
-.qRankTable tbody tr:last-child td { border-bottom: none; }
-
-.qTdRank {
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--ink-3);
-}
-
-.qMlaCell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.qMlaInfo {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.qMlaName {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink);
-  text-decoration: none;
-  display: block;
-  transition: color 120ms;
-}
-
-.qTdConstituency {
-  font-size: 0.8125rem;
-  color: var(--ink-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.qTdQuestions { text-align: right; }
-
-.qQuestionsInner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.qBarTrack {
-  flex: 1;
-  max-width: 90px;
-  height: 5px;
-  background: var(--border);
-  border-radius: 99px;
-  overflow: hidden;
-}
-
-.qBarFill {
-  height: 100%;
-  border-radius: 99px;
-  opacity: 0.75;
-}
-
-.qQuestionsValue {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink);
-  white-space: nowrap;
-  min-width: 50px;
-  text-align: right;
-  font-family: var(--font-mono);
-  flex-shrink: 0;
-}
-
-.qHideMobile {}
-
-.qThQuestions { text-align: right; }
-
-@media (max-width: 640px) {
-  .qHideMobile        { display: none; }
-  .qBarTrack          { display: none; }
-  .qColQuestions      { width: 100px; }
-  .qQuestionsValue    { min-width: 0; font-size: 0.875rem; }
-  .qRankTable thead th { padding: 8px 10px; }
-  .qRankTable tbody td { padding: 8px 10px; }
-}
-
-/* ── Party Expenses tab ─────────────────────────────────────── */
-.expSection {
-  padding-top: var(--s-2);
-}
-
-.overviewGrid2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-md);
-}
-
-.overviewCard {
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  padding: var(--s-5);
-  background: var(--paper-2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: var(--s-1);
-}
-
-.overviewLabel {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-}
-
-.overviewValue {
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  line-height: 1.1;
-}
-
-.overviewMeta {
-  font-size: 12px;
-  color: var(--ink-3);
-}
-
-@media (max-width: 640px) {
-  .overviewGrid2 {
-    grid-template-columns: 1fr;
-  }
-
-  .overviewCard {
-    padding: var(--s-4);
-    align-items: flex-start;
-    text-align: left;
-  }
-
-}
-
-.expCoverageNote {
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--ink-2);
-  font-family: var(--font-sans);
-  margin-bottom: var(--s-5);
-}
-
-.expCoverageNote strong {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-/* ── Metric cards grid ──────────────────────────────────────── */
-.expCardGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s-4);
-  margin-bottom: var(--s-6);
-}
-
-@media (max-width: 640px) {
-  .expCardGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.expCard {
-  background: var(--paper-2);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  padding: var(--s-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-}
-
-.expCardRight {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  background: transparent;
-  border: none;
-  padding: 0;
-}
-
-.expMiniCard {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background: var(--paper-2);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-  padding: var(--s-5);
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-@media (max-width: 640px) {
-  .expMiniCard {
-    align-items: flex-start;
-    justify-content: flex-start;
-    text-align: left;
-  }
-}
-
-.expMetricLabel {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-}
-
-.expMetricValue {
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  line-height: 1.1;
-  margin-top: var(--s-1);
-}
-
-.expMetricSub {
-  font-size: 12px;
-  color: var(--ink-3);
-}
-
-.rankBadge {
-  font-size: 12px;
-  color: var(--ink-3);
-  display: block;
-}
-
-.expDivider {
-  height: 1px;
-  background: var(--rule);
-  margin: var(--s-3) 0;
-  border: none;
-}
-
-.expSectionLabelHigh {
-  font-size: 11px;
-  font-weight: 500;
-  margin-bottom: 4px;
-  color: var(--forest);
-}
-
-.expSectionLabelLow {
-  font-size: 11px;
-  font-weight: 500;
-  margin-bottom: 4px;
-  color: var(--crimson);
-}
-
-/* ── MLA expense rows ───────────────────────────────────────── */
-.expMlaRow {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  padding: var(--s-2) 0;
-  text-decoration: none;
-  color: inherit;
-}
-
-.expMlaRow:hover .expMlaName {
-  color: var(--teal);
-}
-
-.expMlaInfo {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.expMlaName {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink);
-  text-decoration: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: color 120ms;
-}
-
-.expMlaSub {
-  font-size: 12px;
-  color: var(--ink-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.expMlaRight {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  flex-shrink: 0;
-}
-
-.expMlaAmount {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
-
-/* ── MLA expenses table ─────────────────────────────────────── */
-.expTableWrap {
-  width: 100%;
-  overflow: hidden;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-3);
-}
-
-.expTable {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.expColRank       { width: 44px; }
-.expColMla        { width: auto; }
-.expColConstituency { width: 160px; }
-.expColExpenses   { width: 200px; }
-
-.expTable thead th {
-  background: var(--paper-2);
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  padding: 10px 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--rule);
-  white-space: nowrap;
-}
-
-.expTable thead th:first-child {
-  text-align: center;
-}
-
-.expTable thead th:last-child {
-  text-align: right;
-}
-
-.expTable tbody tr {
-  transition: background 100ms ease;
-}
-
-.expTableRow:hover td {
-  background: var(--paper-2);
-}
-
-.expTableRow:hover .expMlaName {
-  color: var(--teal);
-}
-
-.expTable tbody td {
-  padding: 10px 12px;
-  font-size: 0.875rem;
-  color: var(--ink);
-  vertical-align: middle;
-  overflow: hidden;
-  background: var(--paper);
-  border-bottom: 1px solid var(--rule);
-}
-
-.expTable tbody tr:last-child td { border-bottom: none; }
-
-.expTdRank {
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--ink-3);
-}
-
-.expMlaCell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.expMlaName {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink);
-  text-decoration: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
-}
-
-.expMlaName:hover {
-  color: var(--teal);
-}
-
-.expTdConstituency {
-  font-size: 0.8125rem;
-  color: var(--ink-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.expTdExpenses {
-  text-align: right;
-}
-
-.expExpensesInner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.expBarTrack {
-  flex: 1;
-  max-width: 90px;
-  height: 5px;
-  background: var(--border);
-  border-radius: 99px;
-  overflow: hidden;
-}
-
-.expBarFill {
-  height: 100%;
-  border-radius: 99px;
-  opacity: 0.75;
-}
-
-.expExpensesValue {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink);
-  white-space: nowrap;
-  min-width: 78px;
-  text-align: right;
-  font-family: var(--font-mono);
-  flex-shrink: 0;
-}
-
-.expHideMobile {}
-
-.expShowMobile { display: none; }
-
-@media (max-width: 640px) {
-  .expHideMobile {
-    display: none;
-  }
-
-  .expShowMobile {
-    display: inline;
-  }
-
-  .expColExpenses {
-    width: 100px;
-  }
-
-  .expBarTrack {
-    display: none;
-  }
-
-  .expExpensesValue {
-    min-width: 0;
-    font-size: 0.875rem;
-  }
-
-  .expTable thead th {
-    padding: 8px 10px;
-  }
-
-  .expTable tbody td {
-    padding: 8px 10px;
-  }
-}
-
-.chamberFilterBtn {
+.roleBadge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 16px;
-  min-height: 44px;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink-2);
-  font-size: 0.875rem;
-  font-weight: 600;
-  font-family: var(--font-sans);
-  cursor: pointer;
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  background: var(--sw-accent-solid);
+  color: #ffffff;
+  border-radius: 3px;
   white-space: nowrap;
 }
-
-@media (max-width: 600px) {
-  .chamberFilterBtn {
-    flex: 1;
-  }
-}
-
-.chamberFilterBtn:hover {
-  background: var(--paper-2);
-  color: var(--ink);
-}
-
-.chamberFilterBtnActive {
-  background: var(--teal);
-  color: #fff;
-  border-color: var(--teal);
-}
-
-.chamberFilterBtnActive:hover {
-  background: var(--teal);
-  color: #fff;
-}
-

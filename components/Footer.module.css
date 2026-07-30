@@ -1,42 +1,36 @@
 .footer {
-  border-top: 1px solid var(--rule);
-  padding-block: var(--s-10);
-  margin-top: var(--s-20);
-  background: var(--paper-2);
-  color: var(--ink-3);
+  border-top: 1px solid var(--sw-border);
+  padding: 26px var(--sw-gutter-desktop) 22px;
+  margin-top: 8px;
+  background: var(--sw-surface);
+}
+
+@media (max-width: 1024px) {
+  .footer { padding-inline: var(--sw-gutter-tablet); }
+}
+
+@media (max-width: 640px) {
+  .footer { padding-inline: var(--sw-gutter-mobile); }
 }
 
 .inner {
   display: flex;
   flex-direction: column;
-  gap: var(--s-10);
 }
 
 .grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: var(--s-10);
-}
-
-@media (max-width: 900px) {
-  .grid {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--s-8);
-  }
-}
-
-@media (max-width: 480px) {
-  .grid {
-    grid-template-columns: 1fr;
-    gap: var(--s-6);
-  }
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s-8);
 }
 
 /* Brand */
 .brand {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
+  gap: var(--s-2);
+  max-width: 280px;
 }
 
 .brandLink {
@@ -44,72 +38,68 @@
   align-items: center;
   gap: 8px;
   text-decoration: none !important;
-  color: var(--ink);
+  color: var(--sw-text-primary);
 }
 
 .brandLink:hover { text-decoration: none !important; }
-
-.footerLogo {
-  color: var(--ink);
-  flex-shrink: 0;
-}
 
 .brandLogoWrap {
   display: grid;
   place-items: center;
   width: 24px;
   height: 24px;
-  background: var(--ink);
-  border-radius: 7px;
-  color: var(--paper);
+  background: var(--sw-text-primary);
+  border-radius: var(--sw-radius-sm);
+  color: var(--sw-surface);
   flex-shrink: 0;
 }
 
-.brandName {
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  line-height: 1;
+.brandLogoWrap svg {
+  display: block;
 }
 
-.brandStormont { color: var(--ink); }
-.brandWatch { color: var(--ink-3); }
+.brandName {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.brandStormont { color: var(--sw-text-primary); }
+.brandWatch { color: var(--sw-text-secondary); }
 
 .brandTagline {
-  font-size: 13px;
-  color: var(--ink-2);
-  line-height: 1.6;
-  max-width: 40ch;
+  font-size: 12.5px;
+  color: var(--sw-text-tertiary);
+  line-height: 1.55;
 }
 
-.brandBadges {
+/* Link columns */
+.colGroup {
   display: flex;
+  gap: 44px;
   flex-wrap: wrap;
-  gap: var(--s-2);
 }
 
-.badge {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--ink-4);
-  border: 1px solid var(--rule);
-  border-radius: var(--r-pill);
-  padding: 2px 8px;
+@media (max-width: 640px) {
+  .colGroup {
+    flex-direction: column;
+    gap: var(--s-6);
+    width: 100%;
+  }
 }
 
-/* Nav columns */
 .col {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
 }
 
 .colHeading {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink);
-  letter-spacing: -0.01em;
-  margin-bottom: var(--s-3);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--sw-text-tertiary);
+  margin-bottom: 10px;
 }
 
 .colLinks {
@@ -122,53 +112,37 @@
 
 .colLinks a {
   font-size: 13px;
-  color: var(--ink-2);
+  color: var(--sw-text-secondary);
   text-decoration: none;
   display: block;
-  padding: 4px 0;
+  padding: 3px 0;
   transition: color 150ms;
 }
 
 .colLinks a:hover {
-  color: var(--teal);
-  text-decoration: none;
+  color: var(--sw-accent-strong);
+  text-decoration: underline;
 }
 
 /* Bottom bar */
 .bottom {
-  border-top: 1px solid var(--rule);
-  padding-top: var(--s-6);
-  font-size: 12px;
-  color: var(--ink-4);
+  border-top: 1px solid var(--sw-border);
+  margin-top: 22px;
+  padding-top: 16px;
+  font-size: 11.5px;
+  color: var(--sw-text-tertiary);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-4);
   flex-wrap: wrap;
-}
-
-.bottom p {
-  max-width: none;
-  white-space: nowrap;
-}
-
-@media (max-width: 640px) {
-  .bottom p { white-space: normal; }
+  gap: 6px 16px;
 }
 
 .bottom a {
-  color: var(--teal);
+  color: var(--sw-text-tertiary);
   text-decoration: none;
 }
 
 .bottom a:hover {
+  color: var(--sw-accent-strong);
   text-decoration: underline;
   text-underline-offset: 2px;
-}
-
-.colophon {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-4);
-  letter-spacing: 0.03em;
 }

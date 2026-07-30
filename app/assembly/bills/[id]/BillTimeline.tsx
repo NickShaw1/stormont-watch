@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { ChevronDown } from 'lucide-react'
 import { formatDate } from '@/lib/format'
 import { isPassed } from '@/lib/bills'
 import { useMandate } from '@/components/MandateContext'
@@ -109,7 +110,7 @@ function VotedOnList({ items }: { items: BillStageItem[] }) {
           const itemPassed = item.outcome ? isPassed(item.outcome) : null
           return (
             <li key={item.document_id} className={styles.itemColumnRowWrap}>
-              <Link href={`${basePath}/assembly/divisions/${item.division_id}`} className={styles.itemColumnRow}>
+              <Link href={`${basePath}/assembly/divisions/${item.division_id}`} className={`${styles.itemColumnRow} ${styles.itemColumnRowLink}`}>
                 {(item.item_title || item.outcome) && (
                   <span className={`${styles.itemLabel} ${styles.votedTitle}`}>
                     {item.item_title ?? item.outcome}
@@ -117,13 +118,12 @@ function VotedOnList({ items }: { items: BillStageItem[] }) {
                 )}
                 <span className={`${styles.itemColumnDate} ${styles.votedDate}`}>{formatDate(item.plenary_date)}</span>
                 {itemPassed !== null && (
-                  <span className={`${itemPassed ? styles.pillPassed : styles.pillFailed} ${styles.votedPill}`} role="status">
-                    {itemPassed ? 'Passed' : 'Failed'}
+                  <span className={styles.votedPill}>
+                    <span className={itemPassed ? styles.pillPassed : styles.pillFailed} role="status">
+                      {itemPassed ? 'Passed' : 'Failed'}
+                    </span>
                   </span>
                 )}
-                <span className={`${styles.divisionLink} ${styles.divisionLinkSm} ${styles.votedLink}`} aria-hidden="true">
-                  View vote results <span aria-hidden="true">↗</span>
-                </span>
               </Link>
             </li>
           )
@@ -135,20 +135,17 @@ function VotedOnList({ items }: { items: BillStageItem[] }) {
 
 function NoVoteList({ items }: { items: BillStageItem[] }) {
   const noVote = items
-    .filter(i => !i.has_division || !i.division_id)
+    .filter(i => (!i.has_division || !i.division_id) && i.item_title)
     .sort((a, b) => naturalCompareDesc(a.item_title ?? '', b.item_title ?? ''))
 
   if (noVote.length === 0) return null
 
   return (
     <div className={styles.itemColumn}>
-      <div className={styles.itemColumnHeader}>
-        Not voted on <span className={styles.itemColumnCount}>({noVote.length})</span>
-      </div>
       <ul className={styles.itemColumnList} role="list">
         {noVote.map(item => (
-          <li key={item.document_id} className={styles.itemColumnRow}>
-            <span className={styles.itemLabelMuted}>{item.item_title ?? ''}</span>
+          <li key={item.document_id} className={styles.itemColumnRowWrap}>
+            <span className={`${styles.itemColumnRow} ${styles.itemLabelMuted}`}>{item.item_title ?? ''}</span>
           </li>
         ))}
       </ul>
@@ -191,16 +188,20 @@ function StageGroupRow({ group, billConfirmedPassed }: { group: StageGroup; bill
 
       <VotedOnList items={group.items} />
 
-      {hasMultiple && group.items.some(i => !i.has_division || !i.division_id) && (
+      {hasMultiple && group.items.some(i => (!i.has_division || !i.division_id) && i.item_title) && (
         <div className={styles.groupMeta}>
+          <div className={styles.itemColumnHeader}>
+            Not voted on <span className={styles.itemColumnCount}>
+              ({group.items.filter(i => (!i.has_division || !i.division_id) && i.item_title).length})
+            </span>
+          </div>
           <button
             className={styles.expandBtn}
             onClick={() => setExpanded(e => !e)}
             aria-expanded={expanded}
           >
-            {expanded
-              ? 'Hide'
-              : `Not voted on (${group.items.filter(i => !i.has_division || !i.division_id).length})`}
+            <span className={styles.expandBtnLabel}>{expanded ? 'Collapse' : 'Expand'}</span>
+            <ChevronDown className={`${styles.expandBtnChevron} ${expanded ? styles.expandBtnChevronOpen : ''}`} size={14} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
       )}
