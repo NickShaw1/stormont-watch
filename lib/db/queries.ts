@@ -140,6 +140,7 @@ export async function getDivisionWithVotes(documentId: string, mandate: string =
   // Party/designation are shown as at the division's own mandate, not the member's
   // current mandate — so a returning MLA's historical votes keep their period party.
   const divisionMandate = division[0].mandate
+  const divisionDate = division[0].divisionDate
   const divisionVotes = await db
     .select({
       vote: votes.vote,
@@ -152,7 +153,12 @@ export async function getDivisionWithVotes(documentId: string, mandate: string =
     .from(votes)
     .innerJoin(people, eq(votes.personId, people.personId))
     .leftJoin(memberTerms, and(eq(memberTerms.personId, votes.personId), eq(memberTerms.mandate, divisionMandate)))
-    .where(eq(votes.documentId, documentId))
+    .where(and(
+      eq(votes.documentId, documentId),
+      // Presiding officers (Speaker/Deputy Speaker) don't vote by convention — exclude
+      // them only for the window they actually held the role, not the whole mandate.
+      sql`(${memberTerms.assemblyRoleStart} IS NULL OR ${divisionDate}::date < ${memberTerms.assemblyRoleStart}::date OR ${divisionDate}::date >= COALESCE(${memberTerms.assemblyRoleEnd}::date, 'infinity'::date))`
+    ))
     .orderBy(votes.vote, people.fullName)
 
   return { division: division[0], votes: divisionVotes }
