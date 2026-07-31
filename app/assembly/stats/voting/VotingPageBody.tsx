@@ -108,7 +108,7 @@ export default async function VotingPageBody({
               <CalendarCheck className={styles.chartTitleIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
               Party Attendance
             </h3>
-            <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>Average percentage of divisions attended by each party&apos;s current and former MLAs across the {mandate.label} mandate, excluding presiding officers and divisions before each MLA&apos;s mandate start date.</p>
+            <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>Average percentage of divisions attended by each party&apos;s current and former MLAs across the {mandate.label} mandate, excluding presiding officers. MLAs are only counted from the date they took their seat.</p>
             <PartyAttendanceChart data={partyAttendance} />
           </div>
         )}

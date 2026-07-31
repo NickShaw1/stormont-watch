@@ -129,16 +129,16 @@ function DonutChart({ stats }: { stats: PartyVoteStats; partyColor: string }) {
           aria-label={`Voting breakdown: Aye ${stats.aye.toLocaleString()}, No ${stats.no.toLocaleString()}, Abstain ${stats.abstained.toLocaleString()}, No show ${stats.noShow.toLocaleString()}`}
         />
       </div>
-      <div className={styles.donutLegend}>
+      <div className={styles.donutGlanceGrid}>
         {legendItems.map((item) => (
-          <div key={item.label} className={styles.donutLegendItem}>
-            <span className={styles.donutLegendKey}>
+          <div key={item.label} className={styles.donutGlanceCell}>
+            <span className={styles.donutGlanceLabel}>
               <span className={styles.donutLegendSwatch} style={{ background: swatchColor[item.cls] }} />
               {item.label}
             </span>
-            <span className={styles.donutLegendValue}>
-              <span className={styles.donutLegendCount}>{item.count.toLocaleString()}</span>{' '}
-              <span className={styles.donutLegendPct}>{total > 0 ? Math.round(item.count / total * 100) : 0}%</span>
+            <span className={styles.donutGlanceValueRow}>
+              <span className={styles.donutGlanceCount}>{item.count.toLocaleString()}</span>
+              <span className={styles.donutGlancePct}>{total > 0 ? Math.round(item.count / total * 100) : 0}%</span>
             </span>
           </div>
         ))}
@@ -260,14 +260,23 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
       <div className={styles.factPanelGrid}>
         {/* Attendance panel */}
         <div className={styles.factPanel}>
-          <span className={styles.factLabel}>Party division attendance average</span>
+          {/* Row 1: party-wide average */}
+          <span className={styles.factLabel}>Party-wide vote attendance average</span>
           <span className={styles.factValue}>{stats.attendancePct}%</span>
           <ul className={styles.factSubList}>
-            <li>Across current and former MLAs in the {mandate.label} mandate, excluding presiding officers.</li>
-            <li>{stats.present.toLocaleString()} / {stats.total.toLocaleString()} divisions party participated in.</li>
+            <li>Average share of votes cast (not a no-show) across current and former MLAs in the {mandate.label} mandate, excluding presiding officers.</li>
           </ul>
 
           <div className={styles.factDivider} />
+
+          {/* Row 2: division coverage */}
+          <span className={styles.factLabel}>Divisions with at least one party vote cast</span>
+          <span className={styles.factValue}>{stats.present.toLocaleString()} / {stats.total.toLocaleString()}</span>
+
+          <div className={styles.factDivider} />
+
+          {/* Row 2: highest/lowest individual MLA */}
+          <span className={styles.factLabel}>{singleMla ? 'MLA attendance' : 'Highest and lowest MLA attendance'}</span>
           {singleMla ? (
             <MlaStatRow mla={stats.highestMla} />
           ) : (

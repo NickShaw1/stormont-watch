@@ -342,7 +342,7 @@ export async function getAverageAttendance(mandate: string = CURRENT_MANDATE): P
       AND m.mandate = ${mandate}
       AND v.mandate = ${mandate}
       AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
-      AND (m.assembly_role_start IS NULL OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date)))
+      AND (m.assembly_role_start IS NULL OR d.division_date < m.assembly_role_start::date OR d.division_date >= COALESCE(m.assembly_role_end::date, 'infinity'::date))
       GROUP BY m.person_id
     ) attendance
   `)
@@ -1750,7 +1750,7 @@ export async function getPartyAssemblyStats(party: string, mandate: string = CUR
       AND m.party = ${party}
       AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
       AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
-      AND (m.assembly_role_start IS NULL OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date)))
+      AND (m.assembly_role_start IS NULL OR d.division_date < m.assembly_role_start::date OR d.division_date >= COALESCE(m.assembly_role_end::date, 'infinity'::date))
     `),
     db.execute(sql`
       SELECT person_id, full_name, attendance_pct, present, total, constituency
@@ -1805,7 +1805,7 @@ export async function getPartyAssemblyStats(party: string, mandate: string = CUR
       AND m.party = ${party}
       AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
       AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
-      AND (m.assembly_role_start IS NULL OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date)))
+      AND (m.assembly_role_start IS NULL OR d.division_date < m.assembly_role_start::date OR d.division_date >= COALESCE(m.assembly_role_end::date, 'infinity'::date))
       GROUP BY DATE_TRUNC('month', d.division_date)
       ORDER BY month_date ASC
     `),
@@ -2363,7 +2363,7 @@ export async function getPartyAttendanceAll(mandate: string = CURRENT_MANDATE): 
     AND m.party IS NOT NULL
     AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
     AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
-    AND (m.assembly_role_start IS NULL OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date)))
+    AND (m.assembly_role_start IS NULL OR d.division_date < m.assembly_role_start::date OR d.division_date >= COALESCE(m.assembly_role_end::date, 'infinity'::date))
     GROUP BY m.party
     ORDER BY attendance_pct DESC
   `)
@@ -2395,7 +2395,7 @@ export async function getAllPartyAttendanceTrends(mandate: string = CURRENT_MAND
     AND m.party IS NOT NULL
     AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
     AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
-    AND (m.assembly_role_start IS NULL OR (m.assembly_role_end IS NOT NULL AND (d.division_date < m.assembly_role_start::date OR d.division_date >= m.assembly_role_end::date)))
+    AND (m.assembly_role_start IS NULL OR d.division_date < m.assembly_role_start::date OR d.division_date >= COALESCE(m.assembly_role_end::date, 'infinity'::date))
     GROUP BY m.party, DATE_TRUNC('month', d.division_date)
     ORDER BY month_date ASC
   `)

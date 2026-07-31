@@ -588,6 +588,7 @@
 .factRankGroup {
   padding-left: var(--s-3);
   border-left: 2px solid var(--rank-c, var(--sw-border-strong));
+  margin-top: var(--s-3);
 }
 
 @media (max-width: 640px) {
@@ -855,23 +856,12 @@
   margin-top: var(--s-3);
 }
 
-/* Fixed larger size so this card's height isn't coupled to its neighbour's. */
 .donutArea {
   position: relative;
   width: 100%;
   height: 260px;
+  flex-shrink: 0;
   margin-top: var(--s-3);
-}
-
-/* 2-column x 2-row grid so counts align in a clean block. */
-.donutLegend {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--s-5);
-  row-gap: var(--s-3);
-  margin-top: var(--s-4);
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--sw-border);
 }
 
 @media (max-width: 640px) {
@@ -880,28 +870,57 @@
     height: 200px;
   }
 
-  /* One column; a two-column split wrapped "No show   1,471   23%". */
-  .donutLegend {
+  /* One column on mobile; still boxed cards, just stacked. */
+  .donutGlanceGrid {
     grid-template-columns: 1fr;
-    row-gap: var(--s-2);
   }
 }
 
-.donutLegendItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* 2x2 glance cards — compact, sit at the top of any leftover panel height. */
+.donutGlanceGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--s-2);
-  min-width: 0;
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--sw-border);
 }
 
-.donutLegendKey {
+.donutGlanceCell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--sw-border);
+  background: var(--sw-surface-subtle);
+}
+
+.donutGlanceLabel {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-width: 0;
-  font-size: var(--sw-fs-body-sm);
+  font-size: var(--sw-fs-caption);
   color: var(--sw-text-secondary);
+}
+
+.donutGlanceValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.donutGlanceCount {
+  font-size: var(--sw-fs-body-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--sw-text-primary);
+}
+
+.donutGlancePct {
+  font-size: var(--sw-fs-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--sw-text-tertiary);
 }
 
 .donutLegendSwatch {
@@ -910,22 +929,6 @@
   height: 10px;
   border-radius: 2px;
   flex-shrink: 0;
-}
-
-.donutLegendValue {
-  flex-shrink: 0;
-  font-size: var(--sw-fs-body-sm);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.donutLegendCount {
-  color: var(--sw-text-primary);
-  font-weight: 600;
-}
-
-.donutLegendPct {
-  color: var(--sw-text-tertiary);
 }
 
 /* Ranking rows inside a fact panel: bar + value, not a <table>. */
