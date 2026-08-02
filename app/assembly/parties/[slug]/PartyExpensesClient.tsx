@@ -44,6 +44,9 @@ function MlaExpenseRow({ mla, rankSub }: { mla: PartyExpenseStats['highestMla'];
         {mla.constituency && (
           <span className={styles.factRowConstituency}>{formatConstituency(mla.constituency)}</span>
         )}
+        {!mla.isCurrent && (
+          <span className={styles.formerPill}>Former MLA</span>
+        )}
       </div>
       <div className={styles.factRowValueCol}>
         <span className={styles.factRowValue}>{gbp(mla.total)}</span>
@@ -192,6 +195,9 @@ export default function PartyExpensesClient({ expenses, mandateExpenses, partyCo
                   <span className={`${styles.barRowConstituency} ${styles.barRowConstituencyHideMobile}`}>
                     {formatConstituency(mla.constituency)}
                   </span>
+                )}
+                {!mla.isCurrent && (
+                  <span className={styles.formerPill}>Former MLA</span>
                 )}
               </div>
               <div className={styles.barRowBarWrap}>

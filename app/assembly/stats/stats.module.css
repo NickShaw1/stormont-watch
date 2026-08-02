@@ -1452,8 +1452,13 @@
   grid-template-columns: repeat(3, 1fr);
 }
 
+.glanceStripSmallFour {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 @media (max-width: 767px) {
   .glanceStripSmallThree { grid-template-columns: 1fr; }
+  .glanceStripSmallFour { grid-template-columns: 1fr; }
 }
 
 .glanceCellSmall {
@@ -1473,6 +1478,11 @@
   background: color-mix(in srgb, var(--sw-success) 12%, var(--sw-surface));
 }
 
+.glanceCellSmall:nth-child(4) {
+  border-top-color: var(--sw-text-tertiary);
+  background: var(--sw-surface-subtle);
+}
+
 .glanceCellSmallLabelRow {
   display: flex;
   align-items: center;
@@ -1490,6 +1500,7 @@
 
 .glanceCellSmall:nth-child(2) .glanceCellSmallLabel { color: var(--sw-accent-warm); }
 .glanceCellSmall:nth-child(3) .glanceCellSmallLabel { color: var(--sw-success); }
+.glanceCellSmall:nth-child(4) .glanceCellSmallLabel { color: var(--sw-text-tertiary); }
 
 .glanceCellSmallIcon {
   flex-shrink: 0;
@@ -1498,6 +1509,7 @@
 
 .glanceCellSmall:nth-child(2) .glanceCellSmallIcon { color: var(--sw-accent-warm); }
 .glanceCellSmall:nth-child(3) .glanceCellSmallIcon { color: var(--sw-success); }
+.glanceCellSmall:nth-child(4) .glanceCellSmallIcon { color: var(--sw-text-tertiary); }
 
 .glanceCellSmallValue {
   font-size: var(--sw-fs-h2);

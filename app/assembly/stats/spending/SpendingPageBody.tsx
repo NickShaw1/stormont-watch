@@ -12,6 +12,8 @@ import {
   getAllMemberRoleHistories,
   getTotalExpensesPerMember,
   getAllMandateMembers,
+  getAllMlaExpensesForLatestYear,
+  getInstitutionalExpensesForLatestYear,
 } from '@/lib/db/queries'
 import { calculateMandateEarnings, getCurrentAnnualSalary, apiRoleToSalaryRole, salaryRatesPublished, hasServedOneYear, type RoleInterval } from '@/lib/salaries'
 import { formatMemberName, partyBorderColor, abbreviateParty } from '@/lib/format'
@@ -32,7 +34,7 @@ export default async function SpendingPageBody({
   mandate: Mandate
   basePath: string
 }) {
-  const [leaderboard, expensesLeague, expensesByParty, allCurrentMembers, latestExpensesYear, ministerRows, allRoleHistories, totalExpensesData, allMandateMembers] = await Promise.all([
+  const [leaderboard, expensesLeague, expensesByParty, allCurrentMembers, latestExpensesYear, ministerRows, allRoleHistories, totalExpensesData, allMandateMembers, allMlaExpenses, institutionalExpenses] = await Promise.all([
     getMlaLeaderboard(mandate.id),
     getExpensesLeagueTable(mandate.id),
     getExpensesByParty(mandate.id),
@@ -42,6 +44,8 @@ export default async function SpendingPageBody({
     getAllMemberRoleHistories(mandate.id),
     getTotalExpensesPerMember(mandate.id),
     getAllMandateMembers(mandate.id),
+    getAllMlaExpensesForLatestYear(mandate.id),
+    getInstitutionalExpensesForLatestYear(mandate.id),
   ])
 
   void leaderboard
@@ -303,17 +307,35 @@ export default async function SpendingPageBody({
 
               return (
                 <>
-                  <div className={styles.glanceStripSmall} style={{ marginTop: 'var(--s-4)' }}>
+                  <div className={`${styles.glanceStripSmall} ${institutionalExpenses.length > 0 ? styles.glanceStripSmallFour : styles.glanceStripSmallThree}`} style={{ marginTop: 'var(--s-4)' }}>
                     <div className={styles.glanceCellSmall}>
                       <span className={styles.glanceCellSmallLabel}>Total claimed</span>
                       <div className={styles.glanceCellSmallValue}>{gbp(String(assemblyTotal))}</div>
-                      <span className={styles.glanceCellSmallMeta}>{periodLabel}</span>
+                      <span className={styles.glanceCellSmallMeta}>Current MLAs &middot; {periodLabel}</span>
                     </div>
                     <div className={styles.glanceCellSmall}>
                       <span className={styles.glanceCellSmallLabel}>Avg per MLA</span>
                       <div className={styles.glanceCellSmallValue}>{gbp(String(assemblyAvg))}</div>
-                      <span className={styles.glanceCellSmallMeta}>{periodLabel}</span>
+                      <span className={styles.glanceCellSmallMeta}>Current MLAs &middot; {periodLabel}</span>
                     </div>
+                    <div className={styles.glanceCellSmall}>
+                      <span className={styles.glanceCellSmallLabel}>Current &amp; former total</span>
+                      <div className={styles.glanceCellSmallValue}>{gbpFull(allMlaExpenses.total)}</div>
+                      <span className={styles.glanceCellSmallMeta}>
+                        All {allMlaExpenses.count} MLAs who claimed &middot; {periodLabel}
+                      </span>
+                    </div>
+                    {institutionalExpenses.length > 0 && (
+                      <div className={styles.glanceCellSmall}>
+                        <span className={styles.glanceCellSmallLabel}>Other Assembly costs</span>
+                        <div className={styles.glanceCellSmallValue}>
+                          {gbpFull(institutionalExpenses.reduce((sum, r) => sum + r.amount, 0))}
+                        </div>
+                        <span className={styles.glanceCellSmallMeta}>
+                          Not attributed to an MLA &middot; {institutionalExpenses.map(r => r.category).join(', ')}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className={styles.cardGrid}>
                     <ExpensesCard title="Most expenses claimed" icon={ArrowUpWideNarrow} rows={top5} />

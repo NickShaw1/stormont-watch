@@ -157,6 +157,18 @@ export const expenses = pgTable('expenses', {
   pk: primaryKey({ columns: [t.personId, t.financialYear] }),
 }))
 
+// Assembly-wide expense line items from the same published figures that aren't
+// attributable to an individual MLA (e.g. "Disability & Security Measures Costs").
+export const institutionalExpenses = pgTable('institutional_expenses', {
+  financialYear: text('financial_year').notNull(),
+  category: text('category').notNull(),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull().default('0'),
+  mandate: text('mandate').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.financialYear, t.category] }),
+}))
+
 export const bills = pgTable('bills', {
   billId: text('bill_id').primaryKey(),
   shortTitle: text('short_title').notNull(),

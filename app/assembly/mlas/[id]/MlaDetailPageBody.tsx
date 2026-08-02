@@ -100,8 +100,8 @@ export default async function MlaDetailPageBody({
     allowances: string | null
     staff_costs: string | null
     total: string | null
-    rank: number
-    total_members: number
+    rank: number | null
+    total_members: number | null
   }
   const allExpenses = allExpensesRaw as ExpenseRow[]
   const latestExpenses = allExpenses[0] ?? null

@@ -17,8 +17,8 @@ type ExpenseRow = {
   allowances: string | null
   staff_costs: string | null
   total: string | null
-  rank: number
-  total_members: number
+  rank: number | null
+  total_members: number | null
 }
 
 type Expenses = ExpenseRow | null
@@ -600,10 +600,12 @@ export default function ActivityTabsClient(props: Props) {
                     <BarChart3 className={styles.tileIcon} size={17} strokeWidth={1.75} aria-hidden="true" />
                     <span className={styles.questionsSummaryLabel}>{(selectedExpenses?.period ?? selectedYear).replace(/\b(January|February|March|April|May|June|July|August|September|October|November|December)\b/g, m => m.slice(0, 3))} expenses rank</span>
                     <span className={styles.questionsSummaryValue}>
-                      {selectedExpenses ? (() => {
-                        const pctile = selectedExpenses.total_members > 1 ? (selectedExpenses.rank - 1) / (selectedExpenses.total_members - 1) : 0
+                      {selectedExpenses && selectedExpenses.rank !== null && selectedExpenses.total_members !== null ? (() => {
+                        const rank = selectedExpenses.rank as number
+                        const totalMembers = selectedExpenses.total_members as number
+                        const pctile = totalMembers > 1 ? (rank - 1) / (totalMembers - 1) : 0
                         const color = pctile <= 0.33 ? 'var(--sw-error)' : pctile <= 0.66 ? 'var(--sw-warning)' : 'var(--sw-success)'
-                        return <span style={{ color }}>{selectedExpenses.rank}<span className={styles.expenseFraction}>/{selectedExpenses.total_members}</span></span>
+                        return <span style={{ color }}>{rank}<span className={styles.expenseFraction}>/{totalMembers}</span></span>
                       })() : <span className={styles.statMuted}>N/A</span>}
                     </span>
                   </div>

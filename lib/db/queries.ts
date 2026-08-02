@@ -659,6 +659,7 @@ interface PartyMlaExpense {
   total: number
   financialYear: string
   period: string
+  isCurrent: boolean
 }
 
 export interface PartyExpenseStats {
@@ -727,6 +728,7 @@ export async function getPartyExpenses(party: string, mandate: string = CURRENT_
         total: expenses.total,
         financialYear: expenses.financialYear,
         period: expenses.period,
+        isCurrent: members.isCurrent,
       })
       .from(expenses)
       .innerJoin(members, eq(expenses.personId, members.personId))
@@ -777,11 +779,18 @@ export async function getPartyExpenses(party: string, mandate: string = CURRENT_
     total: parseFloat(r.total as unknown as string),
     financialYear: r.financialYear,
     period: r.period ?? '',
+    isCurrent: r.isCurrent,
   }))
 
   const partyTotal = mlas.reduce((sum, m) => sum + m.total, 0)
   const avgPerMla = partyTotal / mlas.length
   const visitCount = Number(visitRows[0]?.count ?? 0)
+
+  // Negative totals are net recoveries/corrections, not genuine claims — exclude from the
+  // ranked list and highest/lowest, but partyTotal/avgPerMla above still net them in.
+  const claimedMlas = mlas.filter(m => m.total >= 0)
+  const highestMla = claimedMlas[0] ?? mlas[0]
+  const lowestMla = claimedMlas[claimedMlas.length - 1] ?? mlas[mlas.length - 1]
 
   type RankRow = { party: string; rank_total: string; rank_avg: string; rank_visits: string; party_count: string }
   const rankData = rankRows.rows as RankRow[]
@@ -796,14 +805,14 @@ export async function getPartyExpenses(party: string, mandate: string = CURRENT_
     period: mlas[0].period,
     partyTotal,
     avgPerMla,
-    highestMla: mlas[0],
-    lowestMla: mlas[mlas.length - 1],
+    highestMla,
+    lowestMla,
     visitCount,
     rankTotal,
     rankAvg,
     rankVisits,
     partyCount,
-    mlas,
+    mlas: claimedMlas,
   }
 }
 
@@ -818,6 +827,7 @@ export async function getAllMemberExpenses(personId: string, mandate: string = C
         COUNT(*) OVER (PARTITION BY financial_year) as total_members
       FROM expenses
       WHERE mandate = ${mandate}
+        AND total >= 0
     )
     SELECT
       e.financial_year,
@@ -830,7 +840,7 @@ export async function getAllMemberExpenses(personId: string, mandate: string = C
       yr.rank,
       yr.total_members
     FROM expenses e
-    JOIN year_ranks yr ON yr.person_id = e.person_id AND yr.financial_year = e.financial_year
+    LEFT JOIN year_ranks yr ON yr.person_id = e.person_id AND yr.financial_year = e.financial_year
     WHERE e.person_id = ${personId}
       AND e.mandate = ${mandate}
     ORDER BY e.financial_year DESC
@@ -1152,6 +1162,47 @@ export async function getSittingDays(mandate: string = CURRENT_MANDATE): Promise
 export async function getLatestExpensesYear(mandate: string = CURRENT_MANDATE): Promise<string> {
   const result = await db.execute(sql`SELECT MAX(financial_year) as latest FROM expenses WHERE mandate = ${mandate}`)
   return String(result.rows[0]?.latest ?? '')
+}
+
+// Sum of every MLA expense claim (current and former members) for the latest published
+// year, alongside the count claims are averaged over. Unlike getExpensesLeagueTable this
+// is not filtered to is_current — it's the true total of individual claims that year.
+export async function getAllMlaExpensesForLatestYear(mandate: string = CURRENT_MANDATE): Promise<{ total: number; count: number; financialYear: string }> {
+  const result = await db.execute(sql`
+    WITH latest_year AS (
+      SELECT financial_year FROM expenses WHERE mandate = ${mandate} ORDER BY financial_year DESC LIMIT 1
+    )
+    SELECT
+      COALESCE(SUM(e.total), 0) as total,
+      COUNT(*) as count,
+      (SELECT financial_year FROM latest_year) as "financialYear"
+    FROM expenses e
+    INNER JOIN members m ON m.person_id = e.person_id AND m.mandate = ${mandate}
+    WHERE e.mandate = ${mandate}
+      AND e.financial_year = (SELECT financial_year FROM latest_year)
+  `)
+  const row = result.rows[0] as { total: string; count: string; financialYear: string } | undefined
+  return {
+    total: Number(row?.total ?? 0),
+    count: Number(row?.count ?? 0),
+    financialYear: row?.financialYear ?? '',
+  }
+}
+
+// Assembly-wide expense line items not attributable to an individual MLA
+// (e.g. "Disability & Security Measures Costs") for the latest published year.
+export async function getInstitutionalExpensesForLatestYear(mandate: string = CURRENT_MANDATE): Promise<{ category: string; amount: number }[]> {
+  const result = await db.execute(sql`
+    WITH latest_year AS (
+      SELECT financial_year FROM expenses WHERE mandate = ${mandate} ORDER BY financial_year DESC LIMIT 1
+    )
+    SELECT category, amount
+    FROM institutional_expenses
+    WHERE mandate = ${mandate}
+      AND financial_year = (SELECT financial_year FROM latest_year)
+    ORDER BY amount DESC
+  `)
+  return (result.rows as { category: string; amount: string }[]).map(r => ({ category: r.category, amount: Number(r.amount) }))
 }
 
 export async function getHomepageStats(mandate: string = CURRENT_MANDATE) {
