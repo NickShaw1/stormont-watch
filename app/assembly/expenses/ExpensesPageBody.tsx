@@ -47,7 +47,7 @@ export default async function ExpensesPageBody({
           <PoundSterling className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
           MLA expenses
         </h1>
-        <p className={styles.lede}>Expenses claimed by every MLA: office costs, travel, constituency support and staff salaries.</p>
+        <p className={styles.lede}>Expenses claimed by every current MLA: office costs, travel, constituency support and staff salaries.</p>
       </header>
 
       {missing.length > 0 && (
