@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/_next/static/*",
+    "/mla-images/*",
+    "/data/*",
+    "/favicon.ico",
+    "/favicon.svg",
+    "/favicon-96x96.png",
+    "/apple-touch-icon.png",
+    "/opengraph-image-v2.png",
+    "/site.webmanifest",
+    "/stormont.jpg",
+    "/web-app-manifest-192x192.png",
+    "/web-app-manifest-512x512.png"
+  ]
+}
