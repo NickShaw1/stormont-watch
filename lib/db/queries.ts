@@ -74,6 +74,9 @@ export async function getAllMandateMembers(mandate: string = CURRENT_MANDATE) {
       personId: members.personId,
       fullName: members.fullName,
       party: members.party,
+      constituency: members.constituency,
+      imgUrl: members.imgUrl,
+      assemblyRole: members.assemblyRole,
       mandateStart: members.mandateStart,
       mandateEnd: members.mandateEnd,
       isCurrent: members.isCurrent,
@@ -395,6 +398,7 @@ export async function getPartyCohesion(mandate: string = CURRENT_MANDATE): Promi
   }))
 }
 
+// Requires 2+ rebellions so one split vote can't top the list on a thin sample.
 export async function getMostRebelliousMla(mandate: string = CURRENT_MANDATE): Promise<{
   personId: string
   fullName: string
@@ -441,6 +445,7 @@ export async function getMostRebelliousMla(mandate: string = CURRENT_MANDATE): P
       AND v.mandate = ${mandate}
       GROUP BY m.person_id, m.full_name, m.party, m.constituency, m.img_url
       HAVING COUNT(*) FILTER (WHERE v.vote != 'NO_SHOW') > 10
+        AND COUNT(*) FILTER (WHERE v.vote != 'NO_SHOW' AND v.vote != pm.majority_vote) >= 2
     )
     SELECT * FROM mla_rebellions
     ORDER BY rebellion_pct DESC
@@ -1017,12 +1022,14 @@ export async function getHansardReportId(plenaryDate: string): Promise<string | 
 }
 
 
+// agreement_pct excludes divisions where a whole bloc cast no votes.
 export async function getCrossCommunityTrends(mandate: string = CURRENT_MANDATE) {
   const { startSql, endSql } = trendBounds(mandate)
   const result = await db.execute(sql`
-    SELECT 
+    SELECT
       gs.month,
       COALESCE(d.total_divisions, 0) as total_divisions,
+      COALESCE(d.comparable_divisions, 0) as comparable_divisions,
       COALESCE(d.agreed_divisions, 0) as agreed_divisions,
       d.agreement_pct
     FROM generate_series(
@@ -1034,15 +1041,18 @@ export async function getCrossCommunityTrends(mandate: string = CURRENT_MANDATE)
       SELECT
         DATE_TRUNC('month', division_date) as month,
         COUNT(*) as total_divisions,
+        COUNT(*) FILTER (WHERE (nationalist_ayes + nationalist_noes) > 0 AND (unionist_ayes + unionist_noes) > 0) as comparable_divisions,
         COUNT(*) FILTER (WHERE
-          (unionist_ayes > unionist_noes AND nationalist_ayes > nationalist_noes)
-          OR (unionist_noes > unionist_ayes AND nationalist_noes > nationalist_ayes)
+          (nationalist_ayes + nationalist_noes) > 0 AND (unionist_ayes + unionist_noes) > 0
+          AND ((unionist_ayes > unionist_noes AND nationalist_ayes > nationalist_noes)
+          OR (unionist_noes > unionist_ayes AND nationalist_noes > nationalist_ayes))
         ) as agreed_divisions,
         ROUND(
           COUNT(*) FILTER (WHERE
-            (unionist_ayes > unionist_noes AND nationalist_ayes > nationalist_noes)
-            OR (unionist_noes > unionist_ayes AND nationalist_noes > nationalist_ayes)
-          ) * 100.0 / NULLIF(COUNT(*), 0)
+            (nationalist_ayes + nationalist_noes) > 0 AND (unionist_ayes + unionist_noes) > 0
+            AND ((unionist_ayes > unionist_noes AND nationalist_ayes > nationalist_noes)
+            OR (unionist_noes > unionist_ayes AND nationalist_noes > nationalist_ayes))
+          ) * 100.0 / NULLIF(COUNT(*) FILTER (WHERE (nationalist_ayes + nationalist_noes) > 0 AND (unionist_ayes + unionist_noes) > 0), 0)
         ) as agreement_pct
       FROM divisions
       WHERE division_date >= ${startSql} AND division_date <= ${endSql}
@@ -1054,13 +1064,22 @@ export async function getCrossCommunityTrends(mandate: string = CURRENT_MANDATE)
   return result.rows as {
     month: string
     total_divisions: number
+    comparable_divisions: number
     agreed_divisions: number
     agreement_pct: number | null
   }[]
 }
 
+// Excludes divisions where a whole bloc cast no votes, matching getBlocAgreement.
 export async function getOverallAgreementRate(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
+    WITH comparable AS (
+      SELECT nationalist_ayes, nationalist_noes, unionist_ayes, unionist_noes
+      FROM divisions
+      WHERE mandate = ${mandate}
+        AND (nationalist_ayes + nationalist_noes) > 0
+        AND (unionist_ayes + unionist_noes) > 0
+    )
     SELECT
       ROUND(
         COUNT(*) FILTER (WHERE
@@ -1070,8 +1089,7 @@ export async function getOverallAgreementRate(mandate: string = CURRENT_MANDATE)
             AND unionist_noes > (unionist_noes + unionist_ayes) * 0.5)
         ) * 100.0 / NULLIF(COUNT(*), 0)
       ) as agreement_pct
-    FROM divisions
-    WHERE mandate = ${mandate}
+    FROM comparable
   `)
   return Number((result.rows[0] as { agreement_pct: unknown }).agreement_pct)
 }
@@ -2831,17 +2849,12 @@ type BlocAgreement = {
   disagreed: number
   bothAye: number
   bothNo: number
+  noParticipation: number
   totalDivisions: number
   agreePct: number
 }
 
-/**
- * How often the unionist-designated and nationalist-designated blocs took the
- * same side. Uses the same rule as getOverallAgreementRate: a bloc's position is
- * the side taken by more than half of that bloc's MLAs who cast an Aye or No,
- * so abstentions and absences are excluded. Sits beside the party-level figures
- * on the voting page, which use a different (four-position) method.
- */
+// Excludes divisions where a whole bloc cast no votes from agreed/disagreed/agreePct.
 export async function getBlocAgreement(mandate: string = CURRENT_MANDATE): Promise<BlocAgreement> {
   const result = await db.execute(sql`
     WITH positions AS (
@@ -2849,30 +2862,36 @@ export async function getBlocAgreement(mandate: string = CURRENT_MANDATE): Promi
         nationalist_ayes > (nationalist_noes + nationalist_ayes) * 0.5 AS nat_aye,
         nationalist_noes > (nationalist_noes + nationalist_ayes) * 0.5 AS nat_no,
         unionist_ayes > (unionist_noes + unionist_ayes) * 0.5 AS uni_aye,
-        unionist_noes > (unionist_noes + unionist_ayes) * 0.5 AS uni_no
+        unionist_noes > (unionist_noes + unionist_ayes) * 0.5 AS uni_no,
+        (nationalist_ayes + nationalist_noes) = 0 AS nat_absent,
+        (unionist_ayes + unionist_noes) = 0 AS uni_absent
       FROM divisions
       WHERE mandate = ${mandate}
     )
     SELECT
       COUNT(*) AS total_divisions,
-      COUNT(*) FILTER (WHERE nat_aye AND uni_aye) AS both_aye,
-      COUNT(*) FILTER (WHERE nat_no AND uni_no) AS both_no
+      COUNT(*) FILTER (WHERE nat_absent OR uni_absent) AS no_participation,
+      COUNT(*) FILTER (WHERE NOT nat_absent AND NOT uni_absent AND nat_aye AND uni_aye) AS both_aye,
+      COUNT(*) FILTER (WHERE NOT nat_absent AND NOT uni_absent AND nat_no AND uni_no) AS both_no
     FROM positions
   `)
 
   const r = (result.rows as unknown as Record<string, unknown>[])[0]
   const totalDivisions = r ? Number(r.total_divisions) : 0
+  const noParticipation = r ? Number(r.no_participation) : 0
   const bothAye = r ? Number(r.both_aye) : 0
   const bothNo = r ? Number(r.both_no) : 0
   const agreed = bothAye + bothNo
+  const comparable = totalDivisions - noParticipation
 
   return {
     agreed,
-    disagreed: totalDivisions - agreed,
+    disagreed: comparable - agreed,
     bothAye,
     bothNo,
+    noParticipation,
     totalDivisions,
-    agreePct: totalDivisions > 0 ? Math.round((agreed / totalDivisions) * 1000) / 10 : 0,
+    agreePct: comparable > 0 ? Math.round((agreed / comparable) * 1000) / 10 : 0,
   }
 }
 

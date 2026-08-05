@@ -1312,7 +1312,8 @@
 }
 
 @media (max-width: 640px) {
-  .bigTwoBreakdown { gap: 6px var(--s-4); }
+  .bigTwoBreakdown { flex-direction: column; gap: 6px; }
+  .bigTwoBreakdownItem { justify-content: space-between; width: 100%; }
 }
 
 /* ── Chart titles / legends / trend notes ──────────────────── */

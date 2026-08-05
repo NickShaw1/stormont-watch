@@ -262,18 +262,19 @@ export default async function VotingPageBody({
               How often the unionist and nationalist blocs agree
             </h3>
             <p className={styles.sectionDesc} style={{ marginBottom: 'var(--s-4)' }}>
-              For each of the {blocAgreement.totalDivisions}{' '}divisions since {mandate.startLabel}, a bloc&apos;s position is the side taken by more than half of that bloc&apos;s MLAs who voted. This is measured differently to the party figures above: it groups MLAs by designation rather than party, excludes MLAs who designate as neither unionist nor nationalist, and counts only Aye and No votes, so abstentions and absences are left out.
+              For each of the {blocAgreement.totalDivisions}{' '}divisions since {mandate.startLabel}, a bloc&apos;s position is the side taken by more than half of that bloc&apos;s MLAs who voted. This is measured differently to the party figures above: it groups MLAs by designation rather than party, excludes MLAs who designate as neither unionist nor nationalist, and counts only Aye and No votes, so abstentions and absences are left out. Divisions where a whole bloc cast no Aye or No votes, such as a Speaker nomination Sinn Féin did not contest, are shown separately rather than counted as disagreement.
             </p>
             <AgreementCard
               title="Agreement between unionist and nationalist blocs"
               barColor="#6366F1"
               agreePct={blocAgreement.agreePct}
               agreed={blocAgreement.agreed}
-              totalDivisions={blocAgreement.totalDivisions}
+              totalDivisions={blocAgreement.totalDivisions - blocAgreement.noParticipation}
               items={[
                 { label: 'Both Aye', value: blocAgreement.bothAye },
                 { label: 'Both No', value: blocAgreement.bothNo },
                 { label: 'Did not agree', value: blocAgreement.disagreed },
+                { label: 'One bloc did not vote', value: blocAgreement.noParticipation },
               ]}
             />
           </div>

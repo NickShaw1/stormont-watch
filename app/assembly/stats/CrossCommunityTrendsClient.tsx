@@ -8,6 +8,7 @@ import { useMandate } from '@/components/MandateContext'
 interface Row {
   month: string
   total_divisions: number
+  comparable_divisions: number
   agreed_divisions: number
   agreement_pct: number | null
 }
@@ -35,8 +36,8 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
       const pcts = data.map(r => r.agreement_pct)
       const totals = data.map(r => r.total_divisions)
       const agreed = data.map(r => r.agreed_divisions)
-      const radii = data.map(r => r.total_divisions >= 3 ? 4 : r.total_divisions > 0 ? 2 : 0)
-      const colors = data.map(r => r.total_divisions >= 3 ? '#3a5a7a' : r.total_divisions > 0 ? 'rgba(58,90,122,0.4)' : 'transparent')
+      const radii = data.map(r => r.comparable_divisions >= 3 ? 4 : r.comparable_divisions > 0 ? 2 : 0)
+      const colors = data.map(r => r.comparable_divisions >= 3 ? '#3a5a7a' : r.comparable_divisions > 0 ? 'rgba(58,90,122,0.4)' : 'transparent')
 
       if (c1.current) {
         chart1.current = new Chart(c1.current, {
@@ -88,11 +89,15 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
                   label: (item: TooltipItem<'line'>) => {
                     const idx = item.dataIndex
                     const row = data[idx]
-                    return [
+                    const lines = [
                       `Both blocs voted same way: ${item.raw}%`,
                       `Divisions that month: ${row.total_divisions}`,
-                      `Voted same way: ${row.agreed_divisions} of ${row.total_divisions}`,
+                      `Voted same way: ${row.agreed_divisions} of ${row.comparable_divisions}`,
                     ]
+                    if (row.comparable_divisions < row.total_divisions) {
+                      lines.push(`One bloc did not vote: ${row.total_divisions - row.comparable_divisions}`)
+                    }
+                    return lines
                   },
                 },
               },
@@ -170,7 +175,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
   }
 
   const peakMonth = data
-    .filter(r => r.total_divisions >= 3 && r.agreement_pct !== null)
+    .filter(r => r.comparable_divisions >= 3 && r.agreement_pct !== null)
     .sort((a, b) => (b.agreement_pct ?? 0) - (a.agreement_pct ?? 0))[0] ?? null
   const latestWithData = [...data].at(-1) ?? null
   const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -194,7 +199,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
             <Trophy className={styles.glanceCellIcon} size={19} strokeWidth={1.75} aria-hidden="true" />
           </div>
           <span className={styles.glanceCellValue}>{peakMonth?.agreement_pct ?? '-'}%</span>
-          <span className={styles.glanceCellMeta}>{peakLabel} ({peakMonth?.agreed_divisions}/{peakMonth?.total_divisions} divisions agreed)</span>
+          <span className={styles.glanceCellMeta}>{peakLabel} ({peakMonth?.agreed_divisions}/{peakMonth?.comparable_divisions} divisions agreed)</span>
         </div>
         <div className={styles.glanceCell}>
           <div className={styles.glanceCellLabelRow}>
@@ -204,7 +209,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
           <span className={styles.glanceCellValue} style={{ color: getAgreementColor(latestWithData?.agreement_pct ?? null) }}>
             {latestWithData?.agreement_pct ?? '-'}%
           </span>
-          <span className={styles.glanceCellMeta}>{latestLabel} ({latestWithData?.agreed_divisions}/{latestWithData?.total_divisions} divisions agreed)</span>
+          <span className={styles.glanceCellMeta}>{latestLabel} ({latestWithData?.agreed_divisions}/{latestWithData?.comparable_divisions} divisions agreed)</span>
         </div>
       </div>
 
@@ -225,7 +230,7 @@ export default function CrossCommunityTrendsClient({ data }: { data: Row[] }) {
           <rect x="9" y="9" width="2" height="6" rx="1" fill="white"/>
           <rect x="9" y="5" width="2" height="2" rx="1" fill="white"/>
         </svg>
-        <p>Percentage of divisions in each month where more unionist MLAs voted Aye than No, and more nationalist MLAs voted Aye than No (or both majority No). Abstentions and no-shows are excluded from the comparison, so a bloc with many abstentions may still register a majority direction from a small number of directional votes. Smaller points indicate months with fewer than 3 divisions, which are less statistically reliable.</p>
+        <p>Percentage of divisions in each month where more unionist MLAs voted Aye than No, and more nationalist MLAs voted Aye than No (or both majority No). A bloc with many abstentions may still register a majority direction from a small number of directional votes. Divisions where a whole bloc cast no votes, such as a Speaker nomination Sinn Féin did not contest, are left out of this percentage. Smaller points indicate months with fewer than 3 comparable divisions, which are less statistically reliable.</p>
       </div>
 
       <h3 className={styles.chartTitle}>

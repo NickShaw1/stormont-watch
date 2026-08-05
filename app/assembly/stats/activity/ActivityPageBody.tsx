@@ -82,6 +82,10 @@ export default async function ActivityPageBody({
     total: r.total,
   }))
 
+  // Party question totals are scoped to current MLAs only, matching the section's
+  // "excludes MLAs no longer sitting" copy — memberMap only holds current members,
+  // so a departed MLA's questions are deliberately dropped here, not merged into
+  // their former party's total.
   const partyTotals: Record<string, number> = {}
   const partyMemberCounts: Record<string, number> = {}
   for (const m of allCurrentMembers) {
@@ -89,7 +93,7 @@ export default async function ActivityPageBody({
   }
   for (const r of questionTotalsRaw) {
     const m = memberMap.get(r.personId)
-    if (!m?.party) continue
+    if (!m?.party || !m.isCurrent) continue
     partyTotals[m.party] = (partyTotals[m.party] ?? 0) + Number(r.total)
   }
   const questionByParty = Object.entries(partyTotals)
@@ -121,7 +125,7 @@ export default async function ActivityPageBody({
             <Link href={`${basePath}/assembly/questions`} className={styles.viewAllBtn}>View full rankings</Link>
           </div>
           <div className={styles.sectionHead}>
-            <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>Who asks the most questions. Excludes current ministers and speakers.</p>
+            <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>Who asks the most questions. Excludes current ministers, speakers and MLAs no longer sitting.</p>
           </div>
           <StatsQuestionsSection top5={questionTop5} bottom5={questionBottom5} byParty={questionByParty} basePath={basePath} />
         </section>

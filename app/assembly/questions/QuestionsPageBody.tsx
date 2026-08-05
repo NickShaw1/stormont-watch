@@ -1,5 +1,5 @@
 import { Mic2 } from 'lucide-react'
-import { getQuestionTotalsAllMembers, getAllMembers, getAllMinisters } from '@/lib/db/queries'
+import { getQuestionTotalsAllMembers, getAllMandateMembers, getAllMinisters } from '@/lib/db/queries'
 import QuestionsRankingClient from './QuestionsRankingClient'
 import StatsBreadcrumb from '../stats/StatsBreadcrumb'
 import styles from './questions.module.css'
@@ -17,19 +17,20 @@ export default async function QuestionsPageBody({
   mandate: Mandate
   basePath: string
 }) {
-  const [questionTotals, allCurrentMembers, ministerRows] = await Promise.all([
+  const [questionTotals, allMandateMembers, ministerRows] = await Promise.all([
     getQuestionTotalsAllMembers(mandate.id),
-    getAllMembers(mandate.id),
+    getAllMandateMembers(mandate.id),
     getAllMinisters(mandate.id),
   ])
 
-  const memberMap = new Map(allCurrentMembers.map(m => [m.personId, m]))
+  const memberMap = new Map(allMandateMembers.map(m => [m.personId, m]))
   const ministerIds = new Set(ministerRows.map(m => m.personId))
 
   const rows = questionTotals
     .map(r => {
       const m = memberMap.get(r.personId)
       if (!m) return null
+      if (!m.isCurrent) return null
       if (m.assemblyRole === 'Speaker' || ministerIds.has(r.personId)) return null
       return {
         personId: r.personId,
