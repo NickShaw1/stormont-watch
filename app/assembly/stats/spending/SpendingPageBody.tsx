@@ -568,7 +568,7 @@ export default async function SpendingPageBody({
         )
 
         const fmt2 = (n: number) => Math.round(n).toLocaleString('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })
-        type CostPartyRow = { party: string; mla_count: number; party_total: number; per_mla_avg: number }
+        type CostPartyRow = { party: string; mla_count: number; seats: number; party_total: number; per_mla_avg: number }
         const partyMap: Record<string, { total: number; count: number }> = {}
         for (const r of overallCostRows) {
           if (!r.party) continue
@@ -576,23 +576,29 @@ export default async function SpendingPageBody({
           partyMap[r.party].total += r.totalCost
           partyMap[r.party].count += 1
         }
-        const costPartyRows: CostPartyRow[] = Object.entries(partyMap).map(([party, { total, count }]) => ({
-          party, mla_count: count, party_total: total, per_mla_avg: count > 0 ? total / count : 0,
-        }))
+        // Current seats per party — the average's denominator, so a seat that changed hands
+        // mid-mandate counts once, not once per person who has ever held it.
+        const currentSeatsByParty: Record<string, number> = {}
+        for (const m of allMandateMembers) {
+          if (!m.party || !m.isCurrent) continue
+          currentSeatsByParty[m.party] = (currentSeatsByParty[m.party] ?? 0) + 1
+        }
+        const costPartyRows: CostPartyRow[] = Object.entries(partyMap).map(([party, { total, count }]) => {
+          const seats = currentSeatsByParty[party] ?? 0
+          return { party, mla_count: count, seats, party_total: total, per_mla_avg: seats > 0 ? total / seats : 0 }
+        })
         const byTotal = [...costPartyRows].sort((a, b) => b.party_total - a.party_total)
         const byAvg = [...costPartyRows].sort((a, b) => b.per_mla_avg - a.per_mla_avg)
-        const maxTotal = byTotal[0]?.party_total ?? 1
-        const maxAvg = byAvg[0]?.per_mla_avg ?? 1
 
         const avgEntries = Object.entries(partyMap)
-          .filter(([, v]) => v.count > 0)
-          .map(([party, { total, count }]) => [party, total / count] as [string, number])
+          .filter(([party]) => (currentSeatsByParty[party] ?? 0) > 0)
+          .map(([party, { total }]) => [party, total / currentSeatsByParty[party]] as [string, number])
           .sort((a, b) => b[1] - a[1])
         const highestAvgParty = avgEntries[0]
         const lowestAvgParty = avgEntries[avgEntries.length - 1]
         const grandTotal = overallCostRows.reduce((s, r) => s + r.totalCost, 0)
 
-        const CostPartyCard = ({ title, icon: Icon, subtitleList, rows, getValue, getMax, wideTotal }: { title: string; icon: LucideIcon; subtitleList: string[]; rows: CostPartyRow[]; getValue: (r: CostPartyRow) => number; getMax: number; wideTotal?: boolean }) => (
+        const CostPartyCard = ({ title, icon: Icon, subtitleList, rows, getValue }: { title: string; icon: LucideIcon; subtitleList: string[]; rows: CostPartyRow[]; getValue: (r: CostPartyRow) => number }) => (
           <div className={styles.partyRankingCard}>
             <p className={styles.partyRankingTitle}>
               {title}
@@ -601,12 +607,12 @@ export default async function SpendingPageBody({
             <ul className={styles.partyRankingSubtitleList}>
               {subtitleList.map((s, i) => <li key={i}>{s}</li>)}
             </ul>
-            <table className={`${styles.partyRankingTable} ${wideTotal ? styles.partyRankingTableExtraWideTotal : ''}`}>
+            <table className={`${styles.partyRankingTable} ${styles.partyRankingTableSeats}`}>
               <colgroup>
                 <col className={styles.colRank} />
                 <col className={styles.colParty} />
                 <col className={styles.colMbrs} />
-                <col className={styles.colBar} />
+                <col className={styles.colSeats} />
                 <col className={styles.colTotal} />
               </colgroup>
               <thead>
@@ -614,7 +620,7 @@ export default async function SpendingPageBody({
                   <th scope="col" className={styles.thRank} aria-label="Rank"></th>
                   <th scope="col">Party</th>
                   <th scope="col" className={styles.thMbrs}><abbr title="Members">Mbrs</abbr></th>
-                  <th scope="col" aria-label="Proportion"></th>
+                  <th scope="col" className={`${styles.thMbrs} ${styles.thSeats}`}><abbr title="Seats">Seats</abbr></th>
                   <th scope="col">Total</th>
                 </tr>
               </thead>
@@ -629,11 +635,7 @@ export default async function SpendingPageBody({
                       </span>
                     </td>
                     <td className={styles.cohesionMembers}>{row.mla_count}</td>
-                    <td className={styles.partyRankingBarCell}>
-                      <div className={styles.partyRankingBarTrack} aria-hidden="true">
-                        <div className={styles.partyRankingBarFill} style={{ width: `${Math.round(getValue(row) / getMax * 100)}%`, background: partyBorderColor(row.party) }} />
-                      </div>
-                    </td>
+                    <td className={`${styles.cohesionMembers} ${styles.seatsCell}`}>{row.seats}</td>
                     <td className={styles.partyRankingValue}>{fmt2(getValue(row))}</td>
                   </tr>
                 ))}
@@ -669,27 +671,27 @@ export default async function SpendingPageBody({
               {highestAvgParty && (
                 <div className={styles.glanceCellSmall}>
                   <div className={styles.glanceCellSmallLabelRow}>
-                    <span className={styles.glanceCellSmallLabel}>Highest cost per MLA</span>
+                    <span className={styles.glanceCellSmallLabel}>Highest cost per seat</span>
                     <Crown className={styles.glanceCellSmallIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
                   </div>
                   <div className={styles.glanceCellSmallValue}><PartyName party={highestAvgParty[0]} /></div>
-                  <span className={styles.glanceCellSmallMeta}>{gbpShort(highestAvgParty[1])} avg per MLA</span>
+                  <span className={styles.glanceCellSmallMeta}>{fmt2(highestAvgParty[1])} per seat</span>
                 </div>
               )}
               {lowestAvgParty && (
                 <div className={styles.glanceCellSmall}>
                   <div className={styles.glanceCellSmallLabelRow}>
-                    <span className={styles.glanceCellSmallLabel}>Lowest cost per MLA</span>
+                    <span className={styles.glanceCellSmallLabel}>Lowest cost per seat</span>
                     <TrendingDown className={styles.glanceCellSmallIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
                   </div>
                   <div className={styles.glanceCellSmallValue}><PartyName party={lowestAvgParty[0]} /></div>
-                  <span className={styles.glanceCellSmallMeta}>{gbpShort(lowestAvgParty[1])} avg per MLA</span>
+                  <span className={styles.glanceCellSmallMeta}>{fmt2(lowestAvgParty[1])} per seat</span>
                 </div>
               )}
             </div>
             <div className={styles.partyRankingGrid} style={{ marginBottom: 'var(--s-5)' }}>
-              <CostPartyCard title="Total cost by party" icon={Users} subtitleList={['All current and former MLAs', `Salary and expenses across the ${mandate.label} mandate`, 'Some MLAs have no published expense data and contribute salary estimates only']} rows={byTotal} getValue={r => r.party_total} getMax={maxTotal} wideTotal />
-              <CostPartyCard title="Cost per MLA by party" icon={UserCheck} subtitleList={['All current and former MLAs', `Salary and expenses across the ${mandate.label} mandate`, 'Some MLAs have no published expense data and contribute salary estimates only']} rows={byAvg} getValue={r => r.per_mla_avg} getMax={maxAvg} />
+              <CostPartyCard title="Total cost by party" icon={Users} subtitleList={['All current and former MLAs', `Salary and expenses across the ${mandate.label} mandate`, 'Some MLAs have no published expense data and contribute salary estimates only']} rows={byTotal} getValue={r => r.party_total} />
+              <CostPartyCard title="Cost per seat by party" icon={UserCheck} subtitleList={[`Salary and expenses across the ${mandate.label} mandate`, 'Some MLAs have no published expense data and contribute salary estimates only', 'Divided by seats each party currently holds, not by every MLA who has held one']} rows={byAvg} getValue={r => r.per_mla_avg} />
             </div>
             <div className={styles.cardGrid}>
               <CostCard title="Highest public cost" icon={TrendingUp} rows={mostCostly5} />

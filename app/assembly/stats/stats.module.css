@@ -933,6 +933,14 @@
 .partyRankingTableExtraWideTotal colgroup .colBar { width: 28%; }
 .partyRankingTableExtraWideTotal colgroup .colTotal { width: 112px; }
 
+/* "Total cost by party" / "Cost per seat by party" only: Members and Seats
+   as two separate columns, no proportion bar. Party is capped rather than
+   left auto — with no bar column here, auto would let it swallow all the
+   space the bar used to take, opening a large gap before Mbrs/Seats/Total. */
+.partyRankingTableSeats colgroup .colParty { width: 180px; }
+.partyRankingTableSeats colgroup .colSeats { width: 48px; }
+.partyRankingTableSeats colgroup .colTotal { width: 108px; }
+
 .partyRankingTable thead th {
   font-size: 11px;
   font-weight: 600;
@@ -952,6 +960,16 @@
 .partyRankingTable thead th.thMbrs {
   text-align: center;
   padding-right: 0;
+}
+
+/* "Seats" sits right after "Mbrs" on the two cards showing both columns —
+   a left gap keeps the two headers and their values from touching. */
+.partyRankingTable thead th.thSeats {
+  padding-left: 10px;
+}
+
+.partyRankingTable .seatsCell {
+  padding-left: 10px;
 }
 
 .partyRankingTable thead th:last-child {
@@ -1042,7 +1060,7 @@
 @media (max-width: 640px) {
   .partyRankingCard { padding: var(--s-4); }
   .partyRankingTable colgroup .colRank { width: 18px; }
-  .partyRankingTable colgroup .colMbrs { width: 32px; }
+  .partyRankingTable colgroup .colMbrs { width: 28px; }
   .partyRankingTable colgroup .colBar { width: 28%; }
   .partyRankingTable colgroup .colTotal { width: 76px; }
   .partyRankingParty { gap: 6px; }
@@ -1055,10 +1073,14 @@
   .partyRankingTablePct colgroup .colBar { width: 38%; }
   .partyRankingTablePct colgroup .colTotal { width: 44px; }
 
-  /* "Total cost by party" — largest £ figures on the page, needs more room
-     than the standard WideTotal variant. */
-  .partyRankingTableExtraWideTotal colgroup .colBar { width: 10%; }
-  .partyRankingTableExtraWideTotal colgroup .colTotal { width: 108px; }
+  /* "Total cost by party" / "Cost per seat by party" — no bar column, so
+     Total just needs a fixed width that fits the largest £ figures. Party
+     is capped at roughly 75% of the width it would otherwise auto-fill, so
+     the numeric columns get more breathing room instead of sitting hard
+     against it. */
+  .partyRankingTableSeats colgroup .colParty { width: 105px; }
+  .partyRankingTableSeats colgroup .colSeats { width: 38px; }
+  .partyRankingTableSeats colgroup .colTotal { width: 88px; }
 }
 
 /* ── Pattern stack (attendance / rebellion / cross-community) ── */

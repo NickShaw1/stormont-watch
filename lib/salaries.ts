@@ -144,6 +144,38 @@ export function hasServedOneYear(mandateStart: string, todayStr: string): boolea
   return new Date(mandateStart) <= oneYearAgo
 }
 
+/**
+ * Fraction of the mandate (0-1) a member actually held their seat, day-weighted from
+ * mandateStart/mandateEnd. Used as the denominator for party-level per-MLA averages so a
+ * seat that changed hands mid-mandate isn't double-divided (once by date pro-rating in the
+ * numerator, again by headcount in the denominator).
+ */
+export function seatTimeFraction(
+  mandateStart: string | null,
+  mandateEnd: string | null,
+  todayStr: string,
+  mandate: string = CURRENT_MANDATE.id
+): number {
+  if (!mandateStart) return 0
+
+  const mandateDef = mandateById(mandate)
+  const windowStart = mandateDef ? new Date(mandateDef.start) : new Date(mandateStart)
+  const today = new Date(todayStr)
+  const windowEnd = mandateDef?.end ? new Date(mandateDef.end) : today
+
+  const seatStart = new Date(Math.max(new Date(mandateStart).getTime(), windowStart.getTime()))
+  const rawSeatEnd = mandateEnd ? new Date(mandateEnd) : today
+  const seatEnd = new Date(Math.min(rawSeatEnd.getTime(), windowEnd.getTime()))
+
+  if (seatEnd <= seatStart) return 0
+
+  const seatDays = (seatEnd.getTime() - seatStart.getTime()) / 86400000
+  const mandateDays = (windowEnd.getTime() - windowStart.getTime()) / 86400000
+  if (mandateDays <= 0) return 0
+
+  return seatDays / mandateDays
+}
+
 const ROLE_PRIORITY: Record<SalaryRole, number> = {
   first_minister: 9,
   deputy_first_minister: 8,
