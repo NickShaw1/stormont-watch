@@ -37,7 +37,7 @@ export async function upsertMemberSnapshot(db: Db, m: MemberSnapshot): Promise<v
       },
     })
 
-  // Per-mandate snapshot for the current term.
+  // Per-mandate snapshot for the current term.12
   await db
     .insert(memberTerms)
     .values({
