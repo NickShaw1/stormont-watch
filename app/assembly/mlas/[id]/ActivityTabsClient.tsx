@@ -55,6 +55,7 @@ interface Props {
   oralCount: number
   questionStats: QuestionStat[]
   hideQuestionsTab: boolean
+  isCurrent: boolean
   partyColor: string
   questionRank: { rank: number; totalEligible: number } | null
   currentSalary: number | null
@@ -308,7 +309,7 @@ function SpeechesChart({ hansardRows, hansardSittingsByMonth, partyColor }: {
 }
 
 export default function ActivityTabsClient(props: Props) {
-  const { allExpenses, interests, totalQuestions, writtenCount, oralCount, questionStats, hideQuestionsTab, partyColor, questionRank, currentSalary, mandateEarnings, mandateExpensesRank, mandateExpensesTotalMembers, hansardRows, hansardRank, hansardDebateRank, hansardSittingsByMonth } = props
+  const { allExpenses, interests, totalQuestions, writtenCount, oralCount, questionStats, hideQuestionsTab, isCurrent, partyColor, questionRank, currentSalary, mandateEarnings, mandateExpensesRank, mandateExpensesTotalMembers, hansardRows, hansardRank, hansardDebateRank, hansardSittingsByMonth } = props
   const { mandate } = useMandate()
   const [activeTab, setActiveTab] = useState<Tab>('finances')
   const [selectedYear, setSelectedYear] = useState<string>(allExpenses[0]?.financial_year ?? '')
@@ -425,7 +426,7 @@ export default function ActivityTabsClient(props: Props) {
                   </div>
                 </div>
               </div>
-              <QuestionsChart questionStats={questionStats} partyColor={partyColor} />
+              {isCurrent && <QuestionsChart questionStats={questionStats} partyColor={partyColor} />}
             </>
           )}
 
@@ -505,7 +506,7 @@ export default function ActivityTabsClient(props: Props) {
                     })()}
                   </div>
                 </div>
-                <SpeechesChart hansardRows={hansardRows} hansardSittingsByMonth={hansardSittingsByMonth} partyColor={partyColor} />
+                {isCurrent && <SpeechesChart hansardRows={hansardRows} hansardSittingsByMonth={hansardSittingsByMonth} partyColor={partyColor} />}
                 <div className={`${styles.sectionHead} ${styles.sectionHeadSpaced}`}>
                   <span className={styles.sectionEyebrow}>Latest</span>
                   <h3 className={styles.sectionHeading}>

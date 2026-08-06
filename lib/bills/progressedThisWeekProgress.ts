@@ -1,6 +1,6 @@
 type BillEventType = 'voted' | 'passed'
 
-export interface BillEvent {
+interface BillEvent {
   stage: string
   plenaryDate: string
   eventType: BillEventType
@@ -49,8 +49,7 @@ export function getPillInfo(bill: BillProgressedThisWeek): { label: string; cls:
   return { label: 'Heard', cls: 'neutral' }
 }
 
-// omitAction drops the action word (e.g. "passed by vote") when it would just
-// repeat the status badge shown above the event list for that same event.
+// omitAction drops wording that would repeat the status badge shown above.
 export function formatEventLine(event: BillEvent, omitAction = false): string {
   const dateStr = new Date(event.plenaryDate).toLocaleDateString('en-GB', {
     day: 'numeric',

@@ -7,6 +7,13 @@ import * as schema from '../lib/db/schema'
 const BASE = 'http://data.niassembly.gov.uk'
 const CURRENT_MANDATE = '2022-2027'
 
+// Only the fields this script reads from GetPlenaryItemsPlenaryDate_JSON.
+interface PlenaryItem {
+  PlenaryTypeID?: unknown
+  Title?: unknown
+  Text?: unknown
+}
+
 function str(val: unknown): string {
   if (val === null || val === undefined) return ''
   return String(val)
@@ -41,12 +48,9 @@ async function main() {
     )
     .orderBy(schema.divisions.divisionDate)
 
-  // Further filter in JS to subject LIKE '-#%' (subject starts with '-' followed by a digit)
-  // The DB LIKE '-#%' pattern isn't directly expressible in Drizzle without raw SQL,
-  // so filter the '-\d' pattern here
+  // Further filter in JS: the DB LIKE '-#%' pattern already narrowed rows to a
+  // leading '-', so filter here by title suffix instead (subject isn't selected).
   const motionAmendments = amendments.filter(d => {
-    const subjectMatch = true // already filtered to LIKE '-%' via DB; re-check subject not available here
-    // We filter on title instead — strip " - Amendment N" and check it differs from title
     const title = d.title ?? ''
     return /\s*-\s*Amendment\s+\d+\s*$/i.test(title)
   })
@@ -71,7 +75,7 @@ async function main() {
   for (const [dateStr, divs] of byDate) {
     console.log(`[backfill] Fetching plenary items for ${dateStr} (${divs.length} amendment(s))...`)
 
-    let itemList: any[] = []
+    let itemList: PlenaryItem[] = []
     try {
       const res = await fetch(
         `${BASE}/plenary.asmx/GetPlenaryItemsPlenaryDate_JSON?startDate=${dateStr}&endDate=${dateStr}`
@@ -83,7 +87,7 @@ async function main() {
         const raw = data?.PlenaryList?.Plenary ?? []
         itemList = Array.isArray(raw) ? raw : [raw]
         // Filter to PlenaryTypeID === '1' (plain motions)
-        itemList = itemList.filter((i: any) => str(i?.PlenaryTypeID) === '1')
+        itemList = itemList.filter((i) => str(i?.PlenaryTypeID) === '1')
       }
     } catch (err) {
       console.warn(`[backfill] Fetch error for ${dateStr}:`, err)
@@ -93,7 +97,7 @@ async function main() {
       const title = div.title ?? ''
       const parentTitle = title.replace(/\s*-\s*Amendment\s+\d+\s*$/i, '').trim()
 
-      const parent = itemList.find((i: any) =>
+      const parent = itemList.find((i) =>
         str(i?.Title).trim().toLowerCase() === parentTitle.toLowerCase()
       )
 

@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 
-/** Shared open/close + outside-click + focus-on-open + arrow-key nav behavior
- *  for mobile filter dropdowns — matches app/assembly/mlas/MlasListClient.tsx's
- *  original useDropdown, factored out here so every ranking page can reuse it. */
+// Open/close, outside-click, focus-on-open, and arrow-key nav for dropdowns.
 export function useDropdown() {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)

@@ -12,6 +12,18 @@ import * as schema from '../lib/db/schema'
 
 const BASE = 'http://data.niassembly.gov.uk'
 
+interface PlenaryDetailsResponse {
+  PlenaryList?: { Plenary?: { Title?: unknown } }
+}
+
+interface PlenaryTablersResponse {
+  TablerList?: { Tabler?: unknown }
+}
+
+interface Tabler {
+  TablerName?: unknown
+}
+
 async function apiFetch<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${BASE}${path}`)
@@ -46,16 +58,16 @@ async function main() {
 
   for (const { documentId } of divisions) {
     const [plenaryData, tablersData] = await Promise.all([
-      apiFetch<any>(`/plenary.asmx/GetPlenaryDetails_JSON?documentId=${documentId}`),
-      apiFetch<any>(`/plenary.asmx/GetPlenaryTablers_JSON?documentId=${documentId}`),
+      apiFetch<PlenaryDetailsResponse>(`/plenary.asmx/GetPlenaryDetails_JSON?documentId=${documentId}`),
+      apiFetch<PlenaryTablersResponse>(`/plenary.asmx/GetPlenaryTablers_JSON?documentId=${documentId}`),
     ])
 
     const title = str(plenaryData?.PlenaryList?.Plenary?.Title) || null
 
-    const tablers: any[] = tablersData?.TablerList?.Tabler ?? []
+    const tablers = (tablersData?.TablerList?.Tabler as Tabler | Tabler[] | undefined) ?? []
     const tablerArray = Array.isArray(tablers) ? tablers : [tablers]
     const tabledBy = tablerArray
-      .map((t: any) => str(t?.TablerName))
+      .map((t) => str(t?.TablerName))
       .filter(Boolean)
       .join(', ') || null
 

@@ -1,3 +1,8 @@
+// Whole-pound GBP, rounded: 1234.56 -> "£1,235".
+export function gbp(val: number): string {
+  return `£${Math.round(val).toLocaleString('en-GB')}`
+}
+
 /**
  * Format an ISO date string or date-like value to "1 January 2024" (British English).
  */
@@ -9,11 +14,7 @@ export function formatDate(raw: string | null | undefined): string {
   return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`
 }
 
-/**
- * Parse a bill number slug from an API title string.
- * Expected format: "NIA Bill XX/XX-XX" somewhere in the title.
- * Returns slug like "nia-bill-01-22-27" or null.
- */
+// Parses "NIA Bill XX/XX-XX" into a slug like "nia-bill-01-22-27".
 export function parseBillSlug(title: string | null | undefined): string | null {
   if (!title) return null
   const match = title.match(/NIA\s+Bill\s+([\d]+)\/([\d]+-[\d]+)/i)
@@ -22,31 +23,7 @@ export function parseBillSlug(title: string | null | undefined): string | null {
   return `nia-bill-${billNum.padStart(2, '0')}-${session.replace('/', '-')}`
 }
 
-/**
- * Parse a bill number (e.g. "01/22-27") from a title for grouping.
- */
-export function parseBillNumber(title: string | null | undefined): string | null {
-  if (!title) return null
-  const match = title.match(/NIA\s+Bill\s+([\d]+\/[\d]+-[\d]+)/i)
-  return match ? match[1] : null
-}
-
-/**
- * Parse the human-readable bill name from a division subject.
- * E.g. "Second Stage: School Uniforms (Guidelines and Allowances) Bill (NIA Bill 12/22-27) [...]"
- * → "School Uniforms (Guidelines and Allowances) Bill"
- */
-export function parseBillTitle(subject: string | null | undefined): string | null {
-  if (!subject) return null
-  const match = subject.match(/:\s*(.+?)\s*\(NIA Bill/i)
-  return match ? match[1].trim() : null
-}
-
-/**
- * Parse the stage name from a division title.
- * E.g. "NIA Bill 01/22-27 — Second Stage" → "Second Stage"
- * Falls back to the full title.
- */
+// E.g. "NIA Bill 01/22-27 — Second Stage" -> "Second Stage". Falls back to the title.
 export function parseStageName(title: string | null | undefined): string {
   if (!title) return 'Unknown stage'
   const dashMatch = title.match(/[—–-]\s*(.+)$/)
@@ -89,11 +66,7 @@ export function abbreviateParty(party: string | null | undefined): string {
   return PARTY_ABBREVIATIONS[party] ?? party
 }
 
-/**
- * Format a party name for display.
- * Pass abbreviated=true in tight-space contexts (cards, pills, roll call).
- * Without the flag, returns the full party name as-is.
- */
+// Pass abbreviated=true for tight spaces like cards, pills, roll call.
 export function formatPartyName(party: string | null | undefined, abbreviated = false): string {
   if (!party) return ''
   if (!abbreviated) return party
@@ -135,10 +108,7 @@ export function partyBorderColor(party: string | null | undefined): string {
   return '#888888'
 }
 
-/**
- * Strip leading title prefix from an MLA's full display name.
- * e.g. "Mr John Smith OBE" → "John Smith OBE"
- */
+// e.g. "Mr John Smith OBE" -> "John Smith OBE".
 export function formatMemberName(fullName: string): string {
   const stripped = fullName
     .replace(/^(Mr|Mrs|Miss|Ms|Dr|Lord|Lady|Sir)\s+/i, '')
@@ -196,11 +166,7 @@ const NI_PARTY_ORDER = [
   'People Before Profit Alliance', 'Independent',
 ]
 
-/**
- * Distinct parties present in the given rows, in canonical NI order (any party not in
- * the canonical list — e.g. a new one in a future mandate — is appended alphabetically).
- * Data-driven so ranking filters only show parties that actually exist in that mandate.
- */
+// Distinct parties present, in canonical NI order; unknown parties sort last.
 export function orderedParties(items: { party?: string | null }[]): string[] {
   const present = [...new Set(items.map((i) => i.party).filter((p): p is string => !!p))]
   return present.sort((a, b) => {

@@ -1,18 +1,12 @@
 import { PoundSterling } from 'lucide-react'
-import { getAllMembers, getAllMemberRoleHistories } from '@/lib/db/queries'
+import { getAllMembers, getAllMemberRoleHistories, mlaImg } from '@/lib/db/queries'
 import { calculateMandateEarnings, getCurrentAnnualSalary, apiRoleToSalaryRole, salaryRatesPublished, type RoleInterval } from '@/lib/salaries'
 import SalariesListClient from './SalariesListClient'
 import StatsBreadcrumb from '../stats/StatsBreadcrumb'
 import styles from '../expenses/expenses.module.css'
 import { type Mandate, sittingAdjective } from '@/lib/constants/mandates'
 
-const mlaImg = (personId: string) => `/mla-images/${personId}.jpg`
-
-/**
- * Shared body for the salaries page — rendered by both the live route (current mandate,
- * basePath '') and the archive route (`/archive/<id>`). `mandate` drives the queries
- * and copy; `basePath` prefixes internal links.
- */
+// Shared by the live route and archive routes; mandate/basePath vary per route.
 export default async function SalariesPageBody({
   mandate,
   basePath,

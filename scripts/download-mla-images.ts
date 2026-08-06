@@ -1,7 +1,7 @@
 import './load-env'
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
-import { eq, isNotNull, like } from 'drizzle-orm'
+import { eq, isNotNull } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 import * as fs from 'fs'
 import * as path from 'path'

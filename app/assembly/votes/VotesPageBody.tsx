@@ -7,11 +7,7 @@ import type { VoteItem } from './VotesListClient'
 import styles from './votes.module.css'
 import type { Mandate } from '@/lib/constants/mandates'
 
-/**
- * Shared body for the votes list — rendered by both the live route (current mandate,
- * basePath '') and the archive route (`/archive/<id>`). `mandate` drives the queries
- * and copy; `basePath` prefixes internal links.
- */
+// Shared by the live route and archive routes; mandate/basePath vary per route.
 export default async function VotesPageBody({
   mandate,
   basePath,

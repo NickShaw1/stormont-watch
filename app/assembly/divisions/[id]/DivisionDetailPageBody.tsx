@@ -172,8 +172,7 @@ export default async function DivisionDetailPageBody({
             )}
           </div>
 
-          {/* Meta strip — date sits here as a plain label/value line, same shape as
-              Tabled by/Report, not as a chip (it's metadata, not a status/tag). */}
+          {/* Date as a plain label/value line, matching Tabled by/Report. */}
           <div className={styles.metaStrip}>
             <div className={styles.metaRow}>
               <span className={styles.metaLabel}>
@@ -309,9 +308,7 @@ export default async function DivisionDetailPageBody({
         )
       })()}
 
-      {/* Vote results — one card: big numbers first, one combined proportional
-          bar underneath for context. Replaces the old three-separate-bars +
-          four-separate-cards layout, which said the same thing twice. */}
+      {/* One card: big numbers first, one proportional bar for context. */}
       <section className={`${styles.resultsSection} ${styles.pageSection}`} aria-labelledby="vote-results-heading">
         <div className={styles.sectionHead}>
           <span className={styles.eyebrow}>The vote</span>
@@ -353,8 +350,7 @@ export default async function DivisionDetailPageBody({
             </div>
           </div>
 
-          {/* Single combined proportional bar — one visual for the whole picture,
-              matching the votes list page's .divBarTrack pattern (§ Pattern). */}
+          {/* Matches the votes list page's .divBarTrack pattern. */}
           {(() => {
             const shareTotal = totalAyes + totalNoes + totalAbstain + totalNoShow
             const pct = (n: number) => shareTotal > 0 ? `${(n / shareTotal) * 100}%` : '0%'

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { CalendarDays, CalendarX, Vote, Activity, MessageCircleQuestion, Users, Mail, MapPin, ClipboardList, AlertTriangle } from 'lucide-react'
-import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getAllMemberExpenses, getMandateExpensesRank, getRegisteredInterestsByMember, getQuestionStatsByMember, getQuestionRankForMember, getMemberRoleHistory, getHansardStatsByMember, getHansardRankForMember, getHansardSittingsByMonth, getHansardDebateRankForMember } from '@/lib/db/queries'
+import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getAllMemberExpenses, getMandateExpensesRank, getRegisteredInterestsByMember, getQuestionStatsByMember, getQuestionRankForMember, getMemberRoleHistory, getHansardStatsByMember, getHansardRankForMember, getHansardSittingsByMonth, getHansardDebateRankForMember, getAverageAttendance } from '@/lib/db/queries'
 import { formatDate, formatMemberName, formatRoleTitle, partyBorderColor, abbreviateParty } from '@/lib/format'
 import type { Mandate } from '@/lib/constants/mandates'
 import { calculateMandateEarnings, getCurrentAnnualSalary, apiRoleToSalaryRole, type RoleInterval } from '@/lib/salaries'
@@ -23,7 +23,7 @@ export default async function MlaDetailPageBody({
   mandate: Mandate
   basePath: string
 }) {
-  const [member, history, structureRole, allExpensesRaw, interests, questionStatsRows, questionRank, roleHistory, hansardRows, hansardRank, hansardDebateRank] = await Promise.all([
+  const [member, history, structureRole, allExpensesRaw, interests, questionStatsRows, questionRank, roleHistory, hansardRows, hansardRank, hansardDebateRank, avgAttendancePct] = await Promise.all([
     getMemberById(id, mandate.id),
     getMemberVotingHistory(id, mandate.id),
     getMemberStructureRole(id, mandate.id),
@@ -35,6 +35,7 @@ export default async function MlaDetailPageBody({
     getHansardStatsByMember(id, mandate.id),
     getHansardRankForMember(id, mandate.id),
     getHansardDebateRankForMember(id, mandate.id),
+    getAverageAttendance(mandate.id),
   ])
 
   if (!member) notFound()
@@ -76,10 +77,18 @@ export default async function MlaDetailPageBody({
   const roleStart = member.assemblyRoleStart ? new Date(member.assemblyRoleStart) : null
   const roleEnd = member.assemblyRoleEnd ? new Date(member.assemblyRoleEnd) : null
 
+  // isSpeaker drives the N/A/banner display; only true for a currently serving Speaker.
+  // A former Speaker shows their real, non-Speaker-window attendance instead.
+  const isSpeaker = member.assemblyRole === 'Speaker' && !roleEnd
+  const isDeputySpeaker = member.assemblyRole === 'Deputy Speaker' || member.assemblyRole === 'Principal Deputy Speaker'
+
+  // Excludes votes cast during Speaker tenure, ongoing or ended, from the count.
+  // Deputy/Principal Deputy Speaker keep their full record; they vote normally.
+  const everSpeaker = member.assemblyRole === 'Speaker'
   const relevantVotes = history.filter((v) => {
     const divDate = new Date(v.divisionDate)
     if (divDate < mandateStart) return false
-    if (roleStart && divDate >= roleStart && (!roleEnd || divDate < roleEnd)) return false
+    if (everSpeaker && roleStart && divDate >= roleStart && (!roleEnd || divDate < roleEnd)) return false
     return true
   })
 
@@ -89,8 +98,7 @@ export default async function MlaDetailPageBody({
     ? Math.round((present / totalDivisions) * 100)
     : 0
 
-  const isPresidingOfficer = member.assemblyRole === 'Speaker' && !roleEnd
-  const hideQuestionsTab = isPresidingOfficer || structureRole?.type === 'minister'
+  const hideQuestionsTab = isSpeaker || structureRole?.type === 'minister'
 
   type ExpenseRow = {
     financial_year: string
@@ -225,7 +233,7 @@ export default async function MlaDetailPageBody({
               <span className={styles.statLbl}>Divisions present</span>
               <div className={styles.statValCol}>
                 <span className={styles.statVal}>
-                  {isPresidingOfficer
+                  {isSpeaker
                     ? <span className={styles.statMuted}>N/A</span>
                     : <>{present}<span className={styles.statFraction}>/{totalDivisions}</span></>}
                 </span>
@@ -235,7 +243,7 @@ export default async function MlaDetailPageBody({
               <Activity className={styles.statIcon} size={17} strokeWidth={1.75} aria-hidden="true" />
               <span className={styles.statLbl}>Vote attendance</span>
               <div className={styles.statValCol}>
-                {isPresidingOfficer ? (
+                {isSpeaker ? (
                   <span className={styles.statMuted}>Does not vote</span>
                 ) : totalDivisions === 0 ? (
                   <span className={styles.statMuted}>N/A</span>
@@ -250,7 +258,9 @@ export default async function MlaDetailPageBody({
                       {attendancePct}%
                     </span>
                     <span className={styles.statSub}>
-                      {attendancePct >= 80 ? 'Above average' : attendancePct >= 60 ? 'Below average' : 'Significantly below average'}
+                      {isDeputySpeaker
+                        ? 'Reflects the full mandate, including periods presiding over sittings.'
+                        : (attendancePct >= avgAttendancePct ? 'Above average' : 'Below average')}
                     </span>
                   </>
                 )}
@@ -312,6 +322,7 @@ export default async function MlaDetailPageBody({
             oralCount={oralCount}
             questionStats={questionStatsRows}
             hideQuestionsTab={hideQuestionsTab}
+            isCurrent={member.isCurrent}
             partyColor={partyBorderColor(member.party)}
             questionRank={questionRank}
             currentSalary={currentSalary}
@@ -331,7 +342,7 @@ export default async function MlaDetailPageBody({
         {relevantVotes.length === 0 ? (
           <p className={styles.noVotes}>
             <Vote className={styles.noVotesIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
-            {isPresidingOfficer
+            {isSpeaker
               ? 'Presiding officers do not participate in divisions.'
               : totalDivisions === 0
                 ? 'No divisions were held during this MLA\'s tenure.'
@@ -339,7 +350,7 @@ export default async function MlaDetailPageBody({
           </p>
         ) : (
           <>
-            {isPresidingOfficer && (
+            {isSpeaker && (
               <div className={styles.presidingOfficerNote}>
                 <AlertTriangle className={styles.presidingOfficerNoteIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
                 <p className={styles.presidingOfficerNoteText}>

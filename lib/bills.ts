@@ -1,26 +1,20 @@
-/**
- * Determine whether a division passed based on the Outcome field.
- * The API returns free-text outcomes; we look for common patterns.
- */
+// Determines pass/fail from the API's free-text Outcome field.
 export function isPassed(outcome: string | null | undefined): boolean | null {
   if (!outcome) return null
   const lower = outcome.toLowerCase()
-  if (lower.includes('carried') || lower.includes('passed') || lower.includes('agreed')) return true
+  // "not carried" must be checked before "carried" or it gets shadowed.
   if (
+    lower.includes('not carried') ||
     lower.includes('failed') ||
     lower.includes('rejected') ||
-    lower.includes('not carried') ||
     lower.includes('negatived') ||
     lower.includes('fell')
   ) return false
+  if (lower.includes('carried') || lower.includes('passed') || lower.includes('agreed')) return true
   return null
 }
 
-/**
- * Whether a shared party-pair vote matched the division's actual outcome.
- * A motion passing always means the Ayes carried it; failing always means the
- * Noes prevailed. Abstain/No Show can never "match" since neither side won.
- */
+// A pass means Ayes won, a fail means Noes won; Abstain/No Show never match.
 export function matchedOutcome(sharedVote: 'AYE' | 'NO' | 'ABSTAINED' | 'NO_SHOW', outcome: string | null): boolean {
   const passed = isPassed(outcome)
   if (passed === null) return false

@@ -7,6 +7,7 @@ import MlaPhoto from '@/components/MlaPhoto'
 import { abbreviateParty, formatMemberName, formatConstituency } from '@/lib/format'
 import styles from './partyDetail.module.css'
 import { useMandate } from '@/components/MandateContext'
+import { useDropdown } from '@/lib/useDropdown'
 
 const EXEC_ORDER: Record<string, number> = {
   'First Minister': 0,
@@ -64,50 +65,13 @@ function abbreviateRole(role: string): string {
   return role.replace(/\bPrincipal\b/g, 'Pr.')
 }
 
-// Mobile-only tab dropdown — same shape as MlasListClient.tsx's local hook.
-function useDropdown() {
-  const [open, setOpen] = useState(false)
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const listRef = useRef<HTMLUListElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const list = listRef.current
-    if (list) {
-      const sel = list.querySelector<HTMLLIElement>('[aria-selected="true"]') ?? list.querySelector<HTMLLIElement>('li')
-      sel?.focus()
-    }
-  }, [open])
-
-  useEffect(() => {
-    if (!open) return
-    function onOutside(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onOutside)
-    return () => document.removeEventListener('mousedown', onOutside)
-  }, [open])
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLLIElement>, onSelect: () => void) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      onSelect()
-    } else if (e.key === 'Escape') {
-      setOpen(false)
-      triggerRef.current?.focus()
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      const items = Array.from(listRef.current?.querySelectorAll<HTMLLIElement>('li') ?? [])
-      items[items.indexOf(e.currentTarget) + 1]?.focus()
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      const items = Array.from(listRef.current?.querySelectorAll<HTMLLIElement>('li') ?? [])
-      items[items.indexOf(e.currentTarget) - 1]?.focus()
-    }
-  }
-
-  return { open, setOpen, wrapRef, triggerRef, listRef, handleKeyDown }
+type QuestionRankingRow = {
+  personId: string
+  fullName: string
+  imgUrl: string | null
+  constituency: string | null
+  isCurrent: boolean
+  total: number
 }
 
 interface FullProps extends Props {
@@ -118,6 +82,7 @@ interface FullProps extends Props {
   writtenCount?: number
   oralCount?: number
   questionStats?: QuestionStatRow[]
+  questionRanking?: QuestionRankingRow[]
 }
 
 function pct(n: number, total: number) {
@@ -172,7 +137,7 @@ function QuestionsYearChart({ questionStats, partyColor }: { questionStats: Ques
   )
 }
 
-export default function PartyDetailClient({ party, mlas, ministers, chairs, borderColor, statsContent, expensesContent, chamberContent, totalQuestions = 0, writtenCount = 0, oralCount = 0, questionStats = [] }: FullProps) {
+export default function PartyDetailClient({ party, mlas, ministers, chairs, borderColor, statsContent, expensesContent, chamberContent, totalQuestions = 0, writtenCount = 0, oralCount = 0, questionStats = [], questionRanking = [] }: FullProps) {
   const [activeTab, setActiveTab] = useState<Tab>('members')
   const { mandate, basePath } = useMandate()
   const tabDropdown = useDropdown()
@@ -194,18 +159,7 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
     roleLookup[c.personId] = 'Chair'
   }
 
-  const ministerIds = new Set(ministers.map(m => m.personId))
-  const qTotals = new Map<string, number>()
-  for (const r of questionStats) {
-    qTotals.set(r.personId, (qTotals.get(r.personId) ?? 0) + r.writtenCount + r.oralCount)
-  }
-  const rankedMlaQuestions = mlas.length > 1
-    ? mlas
-        .filter(m => m.assemblyRole !== 'Speaker' && !ministerIds.has(m.personId))
-        .map(m => ({ ...m, total: qTotals.get(m.personId) ?? 0 }))
-        .filter(m => m.total > 0)
-        .sort((a, b) => b.total - a.total)
-    : []
+  const rankedMlaQuestions = questionRanking
   const qMaxTotal = rankedMlaQuestions[0]?.total ?? 1
 
   return (
@@ -544,6 +498,9 @@ export default function PartyDetailClient({ party, mlas, ministers, chairs, bord
                               <span className={`${styles.barRowConstituency} ${styles.barRowConstituencyHideMobile}`}>
                                 {formatConstituency(mla.constituency)}
                               </span>
+                            )}
+                            {!mla.isCurrent && (
+                              <span className={styles.formerPill}>Former MLA</span>
                             )}
                           </div>
                           <div className={styles.barRowBarWrap}>

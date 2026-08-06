@@ -5,11 +5,7 @@ import StatsBreadcrumb from '../stats/StatsBreadcrumb'
 import styles from './questions.module.css'
 import { type Mandate, sittingAdjective } from '@/lib/constants/mandates'
 
-/**
- * Shared body for the questions page — rendered by both the live route (current mandate,
- * basePath '') and the archive route (`/archive/<id>`). `mandate` drives the queries
- * and copy; `basePath` prefixes internal links.
- */
+// Shared by the live route and archive routes; mandate/basePath vary per route.
 export default async function QuestionsPageBody({
   mandate,
   basePath,

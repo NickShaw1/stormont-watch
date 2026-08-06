@@ -22,11 +22,7 @@ import StatsBreadcrumb from '../StatsBreadcrumb'
 import styles from '../stats.module.css'
 import type { Mandate } from '@/lib/constants/mandates'
 
-/**
- * Shared body for the activity stats page — rendered by both the live route (current
- * mandate, basePath '') and the archive route (`/archive/<id>`). `mandate` drives the
- * queries and copy; `basePath` prefixes internal links.
- */
+// Shared by the live route and archive routes; mandate/basePath vary per route.
 export default async function ActivityPageBody({
   mandate,
   basePath,
@@ -82,10 +78,8 @@ export default async function ActivityPageBody({
     total: r.total,
   }))
 
-  // Party question totals are scoped to current MLAs only, matching the section's
-  // "excludes MLAs no longer sitting" copy — memberMap only holds current members,
-  // so a departed MLA's questions are deliberately dropped here, not merged into
-  // their former party's total.
+  // Scoped to current MLAs only, matching the "no longer sitting" copy.
+  // A departed MLA's questions are deliberately dropped, not merged in.
   const partyTotals: Record<string, number> = {}
   const partyMemberCounts: Record<string, number> = {}
   for (const m of allCurrentMembers) {
@@ -125,7 +119,7 @@ export default async function ActivityPageBody({
             <Link href={`${basePath}/assembly/questions`} className={styles.viewAllBtn}>View full rankings</Link>
           </div>
           <div className={styles.sectionHead}>
-            <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>Who asks the most questions. Excludes current ministers, speakers and MLAs no longer sitting.</p>
+            <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>Who asks the most questions. Excludes current ministers, presiding officers and MLAs no longer sitting.</p>
           </div>
           <StatsQuestionsSection top5={questionTop5} bottom5={questionBottom5} byParty={questionByParty} basePath={basePath} />
         </section>

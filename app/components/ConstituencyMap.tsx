@@ -31,16 +31,8 @@ interface ConstituencyMapProps {
   onError?: () => void
 }
 
-/**
- * Build a single "seams drawn once" boundary overlay from independently-digitized
- * region polygons. Each region's ring is its own set of coordinates, so where two
- * constituencies share a border, both regions carry a slightly different copy of
- * that line — stroking every region individually double-draws (and visually
- * thickens) every shared edge. This walks every ring segment (post-projection, in
- * the same screen-space coordinates actually rendered), canonicalises each segment
- * by its rounded, order-independent endpoints, and buckets them into "outer"
- * (seen once) vs "shared" (seen twice) — each drawn as a single path afterwards.
- */
+// Dedupes shared-border segments so they aren't double-stroked between regions.
+// Segments seen once are "outer" edges; seen twice are "shared" borders.
 function buildBoundaryMesh(features: any[], pathGen: any) {
   const round = (n: number) => Math.round(n * 4) / 4 // quarter-pixel tolerance
   const segCount = new Map<string, { a: [number, number]; b: [number, number]; count: number }>()

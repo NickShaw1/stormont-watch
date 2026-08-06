@@ -5,12 +5,7 @@ import StructureClient from './StructureClient'
 import styles from './structure.module.css'
 import type { Mandate } from '@/lib/constants/mandates'
 
-/**
- * Official links for departments (mandate-independent) and standing committees. Committee
- * pages on niassembly.gov.uk are namespaced by the mandate id (e.g. `.../committees/2022-2027/…`),
- * so the committee URLs are built from the active mandate. Note: a future mandate's committee
- * pages only exist once that Assembly forms, so the 2027-2032 links resolve at the boundary.
- */
+// Department links are mandate-independent; committee URLs are namespaced by mandate id.
 function officialLinksFor(mandateId: string): Record<string, string> {
   const c = `https://www.niassembly.gov.uk/assembly-business/committees/${mandateId}`
   return {
@@ -41,11 +36,8 @@ function officialLinksFor(mandateId: string): Record<string, string> {
   }
 }
 
-/**
- * Shared body for the Assembly structure page — rendered by both the live route (current
- * mandate) and the archive route (`/archive/<id>`). `mandate` drives the queries; internal
- * links are built by StructureClient from mandate context.
- */
+// Shared by the live route and the archive route.
+// Internal links are built by StructureClient from mandate context.
 export default async function StructurePageBody({
   mandate,
 }: {

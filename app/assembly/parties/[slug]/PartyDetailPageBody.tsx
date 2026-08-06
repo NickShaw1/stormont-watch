@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Globe, BookOpen } from 'lucide-react'
-import { getPartyBySlug, getPartyAssemblyStats, getPartyExpenses, getPartyMandateExpenses, getQuestionStatsByParty, getHansardStatsByParty, getHansardPartyRank, getHansardPartyDebateRank, getHansardSittingsByMonthForParty } from '@/lib/db/queries'
+import { getPartyBySlug, getPartyAssemblyStats, getPartyExpenses, getPartyMandateExpenses, getQuestionStatsByParty, getQuestionRankingByParty, getHansardStatsByParty, getHansardPartyRank, getHansardPartyDebateRank, getHansardSittingsByMonthForParty } from '@/lib/db/queries'
 import { partyBorderColor, abbreviateParty } from '@/lib/format'
 import type { Mandate } from '@/lib/constants/mandates'
 import styles from './partyDetail.module.css'
@@ -41,11 +41,7 @@ const PARTY_DESCRIPTIONS: Record<string, string> = {
   'Independent': 'Independent MLAs sit in the Northern Ireland Assembly without a party designation, elected or choosing to sit outside the main political parties.',
 }
 
-/**
- * Shared body for the Party detail page — rendered by both the live route (current
- * mandate, basePath '') and the archive route (`/archive/<id>`). `mandate` drives the
- * queries; `basePath` prefixes internal links.
- */
+// Shared by the live route and archive routes; mandate/basePath vary per route.
 export default async function PartyDetailPageBody({
   slug,
   mandate,
@@ -58,12 +54,13 @@ export default async function PartyDetailPageBody({
   const party = await getPartyBySlug(slug, mandate.id)
   if (!party) notFound()
 
-  const [stats, expenses, mandateExpenses, borderColor, questionStatsRows, hansardStats, hansardPartyRank, hansardPartyDebateRank, hansardSittingsByMonth] = await Promise.all([
+  const [stats, expenses, mandateExpenses, borderColor, questionStatsRows, questionRanking, hansardStats, hansardPartyRank, hansardPartyDebateRank, hansardSittingsByMonth] = await Promise.all([
     getPartyAssemblyStats(party.party, mandate.id),
     getPartyExpenses(party.party, mandate.id),
     getPartyMandateExpenses(party.party, mandate.id),
     Promise.resolve(partyBorderColor(party.party)),
     getQuestionStatsByParty(party.party, mandate.id),
+    getQuestionRankingByParty(party.party, mandate.id),
     getHansardStatsByParty(party.party, mandate.id),
     getHansardPartyRank(party.party, mandate.id),
     getHansardPartyDebateRank(party.party, mandate.id),
@@ -140,6 +137,7 @@ export default async function PartyDetailPageBody({
         writtenCount={writtenCount}
         oralCount={oralCount}
         questionStats={questionStatsRows}
+        questionRanking={questionRanking}
         statsContent={
           <PartyStatsClient
             stats={stats}

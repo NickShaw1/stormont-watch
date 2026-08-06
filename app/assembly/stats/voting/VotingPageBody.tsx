@@ -2,15 +2,12 @@ import Link from 'next/link'
 import { Vote, CheckCircle2, Handshake, Scale, Users, CalendarCheck, ArrowLeftRight } from 'lucide-react'
 import {
   getMlaLeaderboard,
-  getAssemblyStats,
   getAverageAttendance,
   getPartyCohesion,
   getMostRebelliousMla,
   getMostCrossCommunityAgreement,
   getCrossCommunityTrends,
-  getOverallAgreementRate,
   getPartyAttendanceAll,
-  getAllMandateMembers,
   getPartyAlignmentWithBigTwo,
   getBigTwoAgreement,
   getBlocAgreement,
@@ -29,11 +26,7 @@ import PartyName from '@/components/PartyName'
 import styles from '../stats.module.css'
 import { type Mandate, sittingAdjective } from '@/lib/constants/mandates'
 
-/**
- * Shared body for the voting stats page — rendered by both the live route (current
- * mandate, basePath '') and the archive route (`/archive/<id>`). `mandate` drives the
- * queries and copy; `basePath` prefixes internal links.
- */
+// Shared by the live route and archive routes; mandate/basePath vary per route.
 export default async function VotingPageBody({
   mandate,
   basePath,
@@ -41,27 +34,20 @@ export default async function VotingPageBody({
   mandate: Mandate
   basePath: string
 }) {
-  const [leaderboard, assemblyStats, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, crossCommunityTrends, overallAgreementRate, partyAttendance, allMandateMembers, partyAlignment, bigTwoAgreement, blocAgreement, agreedDivisions, bigTwoAgreedDivisions] = await Promise.all([
+  const [leaderboard, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, crossCommunityTrends, partyAttendance, partyAlignment, bigTwoAgreement, blocAgreement, agreedDivisions, bigTwoAgreedDivisions] = await Promise.all([
     getMlaLeaderboard(mandate.id),
-    getAssemblyStats(mandate.id),
     getAverageAttendance(mandate.id),
     getPartyCohesion(mandate.id),
     getMostRebelliousMla(mandate.id),
     getMostCrossCommunityAgreement(mandate.id),
     getCrossCommunityTrends(mandate.id),
-    getOverallAgreementRate(mandate.id),
     getPartyAttendanceAll(mandate.id),
-    getAllMandateMembers(mandate.id),
     getPartyAlignmentWithBigTwo(mandate.id),
     getBigTwoAgreement(mandate.id),
     getBlocAgreement(mandate.id),
     getPartyAgreedDivisions(mandate.id),
     getBigTwoAgreedDivisions(mandate.id),
   ])
-
-  void assemblyStats
-  void overallAgreementRate
-  void allMandateMembers
 
   type RawDivisionRow = { document_id?: string; documentId?: string; subject?: string }
   const crossCommunityDivisionId = crossCommunity
@@ -108,7 +94,7 @@ export default async function VotingPageBody({
               <CalendarCheck className={styles.chartTitleIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
               Party Attendance
             </h3>
-            <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>Average percentage of divisions attended by each party&apos;s current and former MLAs across the {mandate.label} mandate, excluding presiding officers. MLAs are only counted from the date they took their seat.</p>
+            <p className={styles.sectionDesc} style={{ marginBottom: 0 }}>Average percentage of divisions attended by each party&apos;s current and former MLAs across the {mandate.label} mandate, excluding the Speaker (who does not vote by convention). MLAs are only counted from the date they took their seat.</p>
             <PartyAttendanceChart data={partyAttendance} />
           </div>
         )}
@@ -174,7 +160,7 @@ export default async function VotingPageBody({
             <div className={styles.patternStackItem}>
               <h3 className={styles.overviewLabel}>Average {sittingAdjective(mandate)} MLA attendance</h3>
               <span className={styles.patternBigValue}>{avgAttendance}%</span>
-              <span className={styles.patternNote}>of divisions attended, excluding presiding officers</span>
+              <span className={styles.patternNote}>of divisions attended, excluding the Speaker</span>
             </div>
             <div className={styles.patternStackItem}>
               <h3 className={styles.overviewLabel}>Most cross-community agreement</h3>

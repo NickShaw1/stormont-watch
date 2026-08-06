@@ -4,20 +4,15 @@ import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import { PoundSterling, Wallet, Users, MapPin, ListChecks } from 'lucide-react'
 import MlaPhoto from '@/components/MlaPhoto'
-import { formatMemberName, formatConstituency } from '@/lib/format'
+import { formatMemberName, formatConstituency, gbp } from '@/lib/format'
 import type { PartyExpenseStats } from '@/lib/db/queries'
 import styles from './partyDetail.module.css'
 import { useMandate } from '@/components/MandateContext'
-import { sittingAdjective } from '@/lib/constants/mandates'
 
 interface PartyExpensesProps {
   expenses: PartyExpenseStats
   mandateExpenses: { mandateTotal: number; mandateAvgPerMla: number; mlaCount: number; rankTotal: number; rankAvg: number; partyCount: number } | null
   partyColor: string
-}
-
-function gbp(val: number): string {
-  return `£${Math.round(val).toLocaleString('en-GB')}`
 }
 
 // Same 3-tier semantic scheme used on the Attendance/Chamber tabs and MLA detail page.
@@ -122,6 +117,7 @@ export default function PartyExpensesClient({ expenses, mandateExpenses, partyCo
             <Wallet className={styles.statCardIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
           </div>
           <span className={styles.statCardValue}>{gbp(expenses.partyTotal)}</span>
+          <span className={styles.statCardSub}>All claims for {expenses.period}</span>
           <span className={styles.statCardSub} style={{ color: rankColor(expenses.rankTotal, expenses.partyCount) }}>{ordinal(expenses.rankTotal)} of {expenses.partyCount} parties</span>
         </div>
         <div className={styles.statCard} data-tone="amber">
@@ -130,7 +126,7 @@ export default function PartyExpensesClient({ expenses, mandateExpenses, partyCo
             <Users className={styles.statCardIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
           </div>
           <span className={styles.statCardValue}>{gbp(expenses.avgPerMla)}</span>
-          <span className={styles.statCardSub}>Per {sittingAdjective(mandate)} MLA</span>
+          <span className={styles.statCardSub}>Per MLA who claimed</span>
           <span className={styles.statCardSub} style={{ color: rankColor(expenses.rankAvg, expenses.partyCount) }}>{ordinal(expenses.rankAvg)} of {expenses.partyCount} parties</span>
         </div>
         <div className={styles.statCard} data-tone="neutral">

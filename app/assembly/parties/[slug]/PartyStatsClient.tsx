@@ -264,7 +264,7 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
           <span className={styles.factLabel}>Party-wide vote attendance average</span>
           <span className={styles.factValue}>{stats.attendancePct}%</span>
           <ul className={styles.factSubList}>
-            <li>Average share of votes cast (not a no-show) across current and former MLAs in the {mandate.label} mandate, excluding presiding officers.</li>
+            <li>Average share of votes cast (not a no-show) across current and former MLAs in the {mandate.label} mandate, excluding the Speaker (who does not vote by convention).</li>
           </ul>
 
           <div className={styles.factDivider} />
@@ -292,13 +292,13 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
               </div>
             </>
           )}
-          <p className={styles.factSub} style={{ marginTop: 'var(--s-3)' }}>Based on division participation, excluding Speakers and First/Deputy First Ministers.</p>
+          <p className={styles.factFootnote} style={{ marginTop: 'var(--s-3)' }}>* Excludes presiding officers (Speaker, Deputy Speaker, Principal Deputy Speaker) and the First/Deputy First Minister.</p>
         </div>
 
         {/* Donut panel */}
         <div className={styles.factPanel}>
           <span className={styles.factLabel}>Voting breakdown</span>
-          <span className={styles.factSub}>All votes cast by current and former MLAs, excluding presiding officers.</span>
+          <span className={styles.factSub}>All votes cast by current and former MLAs, excluding the Speaker (who does not vote by convention).</span>
           <DonutChart stats={stats} partyColor={partyColor} />
         </div>
       </div>
@@ -310,7 +310,7 @@ export default function PartyStatsClient({ stats, partyColor, mlaCount }: PartyS
           <TrendingUp className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
           Party division attendance
         </h3>
-        <p className={styles.sectionSubtitle}>Only months with recorded divisions are shown. Excludes presiding officers and divisions before each MLA&apos;s mandate start date.</p>
+        <p className={styles.sectionSubtitle}>Only months with recorded divisions are shown. Excludes the Speaker and divisions before each MLA&apos;s mandate start date.</p>
       </div>
       <div className={styles.chartArea}>
         <TrendChart trend={stats.trend} partyColor={partyColor} />

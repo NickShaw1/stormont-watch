@@ -454,6 +454,7 @@ export default async function HomePageBody({
               <span className={styles.kfigSub}>{mostEngaged.attendancePct}% attendance</span>
               <span className={styles.kfigSubMono}>{mostEngaged.attended}/{mostEngaged.total}</span>
             </div>
+            <span className={styles.kfigMlaNote}>* Excludes presiding officers.</span>
           </Link>
         ) : <div className={`${styles.kfig} ${styles.kfigMlaCard}`} />}
         {leastEngaged ? (
@@ -476,6 +477,7 @@ export default async function HomePageBody({
               <span className={styles.kfigSub}>{leastEngaged.attendancePct}% attendance</span>
               <span className={styles.kfigSubMono}>{leastEngaged.attended}/{leastEngaged.total}</span>
             </div>
+            <span className={styles.kfigMlaNote}>* Excludes presiding officers.</span>
           </Link>
         ) : <div className={`${styles.kfig} ${styles.kfigMlaCard}`} />}
       </div>

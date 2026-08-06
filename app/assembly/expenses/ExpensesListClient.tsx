@@ -5,9 +5,9 @@ import Link from 'next/link'
 import { Users, ListChecks, CalendarDays } from 'lucide-react'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
+import PartyFilterControls, { partyLabel } from '@/components/PartyFilterControls'
 import { formatMemberName, abbreviateParty, partyBorderColor, formatConstituency, orderedParties } from '@/lib/format'
 import { useMandate } from '@/components/MandateContext'
-import { useDropdown } from '@/lib/useDropdown'
 import { sittingAdjective } from '@/lib/constants/mandates'
 import styles from './expenses.module.css'
 
@@ -53,10 +53,6 @@ function serviceLabel(mandateStart: string | null): string {
   return `${years}y ${months}m`
 }
 
-function partyLabel(party: string): string {
-  return abbreviateParty(party) || party
-}
-
 const OVERALL = 'overall'
 
 function buildOverallRows(rows: ExpenseRow[]): ExpenseRow[] {
@@ -80,7 +76,6 @@ export default function ExpensesListClient({ rows, years }: Props) {
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false)
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
   const yearDropdownRef = useRef<HTMLDivElement>(null)
-  const partyDropdown = useDropdown()
 
   useEffect(() => {
     if (!yearDropdownOpen) return
@@ -131,79 +126,7 @@ export default function ExpensesListClient({ rows, years }: Props) {
 
       <div className={styles.filterPanel}>
         <div className={styles.filterTopRow}>
-          {/* Party filter pills (desktop) */}
-          <div className={`${styles.filterRow} ${styles.filterRowDesktop}`} role="group" aria-label="Filter by party">
-            <button
-              className={`${styles.filterBtn} ${partyFilter === 'ALL' ? `${styles.filterBtnActive} ${styles.filterBtnActiveAll}` : ''}`}
-              onClick={() => handlePartyFilter('ALL')}
-              aria-pressed={partyFilter === 'ALL'}
-            >
-              All parties
-            </button>
-            {PARTIES.map(party => {
-              const isActive = partyFilter === party
-              return (
-                <button
-                  key={party}
-                  className={`${styles.filterBtn} ${isActive ? `${styles.filterBtnActive} ${styles.filterBtnActiveAll}` : ''}`}
-                  onClick={() => handlePartyFilter(party)}
-                  aria-pressed={isActive}
-                >
-                  {partyLabel(party)}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Party filter dropdown (mobile) */}
-          <div className={styles.filterDropdownWrap}>
-            <div className={styles.dropdownWrap} ref={partyDropdown.wrapRef}>
-              <button
-                ref={partyDropdown.triggerRef}
-                type="button"
-                className={styles.dropdownTrigger}
-                onClick={() => partyDropdown.setOpen((o) => !o)}
-                aria-haspopup="listbox"
-                aria-expanded={partyDropdown.open}
-              >
-                {partyFilter === 'ALL' ? 'All parties' : partyLabel(partyFilter)}
-                <svg
-                  className={`${styles.dropdownTriggerChevron} ${partyDropdown.open ? styles.dropdownTriggerChevronOpen : ''}`}
-                  width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
-                >
-                  <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-
-              {partyDropdown.open && (
-                <ul ref={partyDropdown.listRef} className={styles.dropdownList} role="listbox">
-                  <li
-                    role="option"
-                    tabIndex={0}
-                    aria-selected={partyFilter === 'ALL'}
-                    className={`${styles.dropdownItem} ${partyFilter === 'ALL' ? styles.dropdownItemSelected : ''}`}
-                    onClick={() => { handlePartyFilter('ALL'); partyDropdown.setOpen(false) }}
-                    onKeyDown={(e) => partyDropdown.handleKeyDown(e, () => { handlePartyFilter('ALL'); partyDropdown.setOpen(false) })}
-                  >
-                    All parties
-                  </li>
-                  {PARTIES.map(party => (
-                    <li
-                      key={party}
-                      role="option"
-                      tabIndex={0}
-                      aria-selected={party === partyFilter}
-                      className={`${styles.dropdownItem} ${party === partyFilter ? styles.dropdownItemSelected : ''}`}
-                      onClick={() => { handlePartyFilter(party); partyDropdown.setOpen(false) }}
-                      onKeyDown={(e) => partyDropdown.handleKeyDown(e, () => { handlePartyFilter(party); partyDropdown.setOpen(false) })}
-                    >
-                      {partyLabel(party)}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
+          <PartyFilterControls styles={styles} parties={PARTIES} active={partyFilter} onSelect={handlePartyFilter} />
 
           {/* Year dropdown */}
           {years.length > 1 && (

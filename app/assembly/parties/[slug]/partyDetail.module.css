@@ -551,6 +551,14 @@
   font-weight: 600;
 }
 
+/* Asterisked eligibility footnote — matches the homepage key-figures' .kfigMlaNote exactly. */
+.factFootnote {
+  font-size: var(--sw-fs-eyebrow);
+  font-style: italic;
+  color: var(--sw-text-tertiary);
+  margin-top: 4px;
+}
+
 /* Bulleted key list — matches .partyRankingSubtitleList on the Spending stats page. */
 .factSubList {
   font-size: var(--sw-fs-caption);

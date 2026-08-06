@@ -75,14 +75,16 @@ export default async function BillDetailPageBody({
     ],
   }
 
-  const { stageIdx, scheduledIdx, currentStageLabel } = computeBillProgress(
-    stages.map(s => ({ stage: s.stage, plenaryDate: s.plenary_date })),
-    bill.royal_assent_date,
-  )
   const billPassed =
     bill.royal_assent_date != null ||
     (bill.final_stage_has_division === true && /carried/i.test(bill.final_stage_outcome ?? '')) ||
     (bill.final_stage_nodiv_date != null && new Date(bill.final_stage_nodiv_date) <= new Date())
+
+  const { stageIdx, scheduledIdx, currentStageLabel } = computeBillProgress(
+    stages.map(s => ({ stage: s.stage, plenaryDate: s.plenary_date })),
+    bill.royal_assent_date,
+    billPassed,
+  )
 
   const billFailed =
     !billPassed &&

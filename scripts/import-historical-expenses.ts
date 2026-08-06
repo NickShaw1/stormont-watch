@@ -81,8 +81,6 @@ function numericVal(raw: unknown): string {
   return isNaN(n) ? '0' : n.toFixed(2)
 }
 
-type Db = ReturnType<typeof drizzle<typeof schema>>
-
 async function main() {
   const url = process.env.DATABASE_URL
   if (!url) throw new Error('DATABASE_URL not set')

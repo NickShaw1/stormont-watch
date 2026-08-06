@@ -302,7 +302,7 @@ export default function PartyChamberClient({ hansardStats, hansardPartyRank, han
               MLA chamber activity
             </h3>
             <p className={styles.sectionSubtitle}>
-              Each {sittingAdjective(mandate)} MLA&apos;s plenary sittings spoken in and topics contributed to over the last 12 months. Presiding officers are excluded, as their role is procedural rather than representative.
+              {`Each ${sittingAdjective(mandate)} MLA's plenary sittings spoken in and topics contributed to since the ${mandate.label} mandate began. Presiding officers are excluded, as their role is procedural rather than representative.`}
             </p>
           </div>
           <div className={styles.filterRow}>

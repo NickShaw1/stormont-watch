@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { SearchX, CalendarX, Scale, CheckCircle2, TrendingUp, Landmark, ExternalLink, Zap, Crown } from 'lucide-react'
 import { formatDate } from '@/lib/format'
@@ -9,6 +9,7 @@ import type { BillItem } from './BillsPageBody'
 import type { BillProgressedThisWeek } from '@/lib/bills/progressedThisWeekProgress'
 import BillProgressedRow from '@/components/bills/BillProgressedRow'
 import { useMandate } from '@/components/MandateContext'
+import { useDropdown } from '@/lib/useDropdown'
 import styles from './bills.module.css'
 
 interface Props {
@@ -36,53 +37,6 @@ function formatBillNum(billId: string): { main: string; session: string } {
   return { main: billId.slice(0, idx), session: billId.slice(idx + 1) }
 }
 
-// Same open/close + outside-click + focus-on-open + arrow-key nav behavior as the
-// homepage constituency selector's trigger/list (mirrors MlasListClient.tsx's hook).
-function useDropdown() {
-  const [open, setOpen] = useState(false)
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const listRef = useRef<HTMLUListElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    const list = listRef.current
-    if (list) {
-      const sel = list.querySelector<HTMLLIElement>('[aria-selected="true"]') ?? list.querySelector<HTMLLIElement>('li')
-      sel?.focus()
-    }
-  }, [open])
-
-  useEffect(() => {
-    if (!open) return
-    function onOutside(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onOutside)
-    return () => document.removeEventListener('mousedown', onOutside)
-  }, [open])
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLLIElement>, onSelect: () => void) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      onSelect()
-    } else if (e.key === 'Escape') {
-      setOpen(false)
-      triggerRef.current?.focus()
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      const items = Array.from(listRef.current?.querySelectorAll<HTMLLIElement>('li') ?? [])
-      items[items.indexOf(e.currentTarget) + 1]?.focus()
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      const items = Array.from(listRef.current?.querySelectorAll<HTMLLIElement>('li') ?? [])
-      items[items.indexOf(e.currentTarget) - 1]?.focus()
-    }
-  }
-
-  return { open, setOpen, wrapRef, triggerRef, listRef, handleKeyDown }
-}
-
 export default function BillsListClient({ scheduled, inProgress, completed, progressedThisWeek }: Props) {
   const { basePath } = useMandate()
   // No scheduled bills → drop that tab, default to "In progress".
@@ -96,8 +50,12 @@ export default function BillsListClient({ scheduled, inProgress, completed, prog
   const tabDropdown = useDropdown()
   const yearDropdown = useDropdown()
 
+  // Buckets by royalAssentDate to match the date shown on each row.
+  // Falls back to latestDate for a completed-but-failed bill.
+  const completedYear = (b: BillItem) => new Date(b.royalAssentDate ?? b.latestDate).getFullYear().toString()
+
   const years = ['ALL', ...Array.from(new Set(
-    completed.map(b => new Date(b.latestDate).getFullYear().toString())
+    completed.map(completedYear)
   )).sort((a, b) => Number(b) - Number(a))]
 
   const q = searchQuery.toLowerCase()
@@ -112,7 +70,7 @@ export default function BillsListClient({ scheduled, inProgress, completed, prog
 
   const filteredCompleted = isSearching
     ? completed.filter(b => b.title.toLowerCase().includes(q))
-    : completed.filter(b => yearFilter === 'ALL' || new Date(b.latestDate).getFullYear().toString() === yearFilter)
+    : completed.filter(b => yearFilter === 'ALL' || completedYear(b) === yearFilter)
 
   const visibleCompleted = filteredCompleted
 
@@ -221,8 +179,7 @@ export default function BillsListClient({ scheduled, inProgress, completed, prog
             </div>
           </div>
           {(() => {
-            // Completed bills without a extra date (Failed/Awaiting Royal Assent) would
-            // just repeat the badge text above with nothing new, so the line is dropped.
+            // Dropped when it would just repeat the badge text above.
             const stagePart =
               bill.category === 'scheduled' ? `Scheduled stage · ${bill.currentStage}`
               : bill.category === 'in-progress' ? `Current stage · ${bill.currentStage}`

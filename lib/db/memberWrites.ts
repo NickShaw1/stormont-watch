@@ -17,14 +17,9 @@ export type MemberSnapshot = {
   email?: string | null
 }
 
-/**
- * Upsert a member's stable identity into `people` and their per-mandate snapshot
- * (party / constituency / current status) into `member_terms` for the current mandate.
- * Replaces the old single-row write into the `members` table.
- */
+// Upserts identity into `people` and the per-mandate snapshot into `member_terms`.
 export async function upsertMemberSnapshot(db: Db, m: MemberSnapshot): Promise<void> {
-  // Identity. Never overwrite a locally-downloaded image with an API URL, and don't
-  // clobber an email set elsewhere (the base member API doesn't provide one).
+  // Never overwrite a downloaded image with an API URL or clobber an existing email.
   await db
     .insert(people)
     .values({
@@ -63,10 +58,7 @@ export async function upsertMemberSnapshot(db: Db, m: MemberSnapshot): Promise<v
     })
 }
 
-/**
- * Update the per-mandate role fields (mandate window + special assembly role) on the
- * current-mandate `member_terms` row for a member. Mirrors the old UPDATE on `members`.
- */
+// Updates mandate window + assembly role on the current-mandate member_terms row.
 export async function updateMemberTermRoles(
   db: Db,
   personId: string,

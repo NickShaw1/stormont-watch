@@ -190,10 +190,11 @@ export default function AssemblyProductivityClient({
       <p className={styles.trendNote} style={{ marginBottom: 'var(--s-4)' }}>Percentage of divisions that passed in each calendar year since {mandate.startLabel}.</p>
 
       <div className={styles.glanceBarDynamic} style={{ '--glance-cols': yearData.length } as React.CSSProperties}>
-        {yearData.map((r, i) => (
+        {yearData.map((r) => (
           <div key={r.year} className={styles.glanceCell}>
             <div className={styles.glanceCellLabelRow}>
-              <span className={styles.glanceCellLabel}>{r.year}{i === yearData.length - 1 ? ' (YTD)' : ''}</span>
+              {/* YTD only for the live mandate's current year, never an archived one. */}
+              <span className={styles.glanceCellLabel}>{r.year}{mandate.isCurrent && r.year === new Date().getFullYear() ? ' (YTD)' : ''}</span>
               <Percent className={styles.glanceCellIcon} size={19} strokeWidth={1.75} aria-hidden="true" />
             </div>
             <span className={styles.glanceCellValue}>{Number(r.pass_rate)}%</span>

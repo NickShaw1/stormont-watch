@@ -3,12 +3,9 @@ import Image from 'next/image'
 import { PoundSterling, Wallet, Receipt, Landmark, TrendingUp, TrendingDown, Banknote, PiggyBank, ArrowUpWideNarrow, ArrowDownWideNarrow, ScrollText, Users, UserCheck, Coins, Crown, Sigma } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import {
-  getMlaLeaderboard,
   getExpensesLeagueTable,
   getExpensesByParty,
   getAllMembers,
-  getLatestExpensesYear,
-  getAllMinisters,
   getAllMemberRoleHistories,
   getTotalExpensesPerMember,
   getAllMandateMembers,
@@ -22,11 +19,7 @@ import StatsBreadcrumb from '../StatsBreadcrumb'
 import styles from '../stats.module.css'
 import { type Mandate, sittingAdjective } from '@/lib/constants/mandates'
 
-/**
- * Shared body for the spending stats page — rendered by both the live route (current
- * mandate, basePath '') and the archive route (`/archive/<id>`). `mandate` drives the
- * queries and copy; `basePath` prefixes internal links.
- */
+// Shared by the live route and archive routes; mandate/basePath vary per route.
 export default async function SpendingPageBody({
   mandate,
   basePath,
@@ -34,23 +27,16 @@ export default async function SpendingPageBody({
   mandate: Mandate
   basePath: string
 }) {
-  const [leaderboard, expensesLeague, expensesByParty, allCurrentMembers, latestExpensesYear, ministerRows, allRoleHistories, totalExpensesData, allMandateMembers, allMlaExpenses, institutionalExpenses] = await Promise.all([
-    getMlaLeaderboard(mandate.id),
+  const [expensesLeague, expensesByParty, allCurrentMembers, allRoleHistories, totalExpensesData, allMandateMembers, allMlaExpenses, institutionalExpenses] = await Promise.all([
     getExpensesLeagueTable(mandate.id),
     getExpensesByParty(mandate.id),
     getAllMembers(mandate.id),
-    getLatestExpensesYear(mandate.id),
-    getAllMinisters(mandate.id),
     getAllMemberRoleHistories(mandate.id),
     getTotalExpensesPerMember(mandate.id),
     getAllMandateMembers(mandate.id),
     getAllMlaExpensesForLatestYear(mandate.id),
     getInstitutionalExpensesForLatestYear(mandate.id),
   ])
-
-  void leaderboard
-  void ministerRows
-  void latestExpensesYear
 
   // Salary computation
   const rolesByPerson = new Map<string, typeof allRoleHistories>()
@@ -576,8 +562,7 @@ export default async function SpendingPageBody({
           partyMap[r.party].total += r.totalCost
           partyMap[r.party].count += 1
         }
-        // Current seats per party — the average's denominator, so a seat that changed hands
-        // mid-mandate counts once, not once per person who has ever held it.
+        // Denominator for the average: a seat counts once, not once per holder.
         const currentSeatsByParty: Record<string, number> = {}
         for (const m of allMandateMembers) {
           if (!m.party || !m.isCurrent) continue

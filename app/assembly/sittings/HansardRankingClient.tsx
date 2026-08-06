@@ -5,9 +5,9 @@ import Link from 'next/link'
 import { Users } from 'lucide-react'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
+import PartyFilterControls, { partyLabel } from '@/components/PartyFilterControls'
 import { formatMemberName, abbreviateParty, partyBorderColor, formatConstituency, orderedParties } from '@/lib/format'
 import { useMandate } from '@/components/MandateContext'
-import { useDropdown } from '@/lib/useDropdown'
 import { sittingAdjective } from '@/lib/constants/mandates'
 import styles from './hansard-ranking.module.css'
 
@@ -30,15 +30,10 @@ interface Props {
 
 
 
-function partyLabel(party: string): string {
-  return abbreviateParty(party) || party
-}
-
 export default function HansardRankingClient({ rows, metric, totalMlaCount }: Props) {
   const PARTIES = orderedParties(rows)
   const { mandate, basePath } = useMandate()
   const [partyFilter, setPartyFilter] = useState<string>('ALL')
-  const partyDropdown = useDropdown()
 
   const getValue = (r: HansardRow) => metric === 'sittings' ? r.sittings : r.debates
 
@@ -59,79 +54,7 @@ export default function HansardRankingClient({ rows, metric, totalMlaCount }: Pr
   return (
     <>
       <div className={styles.filterPanel}>
-        {/* Party filter pills (desktop) */}
-        <div className={`${styles.filterRow} ${styles.filterRowDesktop}`} role="group" aria-label="Filter by party">
-          <button
-            className={`${styles.filterBtn} ${partyFilter === 'ALL' ? `${styles.filterBtnActive} ${styles.filterBtnActiveAll}` : ''}`}
-            onClick={() => handlePartyFilter('ALL')}
-            aria-pressed={partyFilter === 'ALL'}
-          >
-            All parties
-          </button>
-          {PARTIES.map(party => {
-            const isActive = partyFilter === party
-            return (
-              <button
-                key={party}
-                className={`${styles.filterBtn} ${isActive ? `${styles.filterBtnActive} ${styles.filterBtnActiveAll}` : ''}`}
-                onClick={() => handlePartyFilter(party)}
-                aria-pressed={isActive}
-              >
-                {partyLabel(party)}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Party filter dropdown (mobile) */}
-        <div className={styles.filterDropdownWrap}>
-          <div className={styles.dropdownWrap} ref={partyDropdown.wrapRef}>
-            <button
-              ref={partyDropdown.triggerRef}
-              type="button"
-              className={styles.dropdownTrigger}
-              onClick={() => partyDropdown.setOpen((o) => !o)}
-              aria-haspopup="listbox"
-              aria-expanded={partyDropdown.open}
-            >
-              {partyFilter === 'ALL' ? 'All parties' : partyLabel(partyFilter)}
-              <svg
-                className={`${styles.dropdownTriggerChevron} ${partyDropdown.open ? styles.dropdownTriggerChevronOpen : ''}`}
-                width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"
-              >
-                <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
-
-            {partyDropdown.open && (
-              <ul ref={partyDropdown.listRef} className={styles.dropdownList} role="listbox">
-                <li
-                  role="option"
-                  tabIndex={0}
-                  aria-selected={partyFilter === 'ALL'}
-                  className={`${styles.dropdownItem} ${partyFilter === 'ALL' ? styles.dropdownItemSelected : ''}`}
-                  onClick={() => { handlePartyFilter('ALL'); partyDropdown.setOpen(false) }}
-                  onKeyDown={(e) => partyDropdown.handleKeyDown(e, () => { handlePartyFilter('ALL'); partyDropdown.setOpen(false) })}
-                >
-                  All parties
-                </li>
-                {PARTIES.map(party => (
-                  <li
-                    key={party}
-                    role="option"
-                    tabIndex={0}
-                    aria-selected={party === partyFilter}
-                    className={`${styles.dropdownItem} ${party === partyFilter ? styles.dropdownItemSelected : ''}`}
-                    onClick={() => { handlePartyFilter(party); partyDropdown.setOpen(false) }}
-                    onKeyDown={(e) => partyDropdown.handleKeyDown(e, () => { handlePartyFilter(party); partyDropdown.setOpen(false) })}
-                  >
-                    {partyLabel(party)}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
+        <PartyFilterControls styles={styles} parties={PARTIES} active={partyFilter} onSelect={handlePartyFilter} />
 
         <p className={styles.resultCount} aria-live="polite" aria-atomic="true">
           <Users className={styles.resultCountIcon} size={14} strokeWidth={1.75} aria-hidden="true" />

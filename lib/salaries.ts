@@ -3,7 +3,7 @@
 
 import { CURRENT_MANDATE, mandateById } from './constants/mandates'
 
-export type SalaryRole =
+type SalaryRole =
   | 'member'
   | 'commission'
   | 'committee_chair'
@@ -120,11 +120,7 @@ const SALARY_PERIODS: SalaryPeriod[] = [
   },
 ]
 
-/**
- * Published pay rates keyed by mandate. A mandate appears here ONLY once its rates are
- * published; a mandate that is absent means rates are pending — the salary functions then
- * return null so the UI can show "rates pending" instead of a misleading £0 (fail loud).
- */
+// A mandate is absent until its rates are published; salary functions then return null.
 const SALARY_PERIODS_BY_MANDATE: Record<string, SalaryPeriod[]> = {
   '2022-2027': SALARY_PERIODS,
 }
@@ -134,46 +130,11 @@ export function salaryRatesPublished(mandate: string): boolean {
   return mandate in SALARY_PERIODS_BY_MANDATE
 }
 
-/**
- * True once an MLA has held their seat for a full year, so partial-year cost/salary
- * figures aren't compared against MLAs with a full year on record.
- */
+// Guards against comparing partial-year figures to a full year's record.
 export function hasServedOneYear(mandateStart: string, todayStr: string): boolean {
   const oneYearAgo = new Date(todayStr)
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
   return new Date(mandateStart) <= oneYearAgo
-}
-
-/**
- * Fraction of the mandate (0-1) a member actually held their seat, day-weighted from
- * mandateStart/mandateEnd. Used as the denominator for party-level per-MLA averages so a
- * seat that changed hands mid-mandate isn't double-divided (once by date pro-rating in the
- * numerator, again by headcount in the denominator).
- */
-export function seatTimeFraction(
-  mandateStart: string | null,
-  mandateEnd: string | null,
-  todayStr: string,
-  mandate: string = CURRENT_MANDATE.id
-): number {
-  if (!mandateStart) return 0
-
-  const mandateDef = mandateById(mandate)
-  const windowStart = mandateDef ? new Date(mandateDef.start) : new Date(mandateStart)
-  const today = new Date(todayStr)
-  const windowEnd = mandateDef?.end ? new Date(mandateDef.end) : today
-
-  const seatStart = new Date(Math.max(new Date(mandateStart).getTime(), windowStart.getTime()))
-  const rawSeatEnd = mandateEnd ? new Date(mandateEnd) : today
-  const seatEnd = new Date(Math.min(rawSeatEnd.getTime(), windowEnd.getTime()))
-
-  if (seatEnd <= seatStart) return 0
-
-  const seatDays = (seatEnd.getTime() - seatStart.getTime()) / 86400000
-  const mandateDays = (windowEnd.getTime() - windowStart.getTime()) / 86400000
-  if (mandateDays <= 0) return 0
-
-  return seatDays / mandateDays
 }
 
 const ROLE_PRIORITY: Record<SalaryRole, number> = {
@@ -231,8 +192,7 @@ export function calculateMandateEarnings(
   if (!periods) return null // rates pending for this mandate — fail loud, do not report £0
 
   const today = new Date(todayStr)
-  // For an open-ended (ongoing) band, the pro-rating denominator is the mandate's end, or
-  // today while the mandate is still running.
+  // An open-ended band pro-rates against the mandate's end, or today if ongoing.
   const mandateEnd = mandateById(mandate)?.end
   const openBandEnd = mandateEnd ? new Date(mandateEnd) : today
   let total = 0

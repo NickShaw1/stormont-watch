@@ -11,13 +11,20 @@ import { bills, billStages } from '../lib/db/schema'
 
 type Db = ReturnType<typeof drizzle<typeof schema>>
 
+// Only the fields this script reads from GetPlenaryItemsPlenaryDate_JSON.
+interface PlenaryItem {
+  Title: string
+  DocumentID: string
+  PlenaryDate: string
+}
+
 const BASE = 'http://data.niassembly.gov.uk/plenary.asmx'
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-async function fetchPlenaryItems(startDate: string, endDate: string) {
+async function fetchPlenaryItems(startDate: string, endDate: string): Promise<PlenaryItem[]> {
   const url = `${BASE}/GetPlenaryItemsPlenaryDate_JSON?startDate=${startDate}&endDate=${endDate}`
   const res = await fetch(url)
   if (!res.ok) throw new Error(`[syncBills] Plenary API returned ${res.status} for ${startDate}–${endDate}`)
@@ -89,7 +96,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
   end.setDate(0) // last day of next month
   console.log(`[syncBills] Syncing from ${syncFrom.toISOString().slice(0, 10)}${forceStartDate ? ' (forced)' : ''}`)
 
-  const allItems: any[] = []
+  const allItems: PlenaryItem[] = []
   let current = new Date(syncFrom.getFullYear(), syncFrom.getMonth(), 1)
 
   while (current <= end) {
@@ -111,7 +118,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
     return
   }
 
-  const billItems = allItems.filter((item: any) =>
+  const billItems = allItems.filter((item) =>
     item.Title && /NIA\s+Bill/i.test(item.Title)
   )
 

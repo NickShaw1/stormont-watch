@@ -83,7 +83,7 @@ export default function RotatingFact({
     },
     {
       number: overallAgreementRate + '%',
-      text: `of votes in the Assembly since ${mandate.start.slice(0, 4)} passed with cross-community support from both unionist and nationalist MLAs.`,
+      text: `of votes in the Assembly since ${mandate.start.slice(0, 4)} where both blocs took part saw unionist and nationalist MLAs vote the same way, for or against.`,
       icon: Handshake,
       color: 'green',
     },

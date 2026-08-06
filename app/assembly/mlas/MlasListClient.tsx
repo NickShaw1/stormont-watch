@@ -25,8 +25,7 @@ interface PartyGroup {
   mlas: MlaRow[]
 }
 
-/** Shape returned by getFormerMembers() — a plain Drizzle select, distinct from
- *  MlaRow's raw-SQL-joined shape (no attendance/role, has mandateEnd instead). */
+// Plain Drizzle select from getFormerMembers(); no attendance/role, has mandateEnd.
 interface FormerMlaRow {
   personId: string
   fullName: string
@@ -357,7 +356,7 @@ export default function MlasListClient({ partyGroups, roleLookup, formerGroups }
                           </Link>
                           <span className={styles.mlaConstituency}>{formatConstituency(mla.constituency)}</span>
                           <span className={`${styles.mlaAtt} ${styles.mlaAttRow}`}>
-                            Att. <strong>{mla.assembly_role && !mla.assembly_role_end ? 'n/a' : (mla.attendance_pct ?? 'n/a')}%</strong>
+                            Att. <strong>{mla.assembly_role === 'Speaker' && !mla.assembly_role_end ? 'n/a' : (mla.attendance_pct ?? 'n/a')}%</strong>
                           </span>
                         </div>
                       </div>
@@ -417,7 +416,7 @@ export default function MlasListClient({ partyGroups, roleLookup, formerGroups }
                             </Link>
                             <span className={styles.mlaConstituency}>{formatConstituency(mla.constituency)}</span>
                             <span className={`${styles.mlaAtt} ${styles.mlaAttRow}`}>
-                              Att. <strong>{mla.assembly_role && !mla.assembly_role_end ? 'n/a' : (mla.attendance_pct ?? 'n/a')}%</strong>
+                              Att. <strong>{mla.assembly_role === 'Speaker' && !mla.assembly_role_end ? 'n/a' : (mla.attendance_pct ?? 'n/a')}%</strong>
                             </span>
                           </div>
                         </div>

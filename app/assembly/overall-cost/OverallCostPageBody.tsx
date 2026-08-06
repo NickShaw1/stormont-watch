@@ -1,18 +1,12 @@
 import { PoundSterling } from 'lucide-react'
-import { getAllMembers, getAllMemberRoleHistories, getTotalExpensesPerMember } from '@/lib/db/queries'
+import { getAllMembers, getAllMemberRoleHistories, getTotalExpensesPerMember, mlaImg } from '@/lib/db/queries'
 import { calculateMandateEarnings, apiRoleToSalaryRole, salaryRatesPublished, hasServedOneYear, type RoleInterval } from '@/lib/salaries'
 import OverallCostListClient from './OverallCostListClient'
 import StatsBreadcrumb from '../stats/StatsBreadcrumb'
 import styles from '../expenses/expenses.module.css'
 import { type Mandate, sittingAdjective } from '@/lib/constants/mandates'
 
-const mlaImg = (personId: string) => `/mla-images/${personId}.jpg`
-
-/**
- * Shared body for the overall cost page — rendered by both the live route (current mandate,
- * basePath '') and the archive route (`/archive/<id>`). `mandate` drives the queries
- * and copy; `basePath` prefixes internal links.
- */
+// Shared by the live route and archive routes; mandate/basePath vary per route.
 export default async function OverallCostPageBody({
   mandate,
   basePath,

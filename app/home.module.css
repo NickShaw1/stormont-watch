@@ -360,6 +360,13 @@
   width: 100%;
 }
 
+.kfigMlaNote {
+  font-size: var(--sw-fs-eyebrow);
+  font-style: italic;
+  color: var(--sw-text-tertiary);
+  margin-top: 4px;
+}
+
 @media (max-width: 1024px) {
   .kfigs { grid-template-columns: 1fr 1fr; }
 }

@@ -4,11 +4,8 @@ import MlasListClient from './MlasListClient'
 import styles from './mlas.module.css'
 import type { Mandate } from '@/lib/constants/mandates'
 
-/**
- * Shared body for the MLA list, rendered by both the live route (current mandate)
- * and the archive route. Also fetches former members so the client can offer a
- * "Former MLAs" toggle alongside By Party/By Constituency.
- */
+// Shared by the live route and the archive route.
+// Also fetches former members for the client's "Former MLAs" toggle.
 export default async function MlasPageBody({
   mandate,
 }: {

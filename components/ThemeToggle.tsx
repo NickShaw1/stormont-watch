@@ -10,12 +10,8 @@ function readStoredTheme(): StoredTheme | null {
   return stored === 'light' || stored === 'dark' ? stored : null
 }
 
-/**
- * Manual override on top of prefers-color-scheme. Resolution order:
- * localStorage override -> system preference -> light. No SSR/hydration
- * state is involved — force-static pages have no server-rendered theme,
- * so this reads/writes purely client-side after mount.
- */
+// Resolution order: localStorage override -> system preference -> light.
+// Client-side only; force-static pages have no server-rendered theme.
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<StoredTheme | null>(null)
 

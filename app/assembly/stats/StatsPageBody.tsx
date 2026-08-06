@@ -20,11 +20,7 @@ import styles from './stats.module.css'
 import { type Mandate, sittingAdjective } from '@/lib/constants/mandates'
 import { formatMemberName } from '@/lib/format'
 
-/**
- * Shared body for the stats landing page — rendered by both the live route (current
- * mandate, basePath '') and the archive route (`/archive/<id>`). `mandate` drives the
- * queries and copy; `basePath` prefixes internal links.
- */
+// Shared by the live route and archive routes; mandate/basePath vary per route.
 export default async function StatsPageBody({
   mandate,
   basePath,
@@ -145,6 +141,7 @@ export default async function StatsPageBody({
           overallPassRate={overallPassRate}
           overallAgreementRate={overallAgreementRate}
           averageAttendance={averageAttendance}
+          sittingAdjective={sittingAdjective(mandate)}
           bigTwoAgreePct={bigTwoAgreement.agreePct}
           topSfAlignedParty={topSfAlignedParty}
           topDupAlignedParty={topDupAlignedParty}

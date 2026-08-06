@@ -19,6 +19,7 @@ interface Props {
   overallPassRate: number
   overallAgreementRate: number
   averageAttendance: number
+  sittingAdjective: string
   bigTwoAgreePct: number
   topSfAlignedParty: { party: string; sfAgreePct: number } | null
   topDupAlignedParty: { party: string; dupAgreePct: number } | null
@@ -37,6 +38,7 @@ export default function StatsHighlights({
   overallPassRate,
   overallAgreementRate,
   averageAttendance,
+  sittingAdjective,
   bigTwoAgreePct,
   topSfAlignedParty,
   topDupAlignedParty,
@@ -53,13 +55,13 @@ export default function StatsHighlights({
     },
     {
       number: `${overallAgreementRate}%`,
-      text: 'of divisions saw a majority of unionist-designated and nationalist-designated MLAs vote the same way.',
+      text: 'of divisions where both blocs voted saw a majority of unionist-designated and nationalist-designated MLAs vote the same way.',
       icon: Scale,
       color: 'blue',
     },
     {
       number: `${averageAttendance}%`,
-      text: 'average voting attendance across all MLAs this mandate.',
+      text: `average voting attendance across ${sittingAdjective} MLAs this mandate.`,
       icon: Users2,
       color: 'amber',
     },
