@@ -91,20 +91,20 @@ export async function getHansardDebateRankForMember(personId: string, mandate: s
 export async function getHansardStatsByParty(party: string, mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
-      personId: hansardContributions.personId,
+      personId: members.personId,
       fullName: members.fullName,
       constituency: members.constituency,
       imgUrl: members.imgUrl,
       sittings: sql<number>`count(distinct ${hansardContributions.reportDocId})`,
       debates: sql<number>`count(distinct ${hansardContributions.debateTitle})`,
     })
-    .from(hansardContributions)
-    .innerJoin(members, and(eq(hansardContributions.personId, members.personId), eq(members.mandate, mandate)))
+    .from(members)
+    .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
     // assembly_role only ever holds a presiding-officer title (Speaker/Deputy Speaker/
     // Principal Deputy Speaker), so excluding it here matches getHansardPartyRank/
     // getHansardPartyDebateRank and the "presiding officers are excluded" caption on the page.
-    .where(and(eq(members.party, party), eq(members.isCurrent, true), isNull(members.assemblyRole), eq(hansardContributions.mandate, mandate)))
-    .groupBy(hansardContributions.personId, members.fullName, members.constituency, members.imgUrl)
+    .where(and(eq(members.party, party), eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
+    .groupBy(members.personId, members.fullName, members.constituency, members.imgUrl)
     .orderBy(desc(sql`count(distinct ${hansardContributions.reportDocId})`))
   return rows
 }

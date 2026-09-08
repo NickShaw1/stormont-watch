@@ -89,7 +89,8 @@ export async function getQuestionStatsByParty(party: string, mandate: string = C
 }
 
 // Must reconcile with getQuestionStatsByParty's total, so no eligibility filtering here.
-// Unlike an MLA's own-page rank, this includes ministers and former members too.
+// Includes every member of the party for this mandate — current or former, minister or not —
+// even at zero activity (e.g. a newly co-opted MLA with no data yet).
 export async function getQuestionRankingByParty(party: string, mandate: string = CURRENT_MANDATE) {
   const rows = await db
     .select({
@@ -98,16 +99,15 @@ export async function getQuestionRankingByParty(party: string, mandate: string =
       imgUrl: members.imgUrl,
       constituency: members.constituency,
       isCurrent: members.isCurrent,
-      total: sql<number>`sum(${questionStats.writtenCount} + ${questionStats.oralCount})`,
+      total: sql<number>`coalesce(sum(${questionStats.writtenCount} + ${questionStats.oralCount}), 0)`,
     })
-    .from(questionStats)
-    .innerJoin(members, and(eq(questionStats.personId, members.personId), eq(members.mandate, mandate)))
+    .from(members)
+    .leftJoin(questionStats, and(eq(questionStats.personId, members.personId), eq(questionStats.mandate, mandate)))
     .where(and(
       eq(members.party, party),
-      eq(questionStats.mandate, mandate),
+      eq(members.mandate, mandate),
     ))
     .groupBy(members.personId, members.fullName, members.imgUrl, members.constituency, members.isCurrent)
-    .having(sql`sum(${questionStats.writtenCount} + ${questionStats.oralCount}) > 0`)
-    .orderBy(desc(sql`sum(${questionStats.writtenCount} + ${questionStats.oralCount})`))
+    .orderBy(desc(sql`coalesce(sum(${questionStats.writtenCount} + ${questionStats.oralCount}), 0)`))
   return rows
 }
