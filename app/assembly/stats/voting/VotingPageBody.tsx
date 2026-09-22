@@ -115,7 +115,11 @@ export default async function VotingPageBody({
               Party cohesion
               <Users className={styles.cardTitleIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
             </p>
-            <p className={styles.partyRankingSubtitle}>Percentage of votes where all party members who voted, voted the same way.</p>
+            <ul className={styles.partyRankingSubtitleList}>
+              <li>Percentage of votes where all party members who voted, voted the same way.</li>
+              <li>Excludes the Speaker and Deputy Speakers.</li>
+              <li>Parties with only 1 MLA are excluded.</li>
+            </ul>
             <table className={`${styles.partyRankingTable} ${styles.partyRankingTablePct}`}>
               <colgroup>
                 <col className={styles.colRank} />

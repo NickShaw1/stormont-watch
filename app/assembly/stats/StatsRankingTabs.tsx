@@ -48,7 +48,13 @@ function sortRows(
   key: keyof Pick<MlaRow, 'attendancePct' | 'ayes' | 'noes'>,
   desc: boolean,
 ) {
-  return [...data].sort((a, b) => desc ? b[key] - a[key] : a[key] - b[key]).slice(0, 5)
+  return [...data].sort((a, b) => {
+    const diff = desc ? b[key] - a[key] : a[key] - b[key]
+    // Ties on attendancePct go to whoever has cast more votes, so a low-sample MLA
+    // doesn't rank above someone with a long, equally-clean record.
+    if (diff !== 0) return diff
+    return key === 'attendancePct' ? b.total - a.total : 0
+  }).slice(0, 5)
 }
 
 function StatCard({

@@ -371,7 +371,9 @@ export async function getLeastEngagedMLA(mandate: string = CURRENT_MANDATE) {
     -- Speaker do vote regularly, so their full record counts, including while presiding.
     AND ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
     GROUP BY m.person_id, m.full_name, m.party, m.constituency, m.img_url
-    ORDER BY attendance_pct ASC
+    -- Ties on attendance_pct go to whoever has cast more votes, so a low-sample MLA
+    -- (e.g. 3/3) doesn't take the spot over someone with a long, equally-clean record.
+    ORDER BY attendance_pct ASC, total DESC
     LIMIT 1
   `)
   const row = result.rows[0]
@@ -413,7 +415,9 @@ export async function getMostEngagedMLA(mandate: string = CURRENT_MANDATE) {
     -- Speaker do vote regularly, so their full record counts, including while presiding.
     AND ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
     GROUP BY m.person_id, m.full_name, m.party, m.constituency, m.img_url
-    ORDER BY attendance_pct DESC
+    -- Ties on attendance_pct go to whoever has cast more votes, so a low-sample MLA
+    -- (e.g. 3/3) doesn't take the spot over someone with a long, equally-clean record.
+    ORDER BY attendance_pct DESC, total DESC
     LIMIT 1
   `)
   const row = result.rows[0]

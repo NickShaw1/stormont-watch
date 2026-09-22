@@ -1,4 +1,4 @@
-import { eq, desc, sql, and, isNull, asc } from 'drizzle-orm'
+import { eq, desc, sql, and, or, isNull, isNotNull, asc } from 'drizzle-orm'
 import { db } from '../client'
 import { members, hansardReports, hansardContributions } from '../schema'
 import { CURRENT_MANDATE, mandateStartOf } from './helpers'
@@ -26,7 +26,7 @@ export async function getHansardRankForMember(personId: string, mandate: string 
     .innerJoin(members, and(eq(hansardContributions.personId, members.personId), eq(members.mandate, mandate)))
     .where(and(
       eq(members.isCurrent, true),
-      isNull(members.assemblyRole),
+      or(isNull(members.assemblyRole), isNotNull(members.assemblyRoleEnd)),
       eq(hansardContributions.mandate, mandate),
     ))
     .groupBy(hansardContributions.personId)
@@ -62,7 +62,7 @@ export async function getHansardDebateRankForMember(personId: string, mandate: s
     .innerJoin(members, and(eq(hansardContributions.personId, members.personId), eq(members.mandate, mandate)))
     .where(and(
       eq(members.isCurrent, true),
-      isNull(members.assemblyRole),
+      or(isNull(members.assemblyRole), isNotNull(members.assemblyRoleEnd)),
       eq(hansardContributions.mandate, mandate),
     ))
     .groupBy(hansardContributions.personId)
@@ -103,7 +103,7 @@ export async function getHansardStatsByParty(party: string, mandate: string = CU
     // assembly_role only ever holds a presiding-officer title (Speaker/Deputy Speaker/
     // Principal Deputy Speaker), so excluding it here matches getHansardPartyRank/
     // getHansardPartyDebateRank and the "presiding officers are excluded" caption on the page.
-    .where(and(eq(members.party, party), eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
+    .where(and(eq(members.party, party), eq(members.isCurrent, true), or(isNull(members.assemblyRole), isNotNull(members.assemblyRoleEnd)), eq(members.mandate, mandate)))
     .groupBy(members.personId, members.fullName, members.constituency, members.imgUrl)
     .orderBy(desc(sql`count(distinct ${hansardContributions.reportDocId})`))
   return rows
@@ -118,7 +118,7 @@ export async function getHansardPartyRank(party: string, mandate: string = CURRE
     })
     .from(members)
     .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
-    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), or(isNull(members.assemblyRole), isNotNull(members.assemblyRoleEnd)), eq(members.mandate, mandate)))
     .groupBy(members.party, members.personId)
     .as('member_sittings')
 
@@ -160,7 +160,7 @@ export async function getHansardPartyDebateRank(party: string, mandate: string =
     })
     .from(members)
     .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
-    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), or(isNull(members.assemblyRole), isNotNull(members.assemblyRoleEnd)), eq(members.mandate, mandate)))
     .groupBy(members.party, members.personId)
     .as('member_debates')
 
@@ -261,7 +261,7 @@ export async function getHansardTopByMLA(limit: number, orderBy: 'sittings' | 'd
     })
     .from(members)
     .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
-    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), or(isNull(members.assemblyRole), isNotNull(members.assemblyRoleEnd)), eq(members.mandate, mandate)))
     .groupBy(members.personId, members.fullName, members.party, members.imgUrl)
     .orderBy(orderBy === 'sittings'
       ? desc(sql`count(distinct ${hansardContributions.reportDocId})`)
@@ -282,7 +282,7 @@ export async function getHansardBottomByMLA(limit: number, orderBy: 'sittings' |
     })
     .from(members)
     .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
-    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), or(isNull(members.assemblyRole), isNotNull(members.assemblyRoleEnd)), eq(members.mandate, mandate)))
     .groupBy(members.personId, members.fullName, members.party, members.imgUrl)
     .orderBy(orderBy === 'sittings'
       ? asc(sql`count(distinct ${hansardContributions.reportDocId})`)
@@ -304,7 +304,7 @@ export async function getHansardAllByMLA(mandate: string = CURRENT_MANDATE) {
     })
     .from(members)
     .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
-    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), or(isNull(members.assemblyRole), isNotNull(members.assemblyRoleEnd)), eq(members.mandate, mandate)))
     .groupBy(members.personId, members.fullName, members.party, members.constituency, members.imgUrl)
     .orderBy(desc(sql`count(distinct ${hansardContributions.reportDocId})`))
   return rows
@@ -320,7 +320,7 @@ export async function getHansardPartyAverages(mandate: string = CURRENT_MANDATE)
     })
     .from(members)
     .leftJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
-    .where(and(eq(members.isCurrent, true), isNull(members.assemblyRole), eq(members.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), or(isNull(members.assemblyRole), isNotNull(members.assemblyRoleEnd)), eq(members.mandate, mandate)))
     .groupBy(members.party, members.personId)
     .as('member_totals')
 

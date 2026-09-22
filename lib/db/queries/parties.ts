@@ -20,14 +20,14 @@ export async function getPartyCohesion(mandate: string = CURRENT_MANDATE): Promi
       FROM votes v
       JOIN members m2 ON v.person_id = m2.person_id
       WHERE m2.is_current = true
-      AND m2.assembly_role IS NULL
+      AND (m2.assembly_role IS NULL OR m2.assembly_role_end IS NOT NULL)
       AND m2.mandate = ${mandate}
       AND v.vote != 'NO_SHOW'
       AND v.mandate = ${mandate}
       GROUP BY v.document_id, m2.party
     ) party_votes ON m.party = party_votes.party
     WHERE m.is_current = true
-    AND m.assembly_role IS NULL
+    AND (m.assembly_role IS NULL OR m.assembly_role_end IS NOT NULL)
     AND m.mandate = ${mandate}
     AND m.party IS NOT NULL
     GROUP BY m.party
@@ -61,7 +61,7 @@ export async function getMostRebelliousMla(mandate: string = CURRENT_MANDATE): P
       FROM votes v
       JOIN members m ON v.person_id = m.person_id
       WHERE m.is_current = true
-      AND m.assembly_role IS NULL
+      AND (m.assembly_role IS NULL OR m.assembly_role_end IS NOT NULL)
       AND m.mandate = ${mandate}
       AND v.mandate = ${mandate}
       GROUP BY v.document_id, m.party
@@ -83,7 +83,7 @@ export async function getMostRebelliousMla(mandate: string = CURRENT_MANDATE): P
       JOIN members m ON v.person_id = m.person_id
       JOIN party_majority pm ON v.document_id = pm.document_id AND m.party = pm.party
       WHERE m.is_current = true
-      AND m.assembly_role IS NULL
+      AND (m.assembly_role IS NULL OR m.assembly_role_end IS NOT NULL)
       AND m.party != 'Independent'
       AND m.mandate = ${mandate}
       AND v.mandate = ${mandate}

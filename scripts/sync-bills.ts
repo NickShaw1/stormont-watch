@@ -152,9 +152,19 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
         .where(eq(billStages.documentId, item.DocumentID))
         .limit(1)
 
+      const dateStr = item.PlenaryDate.slice(0, 10)
+      const plenaryDate = new Date(`${dateStr}T12:00:00.000Z`)
+
+      // The Assembly diary sometimes re-dates an item after it's first synced (e.g. moves
+      // from a scheduled date to the date it was actually heard). Re-fetch and update in that
+      // case instead of leaving the row stuck on its original (now stale) date.
       if (existing.length > 0) {
-        countSkip('already exists')
-        continue
+        const existingDate = existing[0].plenaryDate.toISOString().slice(0, 10)
+        if (existingDate === dateStr) {
+          countSkip('already exists')
+          continue
+        }
+        console.log(`[syncBills] Date changed for documentId ${item.DocumentID}: ${existingDate} → ${dateStr} — updating`)
       }
 
       await sleep(200)
@@ -167,8 +177,6 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
       }
 
       const stage = extractStage(item.Title) ?? billData.Stage ?? 'Unknown'
-      const dateStr = item.PlenaryDate.slice(0, 10)
-      const plenaryDate = new Date(`${dateStr}T12:00:00.000Z`)
 
       // 7. --force-titles: overwrite title fields when explicitly requested
       const isAccelerated = billData.IsAcceleratedPassage === 'true'
@@ -213,7 +221,18 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
         mandate: mandateIdForDate(plenaryDate),
         itemTitle: extractItemTitle(item.Title),
         updatedAt: new Date(),
-      }).onConflictDoNothing()
+      }).onConflictDoUpdate({
+        target: billStages.documentId,
+        // hasDivision/divisionId are left alone — the backfill step below re-derives them
+        // from the divisions table regardless, so don't risk clobbering an existing link.
+        set: {
+          stage,
+          plenaryDate,
+          mandate: mandateIdForDate(plenaryDate),
+          itemTitle: extractItemTitle(item.Title),
+          updatedAt: new Date(),
+        },
+      })
 
       processed++
       console.log(`[syncBills] Processed: ${billId} — ${stage}`)
