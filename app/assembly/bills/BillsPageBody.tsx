@@ -60,7 +60,7 @@ const isCompleted = (b: typeof allBills[number]) =>
     return {
       slug: billSlug(b.bill_id),
       billId: b.bill_id,
-      title: b.short_title,
+      title: b.royal_assent_date && b.act_title ? b.act_title : b.short_title,
       billType: b.bill_type,
       isAccelerated: b.is_accelerated,
       latestDate: b.latest_date,

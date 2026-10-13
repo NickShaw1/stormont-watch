@@ -60,6 +60,8 @@ export default async function BillDetailPageBody({
   const bill = await getBillBySlug(id, mandate.id)
   if (!bill) notFound()
 
+  const displayTitle = bill.royal_assent_date && bill.act_title ? bill.act_title : bill.short_title
+
   const [stages, summary] = await Promise.all([
     getBillStages(bill.bill_id),
     getBillSummary(id),
@@ -71,7 +73,7 @@ export default async function BillDetailPageBody({
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Legislation', item: `${siteUrl}${basePath}/assembly/bills` },
-      { '@type': 'ListItem', position: 2, name: bill.short_title, item: `${siteUrl}${basePath}/assembly/bills/${id}` },
+      { '@type': 'ListItem', position: 2, name: displayTitle, item: `${siteUrl}${basePath}/assembly/bills/${id}` },
     ],
   }
 
@@ -103,7 +105,7 @@ export default async function BillDetailPageBody({
         <nav aria-label="Breadcrumb" className="breadcrumb">
           <ol>
             <li><Link href={`${basePath}/assembly/bills`}>Legislation</Link></li>
-            <li aria-current="page"><span>{bill.short_title}</span></li>
+            <li aria-current="page"><span>{displayTitle}</span></li>
           </ol>
         </nav>
 
@@ -112,7 +114,7 @@ export default async function BillDetailPageBody({
             <span className={styles.eyebrow}>Legislation</span>
             <h1 className={styles.title}>
               <FileText className={styles.titleIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
-              {bill.short_title}
+              {displayTitle}
             </h1>
           </div>
           {bill.long_title && <p className={styles.lede}>{bill.long_title}</p>}

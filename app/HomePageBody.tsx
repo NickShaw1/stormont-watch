@@ -50,9 +50,7 @@ export default async function HomePageBody({
   const now = new Date()
   const weekStartDate = new Date(now)
   const todayDay = now.getDay()
-  if (todayDay === 6) weekStartDate.setDate(now.getDate() + 2)       // Saturday → next Monday
-  else if (todayDay === 0) weekStartDate.setDate(now.getDate() + 1)  // Sunday → next Monday
-  else weekStartDate.setDate(now.getDate() + (1 - todayDay))         // Mon–Fri → this Monday
+  weekStartDate.setDate(now.getDate() - ((todayDay + 6) % 7))
   const weekStart = weekStartDate.toISOString().slice(0, 10)
 
   const [stats, avgAttendance, leastEngaged, mostEngaged, latestDivisions, inProgressBills,
