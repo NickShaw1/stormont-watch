@@ -1005,6 +1005,8 @@
   white-space: nowrap;
 }
 
+.schedLabelCombined { display: none; white-space: nowrap; }
+
 .schedHeadCount {
   margin-left: var(--s-2);
   padding: 1px 7px;
@@ -1081,6 +1083,10 @@
 @media (max-width: 640px) {
   .schedItem { grid-template-columns: 22px minmax(0, 1fr); column-gap: var(--s-2); }
   .schedHead { padding-right: var(--s-3); }
+  .schedHeadTitle { flex-wrap: nowrap; }
+  .schedHeadCount { display: none; }
+  .schedHeadTitleMulti .schedHeadPart { display: none; }
+  .schedHeadTitleMulti .schedLabelCombined { display: inline; }
 }
 
 @media (prefers-reduced-motion: reduce) {

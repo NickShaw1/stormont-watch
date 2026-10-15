@@ -104,13 +104,14 @@ export default function ScheduleAccordion({ days, title = 'Schedule' }: { days: 
                       <span className={styles.diaryDateMonth}>{day.month}</span>
                     </span>
                     <span className={styles.schedHeadText}>
-                      <span className={styles.schedHeadTitle}>
+                      <span className={`${styles.schedHeadTitle} ${summaryParts(day).length > 1 ? styles.schedHeadTitleMulti : ''}`}>
                         {summaryParts(day).map((part) => (
                           <span key={part.label} className={styles.schedHeadPart}>
                             {part.label}
                             {part.count !== null && <span className={styles.schedHeadCount}>{part.count}</span>}
                           </span>
                         ))}
+                        <span className={styles.schedLabelCombined}>Assembly &amp; committees</span>
                       </span>
                       {(day.isToday || day.sitting) && (
                         <span className={styles.schedHeadMeta}>
