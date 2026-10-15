@@ -175,6 +175,7 @@
 .dropdownItem:last-child { border-bottom: none; }
 .dropdownItem:hover { background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
 .dropdownItem:focus { outline: none; background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItem:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: -2px; }
 .dropdownItemSelected { background: var(--sw-surface-subtle); color: var(--sw-text-primary); font-weight: 600; }
 
 /* Reuses .partyFilterCount's look, restated since it's not inside a .partyFilterBtn here. */

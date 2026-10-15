@@ -49,10 +49,20 @@
   background: var(--sw-surface-subtle);
   border-radius: 0;
   padding: var(--s-6);
+}
+
+.strikingStack { display: grid; }
+
+.strikingSlide {
+  grid-area: 1 / 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: var(--s-6);
+  visibility: hidden;
 }
+
+.strikingSlideActive { visibility: visible; }
 
 .strikingIcon {
   flex-shrink: 0;
@@ -138,10 +148,11 @@
 .indigo { color: #6366f1; }
 
 @media (max-width: 640px) {
-  .striking { flex-wrap: wrap; align-content: flex-start; align-items: flex-start; padding: var(--s-5); gap: var(--s-2) var(--s-4); }
+  .striking { padding: var(--s-5); }
+  .strikingSlide { flex-wrap: wrap; align-content: flex-start; align-items: flex-start; gap: var(--s-2) var(--s-4); }
   .strikingIcon, .strikingNumber { align-self: center; }
   .strikingText { padding-right: 0; flex-basis: 100%; font-size: var(--sw-fs-body-sm); }
-  .strikingShuffle { position: static; margin-left: auto; transform: none; }
+  .strikingShuffle { position: static; display: grid; margin: var(--s-2) 0 0 auto; transform: none; }
 }
 
 /* ── Sub-page header (Activity / Voting / Spending) ────────── */
@@ -2007,6 +2018,7 @@
 .divFilterDropdownItem:last-child { border-bottom: none; }
 .divFilterDropdownItem:hover { background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
 .divFilterDropdownItem:focus { outline: none; background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.divFilterDropdownItem:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: -2px; }
 .divFilterDropdownItemSelected { background: var(--sw-surface-subtle); color: var(--sw-text-primary); font-weight: 600; }
 
 /* ── Division rows inside the expanded panel: date-block left, matches votes page .divRow ── */

@@ -98,6 +98,7 @@ export default function RotatingFact({
   const [factIndex, setFactIndex] = useState(0)
   const [spinning, setSpinning] = useState(false)
   const [swapping, setSwapping] = useState(false)
+  const [shuffled, setShuffled] = useState(false)
 
   useEffect(() => {
     setFactIndex(Math.floor(Math.random() * facts.length))
@@ -105,6 +106,7 @@ export default function RotatingFact({
   }, [])
 
   function shuffle() {
+    setShuffled(true)
     setSpinning(true)
     setSwapping(true)
     setTimeout(() => {
@@ -130,15 +132,25 @@ export default function RotatingFact({
     indigo: styles.indigo,
   }
 
-  const fact = facts[factIndex]
-  const FactIcon = fact.icon
-  const colorClass = FACT_COLOR_CLASS[fact.color]
-
   return (
     <div className={styles.striking}>
-      <FactIcon className={`${styles.strikingIcon} ${colorClass}${swapping ? ` ${styles.strikingSwapping}` : ''}`} size={28} strokeWidth={1.75} aria-hidden="true" />
-      <div className={`${styles.strikingNumber}${swapping ? ` ${styles.strikingSwapping}` : ''}`}>{fact.number}</div>
-      <div className={`${styles.strikingText}${swapping ? ` ${styles.strikingSwapping}` : ''}`}>{fact.text}</div>
+      <div className={styles.strikingStack}>
+        {facts.map((fact, i) => {
+          const FactIcon = fact.icon
+          const active = i === factIndex
+          const fade = active && swapping ? ` ${styles.strikingSwapping}` : ''
+          return (
+            <div key={i} className={`${styles.strikingSlide}${active ? ` ${styles.strikingSlideActive}` : ''}`} aria-hidden={!active}>
+              <FactIcon className={`${styles.strikingIcon} ${FACT_COLOR_CLASS[fact.color]}${fade}`} size={28} strokeWidth={1.75} aria-hidden="true" />
+              <div className={`${styles.strikingNumber}${fade}`}>{fact.number}</div>
+              <div className={`${styles.strikingText}${fade}`}>{fact.text}</div>
+            </div>
+          )
+        })}
+      </div>
+      <div className="sr-only" role="status">
+        {shuffled && <>{facts[factIndex].number} {facts[factIndex].text}</>}
+      </div>
       <button
         type="button"
         className={`${styles.strikingShuffle}${spinning ? ` ${styles.strikingShuffleSpin}` : ''}`}

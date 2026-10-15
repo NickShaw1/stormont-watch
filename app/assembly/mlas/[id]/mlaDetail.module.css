@@ -1077,6 +1077,7 @@
 .expensesYearDropdownItem:last-child { border-bottom: none; }
 .expensesYearDropdownItem:hover { background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
 .expensesYearDropdownItem:focus { outline: none; background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.expensesYearDropdownItem:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: -2px; }
 .expensesYearDropdownItemSelected { background: var(--sw-surface-subtle); color: var(--sw-text-primary); font-weight: 600; }
 
 .interestsSection {

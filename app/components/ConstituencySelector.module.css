@@ -7,7 +7,7 @@
   background: var(--sw-surface);
 }
 
-/* Fixed height matching the expanded MLA card; sea-blue background in light mode only. */
+/* Fixed height matching the expanded MLA card. */
 .mapWrap {
   background: var(--sw-map-sea, var(--sw-surface-subtle));
   padding: var(--s-2);
@@ -19,6 +19,13 @@
   align-items: center;
   justify-content: center;
   height: 565px;
+}
+
+.mapWrap :global(.map-content) { filter: drop-shadow(0 3px 3px rgba(8, 40, 70, 0.3)); }
+.mapWrap :global(.map-content) path { transition: fill 180ms ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mapWrap :global(.map-content) path { transition: none; }
 }
 
 /* Search / selection panel — the second region of the same contained frame. */
@@ -129,6 +136,7 @@
 .dropdownItem:last-child { border-bottom: none; }
 .dropdownItem:hover { background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
 .dropdownItem:focus { outline: none; background: var(--sw-surface-subtle); color: var(--sw-text-primary); }
+.dropdownItem:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: -2px; }
 .dropdownItemSelected { background: var(--sw-surface-subtle); color: var(--sw-text-primary); font-weight: 600; }
 
 .clearBtn {

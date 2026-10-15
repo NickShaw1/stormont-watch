@@ -121,7 +121,7 @@
   --sw-map-fill-hover:  #92b89c;
   --sw-map-stroke:      #1a1d21;
   --sw-map-label:       #1a1d21;
-  --sw-map-sea:         #cfe3ee;
+  --sw-map-sea:         linear-gradient(160deg, #dbeaf3 0%, #cfe3ee 55%, #c4dceb 100%);
   --sw-map-selected:    var(--sw-success-solid);
 
   --sw-focus:           var(--sw-accent);
@@ -267,6 +267,7 @@ html {
   -webkit-text-size-adjust: 100%;
   overflow-x: clip;
   scrollbar-gutter: stable;
+  scroll-padding-top: 84px;
 }
 
 body {
@@ -401,7 +402,7 @@ a:active {
 
 /* ── Focus ─────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 1px solid var(--sw-focus);
+  outline: 2px solid var(--sw-focus);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -681,18 +682,24 @@ a:active {
   top: -100%;
   left: 1rem;
   padding: 0.5rem 1rem;
-  background: var(--accent);
+  background: var(--sw-accent-solid);
   color: white;
   z-index: 9999;
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: var(--sw-radius-sm);
+}
+
+.skip-link:hover {
+  color: white;
+  background: var(--sw-accent-strong-solid);
+  text-decoration: none;
 }
 
 .skip-link:focus-visible {
   top: 1rem;
-  outline: 2px solid white;
+  outline: 2px solid var(--sw-text-primary);
   outline-offset: 2px;
 }
 

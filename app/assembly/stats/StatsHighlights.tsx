@@ -156,15 +156,24 @@ export default function StatsHighlights({
 
   if (facts.length === 0) return null
 
-  const fact = facts[factIndex] ?? facts[0]
-  const FactIcon = fact.icon
-  const colorClass = FACT_COLOR_CLASS[fact.color]
+  const activeIndex = factIndex < facts.length ? factIndex : 0
 
   return (
     <div className={styles.striking}>
-      <FactIcon className={`${styles.strikingIcon} ${colorClass}${swapping ? ` ${styles.strikingSwapping}` : ''}`} size={28} strokeWidth={1.75} aria-hidden="true" />
-      <div className={`${styles.strikingNumber}${swapping ? ` ${styles.strikingSwapping}` : ''}`}>{fact.number}</div>
-      <div className={`${styles.strikingText}${swapping ? ` ${styles.strikingSwapping}` : ''}`}>{fact.text}</div>
+      <div className={styles.strikingStack}>
+        {facts.map((fact, i) => {
+          const FactIcon = fact.icon
+          const active = i === activeIndex
+          const fade = active && swapping ? ` ${styles.strikingSwapping}` : ''
+          return (
+            <div key={i} className={`${styles.strikingSlide}${active ? ` ${styles.strikingSlideActive}` : ''}`} aria-hidden={!active}>
+              <FactIcon className={`${styles.strikingIcon} ${FACT_COLOR_CLASS[fact.color]}${fade}`} size={28} strokeWidth={1.75} aria-hidden="true" />
+              <div className={`${styles.strikingNumber}${fade}`}>{fact.number}</div>
+              <div className={`${styles.strikingText}${fade}`}>{fact.text}</div>
+            </div>
+          )
+        })}
+      </div>
       <button
         type="button"
         className={`${styles.strikingShuffle}${spinning ? ` ${styles.strikingShuffleSpin}` : ''}`}
