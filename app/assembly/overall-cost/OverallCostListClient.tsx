@@ -5,6 +5,7 @@ import RankingList, { type RankRow } from '../stats/RankingList'
 import FilterField from '../stats/FilterField'
 import { rankRows } from '../stats/rankUtils'
 import { useMandate } from '@/components/MandateContext'
+import { orderedParties } from '@/lib/format'
 
 export interface CostRow extends RankRow {
   isCurrent: boolean
@@ -18,6 +19,7 @@ export default function OverallCostListClient({ rows }: { rows: CostRow[] }) {
   return (
     <RankingList
       rows={shown}
+      partyOptions={orderedParties(rows)}
       dirty={currentOnly}
       onClear={() => setCurrentOnly(false)}
       ariaLabel="MLA overall cost ranked list"

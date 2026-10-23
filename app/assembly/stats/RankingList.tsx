@@ -34,14 +34,15 @@ interface Props {
   onClear?: () => void
   showService?: boolean
   filterable?: boolean
+  partyOptions?: string[]
 }
 
 const partyShort = (p: string) => abbreviateParty(p) || p
 
-export default function RankingList({ rows, ariaLabel, countSuffix = '', toolbar, note, after, dirty = false, onClear, showService = false, filterable = true }: Props) {
+export default function RankingList({ rows, ariaLabel, countSuffix = '', toolbar, note, after, dirty = false, onClear, showService = false, filterable = true, partyOptions }: Props) {
   const { basePath } = useMandate()
   const [party, setParty] = useState('ALL')
-  const parties = orderedParties(rows)
+  const parties = partyOptions ?? orderedParties(rows)
   const active = party === 'ALL' || parties.includes(party) ? party : 'ALL'
   const shown = active === 'ALL' ? rows : rows.filter((r) => r.party === active)
   const max = Math.max(1, ...rows.map((r) => r.value))
@@ -57,10 +58,10 @@ export default function RankingList({ rows, ariaLabel, countSuffix = '', toolbar
               <span className={styles.rlFieldLabel}>Party</span>
               <div className={`${styles.chipRow} ${styles.rlChips}`} role="group" aria-label="Filter by party">
                 <button type="button" className={styles.chipBtn} aria-pressed={active === 'ALL'} onClick={() => setParty('ALL')}>
-                  All<span className={styles.chipCount}>{rows.length}</span>
+                  All<span className={`${styles.chipCount} ${styles.chipCountAll}`}>{rows.length}</span>
                 </button>
                 {parties.map((p) => (
-                  <button key={p} type="button" className={styles.chipBtn} aria-pressed={active === p} title={p} onClick={() => setParty(p)}>
+                  <button key={p} type="button" className={styles.chipBtn} aria-pressed={active === p} title={p} disabled={(counts.get(p) ?? 0) === 0 && active !== p} onClick={() => setParty(p)}>
                     <i className={styles.chipDot} style={{ background: partyBorderColor(p) }} aria-hidden="true" />
                     {partyShort(p)}<span className={styles.chipCount}>{counts.get(p)}</span>
                   </button>
@@ -71,7 +72,7 @@ export default function RankingList({ rows, ariaLabel, countSuffix = '', toolbar
                   className={styles.phoneSwitch}
                   options={[
                     { key: 'ALL', label: 'All parties', icon: Flag, meta: `${rows.length}`, color: 'var(--sw-accent-solid)' },
-                    ...parties.map((p) => ({ key: p, label: partyShort(p), icon: Flag, meta: `${counts.get(p)}`, color: partyBorderColor(p) })),
+                    ...parties.filter((p) => (counts.get(p) ?? 0) > 0 || active === p).map((p) => ({ key: p, label: partyShort(p), icon: Flag, meta: `${counts.get(p)}`, color: partyBorderColor(p) })),
                   ]}
                   value={active}
                   onPick={setParty}

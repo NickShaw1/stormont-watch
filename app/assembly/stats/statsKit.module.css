@@ -844,3 +844,8 @@
 @media (min-width: 641px) and (max-width: 739px) {
   .rlChips .chipBtn { padding: 0 5px; }
 }
+
+.rlChips .chipCount { min-width: 2ch; text-align: right; }
+.rlChips .chipCountAll { min-width: 3ch; }
+.rlChips .chipBtn:disabled { opacity: 0.45; cursor: default; }
+.rlChips .chipBtn:disabled:hover { background: transparent; border-color: var(--sw-border-strong); }

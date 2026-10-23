@@ -5,6 +5,7 @@ import RankingList, { type RankRow } from '../stats/RankingList'
 import FilterField from '../stats/FilterField'
 import { serviceLabel, rankRows } from '../stats/rankUtils'
 import { useMandate } from '@/components/MandateContext'
+import { orderedParties } from '@/lib/format'
 import styles from '../stats/statsKit.module.css'
 
 export interface ExpenseRow {
@@ -79,6 +80,7 @@ export default function ExpensesListClient({ rows, years, missing }: Props) {
   return (
     <RankingList
       rows={listRows}
+      partyOptions={orderedParties(rows)}
       ariaLabel="MLA expenses ranked list"
       showService
       dirty={selectedYear !== OVERALL || currentOnly}
