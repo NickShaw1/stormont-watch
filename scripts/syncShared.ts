@@ -17,16 +17,34 @@ export const BASE = 'http://data.niassembly.gov.uk'
 
 export type Db = ReturnType<typeof drizzle<typeof schema>>
 
-export async function apiFetch<T>(path: string): Promise<T | null> {
-  try {
-    const res = await fetch(`${BASE}${path}`)
-    if (!res.ok) {
-      console.error(`API error ${res.status} for ${path}`)
-      return null
+const FETCH_TIMEOUT_MS = 30_000
+const FETCH_ATTEMPTS = 3
+
+const sleepMs = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// Retries timeouts, network errors, 429 and 5xx with backoff; other 4xx fail at once.
+export async function fetchWithRetry(url: string): Promise<Response | null> {
+  for (let attempt = 1; attempt <= FETCH_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
+      if (res.ok) return res
+      console.error(`API error ${res.status} for ${url} (attempt ${attempt}/${FETCH_ATTEMPTS})`)
+      if (res.status < 500 && res.status !== 429) return null
+    } catch (err) {
+      console.error(`Fetch error for ${url} (attempt ${attempt}/${FETCH_ATTEMPTS}):`, err)
     }
-    return res.json()
+    if (attempt < FETCH_ATTEMPTS) await sleepMs(1000 * 2 ** (attempt - 1))
+  }
+  return null
+}
+
+export async function apiFetch<T>(path: string): Promise<T | null> {
+  const res = await fetchWithRetry(`${BASE}${path}`)
+  if (!res) return null
+  try {
+    return await res.json()
   } catch (err) {
-    console.error(`Fetch error for ${path}:`, err)
+    console.error(`Invalid JSON for ${path}:`, err)
     return null
   }
 }
@@ -148,10 +166,9 @@ export async function syncMembers(db: Db): Promise<{ knownMemberIds: Set<string>
 export async function syncHansardReports(db: Db) {
   console.log('[syncHansardReports] Fetching all Hansard reports...')
   try {
-    const res = await fetch(`${BASE}/hansard.asmx/GetAllHansardReports`)
-    if (!res.ok) {
-      console.error(`[syncHansardReports] API error ${res.status}`)
-      return
+    const res = await fetchWithRetry(`${BASE}/hansard.asmx/GetAllHansardReports`)
+    if (!res) {
+      throw new Error('[syncHansardReports] API request failed after retries')
     }
     const text = await res.text()
     const matches = text.matchAll(/<HansardComponent>([\s\S]*?)<\/HansardComponent>/g)
@@ -202,10 +219,9 @@ export async function syncHansardReports(db: Db) {
 export async function syncMinisters(db: Db) {
   console.log('[syncMinisters] Fetching current ministers from API...')
   try {
-    const res = await fetch(`${BASE}/members.asmx/GetAllCurrentMinisters`)
-    if (!res.ok) {
-      console.error(`[syncMinisters] API error ${res.status}`)
-      return
+    const res = await fetchWithRetry(`${BASE}/members.asmx/GetAllCurrentMinisters`)
+    if (!res) {
+      throw new Error('[syncMinisters] API request failed after retries')
     }
     const text = await res.text()
     const rawMatches = [...text.matchAll(/<Minister>([\s\S]*?)<\/Minister>/g)]
@@ -216,8 +232,7 @@ export async function syncMinisters(db: Db) {
       return
     }
     if (rawMatches.length < 8) {
-      console.warn(`[syncMinisters] API returned only ${rawMatches.length} ministers (expected ≥8) — preserving existing data and skipping update`)
-      return
+      throw new Error(`[syncMinisters] API returned only ${rawMatches.length} ministers (expected ≥8) — existing data preserved`)
     }
 
     console.log(`[syncMinisters] Found ${rawMatches.length} minister records in API response`)
@@ -287,10 +302,9 @@ export async function syncMinisters(db: Db) {
 export async function syncCommitteeChairs(db: Db) {
   console.log('[syncCommitteeChairs] Fetching current committee chairs from API...')
   try {
-    const res = await fetch(`${BASE}/members.asmx/GetAllCurrentCommitteeChairs`)
-    if (!res.ok) {
-      console.error(`[syncCommitteeChairs] API error ${res.status}`)
-      return
+    const res = await fetchWithRetry(`${BASE}/members.asmx/GetAllCurrentCommitteeChairs`)
+    if (!res) {
+      throw new Error('[syncCommitteeChairs] API request failed after retries')
     }
     const text = await res.text()
     const rawMatches = [...text.matchAll(/<CommitteeChair>([\s\S]*?)<\/CommitteeChair>/g)]
@@ -301,8 +315,7 @@ export async function syncCommitteeChairs(db: Db) {
       return
     }
     if (rawMatches.length < 10) {
-      console.warn(`[syncCommitteeChairs] API returned only ${rawMatches.length} committee chairs (expected ≥10) — preserving existing data and skipping update`)
-      return
+      throw new Error(`[syncCommitteeChairs] API returned only ${rawMatches.length} committee chairs (expected ≥10) — existing data preserved`)
     }
 
     console.log(`[syncCommitteeChairs] Found ${rawMatches.length} committee chair records in API response`)
@@ -381,12 +394,11 @@ export async function syncCommitteeChairs(db: Db) {
 export async function syncRegisteredInterests(db: Db) {
   console.log('[syncRegisteredInterests] Fetching all registered interests from API...')
   try {
-    const res = await fetch(
+    const res = await fetchWithRetry(
       'http://data.niassembly.gov.uk/register.asmx/GetAllRegisteredInterests_JSON'
     )
-    if (!res.ok) {
-      console.error(`[syncRegisteredInterests] API error ${res.status}`)
-      return
+    if (!res) {
+      throw new Error('[syncRegisteredInterests] API request failed after retries')
     }
     const data = await res.json()
     const interests: any[] = data?.AllRegisteredInterests?.RegisteredInterest ?? []
@@ -397,8 +409,7 @@ export async function syncRegisteredInterests(db: Db) {
     }
 
     if (interests.length < 400) {
-      console.warn(`[syncRegisteredInterests] Only ${interests.length} interests found — expected 400+, aborting to avoid data loss`)
-      return
+      throw new Error(`[syncRegisteredInterests] Only ${interests.length} interests found — expected 400+, existing data preserved`)
     }
 
     console.log(`[syncRegisteredInterests] Found ${interests.length} registered interest records`)
@@ -483,12 +494,12 @@ export async function syncPlenaryItems(db: Db) {
   console.log('[syncPlenaryItems] Syncing plenary agenda for current week...')
 
   const now = new Date()
-  const day = now.getDay()
+  const day = now.getUTCDay()
   const diffToMonday = day === 0 ? -6 : 1 - day
   const monday = new Date(now)
-  monday.setDate(now.getDate() + diffToMonday)
+  monday.setUTCDate(now.getUTCDate() + diffToMonday)
   const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
+  sunday.setUTCDate(monday.getUTCDate() + 6)
 
   const startDate = monday.toISOString().slice(0, 10)
   const endDate = sunday.toISOString().slice(0, 10)
@@ -498,8 +509,7 @@ export async function syncPlenaryItems(db: Db) {
   )
 
   if (items === null) {
-    console.log('[syncPlenaryItems] API call failed — skipping')
-    return
+    throw new Error('[syncPlenaryItems] API call failed')
   }
 
   const raw: any[] = items?.PlenaryList?.Plenary ?? []

@@ -14,6 +14,17 @@ export function formatDate(raw: string | null | undefined): string {
   return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`
 }
 
+// e.g. "2026-10-19" -> { day: 19, suffix: "th", month: "Oct" }.
+export function dayMonthOrdinalParts(raw: string | null | undefined): { day: number; suffix: string; month: string } | null {
+  if (!raw) return null
+  const [year, month, day] = raw.slice(0, 10).split('-')
+  if (!year || !month || !day) return null
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const d = parseInt(day)
+  const suffix = d % 100 >= 11 && d % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[d % 10] ?? 'th'
+  return { day: d, suffix, month: months[parseInt(month) - 1] }
+}
+
 // Parses "NIA Bill XX/XX-XX" into a slug like "nia-bill-01-22-27".
 export function parseBillSlug(title: string | null | undefined): string | null {
   if (!title) return null
@@ -174,4 +185,17 @@ export function orderedParties(items: { party?: string | null }[]): string[] {
     const ib = NI_PARTY_ORDER.indexOf(b)
     return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b)
   })
+}
+
+// Exact share to one decimal place, e.g. 1.1% for one seat in 90.
+export function formatShare(count: number, total: number): string {
+  return total > 0 ? ((count / total) * 100).toFixed(1) : '0.0'
+}
+
+/** Shortens text to at most max characters, ending on a whole word with an ellipsis. */
+export function truncateAtWord(text: string, max: number): string {
+  if (text.length <= max) return text
+  const cut = text.slice(0, max - 1)
+  const space = cut.lastIndexOf(' ')
+  return (space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:.]+$/, '') + '…'
 }

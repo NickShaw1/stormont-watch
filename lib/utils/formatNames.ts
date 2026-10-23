@@ -9,5 +9,6 @@ export function formatTabledBy(tabledBy: string | null): string | null {
   return tabledBy
     .split(', ')
     .map(stripHonorifics)
+    .map((name) => (name === 'Elliott of Ballinamallard' ? 'Tom Elliott' : name))
     .join(', ')
 }

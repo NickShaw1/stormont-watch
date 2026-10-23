@@ -1,13 +1,12 @@
 'use client'
 
-import { useRef, useEffect, useState, useMemo, type CSSProperties } from 'react'
-import Link from 'next/link'
-import { TrendingUp, ListChecks, CalendarCheck, MessagesSquare } from 'lucide-react'
-import styles from './partyDetail.module.css'
-import { formatMemberName, formatConstituency } from '@/lib/format'
-import MlaPhoto from '@/components/MlaPhoto'
+import { useMemo, useState } from 'react'
+import { Landmark, TrendingUp, ListChecks, CalendarCheck, MessagesSquare } from 'lucide-react'
 import { useMandate } from '@/components/MandateContext'
-import { sittingAdjective } from '@/lib/constants/mandates'
+import m from '@/app/assembly/mlas/[id]/mlaDetail.module.css'
+import ColumnChart from './ColumnChart'
+import { Kpi, RankList, TileHead } from './PartyUi'
+import styles from './partyDetail.module.css'
 
 interface Props {
   hansardStats: { personId: string; fullName: string; constituency: string | null; imgUrl: string | null; sittings: number; debates: number }[]
@@ -18,344 +17,108 @@ interface Props {
   party: string
 }
 
+const activityScale = (rank: number, total: number) => ({ rank, total, highIsBad: false, top: 'Most', bottom: 'Fewest' })
+
 export default function PartyChamberClient({ hansardStats, hansardPartyRank, hansardPartyDebateRank, hansardSittingsByMonth, partyColor, party }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { mandate, basePath } = useMandate()
-  const [sortBy, setSortBy] = useState<'sittings' | 'debates'>('sittings')
+  const { mandate } = useMandate()
 
-  const parsedStats = useMemo(() =>
-    hansardStats.map(r => ({ ...r, sittings: Number(r.sittings), debates: Number(r.debates) })),
-    [hansardStats]
-  )
+  const parsed = useMemo(() => hansardStats.map((r) => ({ ...r, sittings: Number(r.sittings), debates: Number(r.debates) })), [hansardStats])
+  const [rankBy, setRankBy] = useState<'sittings' | 'debates'>('sittings')
 
-  const sorted = useMemo(() =>
-    [...parsedStats].sort((a, b) => sortBy === 'sittings' ? b.sittings - a.sittings : b.debates - a.debates),
-    [parsedStats, sortBy]
-  )
+  const bySittings = useMemo(() => [...parsed].sort((a, b) => b.sittings - a.sittings || b.debates - a.debates), [parsed])
+  const byDebates = useMemo(() => [...parsed].sort((a, b) => b.debates - a.debates || b.sittings - a.sittings), [parsed])
 
-  const topBySittings = parsedStats.reduce<typeof parsedStats[0] | null>(
-    (best, r) => !best || r.sittings > best.sittings ? r : best, null
-  )
-  const topByDebates = parsedStats.reduce<typeof parsedStats[0] | null>(
-    (best, r) => !best || r.debates > best.debates ? r : best, null
-  )
-  const fewestBySittings = parsedStats.reduce<typeof parsedStats[0] | null>(
-    (best, r) => !best || r.sittings < best.sittings ? r : best, null
-  )
-  const fewestByDebates = parsedStats.reduce<typeof parsedStats[0] | null>(
-    (best, r) => !best || r.debates < best.debates ? r : best, null
-  )
+  const mlaCount = parsed.length
 
-  const maxValue = sorted[0] ? (sortBy === 'sittings' ? sorted[0].sittings : sorted[0].debates) : 1
-
-  const sittingsRankColor = (() => {
-    if (!hansardPartyRank) return 'var(--sw-text-tertiary)'
-    const pctile = hansardPartyRank.totalParties > 1
-      ? (hansardPartyRank.rank - 1) / (hansardPartyRank.totalParties - 1)
-      : 0
-    return pctile <= 0.33 ? 'var(--sw-success)' : pctile <= 0.66 ? 'var(--sw-warning)' : 'var(--sw-error)'
-  })()
-
-  const debatesRankColor = (() => {
-    if (!hansardPartyDebateRank) return 'var(--sw-text-tertiary)'
-    const pctile = hansardPartyDebateRank.totalParties > 1
-      ? (hansardPartyDebateRank.rank - 1) / (hansardPartyDebateRank.totalParties - 1)
-      : 0
-    return pctile <= 0.33 ? 'var(--sw-success)' : pctile <= 0.66 ? 'var(--sw-warning)' : 'var(--sw-error)'
-  })()
-
-  const mlaCount = parsedStats.length
-
-  useEffect(() => {
-    if (!canvasRef.current) return
-
+  const months = useMemo(() => {
     const now = new Date()
-    const months: { year: number; month: number; label: string }[] = []
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      months.push({
-        year: d.getFullYear(),
-        month: d.getMonth() + 1,
-        label: d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }),
-      })
-    }
-
-    const spokenMap = new Map(hansardSittingsByMonth.map(r => [`${r.year}-${r.month}`, r.totalSittings]))
-    const labels = months.map(m => m.label)
-    const data = months.map(m => {
-      const sittings = spokenMap.get(`${m.year}-${m.month}`) ?? 0
-      return mlaCount > 0 ? Math.round((sittings / mlaCount) * 10) / 10 : 0
+    const spoken = new Map(hansardSittingsByMonth.map((r) => [`${r.year}-${r.month}`, r.totalSittings]))
+    return Array.from({ length: 12 }, (_, idx) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (11 - idx), 1)
+      const sittings = spoken.get(`${d.getFullYear()}-${d.getMonth() + 1}`) ?? 0
+      const value = mlaCount > 0 ? Math.round((sittings / mlaCount) * 10) / 10 : 0
+      return {
+        key: `${d.getFullYear()}-${d.getMonth() + 1}`,
+        label: d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }),
+        tick: d.toLocaleDateString('en-GB', { month: 'short' }),
+        value,
+        text: `${value} sittings per MLA`,
+        short: String(value),
+      }
     })
-
-    const root = getComputedStyle(document.documentElement)
-    const tickColor = root.getPropertyValue('--sw-text-tertiary').trim() || '#656b72'
-    const gridColor = root.getPropertyValue('--sw-border').trim() || '#dcded9'
-
-    let chart: { destroy: () => void } | null = null
-
-    import('chart.js/auto').then(({ default: Chart }) => {
-      if (!canvasRef.current) return
-      const existing = Chart.getChart(canvasRef.current)
-      if (existing) existing.destroy()
-      chart = new Chart(canvasRef.current, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            data,
-            borderColor: partyColor,
-            backgroundColor: partyColor + '18',
-            borderWidth: 2,
-            pointRadius: 3,
-            fill: true,
-            tension: 0.3,
-          }],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-              legend: { display: false },
-              tooltip: {
-                mode: 'index',
-                multiKeyBackground: partyColor,
-                callbacks: {
-                  labelColor: () => ({ borderColor: partyColor, backgroundColor: partyColor, borderDash: [0, 0], borderRadius: 2 }),
-                },
-              },
-            },
-          scales: {
-            x: { grid: { display: false }, ticks: { font: { size: 10 }, color: tickColor } },
-            y: { beginAtZero: true, ticks: { precision: 1, font: { size: 10 }, color: tickColor }, grid: { color: gridColor } },
-          },
-        },
-      })
-    })
-
-    return () => { chart?.destroy() }
-  }, [hansardSittingsByMonth, mlaCount, partyColor])
+  }, [hansardSittingsByMonth, mlaCount])
+  const monthMax = Math.max(1, ...months.map((x) => x.value))
 
   return (
-    <div>
-      {/* Glance stats — tinted Key Figures-style cards. */}
-      <div className={`${styles.statStrip} ${styles.statStripTwo}`}>
-        <div className={styles.statCard}>
-          <div className={styles.statCardLabelRow}>
-            <span className={styles.statCardLabel}>Avg sittings per current MLA</span>
-            <CalendarCheck className={styles.statCardIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
-          </div>
-          <span className={styles.statCardValue}>
-            {hansardPartyRank ? hansardPartyRank.avgSittings.toFixed(1) : '-'}
-          </span>
-          {hansardPartyRank && (
-            <span className={styles.statCardSub} style={{ color: sittingsRankColor }}>
-              Ranked {hansardPartyRank.rank}/{hansardPartyRank.totalParties}
-            </span>
-          )}
-        </div>
+    <div className={m.panelFlat}>
+      <TileHead icon={Landmark} tone="tnIndigo" title="Chamber" panel />
+      <div className={m.bento}>
+        <Kpi
+          icon={CalendarCheck}
+          tone="tnGreen"
+          label="Average sittings per current MLA"
+          value={hansardPartyRank ? hansardPartyRank.avgSittings.toFixed(1) : '-'}
+          sub="Plenary sittings spoken in."
+          scale={hansardPartyRank ? activityScale(hansardPartyRank.rank, hansardPartyRank.totalParties) : undefined}
+        />
+        <Kpi
+          icon={MessagesSquare}
+          tone="tnCoral"
+          label="Average debates per current MLA"
+          value={hansardPartyDebateRank ? hansardPartyDebateRank.avgDebates.toFixed(1) : '-'}
+          sub="Topics contributed to."
+          scale={hansardPartyDebateRank ? activityScale(hansardPartyDebateRank.rank, hansardPartyDebateRank.totalParties) : undefined}
+        />
 
-        <div className={styles.statCard} data-tone="amber">
-          <div className={styles.statCardLabelRow}>
-            <span className={styles.statCardLabel}>Avg debates per current MLA</span>
-            <MessagesSquare className={styles.statCardIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+        <section className={styles.group} aria-labelledby="month-heading">
+          <div className={m.tileHead}>
+            <span className={`${m.iconTile} ${m.tnBlue}`}><TrendingUp size={22} strokeWidth={2} aria-hidden="true" /></span>
+            <h3 className={m.tileTitle} id="month-heading">Average sittings per MLA by month</h3>
           </div>
-          <span className={styles.statCardValue}>
-            {hansardPartyDebateRank ? hansardPartyDebateRank.avgDebates.toFixed(1) : '-'}
-          </span>
-          {hansardPartyDebateRank && (
-            <span className={styles.statCardSub} style={{ color: debatesRankColor }}>
-              Ranked {hansardPartyDebateRank.rank}/{hansardPartyDebateRank.totalParties}
-            </span>
-          )}
-        </div>
-      </div>
+          <p className={styles.sectionDesc}>The average number of plenary sittings spoken in across all {party} MLAs, per month over the last 12 months.</p>
+          <ColumnChart items={months} max={monthMax} colour={partyColor} ariaLabel="Average sittings per MLA by month, last 12 months" valueLabel="Average" showValues />
+        </section>
 
-      {/* Most/Fewest MLA comparison — plain bordered cards (Pattern B, §4.2). */}
-      {parsedStats.length > 1 && (
-        <div className={`${styles.rankPanelGrid} ${styles.subHeadingSpaced}`}>
-          <div className={styles.rankPanel}>
-            <div className={styles.statCardLabelRow}>
-              <span className={styles.factLabel}>Sittings</span>
-              <CalendarCheck className={styles.rankPanelIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
-            </div>
-            <div className={styles.factDivider} />
-            {topBySittings && (
-              <div className={styles.factRankGroup} style={{ '--rank-c': 'var(--sw-success)' } as CSSProperties}>
-                <div className={styles.factRankLabel} style={{ color: 'var(--sw-success)' }}>↑ Most</div>
-                <Link href={`${basePath}/assembly/mlas/${topBySittings.personId}`} className={styles.factRow}>
-                  <div className={styles.factRowPhoto}>
-                    <MlaPhoto name={topBySittings.fullName} imgUrl={topBySittings.imgUrl ?? ''} size={40} decorative square personId={topBySittings.personId} />
-                  </div>
-                  <div className={styles.factRowInfo}>
-                    <span className={styles.factRowName}>{formatMemberName(topBySittings.fullName)}</span>
-                    {topBySittings.constituency && (
-                      <span className={styles.factRowConstituency}>{formatConstituency(topBySittings.constituency)}</span>
-                    )}
-                  </div>
-                  <div className={styles.factRowValueCol}>
-                    <span className={styles.factRowValue}>{topBySittings.sittings}</span>
-                    <span className={styles.factRowSub}>sittings</span>
-                  </div>
-                </Link>
+        {parsed.length > 1 && (
+          <section className={styles.group} aria-labelledby="chamber-rank-heading">
+            <div className={m.tileHead}>
+              <span className={`${m.iconTile} ${m.tnPurple}`}><ListChecks size={22} strokeWidth={2} aria-hidden="true" /></span>
+              <h3 className={m.tileTitle} id="chamber-rank-heading">MLA chamber activity</h3>
+              <div className={styles.segTrack} data-pos={rankBy === 'sittings' ? 0 : 1} role="group" aria-label="Rank MLAs by">
+                <span className={styles.segThumb} aria-hidden="true" />
+                <button type="button" className={styles.segBtn} aria-pressed={rankBy === 'sittings'} onClick={() => setRankBy('sittings')}>
+                  <CalendarCheck size={18} strokeWidth={2} aria-hidden="true" />
+                  Sittings
+                </button>
+                <button type="button" className={styles.segBtn} aria-pressed={rankBy === 'debates'} onClick={() => setRankBy('debates')}>
+                  <MessagesSquare size={18} strokeWidth={2} aria-hidden="true" />
+                  Topics
+                </button>
               </div>
-            )}
-            {fewestBySittings && (
-              <>
-                <div className={styles.factRankSep} />
-                <div className={styles.factRankGroup} style={{ '--rank-c': 'var(--sw-error)' } as CSSProperties}>
-                  <div className={styles.factRankLabel} style={{ color: 'var(--sw-error)' }}>↓ Fewest</div>
-                  <Link href={`${basePath}/assembly/mlas/${fewestBySittings.personId}`} className={styles.factRow}>
-                    <div className={styles.factRowPhoto}>
-                      <MlaPhoto name={fewestBySittings.fullName} imgUrl={fewestBySittings.imgUrl ?? ''} size={40} decorative square personId={fewestBySittings.personId} />
-                    </div>
-                    <div className={styles.factRowInfo}>
-                      <span className={styles.factRowName}>{formatMemberName(fewestBySittings.fullName)}</span>
-                      {fewestBySittings.constituency && (
-                        <span className={styles.factRowConstituency}>{formatConstituency(fewestBySittings.constituency)}</span>
-                      )}
-                    </div>
-                    <div className={styles.factRowValueCol}>
-                      <span className={styles.factRowValue}>{fewestBySittings.sittings}</span>
-                      <span className={styles.factRowSub}>sittings</span>
-                    </div>
-                  </Link>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className={styles.rankPanel}>
-            <div className={styles.statCardLabelRow}>
-              <span className={styles.factLabel}>Topics spoken on</span>
-              <MessagesSquare className={styles.rankPanelIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
             </div>
-            <div className={styles.factDivider} />
-            {topByDebates && (
-              <div className={styles.factRankGroup} style={{ '--rank-c': 'var(--sw-success)' } as CSSProperties}>
-                <div className={styles.factRankLabel} style={{ color: 'var(--sw-success)' }}>↑ Most</div>
-                <Link href={`${basePath}/assembly/mlas/${topByDebates.personId}`} className={styles.factRow}>
-                  <div className={styles.factRowPhoto}>
-                    <MlaPhoto name={topByDebates.fullName} imgUrl={topByDebates.imgUrl ?? ''} size={40} decorative square personId={topByDebates.personId} />
-                  </div>
-                  <div className={styles.factRowInfo}>
-                    <span className={styles.factRowName}>{formatMemberName(topByDebates.fullName)}</span>
-                    {topByDebates.constituency && (
-                      <span className={styles.factRowConstituency}>{formatConstituency(topByDebates.constituency)}</span>
-                    )}
-                  </div>
-                  <div className={styles.factRowValueCol}>
-                    <span className={styles.factRowValue}>{topByDebates.debates}</span>
-                    <span className={styles.factRowSub}>topics</span>
-                  </div>
-                </Link>
-              </div>
-            )}
-            {fewestByDebates && (
-              <>
-                <div className={styles.factRankSep} />
-                <div className={styles.factRankGroup} style={{ '--rank-c': 'var(--sw-error)' } as CSSProperties}>
-                  <div className={styles.factRankLabel} style={{ color: 'var(--sw-error)' }}>↓ Fewest</div>
-                  <Link href={`${basePath}/assembly/mlas/${fewestByDebates.personId}`} className={styles.factRow}>
-                    <div className={styles.factRowPhoto}>
-                      <MlaPhoto name={fewestByDebates.fullName} imgUrl={fewestByDebates.imgUrl ?? ''} size={40} decorative square personId={fewestByDebates.personId} />
-                    </div>
-                    <div className={styles.factRowInfo}>
-                      <span className={styles.factRowName}>{formatMemberName(fewestByDebates.fullName)}</span>
-                      {fewestByDebates.constituency && (
-                        <span className={styles.factRowConstituency}>{formatConstituency(fewestByDebates.constituency)}</span>
-                      )}
-                    </div>
-                    <div className={styles.factRowValueCol}>
-                      <span className={styles.factRowValue}>{fewestByDebates.debates}</span>
-                      <span className={styles.factRowSub}>topics</span>
-                    </div>
-                  </Link>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Chart */}
-      <div className={`${styles.sectionHead} ${styles.sectionHeadSpaced} ${styles.sectionHeadWithSubtitle}`}>
-        <span className={styles.sectionEyebrow}>Participation</span>
-        <h3 className={styles.sectionHeading}>
-          <TrendingUp className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-          Average sittings per MLA by month
-        </h3>
-        <p className={styles.sectionSubtitle}>
-          The average number of plenary sittings spoken in across all {party} MLAs, per month over the last 12 months.
-        </p>
-      </div>
-      <div className={styles.chartAreaSm}>
-        <canvas ref={canvasRef} />
-      </div>
-
-      {/* Ranking */}
-      {parsedStats.length > 1 && sorted.length > 0 && (
-        <>
-          <div className={`${styles.sectionHead} ${styles.sectionHeadSpaced} ${styles.sectionHeadWithSubtitle}`}>
-            <span className={styles.sectionEyebrow}>Rankings</span>
-            <h3 className={styles.sectionHeading}>
-              <ListChecks className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-              MLA chamber activity
-            </h3>
-            <p className={styles.sectionSubtitle}>
-              {`Each ${sittingAdjective(mandate)} MLA's plenary sittings spoken in and topics contributed to since the ${mandate.label} mandate began. Presiding officers are excluded, as their role is procedural rather than representative.`}
+            <p className={styles.sectionDesc}>
+              {rankBy === 'sittings'
+                ? `Plenary sittings spoken in since the ${mandate.label} mandate began, highest first. Presiding officers are excluded, as their role is procedural rather than representative.`
+                : `Topics contributed to since the ${mandate.label} mandate began, highest first. Presiding officers are excluded, as their role is procedural rather than representative.`}
             </p>
-          </div>
-          <div className={styles.filterRow}>
-            <button
-              className={`${styles.filterBtn} ${sortBy === 'sittings' ? styles.filterBtnActive : ''}`}
-              onClick={() => setSortBy('sittings')}
-            >
-              Sittings
-            </button>
-            <button
-              className={`${styles.filterBtn} ${sortBy === 'debates' ? styles.filterBtnActive : ''}`}
-              onClick={() => setSortBy('debates')}
-            >
-              Topics
-            </button>
-          </div>
-          <div className={styles.barRowList}>
-            {sorted.map((mla, i) => {
-              const value = sortBy === 'sittings' ? mla.sittings : mla.debates
-              const barPct = maxValue > 0 ? Math.round(value / maxValue * 100) : 0
-              return (
-                <Link
-                  key={mla.personId}
-                  href={`${basePath}/assembly/mlas/${mla.personId}`}
-                  className={styles.barRow}
-                >
-                  <span className={styles.barRowRank}>{i + 1}</span>
-                  <div className={styles.barRowPhoto}>
-                    <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={36} decorative square personId={mla.personId} />
-                  </div>
-                  <div className={styles.barRowInfo}>
-                    <span className={styles.barRowName}>{formatMemberName(mla.fullName)}</span>
-                    {mla.constituency && (
-                      <span className={`${styles.barRowConstituency} ${styles.barRowConstituencyHideMobile}`}>
-                        {formatConstituency(mla.constituency)}
-                      </span>
-                    )}
-                  </div>
-                  <div className={styles.barRowBarWrap}>
-                    <div className={styles.barRowTrack} aria-hidden="true">
-                      <div
-                        className={styles.barRowFill}
-                        style={{ width: `${barPct}%`, background: partyColor }}
-                      />
-                    </div>
-                    <span className={styles.barRowValue}>{value.toLocaleString()}</span>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        </>
-      )}
+            <RankList
+              colour={partyColor}
+              unit={rankBy === 'sittings' ? 'sittings' : 'topics'}
+              items={(rankBy === 'sittings' ? bySittings : byDebates).map((mla) => {
+                const value = rankBy === 'sittings' ? mla.sittings : mla.debates
+                return {
+                  personId: mla.personId,
+                  fullName: mla.fullName,
+                  imgUrl: mla.imgUrl,
+                  constituency: mla.constituency,
+                  value,
+                  display: value.toLocaleString(),
+                }
+              })}
+            />
+          </section>
+        )}
+      </div>
     </div>
   )
 }

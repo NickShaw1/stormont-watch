@@ -1,31 +1,26 @@
 .toggle {
   display: inline-grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  min-width: 44px;
-  min-height: 44px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   background: var(--sw-surface);
   border: 1px solid var(--sw-border-strong);
-  border-radius: var(--sw-radius-sm);
+  border-radius: 50%;
   color: var(--sw-text-primary);
   cursor: pointer;
-  transition: border-color var(--sw-transition), color var(--sw-transition);
+  transition: border-color var(--sw-transition), color var(--sw-transition), background var(--sw-transition);
 }
 
 .toggle:hover {
   border-color: var(--sw-accent);
+  background: color-mix(in srgb, var(--sw-accent) 8%, var(--sw-surface));
   color: var(--sw-accent-strong);
 }
 
 .toggle:focus-visible {
   outline: 2px solid var(--sw-focus);
   outline-offset: 2px;
-}
-
-.toggle:active {
-  background: var(--sw-surface-subtle);
 }
 
 /* Both icons stacked and cross-faded with a rotate + scale, not an instant swap. */

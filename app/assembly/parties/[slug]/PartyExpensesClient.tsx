@@ -1,213 +1,151 @@
 'use client'
 
-import Link from 'next/link'
-import type { CSSProperties } from 'react'
 import { PoundSterling, Wallet, Users, MapPin, ListChecks } from 'lucide-react'
-import MlaPhoto from '@/components/MlaPhoto'
-import { formatMemberName, formatConstituency, gbp } from '@/lib/format'
-import type { PartyExpenseStats } from '@/lib/db/queries'
-import styles from './partyDetail.module.css'
+import { gbp } from '@/lib/format'
+import type { PartyExpenseStats, PartyMandateMlaExpense } from '@/lib/db/queries'
 import { useMandate } from '@/components/MandateContext'
+import m from '@/app/assembly/mlas/[id]/mlaDetail.module.css'
+import { Kpi, RankList, TileHead, rankTone } from './PartyUi'
+import styles from './partyDetail.module.css'
 
 interface PartyExpensesProps {
   expenses: PartyExpenseStats
   mandateExpenses: { mandateTotal: number; mandateAvgPerMla: number; mlaCount: number; rankTotal: number; rankAvg: number; partyCount: number } | null
+  mandateMlas: PartyMandateMlaExpense[]
   partyColor: string
 }
 
-// Same 3-tier semantic scheme used on the Attendance/Chamber tabs and MLA detail page.
-function rankColor(rank: number, total: number): string {
-  const pctile = total > 1 ? (rank - 1) / (total - 1) : 0
-  return pctile <= 0.33 ? 'var(--sw-success)' : pctile <= 0.66 ? 'var(--sw-warning)' : 'var(--sw-error)'
-}
+// Rank 1 is the highest spend, so a high rank reads as the worst end of the scale, as on the MLA pages.
+const spendScale = (rank: number, total: number) => ({ rank, total, highIsBad: true, top: 'Highest', bottom: 'Lowest' })
 
-function ordinal(n: number): string {
-  const s = ['th', 'st', 'nd', 'rd']
+const ordinal = (n: number) => {
   const v = n % 100
-  return n + (s[(v - 20) % 10] || s[v] || s[0])
+  const suffix = ['th', 'st', 'nd', 'rd']
+  return `${n}${suffix[(v - 20) % 10] || suffix[v] || suffix[0]}`
 }
 
-function MlaExpenseRow({ mla, rankSub }: { mla: PartyExpenseStats['highestMla']; rankSub?: string }) {
-  const { basePath } = useMandate()
+const spendRank = (rank: number, total: number) => (rank === 1 ? `Highest of ${total} parties` : `${ordinal(rank)} highest of ${total} parties`)
+
+function Rank({ rank, total, tone, spoken }: { rank: number; total: number; tone?: 'good' | 'warn' | 'bad'; spoken: string }) {
   return (
-    <Link href={`${basePath}/assembly/mlas/${mla.personId}`} className={styles.factRow}>
-      <div className={styles.factRowPhoto}>
-        <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={40} decorative square personId={mla.personId} />
-      </div>
-      <div className={styles.factRowInfo}>
-        <span className={styles.factRowName}>{formatMemberName(mla.fullName)}</span>
-        {mla.constituency && (
-          <span className={styles.factRowConstituency}>{formatConstituency(mla.constituency)}</span>
-        )}
-        {!mla.isCurrent && (
-          <span className={styles.formerPill}>Former MLA</span>
-        )}
-      </div>
-      <div className={styles.factRowValueCol}>
-        <span className={styles.factRowValue}>{gbp(mla.total)}</span>
-        {rankSub && <span className={styles.factRowSub}>{rankSub}</span>}
-      </div>
-    </Link>
+    <span className={m.kpiRank}>
+      <span className={m.kpiRankLabel} aria-hidden="true">Rank</span>
+      <span className={`${m.kpiRankNum}${tone ? ` ${m[`tone_${tone}`]}` : ''}`} aria-hidden="true">{rank}<small>/{total}</small></span>
+      <span className="sr-only">{spoken}</span>
+    </span>
   )
 }
 
-export default function PartyExpensesClient({ expenses, mandateExpenses, partyColor }: PartyExpensesProps) {
-  const { mandate, basePath } = useMandate()
-  const singleMla = expenses.mlas.length === 1
-  const maxTotal = expenses.highestMla.total
+export default function PartyExpensesClient({ expenses, mandateExpenses, mandateMlas, partyColor }: PartyExpensesProps) {
+  const { mandate } = useMandate()
+  const list = mandateMlas.length > 0 ? mandateMlas : []
+
+  const totalTone = rankTone(expenses.rankTotal, expenses.partyCount, true)
+  const avgTone = rankTone(expenses.rankAvg, expenses.partyCount, true)
+  const visitsTone = rankTone(expenses.rankVisits, expenses.partyCount, true)
 
   return (
-    <div>
-      {/* Mandate totals — tinted Key Figures-style stat strip (§4.1). */}
-      {mandateExpenses && (
-        <>
-          <div className={`${styles.sectionHead} ${styles.sectionHeadWithSubtitle}`}>
-            <span className={styles.sectionEyebrow}>This mandate</span>
-            <h3 className={styles.sectionHeading}>
-              <PoundSterling className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-              Total mandate expenses
-            </h3>
-            <span className={styles.sectionSubtitleTag}>{mandate.startLabel} - present</span>
-          </div>
-          <div className={`${styles.statStrip} ${styles.statStripTwo}`}>
-            <div className={styles.statCard}>
-              <div className={styles.statCardLabelRow}>
-                <span className={styles.statCardLabel}>Total claimed</span>
-                <Wallet className={styles.statCardIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
-              </div>
-              <span className={styles.statCardValue}>{gbp(mandateExpenses.mandateTotal)}</span>
-              <span className={styles.statCardSub}>all published years</span>
-              <span className={styles.statCardSub} style={{ color: rankColor(mandateExpenses.rankTotal, mandateExpenses.partyCount) }}>{ordinal(mandateExpenses.rankTotal)} of {mandateExpenses.partyCount} parties</span>
-            </div>
-            <div className={styles.statCard} data-tone="amber">
-              <div className={styles.statCardLabelRow}>
-                <span className={styles.statCardLabel}>Average per MLA</span>
-                <Users className={styles.statCardIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
-              </div>
-              <span className={styles.statCardValue}>{gbp(mandateExpenses.mandateAvgPerMla)}</span>
-              <span className={styles.statCardSub}>across {mandateExpenses.mlaCount} MLA{mandateExpenses.mlaCount !== 1 ? 's' : ''} (current &amp; former) with published data</span>
-              <span className={styles.statCardSub} style={{ color: rankColor(mandateExpenses.rankAvg, mandateExpenses.partyCount) }}>{ordinal(mandateExpenses.rankAvg)} of {mandateExpenses.partyCount} parties</span>
-            </div>
-          </div>
-
-          <div className={`${styles.sectionHead} ${styles.sectionHeadSpaced} ${styles.sectionHeadWithSubtitle}`}>
-            <span className={styles.sectionEyebrow}>This year</span>
-            <h3 className={styles.sectionHeading}>
-              <PoundSterling className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-              Latest published expenses
-            </h3>
-            <span className={`${styles.sectionSubtitleTag} ${styles.sectionSubtitleTagHideMobile}`}>{expenses.period}</span>
-            <p className={styles.sectionSubtitle}>All current and former {expenses.mlas.length > 0 ? `${expenses.mlas.length} ` : ''}MLAs who claimed expenses in this financial year.</p>
-          </div>
-        </>
-      )}
-
-      {/* Coverage note — only shown when there's no mandate section (which already shows the period) */}
-      {!mandateExpenses && (
-        <p className={styles.sectionNote} style={{ marginTop: 0 }}>
-          Figures shown cover {expenses.period}
-        </p>
-      )}
-
-      {/* Row 1 — three tinted stat cards, like the homepage's Key Figures strip. */}
-      <div className={styles.statStrip}>
-        <div className={styles.statCard}>
-          <div className={styles.statCardLabelRow}>
-            <span className={styles.statCardLabel}>Total expenses</span>
-            <Wallet className={styles.statCardIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
-          </div>
-          <span className={styles.statCardValue}>{gbp(expenses.partyTotal)}</span>
-          <span className={styles.statCardSub}>All claims for {expenses.period}</span>
-          <span className={styles.statCardSub} style={{ color: rankColor(expenses.rankTotal, expenses.partyCount) }}>{ordinal(expenses.rankTotal)} of {expenses.partyCount} parties</span>
-        </div>
-        <div className={styles.statCard} data-tone="amber">
-          <div className={styles.statCardLabelRow}>
-            <span className={styles.statCardLabel}>Average per MLA</span>
-            <Users className={styles.statCardIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
-          </div>
-          <span className={styles.statCardValue}>{gbp(expenses.avgPerMla)}</span>
-          <span className={styles.statCardSub}>Per MLA who claimed</span>
-          <span className={styles.statCardSub} style={{ color: rankColor(expenses.rankAvg, expenses.partyCount) }}>{ordinal(expenses.rankAvg)} of {expenses.partyCount} parties</span>
-        </div>
-        <div className={styles.statCard} data-tone="neutral">
-          <div className={styles.statCardLabelRow}>
-            <span className={styles.statCardLabel}>Registered visits</span>
-            <MapPin className={styles.statCardIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
-          </div>
-          <span className={styles.statCardValue}>{expenses.visitCount}</span>
-          <span className={styles.statCardSub}>
-            {expenses.visitCount === 0 ? 'None declared' : 'Declared in register of interests'}
-          </span>
-          {expenses.rankVisits && (
-            <span className={styles.statCardSub} style={{ color: rankColor(expenses.rankVisits, expenses.partyCount) }}>{ordinal(expenses.rankVisits)} of {expenses.partyCount} parties</span>
-          )}
-        </div>
-      </div>
-
-      {/* Row 2 — Highest/Lowest MLA, two half-width plain-bordered cards. */}
-      <div className={`${styles.rankPanelGrid} ${styles.subHeadingSpaced}`}>
-        <div className={styles.rankPanel}>
-          <div className={styles.factRankGroup} style={{ '--rank-c': 'var(--sw-success)' } as CSSProperties}>
-            <span className={styles.factRankLabel} style={{ color: 'var(--sw-success)' }}>↑ Highest</span>
-            <MlaExpenseRow mla={expenses.highestMla} />
-          </div>
-        </div>
-        {!singleMla && (
-          <div className={styles.rankPanel}>
-            <div className={styles.factRankGroup} style={{ '--rank-c': 'var(--sw-error)' } as CSSProperties}>
-              <span className={styles.factRankLabel} style={{ color: 'var(--sw-error)' }}>↓ Lowest</span>
-              <MlaExpenseRow mla={expenses.lowestMla} />
-            </div>
-          </div>
+    <div className={m.panelFlat}>
+      <TileHead icon={Wallet} tone="tnGreen" title="Expenses" panel />
+      <div className={m.bento}>
+        {mandateExpenses && (
+          <>
+            <Kpi
+              big
+              icon={Wallet}
+              tone="tnGreen"
+              label={`Total claimed, ${mandate.startLabel} to present`}
+              value={gbp(mandateExpenses.mandateTotal)}
+              sub="All published years."
+              scale={spendScale(mandateExpenses.rankTotal, mandateExpenses.partyCount)}
+            />
+            <Kpi
+              big
+              icon={Users}
+              tone="tnBlue"
+              label="Average per MLA this mandate"
+              value={gbp(mandateExpenses.mandateAvgPerMla)}
+              sub={`Across ${mandateExpenses.mlaCount} MLA${mandateExpenses.mlaCount !== 1 ? 's' : ''} (current and former) with published data.`}
+              scale={spendScale(mandateExpenses.rankAvg, mandateExpenses.partyCount)}
+            />
+          </>
         )}
-      </div>
 
-      <div className={`${styles.sectionHead} ${styles.sectionHeadSpaced} ${styles.sectionHeadWithSubtitle}`}>
-        <span className={styles.sectionEyebrow}>Rankings</span>
-        <h3 className={styles.sectionHeading}>
-          <ListChecks className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-          MLA expenses, ranked highest to lowest
-        </h3>
-        <p className={styles.sectionSubtitle}>
-          All current and former {expenses.mlas.length} MLAs who claimed expenses in {expenses.period}, ranked by total amount claimed.
-        </p>
-      </div>
-      <div className={styles.barRowList}>
-        {expenses.mlas.map((mla, i) => {
-          const barPct = maxTotal > 0 ? Math.round(mla.total / maxTotal * 100) : 0
-          return (
-            <Link
-              key={mla.personId}
-              href={`${basePath}/assembly/mlas/${mla.personId}`}
-              className={styles.barRow}
-            >
-              <span className={styles.barRowRank}>{i + 1}</span>
-              <div className={styles.barRowPhoto}>
-                <MlaPhoto name={mla.fullName} imgUrl={mla.imgUrl ?? ''} size={36} decorative square personId={mla.personId} />
+        <section className={styles.group} aria-labelledby="exp-year-heading">
+          <div className={m.tileHead}>
+            <span className={`${m.iconTile} ${m.tnTeal}`}><PoundSterling size={22} strokeWidth={2} aria-hidden="true" /></span>
+            <h3 className={m.tileTitle} id="exp-year-heading">Latest published year</h3>
+          </div>
+          <p className={styles.sectionDesc}>All claims for {expenses.period}, with the party&apos;s position among all {expenses.partyCount} parties. The average is per MLA who claimed.</p>
+          <div className={styles.yearCells}>
+            <div className={styles.yearCell}>
+              <div className={m.tileHead}>
+                <span className={`${m.iconTile} ${m.tnTeal}`}><PoundSterling size={22} strokeWidth={2} aria-hidden="true" /></span>
+                <span className={m.tileLabel}>Total expenses</span>
               </div>
-              <div className={styles.barRowInfo}>
-                <span className={styles.barRowName}>{formatMemberName(mla.fullName)}</span>
-                {mla.constituency && (
-                  <span className={`${styles.barRowConstituency} ${styles.barRowConstituencyHideMobile}`}>
-                    {formatConstituency(mla.constituency)}
-                  </span>
-                )}
-                {!mla.isCurrent && (
-                  <span className={styles.formerPill}>Former MLA</span>
-                )}
+              <div className={`${m.kpiTop} ${styles.kpiTopAligned}`}>
+                <span className={styles.yearFigure}>{gbp(expenses.partyTotal)}</span>
+                <Rank rank={expenses.rankTotal} total={expenses.partyCount} tone={totalTone} spoken={spendRank(expenses.rankTotal, expenses.partyCount)} />
               </div>
-              <div className={styles.barRowBarWrap}>
-                <div className={styles.barRowTrack} aria-hidden="true">
-                  <div
-                    className={styles.barRowFill}
-                    style={{ width: `${barPct}%`, background: partyColor }}
-                  />
-                </div>
-                <span className={styles.barRowValue}>{gbp(mla.total)}</span>
+            </div>
+
+            <div className={styles.yearCell}>
+              <div className={m.tileHead}>
+                <span className={`${m.iconTile} ${m.tnPurple}`}><Users size={22} strokeWidth={2} aria-hidden="true" /></span>
+                <span className={m.tileLabel}>Average per MLA</span>
               </div>
-            </Link>
-          )
-        })}
+              <div className={`${m.kpiTop} ${styles.kpiTopAligned}`}>
+                <span className={styles.yearFigure}>{gbp(expenses.avgPerMla)}</span>
+                <Rank rank={expenses.rankAvg} total={expenses.partyCount} tone={avgTone} spoken={spendRank(expenses.rankAvg, expenses.partyCount)} />
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <section className={styles.group} aria-labelledby="exp-visits-heading">
+          <div className={m.tileHead}>
+            <span className={`${m.iconTile} ${m.tnCoral}`}><MapPin size={22} strokeWidth={2} aria-hidden="true" /></span>
+            <h3 className={m.tileTitle} id="exp-visits-heading">Declared visits</h3>
+          </div>
+          <p className={styles.sectionDesc}>Visits declared on the Register of Interests since {mandate.startLabel}, with the party&apos;s position among all {expenses.partyCount} parties. This counts the whole mandate, not only the latest year.</p>
+          <div className={styles.yearCells}>
+            <div className={styles.yearCell}>
+              <div className={m.tileHead}>
+                <span className={`${m.iconTile} ${m.tnCoral}`}><MapPin size={22} strokeWidth={2} aria-hidden="true" /></span>
+                <span className={m.tileLabel}>Visits declared</span>
+              </div>
+              <div className={`${m.kpiTop} ${styles.kpiTopAligned}`}>
+                <span className={styles.yearFigure}>{expenses.visitCount}</span>
+                {expenses.visitCount === 0
+                  ? <span className={m.kpiSub}>None declared</span>
+                  : <Rank rank={expenses.rankVisits} total={expenses.partyCount} tone={visitsTone} spoken={`${ordinal(expenses.rankVisits)} of ${expenses.partyCount} parties`} />}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {list.length > 0 && (
+          <section className={styles.group} aria-labelledby="exp-rank-heading">
+            <div className={m.tileHead}>
+              <span className={`${m.iconTile} ${m.tnPurple}`}><ListChecks size={22} strokeWidth={2} aria-hidden="true" /></span>
+              <h3 className={m.tileTitle} id="exp-rank-heading">MLA expenses, ranked highest to lowest</h3>
+            </div>
+            <p className={styles.sectionDesc}>All current and former {list.length} MLAs who claimed expenses since the mandate began in {mandate.startLabel}, ranked by the total claimed over the whole mandate.</p>
+            <RankList
+              colour={partyColor}
+              items={list.map((mla) => ({
+                personId: mla.personId,
+                fullName: mla.fullName,
+                imgUrl: mla.imgUrl,
+                constituency: mla.constituency,
+                value: mla.total,
+                display: gbp(mla.total),
+                former: !mla.isCurrent,
+              }))}
+            />
+          </section>
+        )}
       </div>
     </div>
   )

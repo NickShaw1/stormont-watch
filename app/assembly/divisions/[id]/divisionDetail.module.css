@@ -1,916 +1,395 @@
-/* ── Header ────────────────────────────────────────────────── */
-.divisionHeader {
-  padding-block: var(--s-6) var(--s-8);
-  border-bottom: 1px solid var(--sw-accent);
-  margin-bottom: var(--sw-space-9);
+.page {
+  --gap: clamp(56px, 6vw, 88px);
+  --c-purple: #8b5cf6;
+  --c-pink: #ec4899;
+  --v-aye: var(--sw-success-solid);
+  --v-no: var(--sw-error-solid);
+  --v-abs: var(--sw-accent-warm);
+  --v-dnv: var(--sw-text-tertiary);
+  --i-aye: var(--sw-success);
+  --i-no: var(--sw-error);
+  --i-abs: var(--sw-warning);
+  --i-dnv: var(--sw-text-secondary);
+  overflow-x: clip;
+  color: var(--sw-text-primary);
 }
 
-@media (max-width: 640px) {
-  .divisionHeader {
-    padding-block: var(--s-5) var(--s-6);
-    margin-bottom: var(--s-10);
-  }
+.band { padding-block: var(--gap); }
+.bandPage { background: var(--sw-bg); }
+.bandPlain { background: var(--band-plain); }
+.bandTint { background: var(--band-tint); }
+
+:global(:root[data-theme="dark"]) .page .boardCell[data-vote='AYE'], :global(:root[data-theme="dark"]) .page .boardCell[data-vote='NO'] { --fg: #0e1a2a; }
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"]):not([data-theme="dark"])) .page .boardCell[data-vote='AYE'], :global(:root:not([data-theme="light"]):not([data-theme="dark"])) .page .boardCell[data-vote='NO'] { --fg: #0e1a2a; }
+}
+:global(:root[data-theme="dark"]) .page { --sw-success-solid: #55a583; --sw-error-solid: #cc6c63; --sw-accent-strong-solid: #474d57; --c-purple: #9a8fd0; }
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"]):not([data-theme="dark"])) .page { --sw-success-solid: #55a583; --sw-error-solid: #cc6c63; --sw-accent-strong-solid: #474d57; --c-purple: #9a8fd0; }
 }
 
-/* Bordered card, matching Bills'/MLA's .titleCard — houses the title block and tags together. */
-.titleCard {
-  border: 1px solid var(--sw-border);
-  background: var(--sw-surface);
-  padding: var(--s-5);
-}
-
-.eyebrow {
-  display: block;
-  font-size: var(--sw-fs-eyebrow);
-  font-weight: var(--sw-fw-eyebrow);
-  text-transform: uppercase;
-  letter-spacing: var(--sw-eyebrow-tracking);
-  color: var(--sw-accent-strong);
-  margin-bottom: 4px;
-}
-
-/* Mobile-only exception: the h1 icon moves into the eyebrow instead, so the
-   title itself carries no icon on narrow screens (see .titleIconDesktopOnly). */
-.eyebrowIconMobile {
-  display: none;
-}
-
-@media (max-width: 640px) {
-  .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .eyebrowIconMobile {
-    display: inline-flex;
-    flex-shrink: 0;
-    position: relative;
-    top: -1px;
-  }
-
-  .titleIconDesktopOnly {
-    display: none;
-  }
-}
-
-/* Footer row — identifying chip (Division id) left, descriptive/status chips right,
-   matching Bills' .titleCardFoot exactly (bill-number chip left, status chips right). */
-.titleCardFoot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-2) var(--s-4);
-  margin-top: var(--s-4);
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--sw-border);
-}
-
-.badgeRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+.page :global(.party-pill) {
   gap: 8px;
-}
-
-/* Division/Amendment chips: mobile shows them directly under the title, desktop
-   keeps them in the bottom footer alongside date/outcome — only one copy is
-   ever visible at a time. */
-.idBadgeRow {
-  margin-top: var(--s-3);
-}
-
-.idBadgeRowMobile {
-  display: none;
-}
-
-/* Division/Amendment as icon+prose meta rows — mobile only, hidden on desktop
-   where the chip version above (.idBadgeRowDesktop) is shown instead.
-   .metaStrip.metaStripMobile (compound selector) so this always beats the
-   plain .metaStrip display:flex rule declared later in this file, regardless
-   of source order. */
-.metaStrip.metaStripMobile {
-  display: none;
-}
-
-@media (max-width: 640px) {
-  .idBadgeRowMobile {
-    display: flex;
-  }
-
-  .idBadgeRowDesktop {
-    display: none;
-  }
-
-  .metaStrip.metaStripMobile {
-    display: flex;
-  }
-
-  /* Date/cross-community/outcome chips stretch to fill the row edge-to-edge on
-     mobile instead of size-to-content, so the footer reads as one solid band. */
-  .statusBadgeRow {
-    width: 100%;
-  }
-
-  .statusBadgeRow .chip {
-    flex: 1;
-    justify-content: center;
-  }
-}
-
-/* One chip box model for every pill in the header — matches Bills' .chip exactly.
-   Colour comes entirely from the modifier classes below, not from separate
-   differently-sized pill classes (outcomePill/tagCrossCommunity/subtitlePill). */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 9px;
-  border-radius: 3px;
-  border: 1px solid transparent;
-  font-size: var(--sw-fs-caption);
+  height: 28px;
+  padding: 0 12px 0 10px;
+  border-radius: 999px;
+  font-size: var(--fs-sm);
   font-weight: 600;
-  line-height: 1.4;
-  white-space: nowrap;
+  letter-spacing: 0;
+  line-height: 1;
+  background: color-mix(in srgb, var(--party-bg, #6f6f6f) 16%, var(--tile-bg));
+  color: color-mix(in srgb, var(--party-bg, #6f6f6f) 48%, var(--sw-text-primary));
+}
+.page :global(.party-pill)::before { content: ''; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--party-bg, #6f6f6f); }
+:global(:root[data-theme="dark"]) .page :global(.party-pill) { color: color-mix(in srgb, var(--party-bg, #6f6f6f) 30%, var(--sw-text-primary)); }
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"]):not([data-theme="dark"])) .page :global(.party-pill) { color: color-mix(in srgb, var(--party-bg, #6f6f6f) 30%, var(--sw-text-primary)); }
 }
 
-.chipNeutral {
-  color: var(--sw-text-secondary);
-  background: var(--sw-surface-subtle);
-  border-color: var(--sw-border);
+.iconTile {
+  --tone: var(--sw-accent-solid);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--tone) 18%, var(--tile-bg));
+  color: var(--tone-ink, var(--sw-accent));
+}
+.tnBlue { --tone: var(--sw-accent-solid); --tone-ink: var(--sw-accent); }
+.tnGreen { --tone: var(--sw-success-solid); --tone-ink: var(--sw-success); }
+.tnAmber { --tone: var(--sw-accent-warm); --tone-ink: var(--sw-warning); }
+.tnPurple { --tone: var(--c-purple); --tone-ink: color-mix(in srgb, var(--c-purple) 62%, var(--sw-text-primary)); }
+.tnPink { --tone: var(--c-pink); --tone-ink: color-mix(in srgb, var(--c-pink) 62%, var(--sw-text-primary)); }
+
+.tile { display: flex; flex-direction: column; gap: var(--s-6); min-width: 0; padding: var(--s-8); border-radius: var(--r-lg); background: var(--tile-bg); border: 1px solid var(--sw-border); box-shadow: var(--lift); }
+.tileHead { display: flex; align-items: center; gap: var(--s-4); min-height: 48px; }
+.tileLabel { flex: 1; min-width: 0; margin: 0; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sw-text-secondary); }
+.tileTitle { flex: 1; min-width: 0; margin: 0; font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; color: var(--sw-text-primary); }
+.tileMeta { flex: none; font-size: var(--fs-sm); font-weight: 600; color: var(--sw-text-secondary); font-variant-numeric: tabular-nums; }
+.bandStack { display: flex; flex-direction: column; gap: var(--s-4); }
+
+/* Head */
+.head { display: flex; flex-direction: column; margin-bottom: var(--s-10); }
+.eyebrow { display: block; margin-bottom: var(--s-3); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sw-accent); }
+.h1 { margin: 0; max-width: 24ch; font-size: clamp(32px, 3.8vw, 48px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.05; color: var(--sw-text-primary); }
+.headSub { margin: var(--s-4) 0 0; max-width: 62ch; font-size: var(--fs-lg); line-height: 1.6; color: var(--sw-text-secondary); }
+.chips { list-style: none; margin: var(--s-5) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px 0 10px; border-radius: 999px; font-size: var(--fs-sm); font-weight: 600; line-height: 1; white-space: nowrap; background: color-mix(in srgb, var(--pt, var(--sw-accent)) 14%, var(--tile-bg)); color: var(--pt-ink, var(--sw-accent-strong)); }
+.pill[data-cat='bill'] { --pt: var(--c-purple); --pt-ink: color-mix(in srgb, var(--c-purple) 62%, var(--sw-text-primary)); }
+.pill[data-cat='regs'] { --pt: var(--c-pink); --pt-ink: color-mix(in srgb, var(--c-pink) 62%, var(--sw-text-primary)); }
+.pill[data-cat='motion'] { --pt: var(--sw-accent); --pt-ink: var(--sw-accent-strong); }
+.pill[data-cat='xc'] { --pt: var(--sw-accent-warm); --pt-ink: var(--sw-warning); background: color-mix(in srgb, var(--sw-accent-warm) 22%, var(--tile-bg)); }
+.pill[data-cat='good'] { --pt: var(--sw-success-solid); --pt-ink: var(--sw-success); }
+.pill[data-cat='bad'] { --pt: var(--sw-error-solid); --pt-ink: var(--sw-error); }
+.pill[data-cat='warn'] { --pt: var(--sw-accent-warm); --pt-ink: var(--sw-warning); background: color-mix(in srgb, var(--sw-accent-warm) 22%, var(--tile-bg)); }
+.pill[data-cat='neutral'] { --pt: var(--sw-text-secondary); --pt-ink: var(--sw-text-secondary); background: var(--sw-surface-subtle); }
+
+.facts { list-style: none; margin: var(--s-6) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-3); }
+.fact { display: flex; align-items: center; gap: var(--s-3); min-width: 0; padding: var(--s-2) var(--s-5) var(--s-2) var(--s-2); border-radius: 16px; background: color-mix(in srgb, var(--sw-accent) 6%, var(--tile-bg)); }
+.fact .iconTile { width: 36px; height: 36px; border-radius: 12px; }
+.factBody { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.factLabel { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sw-text-secondary); }
+.factValue { font-size: var(--fs-base); font-weight: 600; line-height: 1.3; color: var(--sw-text-primary); }
+.moreBtn { display: inline-flex; align-items: center; min-height: 28px; margin-left: var(--s-2); padding: 0 var(--s-3); border: 0; border-radius: 999px; background: color-mix(in srgb, var(--sw-accent) 12%, var(--tile-bg)); color: var(--sw-accent-strong); font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; vertical-align: middle; }
+.moreBtn:hover { background: color-mix(in srgb, var(--sw-accent) 18%, var(--tile-bg)); }
+.moreBtn:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+.factLink { display: inline-flex; align-items: center; gap: 6px; color: var(--sw-accent-strong); text-decoration: none; }
+.factLink:hover { color: var(--sw-accent); text-decoration: none; }
+.factLink:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 3px; border-radius: 4px; }
+
+/* Result */
+.result { --vt: var(--sw-text-tertiary); --vi: var(--sw-text-secondary); gap: var(--s-8); }
+.result[data-tone='pass'] { --vt: var(--sw-success-solid); --vi: var(--sw-success); }
+.result[data-tone='fail'] { --vt: var(--sw-error-solid); --vi: var(--sw-error); }
+.resultTop { display: flex; flex-direction: column; gap: var(--s-6); }
+.verdictBlock { display: flex; flex-direction: column; gap: var(--s-3); min-width: 0; }
+.verdictRow { display: flex; align-items: center; gap: var(--s-4); }
+.verdictIcon { --tone: var(--vt); --tone-ink: var(--vi); width: 52px; height: 52px; border-radius: 16px; }
+.verdict { margin: 0; font-size: var(--fs-num-md); font-weight: 700; letter-spacing: -0.04em; line-height: 1; color: var(--vi); }
+.verdictSub { margin: 0; font-size: var(--fs-lg); line-height: 1.5; color: var(--sw-text-secondary); }
+.verdictSub b { font-weight: 700; color: var(--sw-text-primary); }
+.outcomeNote { margin: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--sw-text-secondary); }
+.board { display: flex; gap: var(--s-1); min-height: 176px; }
+.boardCell { --bg: var(--v-dnv); --fg: #ffffff; flex-basis: 0; min-width: 150px; display: flex; flex-direction: column; justify-content: space-between; gap: var(--s-4); padding: var(--s-5); border-radius: 20px; background: var(--bg); color: var(--fg); }
+.boardCell[data-vote='AYE'] { --bg: var(--v-aye); }
+.boardCell[data-vote='NO'] { --bg: var(--v-no); }
+.boardCell[data-vote='ABSTAINED'] { --bg: var(--v-abs); --fg: #1a1d21; }
+.boardCell[data-vote='NO_SHOW'] { --bg: color-mix(in srgb, var(--sw-text-primary) 14%, var(--tile-bg)); --fg: var(--sw-text-primary); }
+.boardLabel { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.boardNum { font-size: var(--fs-num-lg); font-weight: 700; letter-spacing: -0.045em; line-height: 0.95; font-variant-numeric: tabular-nums; }
+.boardPct { font-size: var(--fs-sm); font-weight: 600; }
+.stack { display: flex; gap: 3px; height: 16px; }
+.stack > span { min-width: 4px; flex-basis: 0; border-radius: 999px; background: var(--k); }
+.stack > span[data-vote='AYE'] { --k: var(--v-aye); }
+.stack > span[data-vote='NO'] { --k: var(--v-no); }
+.stack > span[data-vote='ABSTAINED'] { --k: var(--v-abs); }
+.stack > span[data-vote='NO_SHOW'] { --k: var(--v-dnv); opacity: 0.45; }
+
+/* Wording */
+.wordGrid { display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); gap: var(--s-4); align-items: stretch; }
+.wordCard { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; padding: var(--s-5); border-radius: var(--r-md); background: color-mix(in srgb, var(--sw-accent) 6%, var(--tile-bg)); }
+.wordCard[data-kind='amend'] { background: color-mix(in srgb, var(--sw-accent-warm) 10%, var(--tile-bg)); }
+.wordHead { display: flex; align-items: center; gap: var(--s-3); }
+.wordHead .iconTile { width: 36px; height: 36px; border-radius: 12px; }
+.wordTitle { margin: 0; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sw-text-secondary); }
+.wordText { margin: 0; font-size: var(--fs-base); line-height: 1.7; color: var(--sw-text-primary); white-space: pre-line; overflow-wrap: anywhere; }
+.wordText + .wordText { padding-top: var(--s-3); }
+.cut { padding: 1px 4px; border-radius: 6px; background: color-mix(in srgb, var(--sw-error-solid) 14%, transparent); color: color-mix(in srgb, var(--sw-error) 65%, var(--sw-text-primary)); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.add { display: block; margin-top: var(--s-3); padding: var(--s-3) var(--s-4); border-radius: 12px; background: color-mix(in srgb, var(--sw-success-solid) 12%, var(--tile-bg)); color: var(--sw-text-primary); white-space: pre-line; }
+.addLabel { display: block; margin-bottom: 4px; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sw-success); }
+.instruction { margin: 0; font-size: var(--fs-sm); font-weight: 600; line-height: 1.5; color: var(--sw-text-secondary); }
+.wordArrow { align-self: center; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: color-mix(in srgb, var(--sw-accent) 12%, var(--tile-bg)); color: var(--sw-accent-strong); }
+.wordNote { margin: 0; font-size: var(--fs-base); line-height: 1.6; color: var(--sw-text-secondary); }
+.wordNote a { color: var(--sw-accent-strong); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.single { max-width: 78ch; }
+
+/* Party ledger */
+.partyChart { display: flex; flex-direction: column; gap: var(--s-4); }
+.ledgerHead { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--s-3) var(--s-5); }
+.ledgerKey { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-4); font-size: var(--fs-sm); font-weight: 600; color: var(--sw-text-secondary); }
+.ledgerKey li { --k: var(--v-dnv); display: inline-flex; align-items: center; gap: var(--s-2); }
+.ledgerKey i { flex: none; width: 12px; height: 12px; border-radius: 4px; background: var(--k); }
+.ledgerKey li[data-vote='AYE'] { --k: var(--v-aye); }
+.ledgerKey li[data-vote='NO'] { --k: var(--v-no); }
+.ledgerKey li[data-vote='ABSTAINED'] { --k: var(--v-abs); }
+.ledger { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-2); }
+.ledgerRow { display: grid; grid-template-columns: 180px minmax(0, 1fr); align-items: center; gap: var(--s-4); padding: var(--s-3) var(--s-4); border-radius: 16px; background: color-mix(in srgb, var(--sw-accent) 6%, var(--tile-bg)); }
+.ledgerName { justify-self: start; }
+.ledgerRow .ledgerName { height: 40px; padding: 0 var(--s-4) 0 var(--s-3); gap: var(--s-2); font-size: var(--fs-base); }
+.ledgerRow .ledgerName::before { width: 11px; height: 11px; }
+.ledgerGroups { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-5); min-width: 0; }
+.ledgerGroup { --k: var(--v-dnv); --ki: var(--i-dnv); display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.ledgerGroup[data-vote='AYE'] { --k: var(--v-aye); --ki: var(--i-aye); }
+.ledgerGroup[data-vote='NO'] { --k: var(--v-no); --ki: var(--i-no); }
+.ledgerGroup[data-vote='ABSTAINED'] { --k: var(--v-abs); --ki: var(--i-abs); }
+.ledgerGroup b { min-width: 2ch; font-size: var(--fs-xl); font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ki); text-align: right; }
+.squares { display: flex; flex-wrap: wrap; gap: 3px; min-width: 0; }
+.squares i { flex: none; width: 16px; height: 22px; border-radius: 5px; background: var(--k); }
+.ledgerGroup[data-vote='NO_SHOW'] .squares i { opacity: 0.45; }
+
+/* Lobbies */
+.tileTitles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tileTitles .tileTitle { flex: none; }
+.tileSub { margin: 0; font-size: var(--fs-sm); line-height: 1.45; color: var(--sw-text-secondary); }
+.lobbies { gap: var(--s-6); }
+.lobbiesTitle { margin: 0; font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; color: var(--sw-text-primary); }
+.filterBlock { display: flex; flex-direction: column; gap: var(--s-3); }
+.filterLabel { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sw-text-secondary); }
+.partyFilter { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.pf, .clearFocus { display: inline-flex; flex: none; align-items: center; gap: var(--s-2); min-height: 44px; padding: 0 var(--s-4); border: 1.5px solid var(--sw-border-strong); border-radius: 999px; background: transparent; color: var(--sw-text-primary); font: inherit; font-size: var(--fs-md); font-weight: 600; white-space: nowrap; cursor: pointer; transition: background var(--sw-transition), border-color var(--sw-transition), color var(--sw-transition); }
+.pf:hover, .clearFocus:hover { background: color-mix(in srgb, var(--sw-accent) 8%, transparent); border-color: var(--sw-accent); }
+.pf[aria-pressed='true'] { background: var(--sw-accent-strong-solid); border-color: var(--sw-accent-strong-solid); color: #ffffff; }
+.pf:focus-visible, .clearFocus:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+.pfDot { flex: none; width: 9px; height: 9px; border-radius: 50%; }
+.pf[aria-pressed='true'] .pfDot { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9); }
+.pfCount { font-size: var(--fs-sm); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--sw-text-secondary); }
+.pf[aria-pressed='true'] .pfCount { color: rgba(255, 255, 255, 0.78); }
+.focusNote { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); border-radius: 16px; background: color-mix(in srgb, var(--sw-accent) 8%, var(--tile-bg)); font-size: var(--fs-md); color: var(--sw-text-secondary); }
+.focusNote b { font-weight: 700; color: var(--sw-text-primary); }
+.lobbyStack { display: flex; flex-direction: column; gap: var(--s-4); }
+.lobbyGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
+.lobbyRest { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
+.lobby { --k: var(--v-dnv); display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; padding: var(--s-4); border-radius: var(--r-md); background: color-mix(in srgb, var(--k) 8%, var(--tile-bg)); }
+.lobby[data-vote='AYE'] { --k: var(--v-aye); }
+.lobby[data-vote='NO'] { --k: var(--v-no); }
+.lobby[data-vote='ABSTAINED'] { --k: var(--v-abs); }
+.lobbyTop { display: flex; align-items: center; gap: var(--s-4); }
+.lobbyIcon { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--k); color: #ffffff; }
+.lobby[data-vote='ABSTAINED'] .lobbyIcon { color: #1a1d21; }
+.countPill { flex: none; margin-left: auto; display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--sw-accent) 12%, var(--tile-bg)); color: var(--sw-accent-strong); font-size: var(--fs-sm); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lobbyTitles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lobbyName { margin: 0; font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; color: var(--sw-text-primary); }
+.lobbySub { font-size: var(--fs-sm); font-weight: 600; color: var(--sw-text-secondary); }
+.lobbyBody { display: flex; flex-direction: column; gap: var(--s-3); }
+.partyGroup { display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-4); border-radius: 16px; background: var(--tile-bg); }
+.partyGroup[data-solo] { padding: 0; background: none; }
+.partyGroupHead { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.partySquare { flex: none; width: 28px; height: 28px; border-radius: 9px; }
+.partyFull { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; color: var(--sw-text-primary); }
+.partyGroupCount { font-size: var(--fs-sm); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--sw-text-secondary); }
+.minis { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-4) var(--s-3); }
+.mini { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-2); width: 72px; }
+.miniPhoto { flex: none; display: block; width: 72px; height: 72px; border-radius: 14px; overflow: hidden; background: var(--sw-surface-subtle); }
+.miniPhoto > span { display: block; width: 100% !important; height: 100% !important; min-width: 0 !important; border: 0 !important; border-radius: 0 !important; outline: none !important; }
+.miniPhoto img { width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: top center !important; }
+.lobby[data-vote='NO_SHOW'] .miniPhoto { filter: grayscale(1); opacity: 0.6; }
+.miniName { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; width: 100%; color: var(--sw-text-primary); font-size: var(--fs-xs); font-weight: 600; line-height: 1.25; text-decoration: none; overflow-wrap: anywhere; }
+.miniName::before { content: ''; position: absolute; inset: 0; border-radius: 14px; }
+.miniName:hover { color: var(--sw-accent-strong); text-decoration: none; }
+.miniName:focus-visible { outline: none; }
+.miniName:focus-visible::before { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+
+.desigLabel { display: inline-flex; align-items: center; gap: var(--s-2); height: 40px; padding: 0 var(--s-4) 0 var(--s-3); border-radius: 999px; background: var(--sw-surface-subtle); color: var(--sw-text-primary); font-size: var(--fs-base); font-weight: 600; white-space: nowrap; }
+.desigLabel i { flex: none; width: 11px; height: 11px; border-radius: 50%; }
+
+
+.searchWrap { position: relative; min-width: 0; }
+.searchIcon { position: absolute; top: 50%; left: var(--s-5); transform: translateY(-50%); color: var(--sw-text-secondary); pointer-events: none; }
+.search { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 56px; padding: 0 var(--s-4) 0 52px; border: 1.5px solid var(--sw-border-strong); border-radius: 999px; background: var(--tile-bg); color: var(--sw-text-primary); font-family: var(--font-sans); font-size: 16px; line-height: normal; }
+.search::placeholder { font-family: var(--font-sans); font-size: 16px; color: var(--sw-text-secondary); opacity: 1; }
+.search:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+
+/* Mobile vote view */
+.mobileVote { display: none; flex-direction: column; gap: var(--s-4); min-width: 0; }
+.mVerdict { --vi: var(--sw-text-secondary); display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-5); border-radius: var(--r-lg); background: var(--tile-bg); border: 1px solid var(--sw-border); box-shadow: var(--lift); }
+.mVerdict[data-tone='pass'] { --vi: var(--sw-success); }
+.mVerdict[data-tone='fail'] { --vi: var(--sw-error); }
+.mVerdictTop { display: flex; align-items: center; gap: var(--s-4); color: var(--vi); }
+.mVerdictWord { margin: 0; font-size: var(--fs-num-md); font-weight: 700; letter-spacing: -0.04em; line-height: 1; color: var(--vi); }
+.mVerdictSub { margin: 4px 0 0; font-size: var(--fs-sm); font-weight: 600; color: var(--sw-text-secondary); }
+.mBar { display: flex; gap: 2px; height: 10px; min-width: 0; }
+.mBar[data-big] { height: 18px; }
+.mBar > span { min-width: 3px; flex-basis: 0; border-radius: 999px; background: var(--k); }
+.mBar > span[data-vote='AYE'], .mKey li[data-vote='AYE'] { --k: var(--v-aye); }
+.mBar > span[data-vote='NO'], .mKey li[data-vote='NO'] { --k: var(--v-no); }
+.mBar > span[data-vote='ABSTAINED'], .mKey li[data-vote='ABSTAINED'] { --k: var(--v-abs); }
+.mBar > span[data-vote='NO_SHOW'], .mKey li[data-vote='NO_SHOW'] { --k: var(--v-dnv); }
+.mKey { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-4); font-size: var(--fs-sm); font-weight: 600; color: var(--sw-text-secondary); }
+.mKey li { display: inline-flex; align-items: center; gap: 6px; }
+.mKey i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--k, var(--v-dnv)); }
+.mKey b { font-size: var(--fs-lg); font-weight: 700; color: var(--sw-text-primary); font-variant-numeric: tabular-nums; }
+.mMotion { display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-5); border-radius: var(--r-lg); background: var(--tile-bg); border: 1px solid var(--sw-border); box-shadow: var(--lift); }
+.mMotionHead { display: flex; align-items: center; gap: var(--s-3); }
+.mMotionTitle { margin: 0; font-size: var(--fs-xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; color: var(--sw-text-primary); }
+.mMotionBody { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-4); border-radius: var(--r-md); background: color-mix(in srgb, var(--sw-accent) 6%, var(--tile-bg)); }
+.mMotionBody h3 { margin: 0; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sw-text-secondary); }
+.mMotionBody p { margin: 0; font-size: var(--fs-base); line-height: 1.6; overflow-wrap: anywhere; }
+.mMotionBody:not([data-open]) p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
+.mMotionBody[data-open] p + h3 { margin-top: var(--s-3); }
+.mMotionBtn { align-self: flex-start; display: inline-flex; align-items: center; gap: var(--s-2); min-height: 44px; padding: 0 var(--s-4); border: 1.5px solid var(--sw-border-strong); border-radius: 999px; background: transparent; color: var(--sw-text-primary); font: inherit; font-size: var(--fs-md); font-weight: 600; cursor: pointer; }
+.mMotionBtn:hover { background: color-mix(in srgb, var(--sw-accent) 8%, transparent); border-color: var(--sw-accent); }
+.mMotionBtn svg[data-open] { transform: rotate(180deg); }
+.mobileVote .mSelect { margin-bottom: 0; }
+.mCardTop svg[data-open] { transform: rotate(180deg); }
+.mMotionBtn:focus-visible, .mCardBtn:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+.mPanel { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
+.mHeadRow { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
+.mH { margin: 0; font-size: var(--fs-xl); font-weight: 700; letter-spacing: -0.02em; color: var(--sw-text-primary); }
+.mHeadRow .mH { margin: 0; }
+.mList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-3); }
+.mTableWrap { padding: var(--s-3) var(--s-5); border-radius: var(--r-lg); background: var(--tile-bg); border: 1px solid var(--sw-border); box-shadow: var(--lift); }
+.mTable { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.mTable th, .mTable td { padding: var(--s-2) var(--s-2); text-align: center; font-size: var(--fs-md); font-weight: 700; color: var(--sw-text-primary); }
+.mTable thead th { font-size: var(--fs-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--sw-text-secondary); }
+.mTable tbody tr + tr th, .mTable tbody tr + tr td { border-top: 1px solid var(--sw-border); }
+.mTable tbody th { text-align: left; width: 38%; }
+.mTable td[data-vote='AYE'] { color: var(--i-aye); }
+.mTable td[data-vote='NO'] { color: var(--i-no); }
+.mTable td[data-vote='ABSTAINED'] { color: var(--i-abs); }
+.mTable td[data-zero] { font-weight: 600; color: var(--sw-text-tertiary); }
+.mPartyTag { display: inline-flex; align-items: center; justify-content: center; width: 84px; height: 30px; padding: 0 var(--s-2); border-radius: 12px; font-size: var(--fs-sm); font-weight: 700; white-space: nowrap; }
+.mChart { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-5); border-radius: var(--r-lg); background: var(--tile-bg); border: 1px solid var(--sw-border); box-shadow: var(--lift); }
+.mChartRow { display: grid; grid-template-columns: 56px minmax(0, 1fr) 32px; align-items: center; gap: var(--s-2); }
+.mChartLabel { font-size: var(--fs-sm); font-weight: 700; color: var(--sw-text-secondary); }
+.mChartTrack { display: block; min-width: 0; }
+.mChartBar { display: flex; gap: 2px; height: 32px; }
+.mChartBar > span { flex-basis: 0; min-width: 4px; display: grid; place-items: center; overflow: hidden; border-radius: 6px; font-size: var(--fs-sm); font-weight: 700; font-variant-numeric: tabular-nums; }
+.mChartBar > span[data-small] { font-size: 0; }
+.mChartTotal { font-size: var(--fs-md); font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; color: var(--sw-text-primary); }
+.mCard { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-5); border-radius: var(--r-lg); background: var(--tile-bg); border: 1px solid var(--sw-border); box-shadow: var(--lift); }
+.mCardBtn { display: flex; flex-direction: column; gap: var(--s-2); width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.mCardTop { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); font-size: var(--fs-base); color: var(--sw-text-secondary); }
+.mCardTop b { display: inline-flex; align-items: center; gap: var(--s-2); min-width: 0; font-size: var(--fs-lg); font-weight: 700; letter-spacing: -0.01em; color: var(--sw-text-primary); }
+.mSq { flex: none; width: 14px; height: 14px; border-radius: 4px; }
+.mSplit { font-size: var(--fs-sm); font-weight: 600; color: var(--sw-text-secondary); }
+.mMore { align-self: flex-start; min-height: 44px; padding: 0 var(--s-4); border: 1.5px solid var(--sw-border-strong); border-radius: 999px; background: transparent; color: var(--sw-text-primary); font: inherit; font-size: var(--fs-md); font-weight: 600; cursor: pointer; }
+.mChips { display: flex; gap: var(--s-2); overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.mChips::-webkit-scrollbar { display: none; }
+.mChip { flex: none; min-height: 44px; padding: 0 var(--s-4); border: 1.5px solid var(--sw-border-strong); border-radius: 999px; background: transparent; color: var(--sw-text-primary); font: inherit; font-size: var(--fs-md); font-weight: 600; white-space: nowrap; cursor: pointer; }
+.mChip span { margin-left: 4px; font-size: var(--fs-sm); color: var(--sw-text-secondary); }
+.mChip[aria-pressed='true'] { background: var(--sw-accent-strong-solid); border-color: transparent; color: #ffffff; }
+.mChip[aria-pressed='true'] span { color: rgba(255, 255, 255, 0.78); }
+.mChip:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+.mGroup { --k: var(--v-dnv); display: flex; flex-direction: column; gap: var(--s-3); }
+.mGroup[data-vote='AYE'] { --k: var(--v-aye); }
+.mGroup[data-vote='NO'] { --k: var(--v-no); }
+.mGroup[data-vote='ABSTAINED'] { --k: var(--v-abs); }
+.mGroupHead { display: flex; align-items: center; gap: var(--s-2); margin: 0; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sw-text-secondary); }
+.mGroupHead i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--k); }
+.mGroupHead span { margin-left: auto; font-size: var(--fs-sm); letter-spacing: 0; color: var(--sw-text-primary); font-variant-numeric: tabular-nums; }
+.mRows { list-style: none; margin: var(--s-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.mPanel .mRows { margin: 0; gap: var(--s-2); }
+.mRow { --k: var(--v-dnv); --ki: var(--i-dnv); position: relative; display: flex; align-items: center; gap: var(--s-3); min-height: 56px; padding: var(--s-2) var(--s-3); border-radius: 14px; background: color-mix(in srgb, var(--sw-accent) 6%, var(--tile-bg)); }
+.mAvatar { flex: none; width: 40px; height: 40px; border-radius: 12px; overflow: hidden; background: var(--sw-surface-subtle); }
+.mAvatar > span { display: block; width: 100% !important; height: 100% !important; min-width: 0 !important; border: 0 !important; border-radius: 0 !important; outline: none !important; }
+.mAvatar img { width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: top center !important; }
+.mRow[data-vote='NO_SHOW'] .mAvatar { filter: grayscale(1); opacity: 0.6; }
+.mWho { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mLink { display: block; padding-block: 12px; margin-block: -12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--sw-text-primary); font-size: var(--fs-base); font-weight: 600; text-decoration: none; }
+.mLink::before { content: ''; position: absolute; inset: 0; border-radius: 14px; }
+.mLink:focus-visible { outline: none; }
+.mLink:focus-visible::before { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+.mSub { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--sw-text-secondary); }
+.mSub i { flex: none; width: 10px; height: 10px; border-radius: 3px; }
+.mVote { flex: none; display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--k, var(--v-dnv)) 16%, var(--tile-bg)); color: var(--ki, var(--i-dnv)); font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; }
+.mVote[data-vote='AYE'] { --k: var(--v-aye); --ki: var(--i-aye); }
+.mVote[data-vote='NO'] { --k: var(--v-no); --ki: var(--i-no); }
+.mVote[data-vote='ABSTAINED'] { --k: var(--v-abs); --ki: var(--i-abs); }
+
+@media (max-width: 760px) {
 }
 
-.chipPass {
-  background: var(--sw-success-solid);
-  color: #ffffff;
-  border-color: transparent;
+@media (min-width: 641px) and (max-width: 1240px) {
+  .partyFilter { flex-wrap: nowrap; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+  .partyFilter::-webkit-scrollbar { display: none; }
+  .partyFilter li { flex: 1 1 auto; display: flex; }
+  .pf { flex: 1 1 auto; justify-content: center; gap: 6px; padding: 0 var(--s-3); font-size: var(--fs-sm); }
 }
 
-.chipFail {
-  background: var(--sw-error-solid);
-  color: #ffffff;
-  border-color: transparent;
+@media (min-width: 641px) and (max-width: 1100px) {
+  .partyFilter li:not(:first-child) .pfCount { display: none; }
 }
 
-/* Solid indigo — matches Bills' .pillCrossCommunity (§9 one-off hue). */
-.chipCrossCommunity {
-  background: #6366f1;
-  color: #ffffff;
-  border-color: transparent;
+@media (min-width: 641px) and (max-width: 900px) {
+  .pf { gap: 4px; padding: 0 var(--s-2); font-size: var(--fs-xs); }
+  .pfDot { width: 8px; height: 8px; }
 }
 
-/* Matches Bills' own detail-page <h1>.title exactly (§3.1 — 22px, not the unreached 29px display size). */
-.title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--font-sans);
-  font-weight: 700;
-  font-size: var(--sw-fs-h2);
-  letter-spacing: -0.015em;
-  line-height: 1.15;
-  color: var(--sw-text-primary);
-  margin: 0;
-}
-
-.titleIcon {
-  flex-shrink: 0;
-  color: var(--sw-accent);
-}
-
-.titleWithSub {
-  margin-bottom: 0;
-}
-
-.metaStrip {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: var(--s-4);
-  border-top: 1px solid var(--sw-border);
-  margin-top: var(--s-4);
-}
-
-/* Same hairline/spacing as the standard .metaStrip below it, so every section
-   break in the card reads consistently, including the one right under the title. */
-.metaStrip.metaStripMobile {
-  border-top: 1px solid var(--sw-border);
-  padding-top: var(--s-4);
-  margin-top: var(--s-4);
-}
-
-/* center, not baseline — an inline-flex label containing an icon doesn't report
-   a stable text baseline, which threw the label/value rows out of alignment. */
-.metaRow {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-}
-
-/* Fixed width, not min-width — "Amendment" is the longest label ("AMENDMENT" at
-   this uppercase/tracked size needs ~108px); a min-width let that one row's
-   label grow past the others and knock its value column out of alignment. */
-.metaLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--sw-fs-eyebrow);
-  font-weight: var(--sw-fw-eyebrow);
-  text-transform: uppercase;
-  letter-spacing: var(--sw-eyebrow-tracking);
-  color: var(--sw-text-tertiary);
-  width: 108px;
-  flex-shrink: 0;
-}
-
-.metaLabelIcon {
-  flex-shrink: 0;
-  color: var(--sw-text-tertiary);
-}
-
-.metaValue {
-  font-size: var(--sw-fs-body-sm);
-  color: var(--sw-text-secondary);
-  line-height: 1.4;
-}
-
-.metaValue a {
-  font-size: var(--sw-fs-body-sm);
-  color: var(--sw-accent);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: color 150ms;
-}
-
-.metaValue a:hover {
-  color: var(--sw-accent-strong);
-  text-decoration: underline;
-}
-
-/* Standard §1.1.7 section spacing — applied per-section since several are conditional. */
-.pageSection {
-  margin-top: var(--sw-space-9);
-}
-
-.pageSection:first-child {
-  margin-top: 0;
-}
-
-.sectionLast {
-  margin-bottom: var(--sw-space-9);
+@media (max-width: 1023px) {
+  .wordGrid { grid-template-columns: minmax(0, 1fr); }
+  .wordArrow { justify-self: center; transform: rotate(90deg); }
 }
 
 @media (max-width: 640px) {
-  .pageSection { margin-top: var(--s-10); }
-  .sectionLast { margin-bottom: var(--s-10); }
+  .page { --gap: 48px; }
+  .desktopOnly { display: none; }
+  .mobileVote { display: flex; }
+  .board { flex-wrap: wrap; min-height: 0; }
+  .boardCell { flex: 1 1 calc(50% - var(--s-1)); min-width: 0; padding: var(--s-4); gap: var(--s-3); }
+  .boardCell[data-vote='AYE'] { flex-basis: 100%; }
+  .ledgerRow { grid-template-columns: minmax(0, 1fr); gap: var(--s-3); }
+  .head { margin-bottom: var(--s-6); }
+  .h1 { max-width: none; }
+  .headSub { font-size: var(--fs-base); }
+  .tile { padding: var(--s-5); }
+  .tileTitle { flex: 1 1 10ch; font-size: var(--fs-xl); }
+  .tileHead { flex-wrap: wrap; }
+  .tileHead .pill { flex: none; }
+  .result { gap: var(--s-6); }
+  .verdictIcon { width: 44px; height: 44px; border-radius: 14px; }
+  .facts { gap: var(--s-2); margin-top: var(--s-4); }
+  .fact { flex: 0 1 auto; gap: var(--s-2); padding: 6px var(--s-4) 6px 6px; }
+  .fact:nth-child(2) { flex: 1 1 100%; order: 3; }
+  .fact .iconTile { width: 32px; height: 32px; border-radius: 10px; }
+  .fact .iconTile svg { width: 16px; height: 16px; }
+  .factLabel { font-size: 10px; letter-spacing: 0.08em; }
+  .factValue { font-size: var(--fs-md); }
+  .chips { margin-top: var(--s-3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf, .clearFocus, .mini { transition: none; }
+}
+
+@media (forced-colors: active) {
+  .boardCell, .partySquare, .mPartyTag, .mChartBar > span, .mBar > span, .mSq, .mSub i, .mKey i, .desigLabel i, .ledgerKey i, .squares i, .stack > span, .pfDot, .lobbyIcon { forced-color-adjust: none; }
+}
+
+@media (max-width: 359px) {
+  .mTableWrap { padding: var(--s-3); }
+  .mTable th, .mTable td { padding: var(--s-2) 2px; }
+  .mTable thead th { letter-spacing: 0.04em; }
+  .mTable tbody th { width: 34%; }
 }
-
-/* ── Section headings ──────────────────────────────────────── */
-/* Eyebrow + h2 wrapper, matching Bills'/MLA's .sectionHead. */
-.sectionHead {
-  margin-bottom: var(--s-4);
-}
-
-.sectionHead .eyebrow {
-  margin-bottom: 4px;
-}
-
-.sectionHead h2 {
-  margin: 0;
-}
-
-.sectionHeading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-sans);
-  font-weight: 700;
-  font-size: var(--sw-fs-h2);
-  letter-spacing: -0.015em;
-  line-height: 1.2;
-  color: var(--sw-text-primary);
-  margin: 0;
-}
-
-.sectionHeadingIcon {
-  flex-shrink: 0;
-  color: var(--sw-accent);
-}
-
-/* ── Motion text ───────────────────────────────────────────── */
-.motionSection {
-  margin-bottom: 0;
-}
-
-.amendmentNote {
-  color: var(--sw-text-tertiary);
-  font-style: italic;
-  font-size: var(--sw-fs-body-sm);
-  margin-bottom: var(--s-3);
-  line-height: 1.5;
-}
-
-.motionSubheading {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--sw-fs-caption);
-  font-weight: 700;
-  color: var(--sw-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: var(--sw-eyebrow-tracking);
-  margin: 0 0 var(--s-2);
-}
-
-.motionSubheadingIcon {
-  flex-shrink: 0;
-  color: var(--sw-text-tertiary);
-}
-
-.motionColumns {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s-4);
-  margin-top: var(--s-4);
-}
-
-.motionColumn {
-  padding: var(--s-5);
-  border: 1px solid var(--sw-border);
-  border-top: 3px solid var(--sw-text-tertiary);
-}
-
-.motionColumnOriginal {
-  background: var(--sw-surface);
-}
-
-.motionColumnAmended {
-  background: var(--sw-surface-subtle);
-}
-
-.motionColumn .motionText {
-  max-width: none;
-}
-
-/* Bordered card for the plain (no-amendment) motion text case — matches .motionColumns' framing. */
-.motionCard {
-  border: 1px solid var(--sw-border);
-  background: var(--sw-surface);
-  padding: var(--s-5);
-  margin-top: var(--s-4);
-}
-
-.motionCard .motionText {
-  max-width: none;
-}
-
-@media (max-width: 767px) {
-  .motionColumns {
-    grid-template-columns: 1fr;
-    gap: var(--s-3);
-  }
-
-  .motionColumn {
-    padding: var(--s-4);
-  }
-}
-
-/* Matches .metaValue ("Tabled by" value) exactly — --sw-fs-body-sm, not the larger body size. */
-.motionText {
-  font-size: var(--sw-fs-body-sm);
-  color: var(--sw-text-secondary);
-  line-height: 1.65;
-  white-space: pre-wrap;
-  max-width: 72ch;
-  margin: 0;
-}
-
-@media (max-width: 767px) {
-  .motionText {
-    line-height: 1.6;
-  }
-}
-
-/* ── Results section ───────────────────────────────────────── */
-.resultsSection {
-  margin-bottom: 0;
-}
-
-/* One card holds the whole result: big numbers first, one combined bar for
-   context underneath — replaces the old separate tally-bars + count-cards
-   split, which showed the same four numbers twice in two visual languages. */
-.resultsCard {
-  border: 1px solid var(--sw-border);
-  background: var(--sw-surface);
-  padding: var(--s-5);
-}
-
-/* Key figures strip — Pattern A tinted top-border cards (§4.1), matches the
-   votes list page's .statStrip/.statCell exactly. */
-.counts {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--s-4);
-  margin-bottom: var(--s-5);
-}
-
-.countItem {
-  border: 1px solid var(--sw-border);
-  border-top: 1px solid var(--sw-text-tertiary);
-  background: var(--sw-surface-subtle);
-  padding: var(--s-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  text-align: left;
-}
-
-.countLabelRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.countIcon {
-  color: var(--sw-text-tertiary);
-}
-
-.countItemAye .countIcon { color: var(--sw-success-solid); }
-.countItemNo .countIcon  { color: var(--sw-error-solid); }
-
-.countItemAye {
-  border-top-color: var(--sw-success);
-  background: color-mix(in srgb, var(--sw-success) 12%, var(--sw-surface));
-}
-
-.countItemNo {
-  border-top-color: var(--sw-error);
-  background: color-mix(in srgb, var(--sw-error) 12%, var(--sw-surface));
-}
-
-.countLabel {
-  font-size: var(--sw-fs-eyebrow);
-  font-weight: var(--sw-fw-eyebrow);
-  text-transform: uppercase;
-  letter-spacing: var(--sw-eyebrow-tracking);
-  color: var(--sw-text-secondary);
-}
-
-.countNum {
-  font-size: var(--sw-fs-stat);
-  font-weight: var(--sw-fw-stat);
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-  color: var(--sw-text-primary);
-}
-
-.countItemAye .countNum { color: var(--sw-success-solid); }
-.countItemNo .countNum  { color: var(--sw-error-solid); }
-
-@media (max-width: 1024px) {
-  .counts { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 480px) {
-  .counts { gap: var(--s-3); }
-  .countNum { font-size: 24px; }
-}
-
-/* Single combined proportional bar — matches the votes list page's .divBarTrack
-   exactly (8px, --sw-radius-sm, --sw-surface-subtle track, no border), extended
-   with Abstain/No Show segments since this view needs all four, not just two. */
-.resultsBarTrack {
-  display: flex;
-  min-width: 0;
-  height: 8px;
-  border-radius: var(--sw-radius-sm);
-  overflow: hidden;
-  background: var(--sw-surface-subtle);
-}
-
-.resultsBarAye,
-.resultsBarNo,
-.resultsBarAbs,
-.resultsBarNs {
-  display: block;
-  min-width: 0;
-  height: 100%;
-  transition: width 0.4s ease;
-}
-
-.resultsBarAye { background: var(--sw-success-solid); }
-.resultsBarNo  { background: var(--sw-error-solid); }
-.resultsBarAbs { background: var(--sw-text-tertiary); }
-.resultsBarNs  { background: var(--sw-border-strong); }
-
-/* ── Party / designation breakdown card ───────────────────────── */
-.partyBlocGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
-  border: none;
-  background: var(--sw-surface);
-  overflow: hidden;
-  min-width: 0;
-}
-
-/* Label column is a fixed width matching the pill exactly (no dead space); the four
-   numeric columns share the row's remaining width equally via 1fr, so the table
-   always fills the card edge-to-edge instead of a handful of fixed pixel guesses
-   that only happen to fit at one particular card width. */
-.partyBlocHeaderRow {
-  display: grid;
-  grid-template-columns: 100px repeat(4, 1fr);
-  column-gap: var(--s-3);
-  padding: var(--s-3) var(--s-4);
-  border-bottom: 1px solid var(--sw-border);
-}
-
-.partyBlocItem {
-  display: grid;
-  grid-template-columns: 100px repeat(4, 1fr);
-  column-gap: var(--s-3);
-  align-items: center;
-  padding: var(--s-3) var(--s-4);
-  border-bottom: 1px solid var(--sw-border);
-}
-
-.partyBlocItem:last-child {
-  border-bottom: none;
-}
-
-.partyBlocLabel {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-/* Fixed width here only — the shared .party-pill class elsewhere stays fit-content (§7.6). */
-.partyBlocLabel :global(.party-pill) {
-  align-self: center;
-  line-height: normal;
-  width: 100px;
-  justify-content: center;
-  text-align: center;
-  font-size: 11px;
-  padding: 5px 9px;
-}
-
-/* Hairline between the label and the count columns — matches the votes list page's
-   .divTitle/.divOutcomePillCol convention (border-left + 12px padding on the data side).
-   Sibling combinator (not :first-of-type, which can't distinguish the header row's
-   unlabelled first <span/> from the labelled ones — all are the same element type). */
-.partyBlocHeaderRow > span:first-child + .blocColHead,
-.partyBlocLabel + .blocCell {
-  border-left: 1px solid var(--sw-border);
-  padding-left: 12px;
-}
-
-@media (max-width: 640px) {
-  .partyBlocHeaderRow {
-    grid-template-columns: 84px repeat(4, 1fr);
-    column-gap: var(--s-2);
-    padding: var(--s-2) var(--s-3);
-  }
-
-  .partyBlocItem {
-    grid-template-columns: 84px repeat(4, 1fr);
-    column-gap: var(--s-2);
-    padding: var(--s-2) var(--s-3);
-  }
-
-  .partyBlocLabel :global(.party-pill) {
-    width: 84px;
-    padding: 4px 8px;
-  }
-
-  /* Unlike .divTitle's mobile behaviour (which stacks its pill above the title,
-     removing the divider entirely), this row stays side-by-side at every width —
-     the hairline stays too, just with tighter padding to fit the narrower columns. */
-  .partyBlocHeaderRow > span:first-child + .blocColHead,
-  .partyBlocLabel + .blocCell {
-    padding-left: var(--s-2);
-  }
-}
-
-/* Dedicated canvas wrapper — matches the MLA detail page's .chartCanvasWrap exactly.
-   Chart.js's maintainAspectRatio:false needs a position:relative parent with a fixed,
-   non-flex-computed height; the legend must live outside this wrapper, not inside it. */
-.chartCanvasWrap {
-  position: relative;
-  width: 100%;
-  height: 180px;
-}
-
-/* ── Roll call chart canvas wrapper ─────────────────────────── */
-/* Stretched by .designationLayout's grid (align-items: stretch) — fills that full height
-   rather than the fixed 180px other .chartCanvasWrap usages default to. */
-.rollCallChart {
-  min-width: 0;
-  height: 100%;
-  padding: var(--s-3) var(--s-4) var(--s-4);
-  display: flex;
-  flex-direction: column;
-}
-
-.rollCallChart .chartCanvasWrap {
-  flex: 1;
-  height: auto;
-  min-height: 220px;
-}
-
-@media (max-width: 640px) {
-  .rollCallChart {
-    height: auto;
-  }
-
-  .rollCallChart .chartCanvasWrap {
-    flex: none;
-    height: 200px;
-  }
-}
-
-/* ── Designation breakdown ─────────────────────────────────── */
-.designationSection {
-  margin-bottom: 0;
-}
-
-.designationLayout {
-  display: grid;
-  grid-template-columns: auto 1px 1fr;
-  align-items: stretch;
-  border: 1px solid var(--sw-border);
-  background: var(--sw-surface);
-  overflow: hidden;
-}
-
-.designationSep {
-  background: var(--sw-border);
-  width: 1px;
-}
-
-.designationChart {
-  min-width: 0;
-  padding: var(--s-4);
-}
-
-.designationChart .chartCanvasWrap {
-  height: 160px;
-}
-
-@media (max-width: 640px) {
-  .designationLayout {
-    grid-template-columns: 1fr;
-    border: 1px solid var(--sw-border);
-    background: var(--sw-surface);
-    overflow: hidden;
-  }
-  .designationSep {
-    display: block;
-    width: auto;
-    height: 1px;
-    background: var(--sw-border);
-  }
-  .designationChart { padding: var(--s-4); }
-  .designationChart .chartCanvasWrap { height: 200px; }
-}
-
-.blocGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
-  border: 1px solid var(--sw-border);
-  background: var(--sw-surface);
-  overflow: hidden;
-  max-width: 420px;
-}
-
-/* Variant for use inside .designationLayout, which already supplies its own border/background. */
-.blocGridPlain {
-  border: none;
-  border-radius: 0;
-  max-width: none;
-}
-
-/* Label column is a fixed width matching the pill exactly; the numeric columns
-   share the row's remaining width equally via 1fr — same approach as .partyBlocItem.
-   --data-cols (3 or 4, set inline from the NS-present count) only controls how many
-   1fr tracks exist, so the split stays even whether NS is shown or not. */
-.blocHeaderRow {
-  display: grid;
-  grid-template-columns: 100px repeat(var(--data-cols, 4), 1fr);
-  column-gap: var(--s-3);
-  padding: var(--s-2) var(--s-4);
-  border-bottom: 1px solid var(--sw-border);
-}
-
-.blocColHead {
-  display: block;
-  width: 100%;
-  font-size: var(--sw-fs-eyebrow);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--sw-eyebrow-tracking);
-  color: var(--sw-text-tertiary);
-  text-align: center;
-}
-
-.blocItem {
-  display: grid !important;
-  grid-template-columns: 100px repeat(var(--data-cols, 4), 1fr);
-  column-gap: var(--s-3);
-  align-items: center;
-  padding: var(--s-3) var(--s-4);
-  border-bottom: 1px solid var(--sw-border);
-}
-
-.blocItem:last-child {
-  border-bottom: none;
-}
-
-.blocCell {
-  display: block;
-  width: 100%;
-  font-size: var(--sw-fs-body-sm);
-  color: var(--sw-text-primary);
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Used by the party breakdown table only — dims the zero-placeholder dash so real
-   values carry the visual weight instead of every cell reading with equal emphasis. */
-.blocCellZero {
-  color: var(--sw-text-tertiary);
-}
-
-.blocCellValue {
-  font-weight: 700;
-  color: var(--sw-text-primary);
-}
-
-.blocValueDesktop { display: none; }
-
-.blocLabel {
-  font-size: var(--sw-fs-body-sm);
-  font-weight: 500;
-  color: var(--sw-text-secondary);
-}
-
-/* Fixed width here only — the shared .designation-pill class stays fit-content elsewhere. */
-.blocLabel :global(.designation-pill) {
-  line-height: normal;
-  width: 100px;
-  justify-content: center;
-  text-align: center;
-  padding: 5px 9px;
-}
-
-/* Hairline between the label and the count columns — matches the votes list page's
-   .divTitle/.divOutcomePillCol convention (border-left + 12px padding on the data side).
-   Sibling combinator (not :first-of-type, which can't distinguish the header row's
-   unlabelled first <span/> from the labelled ones — all are the same element type). */
-.blocHeaderRow > span:first-child + .blocColHead,
-.blocLabel + .blocCell {
-  border-left: 1px solid var(--sw-border);
-  padding-left: 12px;
-}
-
-@media (max-width: 640px) {
-  .blocHeaderRow {
-    grid-template-columns: 84px repeat(var(--data-cols, 4), 1fr);
-    column-gap: var(--s-2);
-    padding: var(--s-2) var(--s-3);
-  }
-
-  .blocItem {
-    grid-template-columns: 84px repeat(var(--data-cols, 4), 1fr);
-    column-gap: var(--s-2);
-    padding: var(--s-2) var(--s-3);
-  }
-
-  .blocLabel :global(.designation-pill) {
-    width: 84px;
-    padding: 4px 8px;
-  }
-
-  /* Unlike .divTitle's mobile behaviour (which stacks its pill above the title,
-     removing the divider entirely), this row stays side-by-side at every width —
-     the hairline stays too, just with tighter padding to fit the narrower columns. */
-  .blocHeaderRow > span:first-child + .blocColHead,
-  .blocLabel + .blocCell {
-    padding-left: var(--s-2);
-  }
-}
-
-.blocAye { color: var(--sw-success-solid); }
-.blocNo  { color: var(--sw-error-solid); }
-.blocNs  { color: var(--sw-text-tertiary); }
-.blocSep { color: var(--sw-text-tertiary); }
-
-/* ── Roll call ─────────────────────────────────────────────── */
-/* No outer shell — each column below is its own fully independent bordered card,
-   not one shared card with internal dividers. */
-.rollCallCard {
-  border: none;
-  background: transparent;
-}
-
-.rollCall {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--sw-space-9);
-  margin-top: 0;
-}
-
-@media (min-width: 768px) {
-  .rollCall {
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--s-5);
-  }
-
-  .rollCallCol {
-    border: 1px solid var(--sw-border);
-    background: var(--sw-surface);
-    padding: var(--s-4);
-  }
-}
-
-/* Real sub-heading, matching the MLA detail page's .chartTitle/.financesSectionHeading
-   exactly (16px/700/-0.01em, primary-strength text) — not the eyebrow's tiny uppercase
-   caption scale, which read as decoration rather than each column's actual heading.
-   Colour-coded per vote type (Aye = success, No = error, Abstain/No Show = neutral). */
-.columnHeading {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--font-sans);
-  font-weight: 700;
-  font-size: var(--sw-fs-h3);
-  letter-spacing: -0.01em;
-  color: var(--sw-text-primary);
-  margin: 0 0 var(--s-4);
-}
-
-.columnHeadingIcon {
-  flex-shrink: 0;
-  color: var(--sw-text-tertiary);
-}
-
-.columnHeadingAye  { color: var(--sw-success-solid); }
-.columnHeadingAye .columnHeadingIcon { color: var(--sw-success-solid); }
-.columnHeadingNo   { color: var(--sw-error-solid); }
-.columnHeadingNo .columnHeadingIcon { color: var(--sw-error-solid); }
-
-.nameList {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  margin: 0;
-}
-
-.nameItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-3);
-  padding-block: var(--s-2);
-  border-bottom: 1px solid var(--sw-border);
-  font-size: var(--sw-fs-body-sm);
-}
-
-.nameItem:last-child {
-  border-bottom: none;
-}
-
-.nameItem a {
-  color: var(--sw-text-primary);
-  text-decoration: none;
-}
-
-.nameItem a:hover {
-  color: var(--sw-accent-strong);
-  text-decoration: underline;
-}
-
-/* Contained unit — party pill + its members read as one boxed group, not a pill
-   floating above plain list text. Top border is tinted per-party (inline style,
-   same technique as the count cards' Pattern A) instead of one flat grey box
-   with no relationship to the party's own identity/colour. */
-.partyGroup {
-  margin-bottom: var(--s-4);
-  padding: var(--s-3) var(--s-4) var(--s-4);
-  background: var(--sw-surface);
-  border: 1px solid var(--sw-border);
-  border-top: 3px solid var(--sw-border);
-}
-
-.partyGroup:last-child {
-  margin-bottom: 0;
-}
-
-.partyGroupHeading {
-  margin-bottom: var(--s-3);
-}
-

@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv'
 dotenv.config({ path: '.env.local' })
 
-import { mandateIdForDate } from '../lib/constants/mandates'
+import { mandateIdForDate, EARLIEST_MANDATE_START } from '../lib/constants/mandates'
 
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
@@ -86,22 +86,22 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
     ? new Date(forceStartDate)
     : latestStage.length > 0
       ? new Date(latestStage[0].plenaryDate)
-      : new Date('2022-05-01')
+      : new Date(EARLIEST_MANDATE_START)
 
   // Start from the beginning of the month containing syncFrom
-  syncFrom.setDate(1)
+  syncFrom.setUTCDate(1)
 
   const end = new Date()
-  end.setMonth(end.getMonth() + 2)
-  end.setDate(0) // last day of next month
+  end.setUTCMonth(end.getUTCMonth() + 2)
+  end.setUTCDate(0) // last day of next month
   console.log(`[syncBills] Syncing from ${syncFrom.toISOString().slice(0, 10)}${forceStartDate ? ' (forced)' : ''}`)
 
   const allItems: PlenaryItem[] = []
-  let current = new Date(syncFrom.getFullYear(), syncFrom.getMonth(), 1)
+  let current = new Date(Date.UTC(syncFrom.getUTCFullYear(), syncFrom.getUTCMonth(), 1))
 
   while (current <= end) {
     const monthStart = current.toISOString().slice(0, 10)
-    const nextMonth = new Date(current.getFullYear(), current.getMonth() + 1, 1)
+    const nextMonth = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + 1, 1))
     const monthEnd = new Date(nextMonth.getTime() - 86400000).toISOString().slice(0, 10)
     console.log(`[syncBills] Fetching plenary items ${monthStart} to ${monthEnd}`)
     const items = await fetchPlenaryItems(monthStart, monthEnd)

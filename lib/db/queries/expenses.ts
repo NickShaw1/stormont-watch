@@ -14,8 +14,35 @@ export async function getTotalExpensesPerMember(mandate: string = CURRENT_MANDAT
   return result.rows as { personId: string; totalExpenses: string }[]
 }
 
+// Every MLA with published expenses, current and former, with the same ranks the MLA profile shows:
+// per financial year among rows of £0 or more, and for the whole mandate on each MLA's net total.
+// Ranks are standard competition ranks (ties share a rank) over the full pool, so they never change
+// when a page filters or re-sorts the list.
 export async function getAllExpensesLeagueTable(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
+    WITH year_ranks AS (
+      SELECT
+        person_id,
+        financial_year,
+        RANK() OVER (PARTITION BY financial_year ORDER BY total DESC) AS year_rank,
+        COUNT(*) OVER (PARTITION BY financial_year) AS year_pool
+      FROM expenses
+      WHERE mandate = ${mandate}
+        AND total >= 0
+    ),
+    mandate_totals AS (
+      SELECT person_id, SUM(total) AS mandate_total
+      FROM expenses
+      WHERE mandate = ${mandate}
+      GROUP BY person_id
+    ),
+    mandate_ranks AS (
+      SELECT
+        person_id,
+        RANK() OVER (ORDER BY mandate_total DESC) AS mandate_rank,
+        COUNT(*) OVER () AS mandate_pool
+      FROM mandate_totals
+    )
     SELECT
       e.person_id as "personId",
       m.full_name as "fullName",
@@ -23,17 +50,36 @@ export async function getAllExpensesLeagueTable(mandate: string = CURRENT_MANDAT
       m.constituency,
       m.img_url as "imgUrl",
       m.mandate_start as "mandateStart",
+      m.mandate_end as "mandateEnd",
+      m.is_current as "isCurrent",
       e.total,
       e.financial_year as "financialYear",
-      e.period
+      e.period,
+      yr.year_rank as "yearRank",
+      yr.year_pool as "yearPool",
+      mr.mandate_rank as "mandateRank",
+      mr.mandate_pool as "mandatePool"
     FROM expenses e
     INNER JOIN members m ON m.person_id = e.person_id AND m.mandate = ${mandate}
-    WHERE m.is_current = true
-    AND e.mandate = ${mandate}
+    LEFT JOIN year_ranks yr ON yr.person_id = e.person_id AND yr.financial_year = e.financial_year
+    LEFT JOIN mandate_ranks mr ON mr.person_id = e.person_id
+    WHERE e.mandate = ${mandate}
     ORDER BY e.financial_year DESC, e.total DESC NULLS LAST
   `)
-  type LeagueRow = { personId: string; fullName: string; party: string | null; constituency: string | null; imgUrl: string | null; mandateStart: string | null; total: string | null; financialYear: string; period: string | null }
-  return (result.rows as LeagueRow[]).map(r => ({ ...r, imgUrl: `/mla-images/${r.personId}.jpg` }))
+  type LeagueRow = {
+    personId: string; fullName: string; party: string | null; constituency: string | null; imgUrl: string | null
+    mandateStart: string | null; mandateEnd: string | null; isCurrent: boolean; total: string | null
+    financialYear: string; period: string | null
+    yearRank: string | null; yearPool: string | null; mandateRank: string | null; mandatePool: string | null
+  }
+  return (result.rows as LeagueRow[]).map(r => ({
+    ...r,
+    imgUrl: mlaImg(r.personId),
+    yearRank: r.yearRank === null ? null : Number(r.yearRank),
+    yearPool: r.yearPool === null ? null : Number(r.yearPool),
+    mandateRank: r.mandateRank === null ? null : Number(r.mandateRank),
+    mandatePool: r.mandatePool === null ? null : Number(r.mandatePool),
+  }))
 }
 
 export async function getExpensesLeagueTable(mandate: string = CURRENT_MANDATE) {
@@ -146,6 +192,45 @@ export async function getPartyMandateExpenses(party: string, mandate: string = C
   }
 }
 
+export interface PartyMandateMlaExpense {
+  personId: string
+  fullName: string
+  imgUrl: string | null
+  constituency: string | null
+  total: number
+  isCurrent: boolean
+}
+
+// Each of a party's MLAs (current and former) with their expenses summed over the whole mandate, highest first.
+// Net negative totals (recoveries) are left out, as in the single-year ranking.
+export async function getPartyMandateMlaExpenses(party: string, mandate: string = CURRENT_MANDATE): Promise<PartyMandateMlaExpense[]> {
+  const result = await db.execute(sql`
+    SELECT
+      m.person_id,
+      m.full_name,
+      m.constituency,
+      m.is_current,
+      SUM(e.total) AS total
+    FROM expenses e
+    JOIN members m ON m.person_id = e.person_id AND m.mandate = ${mandate}
+    WHERE e.total IS NOT NULL
+      AND e.mandate = ${mandate}
+      AND m.party = ${party}
+    GROUP BY m.person_id, m.full_name, m.constituency, m.is_current
+    HAVING SUM(e.total) >= 0
+    ORDER BY SUM(e.total) DESC
+  `)
+  type Row = { person_id: string; full_name: string; constituency: string | null; is_current: boolean; total: string }
+  return (result.rows as unknown as Row[]).map((r) => ({
+    personId: r.person_id,
+    fullName: r.full_name,
+    imgUrl: mlaImg(r.person_id),
+    constituency: r.constituency,
+    total: Number(r.total),
+    isCurrent: r.is_current,
+  }))
+}
+
 export async function getPartyExpenses(party: string, mandate: string = CURRENT_MANDATE): Promise<PartyExpenseStats | null> {
   const [mlaRows, visitRows, rankRows] = await Promise.all([
     db
@@ -179,24 +264,37 @@ export async function getPartyExpenses(party: string, mandate: string = CURRENT_
         eq(members.party, party),
       )),
     // Ranks include negative totals (net recoveries), matching partyTotal/avgPerMla above,
-    // so a party's rank position always matches the net figure it's labeling.
+    // so a party's rank position always matches the net figure it's labeling. Visits are counted
+    // in their own CTE: joining them to the expense rows repeated each expense row once per visit
+    // and inflated the totals.
     db.execute(sql`
+      WITH latest AS (
+        SELECT MAX(financial_year) AS fy FROM expenses WHERE mandate = ${mandate}
+      ),
+      party_expenses AS (
+        SELECT m.party, SUM(e.total) AS total, AVG(e.total) AS avg_total
+        FROM expenses e
+        JOIN members m ON m.person_id = e.person_id AND m.mandate = ${mandate}
+        WHERE e.mandate = ${mandate}
+          AND e.financial_year = (SELECT fy FROM latest)
+        GROUP BY m.party
+      ),
+      party_visits AS (
+        SELECT m.party, COUNT(ri.id) AS visits
+        FROM registered_interests ri
+        JOIN members m ON m.person_id = ri.person_id AND m.mandate = ${mandate}
+        WHERE ri.register_category = 'Visits'
+          AND ri.mandate = ${mandate}
+        GROUP BY m.party
+      )
       SELECT
-        m.party,
-        RANK() OVER (ORDER BY SUM(e.total) DESC) AS rank_total,
-        RANK() OVER (ORDER BY AVG(e.total) DESC) AS rank_avg,
-        RANK() OVER (ORDER BY COUNT(DISTINCT ri.id) DESC) AS rank_visits,
-        COUNT(*) AS party_count
-      FROM expenses e
-      JOIN members m ON m.person_id = e.person_id
-      LEFT JOIN registered_interests ri
-        ON ri.person_id = m.person_id
-        AND ri.register_category = 'Visits'
-        AND ri.mandate = ${mandate}
-      WHERE e.financial_year = (SELECT MAX(financial_year) FROM expenses WHERE mandate = ${mandate})
-        AND e.mandate = ${mandate}
-        AND m.mandate = ${mandate}
-      GROUP BY m.party
+        pe.party,
+        RANK() OVER (ORDER BY pe.total DESC) AS rank_total,
+        RANK() OVER (ORDER BY pe.avg_total DESC) AS rank_avg,
+        RANK() OVER (ORDER BY COALESCE(pv.visits, 0) DESC) AS rank_visits,
+        COUNT(*) OVER () AS party_count
+      FROM party_expenses pe
+      LEFT JOIN party_visits pv ON pv.party = pe.party
     `),
   ])
 
@@ -321,7 +419,6 @@ export async function getExpensesByParty(mandate: string = CURRENT_MANDATE) {
     JOIN members m ON e.person_id = m.person_id AND m.mandate = ${mandate}
     WHERE e.mandate = ${mandate}
       AND e.financial_year = (SELECT MAX(financial_year) FROM expenses WHERE mandate = ${mandate})
-      AND m.is_current = true
     GROUP BY m.party
     ORDER BY party_total DESC
   `)

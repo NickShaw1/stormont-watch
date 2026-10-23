@@ -32,15 +32,24 @@ jobs:
         run: npm ci
 
       - name: Run sync
+        id: sync
+        continue-on-error: true
         run: npm run sync
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      # Steps that succeeded have already written their data, so deploy even if another step failed.
       - name: Trigger deploy
-        if: success()
+        if: steps.sync.outcome != 'cancelled'
         run: |
-          curl -X POST \
+          curl --fail-with-body --silent --show-error --max-time 30 -X POST \
             -H "Authorization: token ${{ secrets.WORKFLOW_PAT }}" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/NickShaw1/stormont-watch/actions/workflows/deploy.yml/dispatches \
             -d '{"ref":"main"}'
+
+      - name: Fail the run if any sync step failed
+        if: steps.sync.outcome == 'failure'
+        run: |
+          echo "::error::One or more sync steps failed. Data from the other steps was still deployed."
+          exit 1

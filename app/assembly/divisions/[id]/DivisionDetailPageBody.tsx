@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Vote, FileText, Users, Scale, CheckCircle2, XCircle, MinusCircle, UserX, Pencil, CalendarDays, User, Hash } from 'lucide-react'
+import { CheckCircle2, XCircle, MinusCircle, CalendarDays, User, FileText, ArrowUpRight, ArrowRight, Pencil, Scale, Megaphone, Stamp, Landmark } from 'lucide-react'
 import { eq } from 'drizzle-orm'
 import { getDivisionWithVotes, getHansardReportId, getAmendmentMotionTexts } from '@/lib/db/queries'
 import { db } from '@/lib/db/client'
@@ -10,15 +10,60 @@ import { formatDate } from '@/lib/format'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import { formatTabledBy } from '@/lib/utils/formatNames'
 import type { Mandate } from '@/lib/constants/mandates'
+import LobbiesClient from './LobbiesClient'
+import MobileVote from './MobileVote'
+import TabledBy from './TabledBy'
+import PartyChart from './PartyChart'
+import DesignationChart from './DesignationChart'
+import { toBallots, VOTE_ORDER, VOTE_LABEL, type VoteKey } from './voteMeta'
+import styles from './divisionDetail.module.css'
 
 function billSlug(billId: string): string {
   return billId.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
 }
 
-import RollCallClient from './RollCallClient'
-import DesignationChartClient from './DesignationChartClient'
-import PartyBreakdownClient from './PartyBreakdownClient'
-import styles from './divisionDetail.module.css'
+const norm = (t: string) => t.replace(/[‘’‚‛]/g, "'").replace(/[“”„]/g, '"')
+const stripQuotes = (t: string) => t.trim().replace(/^['"]+/, '').replace(/['"]+[.;]?$/, '').trim()
+
+type Segment = { text: string; cut?: boolean }
+type Diff = { segments: Segment[]; instruction: string; inserted: string }
+
+function amendmentDiff(original: string, amendment: string): Diff | null {
+  const a = norm(amendment)
+  const on = norm(original).toLowerCase()
+
+  const allAfter = a.match(/^\s*Leave out all after\s+'([\s\S]+?)'(?=\s*(?:and\b|:))\s*(?:and\s+(?:insert|substitute)\s*)?:?\s*([\s\S]*)$/i)
+  if (allAfter) {
+    const idx = on.indexOf(allAfter[1].toLowerCase())
+    if (idx < 0) return null
+    const end = idx + allAfter[1].length
+    const insertedRaw = allAfter[2]
+    return {
+      segments: [{ text: original.slice(0, end) }, { text: original.slice(end), cut: true }],
+      instruction: amendment.slice(0, amendment.length - insertedRaw.length).trim(),
+      inserted: stripQuotes(insertedRaw),
+    }
+  }
+
+  const swap = a.match(/^\s*Leave out\s+'([\s\S]+?)'\s+and\s+insert\s+'([\s\S]+?)'\s*\.?\s*$/i)
+  if (swap) {
+    const idx = on.indexOf(swap[1].toLowerCase())
+    if (idx < 0) return null
+    const end = idx + swap[1].length
+    return {
+      segments: [{ text: original.slice(0, idx) }, { text: original.slice(idx, end), cut: true }, { text: original.slice(end) }],
+      instruction: `Leave out '${swap[1]}' and insert:`,
+      inserted: swap[2].trim(),
+    }
+  }
+  return null
+}
+
+const CAT = {
+  bill: { label: 'Bill', Icon: Scale },
+  regs: { label: 'Regulations', Icon: Stamp },
+  motion: { label: 'Motion', Icon: Megaphone },
+} as const
 
 // Shared by the live route and the archive route; mandate/basePath vary per route.
 export default async function DivisionDetailPageBody({
@@ -30,7 +75,6 @@ export default async function DivisionDetailPageBody({
   mandate: Mandate
   basePath: string
 }) {
-  // Mandate-scoped: a division from another mandate returns null and 404s here.
   const data = await getDivisionWithVotes(id, mandate.id)
   if (!data) notFound()
 
@@ -52,8 +96,6 @@ export default async function DivisionDetailPageBody({
     : null
 
   const plenaryDateStr = new Date(division.divisionDate).toISOString().slice(0, 10)
-
-  // For non-amendment divisions, look for sibling amendment divisions that passed
   const amendmentTexts = !division.isMotionAmendment && division.title
     ? await getAmendmentMotionTexts(division.title, plenaryDateStr)
     : []
@@ -63,42 +105,68 @@ export default async function DivisionDetailPageBody({
     ? `https://aims.niassembly.gov.uk/officialreport/report.aspx?&eveDate=${plenaryDateStr.replace(/-/g, '/')}&docID=${reportDocId}`
     : null
 
-  const ayes = votes.filter((v) => v.vote === 'AYE')
-  const noes = votes.filter((v) => v.vote === 'NO')
-  const abstains = votes.filter((v) => v.vote === 'ABSTAINED')
-  const noShows = votes.filter((v) => v.vote === 'NO_SHOW')
-
-  const totalAyes = division.totalAyes ?? ayes.length
-  const totalNoes = division.totalNoes ?? noes.length
-  const totalAbstain = division.totalAbstains ?? abstains.length
-  const totalNoShow = noShows.length
+  const ballots = toBallots(votes)
+  const count = (v: VoteKey) => ballots.filter((b) => b.vote === v).length
+  const totalAyes = division.totalAyes ?? count('AYE')
+  const totalNoes = division.totalNoes ?? count('NO')
+  const totalAbstain = division.totalAbstains ?? count('ABSTAINED')
+  const totalNoShow = count('NO_SHOW')
+  const tally: Record<VoteKey, number> = { AYE: totalAyes, NO: totalNoes, ABSTAINED: totalAbstain, NO_SHOW: totalNoShow }
+  const share = ballots.length || totalAyes + totalNoes + totalAbstain + totalNoShow
+  const pct = (n: number) => (share > 0 ? Math.round((n / share) * 100) : 0)
 
   const passed = isPassed(division.outcome)
-
-  const hasDesignationBreakdown =
-    (division.nationalistAyes ?? 0) + (division.unionistAyes ?? 0) +
-    (division.nationalistNoes ?? 0) + (division.unionistNoes ?? 0) > 0
-
-  const noShowByDesignation = {
-    Unionist: noShows.filter((v) => (v.memberDesignation ?? v.designation) === 'Unionist').length,
-    Nationalist: noShows.filter((v) => (v.memberDesignation ?? v.designation) === 'Nationalist').length,
-    Other: noShows.filter((v) => (v.memberDesignation ?? v.designation) === 'Other' || !(v.memberDesignation ?? v.designation)).length,
-  }
-
-  const abstainByDesignation = {
-    Unionist: abstains.filter((v) => (v.memberDesignation ?? v.designation) === 'Unionist').length,
-    Nationalist: abstains.filter((v) => (v.memberDesignation ?? v.designation) === 'Nationalist').length,
-    Other: abstains.filter((v) => (v.memberDesignation ?? v.designation) === 'Other' || !(v.memberDesignation ?? v.designation)).length,
-  }
-
-  const hasDesignationNoShow = noShows.length > 0
+  const margin = Math.abs(totalAyes - totalNoes)
+  const VerdictIcon = passed === null ? MinusCircle : passed ? CheckCircle2 : XCircle
+  const verdict = passed === null ? 'No outcome' : passed ? 'Passed' : 'Failed'
+  const outcomeNote = division.outcome && !/^(passed|failed)$/i.test(division.outcome.trim()) ? division.outcome.trim() : null
 
   const raw = division.title ?? division.subject
   const { title: displayTitle, subtitle } = formatDivisionSubject(raw)
   const tabledByClean = formatTabledBy(division.tabledBy)
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.stormontwatch.com'
+  const statutory = /^The draft /i.test(division.title ?? '') || /^Prayer of Annulment:/i.test(division.title ?? '') || /^Applicability Motion/i.test(division.title ?? '')
+  const isBill = !statutory && (!!billStage[0]?.billId || /NIA Bill/i.test(division.subject ?? ''))
+  const cat = statutory ? 'regs' : isBill ? 'bill' : 'motion'
+  const { label: catLabel, Icon: CatIcon } = CAT[cat]
+  const crossCommunity = division.divisionType === 'Cross-Community'
 
+  const byDesignation = (d: 'Unionist' | 'Nationalist' | 'Other') => {
+    const members = ballots.filter((b) => (b.designation ?? 'Other') === d)
+    return {
+      abstains: members.filter((b) => b.vote === 'ABSTAINED').length,
+      noShows: members.filter((b) => b.vote === 'NO_SHOW').length,
+    }
+  }
+  const designations = [
+    { key: 'Unionist', colour: '#f97316', ayes: division.unionistAyes ?? 0, noes: division.unionistNoes ?? 0, ...byDesignation('Unionist') },
+    { key: 'Nationalist', colour: '#15803d', ayes: division.nationalistAyes ?? 0, noes: division.nationalistNoes ?? 0, ...byDesignation('Nationalist') },
+    { key: 'Other', colour: '#9e9e9e', ayes: division.otherAyes ?? 0, noes: division.otherNoes ?? 0, ...byDesignation('Other') },
+  ]
+  const hasDesignation = designations.some((d) => d.ayes + d.noes > 0)
+  const sideOf = (a: number, n: number) => (a > n ? 'aye' : a < n ? 'no' : 'level')
+  const uSide = sideOf(designations[0].ayes, designations[0].noes)
+  const nSide = sideOf(designations[1].ayes, designations[1].noes)
+  const insight =
+    designations[0].ayes + designations[0].noes > 0 && designations[1].ayes + designations[1].noes > 0
+      ? uSide === 'level' || nSide === 'level'
+        ? { label: 'A designation split evenly', tone: 'warn' }
+        : uSide === nSide
+          ? uSide === 'aye'
+            ? { label: 'Both sides in favour', tone: 'good' }
+            : { label: 'Both sides against', tone: 'bad' }
+          : { label: 'Divided', tone: 'warn' }
+      : null
+
+  const isAmendment = division.isMotionAmendment === true
+  const motionText = division.motionText
+  const asAmendedNoText = !isAmendment && amendmentTexts.length === 0 && /as amended/i.test(division.outcome ?? '')
+  const showSplit = !!motionText && ((isAmendment && !!division.parentMotionText) || amendmentTexts.length > 0 || asAmendedNoText)
+  const originalText = isAmendment ? division.parentMotionText : motionText
+  const amendTexts = isAmendment ? (motionText ? [motionText] : []) : amendmentTexts.map((a) => a.motion_text as string)
+  const diff = showSplit && originalText && amendTexts.length === 1 ? amendmentDiff(originalText, amendTexts[0]) : null
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.stormontwatch.com'
   const breadcrumbItems = parentBill?.[0]
     ? [
         { '@type': 'ListItem', position: 1, name: 'Legislation', item: `${siteUrl}${basePath}/assembly/bills` },
@@ -109,351 +177,178 @@ export default async function DivisionDetailPageBody({
         { '@type': 'ListItem', position: 1, name: 'Votes', item: `${siteUrl}${basePath}/assembly/votes` },
         { '@type': 'ListItem', position: 2, name: displayTitle, item: `${siteUrl}${basePath}/assembly/divisions/${id}` },
       ]
+  const breadcrumbJsonLd = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: breadcrumbItems }
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: breadcrumbItems,
-  }
-
-  void mandate
+  let bandIndex = 0
+  const nextBand = () => `${styles.band} ${bandIndex++ % 2 === 0 ? styles.bandTint : styles.bandPlain}`
 
   return (
-    <div className="container">
-<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+    <div className={styles.page}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
-      <header className={styles.divisionHeader}>
-        {/* Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="breadcrumb">
-          <ol>
-            {parentBill?.[0] ? (
-              <>
-                <li><Link href={`${basePath}/assembly/bills`}>Legislation</Link></li>
-                <li><Link href={`${basePath}/assembly/bills/${billSlug(billStage[0].billId ?? '')}`}>{parentBill[0].shortTitle}</Link></li>
-                <li aria-current="page"><span>{displayTitle}</span></li>
-              </>
-            ) : (
-              <>
-                <li><Link href={`${basePath}/assembly/votes`}>Votes</Link></li>
-                <li aria-current="page"><span>{displayTitle}</span></li>
-              </>
-            )}
-          </ol>
-        </nav>
-
-        <div className={styles.titleCard}>
-          <span className={styles.eyebrow}>
-            <Vote className={styles.eyebrowIconMobile} size={14} strokeWidth={1.75} aria-hidden="true" />
-            Votes
-          </span>
-          <h1 className={`${styles.title} ${subtitle ? styles.titleWithSub : ''}`}>
-            <Vote className={`${styles.titleIcon} ${styles.titleIconDesktopOnly}`} size={29} strokeWidth={1.75} aria-hidden="true" />
-            {displayTitle}
-          </h1>
-
-          {/* Mobile-only meta rows for Division/Amendment — icon+prose, matching
-              the Date/Tabled by/Report treatment below, not chips. */}
-          <div className={`${styles.metaStrip} ${styles.metaStripMobile}`}>
-            <div className={styles.metaRow}>
-              <span className={styles.metaLabel}>
-                <Hash className={styles.metaLabelIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
-                Division
-              </span>
-              <span className={styles.metaValue}>{documentId}</span>
-            </div>
-            {subtitle && (
-              <div className={styles.metaRow}>
-                <span className={styles.metaLabel}>
-                  <Pencil className={styles.metaLabelIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
-                  Amendment
+      <section className={`${styles.band} ${styles.bandPage}`} aria-labelledby="division-title">
+        <div className="container">
+          <header className={styles.head}>
+            <span className={styles.eyebrow}>Division {documentId}</span>
+            <h1 className={styles.h1} id="division-title">{displayTitle}</h1>
+            <ul className={styles.chips} aria-label="Type">
+              <li><span className={styles.pill} data-cat={cat}><CatIcon size={14} strokeWidth={2} aria-hidden="true" />{catLabel}</span></li>
+              {subtitle && <li><span className={styles.pill} data-cat="neutral"><Pencil size={14} strokeWidth={2} aria-hidden="true" />{subtitle}</span></li>}
+              {crossCommunity && <li><span className={styles.pill} data-cat="xc">Cross-community</span></li>}
+            </ul>
+            <ul className={styles.facts} aria-label="Details">
+              <li className={styles.fact}>
+                <span className={`${styles.iconTile} ${styles.tnBlue}`}><CalendarDays size={18} strokeWidth={2} aria-hidden="true" /></span>
+                <span className={styles.factBody}>
+                  <span className={styles.factLabel}>Date</span>
+                  <span className={styles.factValue}>{formatDate(division.divisionDate.toISOString())}</span>
                 </span>
-                <span className={styles.metaValue}>{subtitle}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Date as a plain label/value line, matching Tabled by/Report. */}
-          <div className={styles.metaStrip}>
-            <div className={styles.metaRow}>
-              <span className={styles.metaLabel}>
-                <CalendarDays className={styles.metaLabelIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
-                Date
-              </span>
-              <span className={styles.metaValue}>{formatDate(division.divisionDate.toISOString())}</span>
-            </div>
-            {tabledByClean && (
-              <div className={styles.metaRow}>
-                <span className={styles.metaLabel}>
-                  <User className={styles.metaLabelIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
-                  Tabled by
-                </span>
-                <span className={styles.metaValue}>{tabledByClean}</span>
-              </div>
-            )}
-            {officialReportUrl && (
-              <div className={styles.metaRow}>
-                <span className={styles.metaLabel}>
-                  <FileText className={styles.metaLabelIcon} size={14} strokeWidth={1.75} aria-hidden="true" />
-                  Report
-                </span>
-                <span className={styles.metaValue}>
-                  <a href={officialReportUrl} target="_blank" rel="noopener noreferrer">
-                    Official Report
-                  </a>
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Footer — identifying chips left (desktop only), cross-community/outcome
-              chips right, matching Bills' .titleCardFoot exactly. */}
-          <div className={styles.titleCardFoot}>
-            <div className={`${styles.badgeRow} ${styles.idBadgeRowDesktop}`}>
-              <span className={`${styles.chip} ${styles.chipNeutral}`}>Division {documentId}</span>
-              {subtitle && <span className={`${styles.chip} ${styles.chipNeutral}`}>{subtitle}</span>}
-            </div>
-            <div className={`${styles.badgeRow} ${styles.statusBadgeRow}`}>
-              {division.divisionType === 'Cross-Community' && (
-                <span className={`${styles.chip} ${styles.chipCrossCommunity}`}>Cross-community</span>
+              </li>
+              {tabledByClean && (
+                <li className={styles.fact}>
+                  <span className={`${styles.iconTile} ${styles.tnPurple}`}><User size={18} strokeWidth={2} aria-hidden="true" /></span>
+                  <span className={styles.factBody}>
+                    <span className={styles.factLabel}>Tabled by</span>
+                    <TabledBy names={tabledByClean.split(', ')} />
+                  </span>
+                </li>
               )}
-              {passed === true && <span className={`${styles.chip} ${styles.chipPass}`}>Passed</span>}
-              {passed === false && <span className={`${styles.chip} ${styles.chipFail}`}>Failed</span>}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Motion text */}
-      {division.motionText && (() => {
-        const isMotionAmendment = division.isMotionAmendment === true
-        return (
-          <>
-            <section className={`${styles.motionSection} ${styles.pageSection}`}>
-              <div className={styles.sectionHead}>
-                <span className={styles.eyebrow}>The vote</span>
-                <h2 className={styles.sectionHeading}>
-                  <FileText className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-                  Motion text
-                </h2>
-              </div>
-              {isMotionAmendment && division.parentMotionText ? (
-                <div className={styles.motionColumns}>
-                  <div className={`${styles.motionColumn} ${styles.motionColumnOriginal}`}>
-                    <h3 className={styles.motionSubheading}>
-                      <FileText className={styles.motionSubheadingIcon} size={13} strokeWidth={2} aria-hidden="true" />
-                      Original motion
-                    </h3>
-                    <p className={styles.motionText}>{division.parentMotionText}</p>
-                  </div>
-                  <div className={`${styles.motionColumn} ${styles.motionColumnAmended}`}>
-                    <h3 className={styles.motionSubheading}>
-                      <Pencil className={styles.motionSubheadingIcon} size={13} strokeWidth={2} aria-hidden="true" />
-                      Amendment text
-                    </h3>
-                    <p className={styles.motionText}>{division.motionText}</p>
-                  </div>
-                </div>
-              ) : amendmentTexts.length > 0 ? (
-                <div className={styles.motionColumns}>
-                  <div className={`${styles.motionColumn} ${styles.motionColumnOriginal}`}>
-                    <h3 className={styles.motionSubheading}>
-                      <FileText className={styles.motionSubheadingIcon} size={13} strokeWidth={2} aria-hidden="true" />
-                      Original motion
-                    </h3>
-                    <p className={styles.motionText}>{division.motionText}</p>
-                  </div>
-                  <div className={`${styles.motionColumn} ${styles.motionColumnAmended}`}>
-                    <h3 className={styles.motionSubheading}>
-                      <Pencil className={styles.motionSubheadingIcon} size={13} strokeWidth={2} aria-hidden="true" />
-                      {amendmentTexts.length === 1 ? 'Amendment text (passed)' : 'Amendments passed'}
-                    </h3>
-                    {amendmentTexts.map((a) => (
-                      <p key={a.title} className={styles.motionText}>{a.motion_text}</p>
-                    ))}
-                  </div>
-                </div>
-              ) : /as amended/i.test(division.outcome ?? '') && !isMotionAmendment ? (
-                <div className={styles.motionColumns}>
-                  <div className={`${styles.motionColumn} ${styles.motionColumnOriginal}`}>
-                    <h3 className={styles.motionSubheading}>
-                      <FileText className={styles.motionSubheadingIcon} size={13} strokeWidth={2} aria-hidden="true" />
-                      Original motion
-                    </h3>
-                    <p className={styles.motionText}>{division.motionText}</p>
-                  </div>
-                  <div className={`${styles.motionColumn} ${styles.motionColumnAmended}`}>
-                    <h3 className={styles.motionSubheading}>
-                      <Pencil className={styles.motionSubheadingIcon} size={13} strokeWidth={2} aria-hidden="true" />
-                      Amendment text (passed)
-                    </h3>
-                    <p className={styles.amendmentNote}>
-                      The amendment was agreed without a formal division. The amended text is not available in the current data -{' '}
-                      {officialReportUrl
-                        ? <a href={officialReportUrl} target="_blank" rel="noopener noreferrer">see the Official Report</a>
-                        : 'see the Official Report'
-                      }{' '}for the full text.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className={styles.motionCard}>
-                  {isMotionAmendment && (
-                    <p className={styles.amendmentNote}>This amendment proposes changes to the original motion text.</p>
-                  )}
-                  <p className={styles.motionText}>{division.motionText}</p>
-                </div>
+              {parentBill?.[0] && billStage[0]?.billId && (
+                <li className={styles.fact}>
+                  <span className={`${styles.iconTile} ${styles.tnPurple}`}><Landmark size={18} strokeWidth={2} aria-hidden="true" /></span>
+                  <span className={styles.factBody}>
+                    <span className={styles.factLabel}>Bill</span>
+                    <Link href={`${basePath}/assembly/bills/${billSlug(billStage[0].billId)}`} className={`${styles.factValue} ${styles.factLink}`}>
+                      {parentBill[0].shortTitle}
+                      <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
+                    </Link>
+                  </span>
+                </li>
               )}
-            </section>
-          </>
-        )
-      })()}
+              {officialReportUrl && (
+                <li className={styles.fact}>
+                  <span className={`${styles.iconTile} ${styles.tnGreen}`}><FileText size={18} strokeWidth={2} aria-hidden="true" /></span>
+                  <span className={styles.factBody}>
+                    <span className={styles.factLabel}>Report</span>
+                    <a href={officialReportUrl} target="_blank" rel="noopener noreferrer" className={`${styles.factValue} ${styles.factLink}`}>
+                      Official Report
+                      <ArrowUpRight size={16} strokeWidth={2} aria-hidden="true" />
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    </a>
+                  </span>
+                </li>
+              )}
+            </ul>
+          </header>
 
-      {/* One card: big numbers first, one proportional bar for context. */}
-      <section className={`${styles.resultsSection} ${styles.pageSection}`} aria-labelledby="vote-results-heading">
-        <div className={styles.sectionHead}>
-          <span className={styles.eyebrow}>The vote</span>
-          <h2 id="vote-results-heading" className={styles.sectionHeading}>
-            <Vote className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-            Vote results
-          </h2>
-        </div>
-
-        <div className={styles.resultsCard}>
-          <div className={styles.counts}>
-            <div className={`${styles.countItem} ${styles.countItemAye}`}>
-              <div className={styles.countLabelRow}>
-                <span className={styles.countLabel}>Ayes</span>
-                <CheckCircle2 className={styles.countIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
-              </div>
-              <span className={styles.countNum}>{totalAyes}</span>
-            </div>
-            <div className={`${styles.countItem} ${styles.countItemNo}`}>
-              <div className={styles.countLabelRow}>
-                <span className={styles.countLabel}>Noes</span>
-                <XCircle className={styles.countIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
-              </div>
-              <span className={styles.countNum}>{totalNoes}</span>
-            </div>
-            <div className={styles.countItem}>
-              <div className={styles.countLabelRow}>
-                <span className={styles.countLabel}>Abstain</span>
-                <MinusCircle className={styles.countIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
-              </div>
-              <span className={styles.countNum}>{totalAbstain}</span>
-            </div>
-            <div className={styles.countItem}>
-              <div className={styles.countLabelRow}>
-                <span className={styles.countLabel}>No Show</span>
-                <UserX className={styles.countIcon} size={16} strokeWidth={1.75} aria-hidden="true" />
-              </div>
-              <span className={styles.countNum}>{totalNoShow}</span>
-            </div>
+          {ballots.length > 0 && (
+            <MobileVote ballots={ballots} verdict={verdict} passed={passed} detail={passed === null ? null : `${passed ? 'Carried' : 'Defeated'} by ${margin} ${margin === 1 ? 'vote' : 'votes'}`} insight={insight} originalText={originalText ?? null} amendTexts={showSplit ? amendTexts : []} isAmendment={isAmendment} />
+          )}
+          <div className={`${styles.bandStack} ${styles.desktopOnly}`}>
+          {motionText && (
+        <section className={styles.tile} aria-labelledby="wording-heading">
+          <div className={styles.tileHead}>
+            <span className={`${styles.iconTile} ${styles.tnPurple}`}><FileText size={22} strokeWidth={2} aria-hidden="true" /></span>
+            <h2 className={styles.tileTitle} id="wording-heading">What was voted on</h2>
+            {showSplit && (
+              <span className={styles.pill} data-cat="motion">
+                {isAmendment ? `Amendment ${passed === null ? '' : passed ? 'agreed' : 'defeated'}`.trim() : amendTexts.length > 0 ? 'Motion as amended' : 'Motion as amended'}
+              </span>
+            )}
           </div>
 
-          {/* Matches the votes list page's .divBarTrack pattern. */}
-          {(() => {
-            const shareTotal = totalAyes + totalNoes + totalAbstain + totalNoShow
-            const pct = (n: number) => shareTotal > 0 ? `${(n / shareTotal) * 100}%` : '0%'
-            return (
-              <div className={styles.resultsBarTrack} role="img" aria-label={`${totalAyes} Ayes, ${totalNoes} Noes, ${totalAbstain} Abstain, ${totalNoShow} No Show`}>
-                {totalAyes > 0 && <span className={styles.resultsBarAye} style={{ width: pct(totalAyes) }} />}
-                {totalNoes > 0 && <span className={styles.resultsBarNo} style={{ width: pct(totalNoes) }} />}
-                {totalAbstain > 0 && <span className={styles.resultsBarAbs} style={{ width: pct(totalAbstain) }} />}
-                {totalNoShow > 0 && <span className={styles.resultsBarNs} style={{ width: pct(totalNoShow) }} />}
+          {showSplit ? (
+            <div className={styles.wordGrid}>
+              <div className={styles.wordCard}>
+                <div className={styles.wordHead}>
+                  <span className={`${styles.iconTile} ${styles.tnBlue}`}><FileText size={18} strokeWidth={2} aria-hidden="true" /></span>
+                  <h3 className={styles.wordTitle}>Original motion</h3>
+                </div>
+                
+                  <p className={styles.wordText}>
+                    {diff
+                      ? diff.segments.map((s, i) => (s.cut ? <del key={i} className={styles.cut}>{s.text}</del> : <span key={i}>{s.text}</span>))
+                      : originalText}
+                  </p>
+                
               </div>
-            )
-          })()}
-        </div>
-      </section>
-
-      {/* Party breakdown */}
-      {votes.length > 0 && (
-        <section className={styles.pageSection} aria-labelledby="party-breakdown-heading">
-          <div className={styles.sectionHead}>
-            <span className={styles.eyebrow}>The vote</span>
-            <h2 id="party-breakdown-heading" className={styles.sectionHeading}>
-              <Users className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-              Party breakdown
-            </h2>
-          </div>
-          <PartyBreakdownClient votes={votes} />
+              <span className={styles.wordArrow} aria-hidden="true">
+                <ArrowRight size={20} strokeWidth={2} />
+              </span>
+              <div className={styles.wordCard} data-kind="amend">
+                <div className={styles.wordHead}>
+                  <span className={`${styles.iconTile} ${styles.tnAmber}`}><Pencil size={18} strokeWidth={2} aria-hidden="true" /></span>
+                  <h3 className={styles.wordTitle}>{isAmendment ? 'The amendment' : amendTexts.length === 1 ? 'Amendment agreed' : 'Amendments agreed'}</h3>
+                </div>
+                {diff ? (
+                  <>
+                    <p className={styles.instruction}>{diff.instruction}</p>
+                    <p className={styles.add}><span className={styles.addLabel}>Replacement wording</span>{diff.inserted}</p>
+                  </>
+                ) : amendTexts.length > 0 ? (
+                  amendTexts.map((t) => <p key={t} className={styles.wordText}>{t}</p>)
+                ) : (
+                  <p className={styles.wordNote}>
+                    The amendment was agreed without a formal division, so its wording is not in the data.{' '}
+                    {officialReportUrl ? (
+                      <a href={officialReportUrl} target="_blank" rel="noopener noreferrer">See the Official Report<span className="sr-only"> (opens in a new tab)</span></a>
+                    ) : (
+                      'See the Official Report for the full text.'
+                    )}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className={styles.wordCard}>
+              {isAmendment && <p className={styles.instruction}>This amendment proposes changes to the original motion text.</p>}
+              <p className={`${styles.wordText} ${styles.single}`}>{motionText}</p>
+            </div>
+          )}
         </section>
-      )}
-
-      {/* Designation breakdown */}
-      {hasDesignationBreakdown && (
-        <section className={`${styles.designationSection} ${styles.pageSection}`} aria-labelledby="designation-heading">
-            <div className={styles.sectionHead}>
-              <span className={styles.eyebrow}>The vote</span>
-              <h2 id="designation-heading" className={styles.sectionHeading}>
-                <Scale className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-                Designation breakdown
-              </h2>
-            </div>
-            {(() => {
-              const dataCols = 2 + (hasDesignationNoShow ? 1 : 0) + 1
-              const gridColsStyle = { '--data-cols': dataCols } as React.CSSProperties
-              const renderCell = (n: number) =>
-                n === 0
-                  ? <span className={styles.blocCellZero}>-</span>
-                  : <span className={styles.blocCellValue}>{n}</span>
-              return (
-            <div className={styles.designationLayout}>
-              <div className={`${styles.blocGrid} ${styles.blocGridPlain}`}>
-                <div className={styles.blocHeaderRow} style={gridColsStyle}>
-                  <span />
-                  <span className={styles.blocColHead}>Aye</span>
-                  <span className={styles.blocColHead}>No</span>
-                  {hasDesignationNoShow && <span className={styles.blocColHead}>NS</span>}
-                  <span className={styles.blocColHead}>Abs</span>
+          )}
+            <section className={`${styles.tile} ${styles.result}`} data-tone={passed === null ? 'none' : passed ? 'pass' : 'fail'} aria-labelledby="result-heading">
+              <div className={styles.resultTop}>
+                <div className={styles.verdictBlock}>
+                  <span className={styles.tileLabel}>Result</span>
+                  <div className={styles.verdictRow}>
+                    <span className={`${styles.iconTile} ${styles.verdictIcon}`}><VerdictIcon size={30} strokeWidth={2} aria-hidden="true" /></span>
+                    <h2 className={styles.verdict} id="result-heading">{verdict}</h2>
+                  </div>
+                  {passed !== null && (
+                    <p className={styles.verdictSub}>
+                      {passed ? 'Carried' : 'Defeated'} by <b>{margin}</b> {margin === 1 ? 'vote' : 'votes'}.
+                    </p>
+                  )}
+                  {outcomeNote && <p className={styles.outcomeNote}>Recorded as: {outcomeNote}</p>}
                 </div>
-                {[
-                  { label: 'Unionist',    designation: 'unionist',    ayes: division.unionistAyes ?? 0,    noes: division.unionistNoes ?? 0,    ns: noShowByDesignation.Unionist,    abs: abstainByDesignation.Unionist },
-                  { label: 'Nationalist', designation: 'nationalist', ayes: division.nationalistAyes ?? 0, noes: division.nationalistNoes ?? 0, ns: noShowByDesignation.Nationalist, abs: abstainByDesignation.Nationalist },
-                  { label: 'Other',       designation: 'other',       ayes: division.otherAyes ?? 0,       noes: division.otherNoes ?? 0,       ns: noShowByDesignation.Other,       abs: abstainByDesignation.Other },
-                ].map(({ label, designation, ayes, noes, ns, abs }) => (
-                  <div key={label} className={styles.blocItem} style={gridColsStyle}>
-                    <span className={styles.blocLabel}>
-                      <span className="designation-pill" data-designation={designation}>{label}</span>
-                    </span>
-                    <span className={styles.blocCell}>{renderCell(ayes)}</span>
-                    <span className={styles.blocCell}>{renderCell(noes)}</span>
-                    {hasDesignationNoShow && <span className={styles.blocCell}>{renderCell(ns)}</span>}
-                    <span className={styles.blocCell}>{renderCell(abs)}</span>
-                    <b className={styles.blocValueDesktop}>
-                      <span className={styles.blocAye}>{ayes} Aye</span>
-                      {' · '}
-                      <span className={styles.blocNo}>{noes} No</span>
-                      {ns  > 0 && <><span className={styles.blocSep}> · </span><span className={styles.blocNs}>{ns} NS</span></>}
-                      {abs > 0 && <><span className={styles.blocSep}> · </span><span className={styles.blocNs}>{abs} Abs</span></>}
-                    </b>
+              </div>
+              <div className={styles.board} role="group" aria-label="Vote totals">
+                {VOTE_ORDER.filter((v) => tally[v] > 0 || v === 'AYE' || v === 'NO').map((v) => (
+                  <div key={v} className={styles.boardCell} data-vote={v} style={{ flexGrow: Math.max(tally[v], 1) }}>
+                    <span className={styles.boardLabel}>{VOTE_LABEL[v]}</span>
+                    <span className={styles.boardNum}>{tally[v]}</span>
+                    <span className={styles.boardPct}>{pct(tally[v])}% of {share} MLAs</span>
                   </div>
                 ))}
               </div>
-              <div className={styles.designationSep} />
-              <DesignationChartClient
-                unionistAyes={division.unionistAyes ?? 0}
-                unionistNoes={division.unionistNoes ?? 0}
-                unionistNs={noShowByDesignation.Unionist}
-                unionistAbs={abstainByDesignation.Unionist}
-                nationalistAyes={division.nationalistAyes ?? 0}
-                nationalistNoes={division.nationalistNoes ?? 0}
-                nationalistNs={noShowByDesignation.Nationalist}
-                nationalistAbs={abstainByDesignation.Nationalist}
-                otherAyes={division.otherAyes ?? 0}
-                otherNoes={division.otherNoes ?? 0}
-                otherNs={noShowByDesignation.Other}
-                otherAbs={abstainByDesignation.Other}
-              />
-            </div>
-              )
-            })()}
-          </section>
-      )}
+              <PartyChart ballots={ballots} />
+              {hasDesignation && <DesignationChart ballots={ballots} insight={insight} />}
+            </section>
+          </div>
+        </div>
+      </section>
 
-      <div className={`${styles.pageSection} ${styles.sectionLast}`}>
-        <RollCallClient votes={votes} />
-      </div>
+
+      {ballots.length > 0 && (
+        <div className={`${nextBand()} ${styles.desktopOnly}`}>
+          <div className="container">
+            <div className={styles.bandStack}>
+              <LobbiesClient ballots={ballots} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

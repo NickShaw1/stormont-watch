@@ -3,23 +3,23 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { CURRENT_MANDATE, ARCHIVED_MANDATES } from '@/lib/constants/mandates'
 import styles from './Nav.module.css'
 
 const MANDATES = [CURRENT_MANDATE, ...ARCHIVED_MANDATES]
 
-export default function MandateSwitcher() {
+// Lands on that mandate's homepage; a deep page's sub-path has no cross-mandate counterpart.
+const urlFor = (id: string) => (id === CURRENT_MANDATE.id ? '/' : `/archive/${id}`)
+
+export default function MandateSwitcher({ variant = 'menu', onNavigate }: { variant?: 'menu' | 'list'; onNavigate?: () => void }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  // Which mandate are we on?
   const m = pathname.match(/^\/archive\/([^/]+)(\/.*)?$/)
   const activeId = m ? m[1] : CURRENT_MANDATE.id
   const active = MANDATES.find((x) => x.id === activeId) ?? CURRENT_MANDATE
-
-  // Lands on that mandate's homepage; a deep page's sub-path has no cross-mandate counterpart.
-  const urlFor = (id: string) => (id === CURRENT_MANDATE.id ? '/' : `/archive/${id}`)
 
   useEffect(() => {
     if (!open) return
@@ -38,6 +38,28 @@ export default function MandateSwitcher() {
   // After all hooks so hook order stays stable (rules-of-hooks).
   if (MANDATES.length < 2) return null
 
+  if (variant === 'list') {
+    return (
+      <>
+        <p className={styles.listGroup}>Mandate</p>
+        <ul className={styles.mandateList} role="list">
+          {MANDATES.map((x) => (
+            <li key={x.id}>
+              <Link
+                href={urlFor(x.id)}
+                className={styles.mandateChip}
+                aria-current={x.id === activeId ? 'true' : undefined}
+                onClick={onNavigate}
+              >
+                {x.label}{x.isCurrent ? ' · current' : ' · archive'}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+
   return (
     <div className={styles.mandateSwitch} ref={ref}>
       <button
@@ -48,7 +70,7 @@ export default function MandateSwitcher() {
         data-archive={active.isCurrent ? undefined : 'true'}
       >
         <span>{active.label}{active.isCurrent ? '' : ' archive'}</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+        <ChevronDown size={14} strokeWidth={2.5} aria-hidden="true" />
       </button>
       {open && (
         <ul className={styles.mandateMenu} role="menu">

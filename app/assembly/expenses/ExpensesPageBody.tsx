@@ -1,15 +1,13 @@
-import { PoundSterling, AlertTriangle } from 'lucide-react'
+import { Coins, Crown, UserX } from 'lucide-react'
 import { getAllExpensesLeagueTable, getMlasWithoutExpenses } from '@/lib/db/queries'
+import { formatMemberName, gbp } from '@/lib/format'
 import ExpensesListClient from './ExpensesListClient'
-import MissingMlasTable from './MissingMlasTable'
-import StatsBreadcrumb from '../stats/StatsBreadcrumb'
-import styles from './expenses.module.css'
+import RankingShell, { rankTones } from '../stats/RankingShell'
 import type { Mandate } from '@/lib/constants/mandates'
 
 // Shared by the live route and archive routes; mandate/basePath vary per route.
 export default async function ExpensesPageBody({
   mandate,
-  basePath,
 }: {
   mandate: Mandate
   basePath: string
@@ -29,38 +27,48 @@ export default async function ExpensesPageBody({
     constituency: r.constituency as string | null,
     imgUrl: r.imgUrl as string | null,
     mandateStart: r.mandateStart as string | null,
+    mandateEnd: r.mandateEnd as string | null,
+    isCurrent: r.isCurrent as boolean,
     total: r.total as string | null,
     period: r.period as string | null,
     financialYear: r.financialYear as string,
+    yearRank: r.yearRank,
+    yearPool: r.yearPool,
+    mandateRank: r.mandateRank,
+    mandatePool: r.mandatePool,
+  }))
+
+  const byPerson = new Map<string, { name: string; total: number }>()
+  for (const r of mappedRows) {
+    const e = byPerson.get(r.personId) ?? { name: r.fullName, total: 0 }
+    e.total += parseFloat(r.total ?? '0')
+    byPerson.set(r.personId, e)
+  }
+  const people = [...byPerson.values()].sort((a, b) => b.total - a.total)
+  const grand = people.reduce((s, p) => s + p.total, 0)
+
+  const missingRows = missing.map(m => ({
+    id: m.person_id,
+    fullName: m.full_name,
+    party: m.party,
+    constituency: m.constituency,
+    imgUrl: m.img_url,
+    value: 0,
+    display: 'No data',
+    rank: '-',
   }))
 
   return (
-    <div className="container">
-      <header className={styles.pageHeader}>
-        <StatsBreadcrumb label="MLA expenses" basePath={basePath} />
-        <span className={styles.pageHeaderEyebrow}>Rankings</span>
-        <h1 className={styles.pageHeaderTitle}>
-          <PoundSterling className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
-          MLA expenses
-        </h1>
-        <p className={styles.lede}>Expenses claimed by every current MLA: office costs, travel, constituency support and staff salaries.</p>
-      </header>
-
-      {missing.length > 0 && (
-        <div className={styles.missingSection} role="note" aria-label="MLAs with no expenses on record">
-          <div className={styles.sectionHead}>
-            <span className={styles.sectionEyebrow}>Data gap</span>
-            <h2 className={styles.sectionHeading}>
-              <AlertTriangle className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-              No record
-            </h2>
-            <p className={styles.sectionSubtitle}>{missing.length} MLA{missing.length !== 1 ? 's' : ''} {missing.length !== 1 ? 'have' : 'has'} no expenses on record for this period.</p>
-          </div>
-          <MissingMlasTable missing={missing} />
-        </div>
-      )}
-
-      <ExpensesListClient rows={mappedRows} years={years} latestYear={latestYear} />
-    </div>
+    <RankingShell
+      title="MLA expenses"
+      sub="Expenses claimed by every MLA with published expenses, current and former: staff costs, constituency office costs, allowances (including travel allowances) and other expenses."
+      stats={people.length > 0 ? [
+        { tone: rankTones.amber, icon: Coins, label: 'Total claimed', figure: gbp(grand), sub: `${people.length} MLAs, all published years` },
+        { tone: rankTones.coral, icon: Crown, label: 'Highest claimant', figure: gbp(people[0].total), sub: `${formatMemberName(people[0].name)}, all published years` },
+        { tone: rankTones.indigo, icon: UserX, label: 'No record', figure: missing.length, sub: missing.length === 1 ? 'MLA has no expenses on record' : 'MLAs have no expenses on record' },
+      ] : []}
+    >
+      <ExpensesListClient rows={mappedRows} years={years} latestYear={latestYear} missing={missingRows} />
+    </RankingShell>
   )
 }

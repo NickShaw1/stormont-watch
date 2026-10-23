@@ -1,7 +1,7 @@
 // Published salary rates, keyed by mandate.
 // Source (2022-2027): https://www.niassembly.gov.uk/your-mlas/members-salaries-and-expenses/salaries-and-expenditure-rates/salaries-and-expenditure-rates-2022-2027/
 
-import { CURRENT_MANDATE, mandateById } from './constants/mandates'
+import { CURRENT_MANDATE } from './constants/mandates'
 
 type SalaryRole =
   | 'member'
@@ -149,6 +149,12 @@ const ROLE_PRIORITY: Record<SalaryRole, number> = {
   member: 1,
 }
 
+// The Assembly's pay table gives the chair salary to the "Chairperson of a Statutory Committee or of the
+// Public Accounts Committee" only. The statutory committees are the nine departmental ones ("Committee for ...");
+// chairs of the other standing committees (Business, Audit, Procedures, Standards and Privileges,
+// Assembly and Executive Review, Windsor Framework Democratic Scrutiny) and of groups are not paid that band.
+const PAID_CHAIR_COMMITTEE = /^(Committee for .+|Public Accounts Committee)$/i
+
 export function apiRoleToSalaryRole(
   roleType: string,
   role: string,
@@ -171,7 +177,7 @@ export function apiRoleToSalaryRole(
 
   if (roleType === 'Committee Role (incl Assembly Commission)') {
     if (organisation === 'Northern Ireland Assembly Commission') return 'commission'
-    if (role === 'Committee Chair') return 'committee_chair'
+    if (role === 'Committee Chair' && PAID_CHAIR_COMMITTEE.test(organisation.trim())) return 'committee_chair'
   }
 
   return null
@@ -192,9 +198,9 @@ export function calculateMandateEarnings(
   if (!periods) return null // rates pending for this mandate — fail loud, do not report £0
 
   const today = new Date(todayStr)
-  // An open-ended band pro-rates against the mandate's end, or today if ongoing.
-  const mandateEnd = mandateById(mandate)?.end
-  const openBandEnd = mandateEnd ? new Date(mandateEnd) : today
+  const DAY = 86400000
+  // A role's end date is its last day in the role, so it is paid through to the start of the next day.
+  const roleEndMs = (interval: RoleInterval) => (interval.endDate ? new Date(interval.endDate).getTime() + DAY : today.getTime())
   let total = 0
 
   // Find earliest role start — do not calculate earnings before this date
@@ -207,11 +213,9 @@ export function calculateMandateEarnings(
       new Date(period.start).getTime(),
       new Date(earliestStart).getTime()
     ))
-    const fullPeriodStart = new Date(period.start)
-    const periodEnd = period.end ? new Date(period.end) : today
+    // A band's end date is its last day, so the band runs to the start of the following day.
+    const periodEnd = period.end ? new Date(new Date(period.end).getTime() + DAY) : today
     const effectivePeriodEnd = periodEnd < today ? periodEnd : today
-    const fullPeriodEnd = period.end ? new Date(period.end) : openBandEnd
-    const fullDaysInPeriod = (fullPeriodEnd.getTime() - fullPeriodStart.getTime()) / 86400000
 
     if (periodStart >= effectivePeriodEnd) continue
 
@@ -219,9 +223,15 @@ export function calculateMandateEarnings(
     boundaries.add(periodStart.getTime())
     boundaries.add(effectivePeriodEnd.getTime())
 
+    // Split at each 1 January so every segment sits inside one calendar year and is paid at that year's length.
+    for (let y = periodStart.getUTCFullYear() + 1; y <= effectivePeriodEnd.getUTCFullYear(); y++) {
+      const jan1 = Date.UTC(y, 0, 1)
+      if (jan1 > periodStart.getTime() && jan1 < effectivePeriodEnd.getTime()) boundaries.add(jan1)
+    }
+
     for (const interval of intervals) {
       const iStart = new Date(interval.startDate).getTime()
-      const iEnd = interval.endDate ? new Date(interval.endDate).getTime() : today.getTime()
+      const iEnd = roleEndMs(interval)
       if (iStart > periodStart.getTime() && iStart < effectivePeriodEnd.getTime()) boundaries.add(iStart)
       if (iEnd > periodStart.getTime() && iEnd < effectivePeriodEnd.getTime()) boundaries.add(iEnd)
     }
@@ -232,14 +242,15 @@ export function calculateMandateEarnings(
       const segStart = new Date(sorted[i])
       const segEnd = new Date(sorted[i + 1])
       const midpoint = new Date((segStart.getTime() + segEnd.getTime()) / 2)
-      const daysInSeg = (segEnd.getTime() - segStart.getTime()) / 86400000
+      const daysInSeg = (segEnd.getTime() - segStart.getTime()) / DAY
+      const year = segStart.getUTCFullYear()
+      const daysInYear = (Date.UTC(year + 1, 0, 1) - Date.UTC(year, 0, 1)) / DAY
 
       let bestRole: SalaryRole = 'member'
       let bestPriority = 0
       for (const interval of intervals) {
         const iStart = new Date(interval.startDate)
-        const iEnd = interval.endDate ? new Date(interval.endDate) : today
-        if (iStart <= midpoint && iEnd > midpoint) {
+        if (iStart <= midpoint && roleEndMs(interval) > midpoint.getTime()) {
           const priority = ROLE_PRIORITY[interval.salaryRole]
           if (priority > bestPriority) {
             bestPriority = priority
@@ -255,7 +266,8 @@ export function calculateMandateEarnings(
         }
       }
 
-      if (bestPriority > 0) total += (period.rates[effectiveRole] * daysInSeg) / fullDaysInPeriod
+      // Rates are annual, so each day is worth one day's share of the year.
+      if (bestPriority > 0) total += (period.rates[effectiveRole] * daysInSeg) / daysInYear
     }
   }
 
@@ -287,7 +299,7 @@ export function getCurrentAnnualSalary(
   for (const interval of intervals) {
     const iStart = new Date(interval.startDate)
     const iEnd = interval.endDate ? new Date(interval.endDate) : null
-    if (iStart <= today && (iEnd === null || iEnd > today)) {
+    if (iStart <= today && (iEnd === null || iEnd >= today)) {
       const priority = ROLE_PRIORITY[interval.salaryRole]
       if (priority > bestPriority) {
         bestPriority = priority

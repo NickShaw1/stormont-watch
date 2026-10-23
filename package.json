@@ -22,7 +22,7 @@
     "backfill:titles": "npx tsx scripts/backfill-titles.ts",
     "download-images": "npx tsx scripts/download-mla-images.ts",
     "sync:question-stats": "npx tsx scripts/sync-question-stats.ts",
-    "import:historical-expenses": "npx tsx scripts/import-historical-expenses.ts"
+    "import:historical-expenses": "npx tsx scripts/import-historical-expenses.ts","verify:consistency": "tsx --env-file=.env.local scripts/verify-consistency.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

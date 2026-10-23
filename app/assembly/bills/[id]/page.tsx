@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getAllBills } from '@/lib/db/queries'
 import { CURRENT_MANDATE } from '@/lib/constants/mandates'
+import { truncateAtWord } from '@/lib/format'
 import BillDetailPageBody from './BillDetailPageBody'
 
 function billSlug(billId: string): string {
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!bill) return { title: 'Bill not found' }
   const displayTitle = bill.royal_assent_date && bill.act_title ? bill.act_title : bill.short_title
   const description = bill.long_title
-    ? `${bill.long_title}`
+    ? truncateAtWord(bill.long_title, 158)
     : `All Assembly stages for ${displayTitle}.`
   return {
     title: displayTitle,
@@ -35,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `${displayTitle} - Stormont Watch`,
       description,
-      images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
+      images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch: NI Assembly Transparency' }],
     },
     twitter: {
       card: 'summary_large_image',

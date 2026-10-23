@@ -8,7 +8,7 @@
 export type Mandate = {
   /** Value stamped in every `mandate` column, e.g. "2022-2027". */
   id: string
-  /** Display label, e.g. "2022–2027". */
+  /** Display label, e.g. "2022-2027". */
   label: string
   /** Human label for the mandate start, for "since …" copy, e.g. "May 2022". */
   startLabel: string
@@ -18,7 +18,7 @@ export type Mandate = {
   start: string
   /** Last day of the mandate (ISO date), or null while ongoing. */
   end: string | null
-  /** True if this mandate had the 2022–2024 restoration gap; drives the suspension notice. */
+  /** True if this mandate had the 2022-2024 restoration gap; drives the suspension notice. */
   hadEarlySuspension?: boolean
   /** Exactly one mandate has this true — the one the live site shows. */
   isCurrent?: boolean
@@ -27,7 +27,7 @@ export type Mandate = {
 export const MANDATES: Mandate[] = [
   {
     id: '2022-2027',
-    label: '2022–2027',
+    label: '2022-2027',
     startLabel: 'May 2022',
     electionDate: '2022-05-05',
     start: '2022-05-05',
@@ -40,7 +40,7 @@ export const MANDATES: Mandate[] = [
     // it starts and so it's ready to flip to `isCurrent` at the boundary. See the PIVOT
     // RUNBOOK below for everything that flip actually involves — it is not just this flag.
     id: '2027-2032',
-    label: '2027–2032',
+    label: '2027-2032',
     startLabel: 'May 2027',
     electionDate: '2027-05-06',
     start: '2027-05-08',
@@ -90,12 +90,12 @@ export const MANDATES: Mandate[] = [
 //
 //   4. Run a full sync (npm run sync / sync-full) against the live 2027-2032 Assembly data,
 //      then rebuild + redeploy. Confirm: /assembly/** shows 2027-2032 content; the mandate
-//      switcher lists "2022–2027 · archive" linking to /archive/2022-2027 with the exact
+//      switcher lists "2022-2027 · archive" linking to /archive/2022-2027 with the exact
 //      frozen data; /archive/2022-2027 has no dependency on anything written for 2027-2032
 //      afterwards (separate DB rows, separate static build output — no bleed either direction).
 //
-//   5. Optional cleanup: four one-off analysis/import scripts hardcode '2022-2027'
-//      (mandate-cost-breakdown.mjs, import-expenses.py, import-historical-expenses.ts,
+//   5. Optional cleanup: three one-off analysis/import scripts hardcode '2022-2027'
+//      (import-expenses.py, import-historical-expenses.ts,
 //      backfill-parent-motion-text.ts). None run automatically (not part of `npm run sync`),
 //      so they're not a pivot blocker — just don't reuse them for 2027-2032 figures without
 //      updating the hardcoded id first.
@@ -108,6 +108,9 @@ export const MANDATES: Mandate[] = [
 // ============================================================================================
 
 /** The mandate the live site shows (the one flagged current, else the latest). */
+/** First day of the earliest mandate the site tracks; sync scripts never look earlier. */
+export const EARLIEST_MANDATE_START: string = MANDATES[0].start
+
 export const CURRENT_MANDATE: Mandate =
   MANDATES.find((m) => m.isCurrent) ?? MANDATES[MANDATES.length - 1]
 

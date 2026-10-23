@@ -1,21 +1,17 @@
-import { UsersRound } from 'lucide-react'
-import { getMembersGroupedByParty, getAllMinisters, getAllCommitteeChairs, getFormerMembers } from '@/lib/db/queries'
+import { getMembersGroupedByParty, getAllMinisters, getAllCommitteeChairs, getFormerMembers, getAverageAttendance } from '@/lib/db/queries'
+import type { Mandate } from '@/lib/constants/mandates'
+import { attendanceFloor } from '@/lib/attendance'
 import MlasListClient from './MlasListClient'
 import styles from './mlas.module.css'
-import type { Mandate } from '@/lib/constants/mandates'
 
 // Shared by the live route and the archive route.
-// Also fetches former members for the client's "Former MLAs" toggle.
-export default async function MlasPageBody({
-  mandate,
-}: {
-  mandate: Mandate
-}) {
-  const [partyGroups, ministers, chairs, formerGroups] = await Promise.all([
+export default async function MlasPageBody({ mandate }: { mandate: Mandate }) {
+  const [partyGroups, ministers, chairs, formerGroups, averageAttendance] = await Promise.all([
     getMembersGroupedByParty(mandate.id),
     getAllMinisters(mandate.id),
     getAllCommitteeChairs(mandate.id),
     getFormerMembers(mandate.id),
+    getAverageAttendance(mandate.id),
   ])
 
   const roleLookup: Record<string, string> = {}
@@ -34,21 +30,19 @@ export default async function MlasPageBody({
     if (!roleLookup[c.personId]) roleLookup[c.personId] = 'Chair'
   }
 
-  const total = partyGroups.reduce((s, g) => s + g.mlas.length, 0)
+  const allMlas = partyGroups.flatMap((g) => g.mlas)
 
   return (
-    <div>
-      <div className="container">
-        <header className={styles.pageHeader}>
-          <span className={styles.pageHeaderEyebrow}>The Assembly</span>
-          <h1 className={styles.pageHeaderTitle}>
-            <UsersRound className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
-            All {total} MLAs
-          </h1>
-          <p className={styles.lede}>Every Member of the Legislative Assembly elected to the {mandate.label} mandate.</p>
-        </header>
-      </div>
-      <MlasListClient partyGroups={partyGroups} roleLookup={roleLookup} formerGroups={formerGroups} />
+    <div className={styles.page}>
+      <MlasListClient
+        partyGroups={partyGroups}
+        roleLookup={roleLookup}
+        formerGroups={formerGroups}
+        averageAttendance={averageAttendance}
+        attendanceFloor={attendanceFloor(allMlas, averageAttendance)}
+        totalMlas={allMlas.length}
+        mandateLabel={mandate.label}
+      />
     </div>
   )
 }

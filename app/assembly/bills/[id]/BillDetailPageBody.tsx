@@ -1,20 +1,22 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { GitBranch, FileText, Gauge, History, HelpCircle, CheckCircle2, ExternalLink, Crown } from 'lucide-react'
+import {
+  GitBranch, FileText, History, CalendarCheck, CalendarClock,
+  Milestone, ArrowUpRight, Timer, Vote,
+} from 'lucide-react'
 import { getAllBills, getBillStages } from '@/lib/db/queries'
-import { computeBillProgress, BILL_STAGES } from '@/lib/bills/billProgress'
+import { computeBillProgress } from '@/lib/bills/billProgress'
+import { billStatus } from '@/lib/bills/billStatus'
+import { daysToLawOf } from '@/lib/bills/billStats'
 import { getBillSummary } from '@/lib/summaries'
+import { STAGE_INFO } from '@/lib/bills/stageInfo'
+import { formatDate, dayMonthOrdinalParts } from '@/lib/format'
+import { railModel, splitBillId, type BillKind } from '@/components/bills/BillCard'
 import type { Mandate } from '@/lib/constants/mandates'
 import BillTimeline from './BillTimeline'
 import styles from './billDetail.module.css'
 
 function billSlug(billId: string): string {
   return billId.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
-}
-
-async function getBillBySlug(id: string, mandate: string) {
-  const allBills = await getAllBills(mandate)
-  return allBills.find(b => billSlug(b.bill_id) === id) ?? null
 }
 
 const IMPACT_LABELS: { key: string; label: string }[] = [
@@ -28,19 +30,29 @@ const IMPACT_LABELS: { key: string; label: string }[] = [
 const LEVEL_ORDER = ['none', 'low', 'medium', 'high'] as const
 type ImpactLevel = typeof LEVEL_ORDER[number]
 
-// BILL_STAGES minus "Introduction" — that's not a numbered stage. Matches BillsListClient.tsx.
-const NUMBERED_STAGES = BILL_STAGES.slice(1).map(s => s.replace(/ Stage$/, ''))
+
+const DATE_LABEL: Record<BillKind, string> = {
+  scheduled: 'Scheduled',
+  active: 'Last activity',
+  awaiting: 'Final Stage',
+  law: 'Royal Assent',
+  failed: 'Defeated',
+}
+
+function plural(n: number, one: string, many: string) {
+  return `${n} ${n === 1 ? one : many}`
+}
 
 function ImpactDots({ level }: { level: ImpactLevel }) {
   const active = LEVEL_ORDER.indexOf(level)
   return (
     <span className={styles.dotsWrap} aria-hidden="true">
-      {LEVEL_ORDER.map((l, i) => (
+      {LEVEL_ORDER.slice(1).map((l, i) => (
         <span
           key={l}
           className={styles.dot}
-          data-active={i <= active && level !== 'none'}
-          data-level={i <= active ? level : 'none'}
+          data-active={i + 1 <= active}
+          data-level={i + 1 <= active ? level : 'none'}
         />
       ))}
     </span>
@@ -57,7 +69,8 @@ export default async function BillDetailPageBody({
   mandate: Mandate
   basePath: string
 }) {
-  const bill = await getBillBySlug(id, mandate.id)
+  const allBills = await getAllBills(mandate.id)
+  const bill = allBills.find(b => billSlug(b.bill_id) === id) ?? null
   if (!bill) notFound()
 
   const displayTitle = bill.royal_assent_date && bill.act_title ? bill.act_title : bill.short_title
@@ -77,207 +90,216 @@ export default async function BillDetailPageBody({
     ],
   }
 
-  const billPassed =
-    bill.royal_assent_date != null ||
-    (bill.final_stage_has_division === true && /carried/i.test(bill.final_stage_outcome ?? '')) ||
-    (bill.final_stage_nodiv_date != null && new Date(bill.final_stage_nodiv_date) <= new Date())
+  const { kind, passed } = billStatus(bill)
+  const { stageIdx, scheduledIdx } = computeBillProgress(bill.stage_history, bill.royal_assent_date, passed === true)
+  const { nodes } = railModel({ stageIdx: Math.max(stageIdx, 0), scheduledIdx }, kind)
 
-  const { stageIdx, scheduledIdx, currentStageLabel } = computeBillProgress(
-    stages.map(s => ({ stage: s.stage, plenaryDate: s.plenary_date })),
-    bill.royal_assent_date,
-    billPassed,
-  )
+  const today = new Date().toISOString().slice(0, 10)
+  const dates = stages.map(s => s.plenary_date).filter(d => !isNaN(new Date(d).getTime())).sort()
+  const latest = kind === 'law' && bill.royal_assent_date ? bill.royal_assent_date : bill.latest_date
+  const { prefix: idPrefix, number: idNumber } = splitBillId(bill.bill_id)
 
-  const billFailed =
-    !billPassed &&
-    bill.final_stage_has_division === true &&
-    /negatived|fell/i.test(bill.final_stage_outcome ?? '')
+  const acts = daysToLawOf(allBills.map(b => ({
+    slug: billSlug(b.bill_id),
+    title: b.short_title,
+    billType: b.bill_type,
+    stageHistory: b.stage_history,
+    royalAssentDate: b.royal_assent_date,
+    passed: null,
+  })))
+  const thisAct = acts?.acts.find(a => a.slug === id) ?? null
+  const plenaryDays = new Set(dates.map(d => d.slice(0, 10))).size
+  const divisionCount = stages.filter(s => s.has_division && s.division_id).length
+
+  const journey = nodes.map(n => {
+    if (n.stage === 'Royal Assent') {
+      return { ...n, date: bill.royal_assent_date, votes: 0 }
+    }
+    const rows = stages.filter(s => s.stage.toLowerCase() === n.stage.toLowerCase())
+    const days = [...new Set(rows.map(r => r.plenary_date.slice(0, 10)))].sort()
+    return { ...n, date: days[0] ?? null, votes: rows.filter(r => r.has_division && r.division_id).length }
+  })
+  const reached = journey.filter(j => j.state === 'done' || j.state === 'current')
+  const focus = journey.find(j => j.state === 'scheduled') ?? reached[reached.length - 1] ?? journey[0]
+  const focusKey = kind === 'law' ? 'Became law' : kind === 'awaiting' ? 'Awaiting Royal Assent' : kind === 'failed' ? 'Defeated' : focus.stage
+  const focusLabel = kind === 'scheduled' ? 'Next stage' : kind === 'active' ? 'Current stage' : focusKey
+  const focusExplain = STAGE_INFO[focusKey]?.summary ?? ''
+  const lastReached = reached.length - 1
+  const tiles = journey.map((j) => ({
+    ...j,
+    parts: dayMonthOrdinalParts(j.date),
+    word: j.date ? '' : j.index === 1 ? 'Introduced' : j.index === 3 ? 'In committee' : j.state === 'scheduled' ? 'Awaiting' : j.state ? 'Held' : 'Pending',
+    tone: kind === 'law' ? 'law'
+      : kind === 'awaiting' && j.state === 'scheduled' ? 'awaiting'
+      : kind === 'failed' && j.stage === reached[lastReached]?.stage ? 'failed'
+      : 'default',
+    meta: [j.date ? j.date.slice(0, 4) : '', j.votes > 0 ? plural(j.votes, 'vote', 'votes') : ''].filter(Boolean).join(' · '),
+  }))
+  const focusParts = dayMonthOrdinalParts(latest)
+  const dateIcon = kind === 'scheduled' ? CalendarClock : CalendarCheck
+  const dateTone = kind === 'law' ? 'tnGreen' : kind === 'awaiting' ? 'tnAmber' : kind === 'failed' ? 'tnRed' : 'tnBlue'
+  const panelFacts: { label: string; value: React.ReactNode; sub?: string; Icon: typeof Timer; tone: string }[] = [
+    ...(focusParts
+      ? [{
+          label: DATE_LABEL[kind],
+          value: formatDate(latest),
+          Icon: dateIcon,
+          tone: dateTone,
+        }]
+      : []),
+    {
+      label: divisionCount === 1 ? 'Division held' : 'Divisions held',
+      value: divisionCount,
+      Icon: Vote,
+      tone: 'tnPurple',
+    },
+    thisAct
+      ? { label: 'To become law', value: <>{thisAct.days} <small>days</small></>, sub: acts ? `Median Act ${acts.median} days` : undefined, Icon: Timer, tone: 'tnTeal' }
+      : { label: plenaryDays === 1 ? 'Sitting day so far' : 'Sitting days so far', value: plenaryDays, Icon: Timer, tone: 'tnTeal' },
+  ]
 
   return (
-    <div className="container">
+    <div className={styles.page}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
-      {/* Header */}
-      <header className={styles.header}>
-        <nav aria-label="Breadcrumb" className="breadcrumb">
-          <ol>
-            <li><Link href={`${basePath}/assembly/bills`}>Legislation</Link></li>
-            <li aria-current="page"><span>{displayTitle}</span></li>
-          </ol>
-        </nav>
-
-        <div className={styles.titleCard}>
-          <div className={styles.titleBlock}>
-            <span className={styles.eyebrow}>Legislation</span>
-            <h1 className={styles.title}>
-              <FileText className={styles.titleIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
-              {displayTitle}
-            </h1>
-          </div>
-          {bill.long_title && <p className={styles.lede}>{bill.long_title}</p>}
-          <div className={styles.titleCardFoot}>
-            <span className={`${styles.chip} ${styles.chipNeutral}`}>
-              <FileText size={12} strokeWidth={2} aria-hidden="true" />
-              Bill {bill.bill_id}
-            </span>
-            <div className={styles.badgeRow}>
-              {bill.bill_type && <span className={`${styles.chip} ${styles.chipAccent}`}>{bill.bill_type}</span>}
-              {bill.royal_assent_date != null && (
-                <span className={`${styles.chip} ${styles.chipLaw}`}>
-                  <CheckCircle2 size={12} strokeWidth={2} aria-hidden="true" />
-                  Became law
-                </span>
-              )}
-              {billPassed && !bill.royal_assent_date && (
-                <span className={`${styles.chip} ${styles.chipAwaiting}`}>
-                  <Crown size={12} strokeWidth={2} aria-hidden="true" />
-                  Awaiting Royal Assent
-                </span>
-              )}
-              {billFailed && <span className={`${styles.chip} ${styles.chipFail}`}>Failed</span>}
+      <section className={`${styles.band} ${styles.bandPage} ${styles.intro}`} aria-labelledby="bill-title">
+        <div className="container">
+          <div className={styles.introTop}>
+            <header className={styles.introCopy}>
+              <span className={styles.eyebrow}>
+                <span className={styles.eyebrowNo}>{idPrefix ?? 'Bill'} {idNumber} · </span>
+                {bill.bill_type ?? 'Bill'}{bill.is_accelerated ? ' · Accelerated passage' : ''}
+              </span>
+              <h1 className={styles.h1} id="bill-title">{displayTitle}</h1>
+              {bill.long_title && <p className={styles.headSub}>{bill.long_title}</p>}
               {bill.legislation_url && (
-                <a href={bill.legislation_url} target="_blank" rel="noopener noreferrer" className={`${styles.chip} ${styles.chipLink}`}>
+                <a href={bill.legislation_url} target="_blank" rel="noopener noreferrer" className={styles.actLink}>
                   View Act
-                  <ExternalLink size={12} strokeWidth={2} aria-hidden="true" />
+                  <ArrowUpRight size={16} strokeWidth={2} aria-hidden="true" />
+                  <span className={styles.srOnly}>(opens in a new tab)</span>
                 </a>
               )}
+            </header>
+            <div className={styles.billNo} aria-hidden="true">
+              <span className={styles.billNoCap}>{idPrefix ?? 'Bill'}</span>
+              <span className={styles.billNoNum}>{idNumber}</span>
             </div>
           </div>
-        </div>
-      </header>
 
-      {/* Stage tracker — same legend/segment logic as the bills list page (Passed/Scheduled/Not yet reached). */}
-      <section className={styles.stagesSection}>
-        <div className={styles.sectionHead}>
-          <span className={styles.eyebrow}>Stage tracker</span>
-          <h2 className={styles.stagesSectionHead}>
-            <Gauge className={styles.stagesSectionHeadIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-            Progress
-          </h2>
-        </div>
-
-        <div className={styles.stagesCard}>
-          <div
-            className={styles.currentStageBanner}
-            data-tone={
-              bill.royal_assent_date != null ? 'pass'
-              : billPassed ? 'awaiting'
-              : scheduledIdx !== null ? 'scheduled'
-              : 'active'
-            }
-          >
-            <span className={styles.currentStageBannerLabel}>
-              {bill.royal_assent_date != null ? 'Completed'
-                : billPassed ? 'Passed Final Stage'
-                : scheduledIdx !== null ? 'Next scheduled stage'
-                : 'Current stage'}
-            </span>
-            <span className={styles.currentStageBannerValue}>
-              {bill.royal_assent_date != null
-                ? 'Royal Assent'
-                : billPassed
-                ? 'Awaiting Royal Assent'
-                : scheduledIdx !== null
-                ? BILL_STAGES[scheduledIdx]
-                : currentStageLabel || BILL_STAGES[0]}
-            </span>
+          <div className={styles.bar} aria-hidden="true">
+            {tiles.map((t, i) => <span key={t.stage} className={styles.seg} data-state={t.state} data-tone={t.tone} style={{ '--o': 0.4 + (i / 6) * 0.6 } as React.CSSProperties} />)}
           </div>
 
-          <div className={styles.stagesLabels}>
-            <span className={styles.stagesStageCount}>Stage {Math.max(stageIdx, 0)} of {BILL_STAGES.length - 1}</span>
-            {bill.royal_assent_date != null && <span className={styles.stagesPassed}><CheckCircle2 size={14} strokeWidth={2} aria-hidden="true" />Passed</span>}
-          </div>
+          <ol className={styles.stages}>
+            {tiles.map(t => (
+              <li key={t.stage} className={styles.stage} data-state={t.state} data-tone={t.tone} data-focus={t.stage === focus.stage ? '' : undefined}>
+                <span className={styles.stageNode} aria-hidden="true">{t.index}</span>
+                <span className={styles.stageValue}>
+                  {t.parts
+                    ? <>{t.parts.day}<sup>{t.parts.suffix}</sup> {t.parts.month}</>
+                    : <span className={styles.stageWord}>{t.word}</span>}
+                </span>
+                <span className={styles.stageLabel}>{t.stage.replace(/ Stage$/, '')}</span>
+                {t.meta && <span className={styles.stageMeta}>{t.meta}</span>}
+                <span className={styles.srOnly}>
+                  {t.state === 'done' || t.state === 'current' ? ', completed' : t.state === 'scheduled' ? ', next' : ', not yet reached'}
+                </span>
+              </li>
+            ))}
+          </ol>
 
-          <div className={styles.stages}>
-            {NUMBERED_STAGES.map((s, j) => {
-              const i = j + 1 // offset for the dropped "Introduction" index
-              const completedUpTo = scheduledIdx !== null ? scheduledIdx - 1 : stageIdx
-              const state = i <= completedUpTo ? 'done' : i === scheduledIdx ? 'scheduled' : undefined
-              return (
-                <div key={s} className={styles.stage} data-state={state}>
-                  <span className={styles.stageNum}>{j + 1}</span>
-                  {s}
+          <section className={styles.focusTile} aria-labelledby="journey-heading">
+            <div className={styles.focusMain}>
+            <div className={styles.phoneRail} data-kind={kind}>
+              <ol className={styles.pNodes}>
+                {nodes.map(n => (
+                  <li key={n.stage} className={styles.pStep} data-state={n.state} data-left={n.left} data-right={n.right}>
+                    <span className={styles.pNode} aria-hidden="true">{n.index}</span>
+                    <span className={styles.srOnly}>
+                      {n.stage}
+                      {n.state === 'done' || n.state === 'current' ? ', completed' : n.state === 'scheduled' ? ', next' : ', not yet reached'}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+              <div className={styles.focusHead}>
+                <span className={`${styles.iconTile} ${styles.tnBlue}`}><Milestone size={22} strokeWidth={2} aria-hidden="true" /></span>
+                <div className={styles.focusTitles}>
+                  <span className={styles.focusEyebrow}>Stage {focus.index} · {focusLabel}</span>
+                  <h2 className={styles.focusTitle} id="journey-heading">{focus.stage}</h2>
                 </div>
-              )
-            })}
-          </div>
-
-          <div className={styles.stagesMobileBar}>
-            {NUMBERED_STAGES.map((s, j) => {
-              const i = j + 1
-              const completedUpTo = scheduledIdx !== null ? scheduledIdx - 1 : stageIdx
-              const state = i <= completedUpTo ? 'done' : i === scheduledIdx ? 'scheduled' : undefined
-              return <div key={s} className={styles.stagesMobileSeg} data-state={state} />
-            })}
-          </div>
+              </div>
+              {focusExplain && <p className={styles.focusText}>{focusExplain}</p>}
+            </div>
+            <ul className={styles.facts} role="list">
+              {panelFacts.map(f => (
+                <li key={f.label} className={styles.fact}>
+                  <span className={`${styles.iconTile} ${styles[f.tone]}`}><f.Icon size={22} strokeWidth={2} aria-hidden="true" /></span>
+                  <span className={styles.factBody}>
+                    <span className={styles.factText}>
+                      <span className={styles.factLabel}>{f.label}</span>
+                      {f.sub && <span className={styles.factSub}>{f.sub}</span>}
+                    </span>
+                    <span className={styles.factValue}>{f.value}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
       </section>
 
-      {summary && (
-        <>
-          <section aria-labelledby="summary-heading" className={styles.summarySection}>
-            <div className={styles.sectionHead}>
-              <span className={styles.eyebrow}>Summary</span>
-              <h2 id="summary-heading" className={styles.sectionHeading}>
-                <FileText className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-                What this bill does
-              </h2>
-            </div>
-            <div className={styles.summaryCard}>
-              <p className={styles.summaryText}>{summary.summary}</p>
-            </div>
-          </section>
+      <section className={`${styles.band} ${styles.bandTint}`} aria-label="Bill details">
+        <div className="container">
+          <div className={styles.bento}>
+            {summary && (
+              <>
+                <section className={`${styles.tile} ${styles.tSeven}`} aria-labelledby="summary-heading">
+                  <div className={styles.tileHead}>
+                    <span className={`${styles.iconTile} ${styles.tnPurple}`}><FileText size={22} strokeWidth={2} aria-hidden="true" /></span>
+                    <h2 className={styles.tileTitle} id="summary-heading">What this bill does</h2>
+                  </div>
+                  <p className={styles.summaryText}>{summary.summary}</p>
+                </section>
 
-          <section aria-labelledby="impact-heading" className={styles.impactSection}>
-            <div className={styles.sectionHead}>
-              <span className={styles.eyebrow}>Assessment</span>
-              <h2 id="impact-heading" className={styles.sectionHeading}>
-                <GitBranch className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-                Impact areas
-              </h2>
-            </div>
-            <div className={styles.impactCard}>
-              <ul className={styles.impactList} role="list">
-                {IMPACT_LABELS.map(({ key, label }) => {
-                  type ImpactKey = 'fiscal' | 'rights' | 'publicServices' | 'crossCommunity' | 'environment'
-                  const level: ImpactLevel = (summary.impact?.[key as ImpactKey] as ImpactLevel) ?? 'none'
-                  const levelLabel = level.charAt(0).toUpperCase() + level.slice(1)
-                  return (
-                    <li key={key} className={styles.impactItem}>
-                      <span className={styles.impactLabel}>{label}</span>
-                      <ImpactDots level={level} />
-                      <span className={styles.impactValue} data-level={level}>{levelLabel}</span>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          </section>
-        </>
-      )}
+                <section className={`${styles.tile} ${styles.tFive}`} aria-labelledby="impact-heading">
+                  <div className={styles.tileHead}>
+                    <span className={`${styles.iconTile} ${styles.tnTeal}`}><GitBranch size={22} strokeWidth={2} aria-hidden="true" /></span>
+                    <h2 className={styles.tileTitle} id="impact-heading">Impact areas</h2>
+                  </div>
+                  <ul className={styles.impactList} role="list">
+                    {IMPACT_LABELS.map(({ key, label }) => {
+                      type ImpactKey = 'fiscal' | 'rights' | 'publicServices' | 'crossCommunity' | 'environment'
+                      const level: ImpactLevel = (summary.impact?.[key as ImpactKey] as ImpactLevel) ?? 'none'
+                      const levelLabel = level.charAt(0).toUpperCase() + level.slice(1)
+                      return (
+                        <li key={key} className={styles.impactItem}>
+                          <span className={styles.impactLabel}>{label}</span>
+                          <ImpactDots level={level} />
+                          <span className={styles.impactValue} data-level={level}>{levelLabel}</span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </section>
+              </>
+            )}
 
-      <section aria-labelledby="stages-heading" className={`${styles.timelineSection} ${styles.sectionLast}`}>
-        <div className={styles.sectionHeadRow}>
-          <div className={styles.sectionHead}>
-            <span className={styles.eyebrow}>Timeline</span>
-            <h2 id="stages-heading" className={styles.sectionHeading}>
-              <History className={styles.sectionHeadingIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-              Legislative stages
-            </h2>
+            <section className={`${styles.tile} ${styles.tFull}`} aria-labelledby="stages-heading">
+              <div className={styles.tileHead}>
+                <span className={`${styles.iconTile} ${styles.tnBlue}`}><History size={22} strokeWidth={2} aria-hidden="true" /></span>
+                <h2 className={styles.tileTitle} id="stages-heading">Legislative stages</h2>
+              </div>
+              <p className={styles.tileDesc}>
+                Every plenary day this bill has been on the agenda, newest first. A stage can appear more than once if the Assembly sat on it across several days.
+              </p>
+              <BillTimeline stages={stages} royalAssentDate={bill.royal_assent_date} latestDate={bill.latest_date} today={today} />
+            </section>
           </div>
-          <Link href={`${basePath}/assembly/legislation-guide`} className={styles.viewAllBtn}>
-            <HelpCircle size={14} strokeWidth={2} aria-hidden="true" />
-            How does a bill become law?
-          </Link>
-        </div>
-        <p className={styles.timelineNote}>
-          A stage can appear more than once below if the Assembly sat on it across several plenary days.
-        </p>
-        <div className={styles.timelineCard}>
-          <BillTimeline stages={stages} royalAssentDate={bill.royal_assent_date} latestDate={bill.latest_date} />
         </div>
       </section>
     </div>

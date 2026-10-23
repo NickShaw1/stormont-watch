@@ -3,9 +3,10 @@ import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
 import { and, eq, isNull, like, sql } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
+import { mandateForToday } from '../lib/constants/mandates'
 
 const BASE = 'http://data.niassembly.gov.uk'
-const CURRENT_MANDATE = '2022-2027'
+const CURRENT_MANDATE = mandateForToday().id
 
 // Only the fields this script reads from GetPlenaryItemsPlenaryDate_JSON.
 interface PlenaryItem {

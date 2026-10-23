@@ -131,22 +131,16 @@ export async function getHansardPartyRank(party: string, mandate: string = CURRE
     .groupBy(memberSittings.party)
     .as('party_avgs')
 
-  const myAvgRows = await db
-    .select({ avgSittings: partyAvgs.avgSittings })
-    .from(partyAvgs)
-    .where(eq(partyAvgs.party, party))
-
-  const avgSittings = Number(myAvgRows[0]?.avgSittings ?? 0)
-  if (!myAvgRows.length) return null
-
-  const [rankRow, countRow] = await Promise.all([
-    db.select({ rank: sql<number>`count(*) + 1` }).from(partyAvgs).where(sql`${partyAvgs.avgSittings} > ${avgSittings}`),
-    db.select({ count: sql<number>`count(*)` }).from(partyAvgs),
-  ])
+  // Rank in JS from the same numbers, so a party's own average can never beat itself through numeric precision.
+  const allAvgs = await db.select({ party: partyAvgs.party, avg: partyAvgs.avgSittings }).from(partyAvgs)
+  const mine = allAvgs.find((r) => r.party === party)
+  if (!mine) return null
+  const avgSittings = Number(mine.avg ?? 0)
+  const rank = 1 + allAvgs.filter((r) => r.party !== party && Number(r.avg ?? 0) > avgSittings).length
 
   return {
-    rank: Number(rankRow[0]?.rank ?? 1),
-    totalParties: Number(countRow[0]?.count ?? 0),
+    rank,
+    totalParties: allAvgs.length,
     avgSittings,
   }
 }
@@ -173,22 +167,16 @@ export async function getHansardPartyDebateRank(party: string, mandate: string =
     .groupBy(memberDebates.party)
     .as('party_avgs')
 
-  const myAvgRows = await db
-    .select({ avgDebates: partyAvgs.avgDebates })
-    .from(partyAvgs)
-    .where(eq(partyAvgs.party, party))
-
-  const avgDebates = Number(myAvgRows[0]?.avgDebates ?? 0)
-  if (!myAvgRows.length) return null
-
-  const [rankRow, countRow] = await Promise.all([
-    db.select({ rank: sql<number>`count(*) + 1` }).from(partyAvgs).where(sql`${partyAvgs.avgDebates} > ${avgDebates}`),
-    db.select({ count: sql<number>`count(*)` }).from(partyAvgs),
-  ])
+  // Rank in JS from the same numbers, so a party's own average can never beat itself through numeric precision.
+  const allAvgs = await db.select({ party: partyAvgs.party, avg: partyAvgs.avgDebates }).from(partyAvgs)
+  const mine = allAvgs.find((r) => r.party === party)
+  if (!mine) return null
+  const avgDebates = Number(mine.avg ?? 0)
+  const rank = 1 + allAvgs.filter((r) => r.party !== party && Number(r.avg ?? 0) > avgDebates).length
 
   return {
-    rank: Number(rankRow[0]?.rank ?? 1),
-    totalParties: Number(countRow[0]?.count ?? 0),
+    rank,
+    totalParties: allAvgs.length,
     avgDebates,
   }
 }
@@ -218,7 +206,7 @@ export async function getHansardSiteStats(mandate: string = CURRENT_MANDATE) {
   const [sittingsRow, contribRow] = await Promise.all([
     db.select({ totalSittings: sql<number>`count(*)` })
       .from(hansardReports)
-      .where(eq(hansardReports.mandate, mandate)),
+      .where(and(eq(hansardReports.mandate, mandate), sql`${hansardReports.plenaryDate} >= ${mandateStartOf(mandate)}`)),
     db.select({
       totalDebates: sql<number>`count(distinct ${hansardContributions.debateTitle})`,
       totalParticipations: sql<number>`count(*)`,
@@ -310,6 +298,18 @@ export async function getHansardAllByMLA(mandate: string = CURRENT_MANDATE) {
   return rows
 }
 
+export async function getHansardRankedTotals(mandate: string = CURRENT_MANDATE) {
+  const rows = await db
+    .select({
+      sittings: sql<number>`count(distinct ${hansardContributions.reportDocId})`,
+      debates: sql<number>`count(distinct ${hansardContributions.debateTitle})`,
+    })
+    .from(members)
+    .innerJoin(hansardContributions, and(eq(hansardContributions.personId, members.personId), eq(hansardContributions.mandate, mandate)))
+    .where(and(eq(members.isCurrent, true), or(isNull(members.assemblyRole), isNotNull(members.assemblyRoleEnd)), eq(members.mandate, mandate)))
+  return { sittings: Number(rows[0]?.sittings ?? 0), debates: Number(rows[0]?.debates ?? 0) }
+}
+
 export async function getHansardPartyAverages(mandate: string = CURRENT_MANDATE): Promise<{ party: string; avgSittings: number; avgDebates: number }[]> {
   const memberTotals = db
     .select({
@@ -343,8 +343,8 @@ export async function getHansardPartyAverages(mandate: string = CURRENT_MANDATE)
 
 export async function getHansardThisMonth(mandate: string = CURRENT_MANDATE): Promise<number> {
   const now = new Date()
-  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  const monthStart = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`
+  const nextMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
   const monthEnd = nextMonth.toISOString().slice(0, 10)
   const rows = await db
     .select({ total: sql<number>`count(distinct ${hansardReports.reportDocId})` })

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Voting - Stormont Watch',
     description: `How MLAs and parties vote. Attendance records, party cohesion, rebellion rates and cross-community trends since ${CURRENT_MANDATE.startLabel}.`,
-    images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
+    images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch: NI Assembly Transparency' }],
   },
   alternates: { canonical: 'https://www.stormontwatch.com/assembly/stats/voting' },
 }

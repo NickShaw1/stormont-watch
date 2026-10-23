@@ -8,7 +8,7 @@ import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
 import * as schema from '../lib/db/schema'
 import { apiRoleToSalaryRole } from '../lib/salaries'
-import { updateMemberTermRoles } from '../lib/db/memberWrites'
+import { updateMemberTermRoles, syncMemberRoleHistory, type MemberRoleRow } from '../lib/db/memberWrites'
 import { BASE, type Db, syncMembers } from './syncShared'
 import { mandateIdForDate, mandateForToday } from '../lib/constants/mandates'
 
@@ -96,6 +96,7 @@ async function syncMandateAndRoles(db: Db) {
 
       const MANDATE_START = todaysMandate.start
       const AD_HOC_RE = /concurrent|ad hoc/i
+      const roleRows: MemberRoleRow[] = []
 
       for (const r of roles) {
         const affiliationId = String(r?.AffiliationId ?? '')
@@ -127,27 +128,19 @@ async function syncMandateAndRoles(db: Db) {
           continue
         }
 
-        await db
-          .insert(schema.memberRoleHistory)
-          .values({
-            personId,
-            affiliationId,
-            roleType,
-            role,
-            organisation: organisation || null,
-            organisationId: organisationId || null,
-            startDate: effectiveStartDate,
-            endDate,
-            mandate: mandateIdForDate(effectiveStartDate),
-          })
-          .onConflictDoUpdate({
-            target: schema.memberRoleHistory.affiliationId,
-            set: {
-              endDate,
-              updatedAt: new Date(),
-            },
-          })
+        roleRows.push({
+          affiliationId,
+          roleType,
+          role,
+          organisation: organisation || null,
+          organisationId: organisationId || null,
+          startDate: effectiveStartDate,
+          endDate,
+          mandate: mandateIdForDate(effectiveStartDate),
+        })
       }
+
+      await syncMemberRoleHistory(db, personId, todaysMandate.id, roleRows)
 
       processed++
       if (processed % 10 === 0) {

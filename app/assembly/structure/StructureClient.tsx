@@ -2,7 +2,9 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Handshake, Gavel, Building2, ShieldCheck } from 'lucide-react'
+import { Handshake, Gavel, Building2, ShieldCheck, ArrowUpRight, ArrowRight } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { formatMemberName, abbreviateParty } from '@/lib/format'
 import { useMandate } from '@/components/MandateContext'
 import styles from './structure.module.css'
@@ -46,207 +48,198 @@ interface Props {
   presidingOfficers: PresidingOfficer[]
 }
 
-function PersonPhoto({ imgUrl, name, sizes, priority }: { imgUrl: string | null; name: string; sizes: string; priority?: boolean }) {
-  if (!imgUrl) return null
+type PersonProps = {
+  personId: string
+  fullName: string
+  party: string | null
+  imgUrl: string | null
+  constituency: string | null
+  role?: string | null
+  priority?: boolean
+}
+
+function Person({ personId, fullName, party, imgUrl, constituency, role, priority }: PersonProps) {
+  const { basePath } = useMandate()
+  const abbr = party ? abbreviateParty(party) : null
   return (
-    <Image
-      src={imgUrl}
-      alt={name}
-      fill
-      sizes={sizes}
-      priority={priority}
-      style={{ objectFit: 'cover', objectPosition: 'top center' }}
-    />
+    <div className={styles.person}>
+      <div className={styles.photo}>
+        {imgUrl && (
+          <Image
+            src={imgUrl}
+            alt=""
+            fill
+            sizes="88px"
+            priority={priority}
+            style={{ objectFit: 'cover', objectPosition: 'top center' }}
+          />
+        )}
+      </div>
+      <div className={styles.info}>
+        <Link href={`${basePath}/assembly/mlas/${personId}`} className={styles.name}>{formatMemberName(fullName)}</Link>
+        {constituency && <span className={styles.constituency}>{constituency}</span>}
+        {(abbr || role) && (
+          <span className={styles.tags}>
+            {abbr && <span className="party-pill" data-party={abbr}>{abbr}</span>}
+            {role && <span className={styles.rolePill}>{role.charAt(0).toUpperCase() + role.slice(1)}</span>}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ExtLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={styles.extLink}>
+      {children}
+      <ArrowUpRight size={14} strokeWidth={2.25} aria-hidden="true" />
+      <span className="sr-only"> (opens in a new tab)</span>
+    </a>
+  )
+}
+
+function Unit({ title, href, children }: { title: string; href?: string; children: ReactNode }) {
+  return (
+    <li className={styles.unit}>
+      <h3 className={styles.unitTitle}>
+        {href ? <ExtLink href={href}>{title}</ExtLink> : <span className={styles.unitText}>{title}</span>}
+      </h3>
+      <div className={styles.row}>
+        {children}
+        <ArrowRight className={styles.arrow} size={18} strokeWidth={2} aria-hidden="true" />
+      </div>
+    </li>
+  )
+}
+
+function Row({ children }: { children: ReactNode }) {
+  return (
+    <li className={styles.row}>
+      {children}
+      <ArrowRight className={styles.arrow} size={18} strokeWidth={2} aria-hidden="true" />
+    </li>
+  )
+}
+
+function TileHead({ icon: IconCmp, eyebrow, title, id, children }: { icon: LucideIcon; eyebrow: string; title: string; id: string; children: ReactNode }) {
+  return (
+    <header className={styles.tileHead}>
+      <span className={styles.iconTile}><IconCmp size={22} strokeWidth={2} aria-hidden="true" /></span>
+      <div className={styles.tileHeadText}>
+        <span className={styles.tileEyebrow}>{eyebrow}</span>
+        <h2 className={styles.tileTitle} id={id}>{title}</h2>
+      </div>
+      <p className={styles.tileText}>{children}</p>
+    </header>
   )
 }
 
 export default function StructureClient({ fm, dfm, juniorMinisters, departments, chairs, officialLinks, presidingOfficers }: Props) {
-  const { basePath } = useMandate()
+  const leaders = [fm, dfm].filter((m): m is Minister => Boolean(m))
+
   return (
     <>
-      {/* Executive */}
-      <section aria-label="The Executive" className={styles.section}>
-        <div className={styles.sectionHead}>
-          <span className={styles.sectionEyebrow}>Power sharing</span>
-          <h2 className={styles.sectionTitle}>
-            <Handshake className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-            The Executive
-          </h2>
-        </div>
-        <p className={styles.sectionBlurb}>
-          The <a href="https://www.northernireland.gov.uk/" target="_blank" rel="noopener noreferrer">Northern Ireland Executive</a> is the devolved government established under the <a href="https://en.wikipedia.org/wiki/Good_Friday_Agreement" target="_blank" rel="noopener noreferrer">Good Friday Agreement</a>. It operates on a mandatory power-sharing basis, with the First Minister and Deputy First Minister drawn from the largest unionist and nationalist parties respectively.
-        </p>
+      <section className={`${styles.band} ${styles.bandPage}`} aria-labelledby="structure-title">
+        <div className="container">
+          <header className={styles.head}>
+            <span className={styles.eyebrow}>The Assembly</span>
+            <h1 className={styles.h1} id="structure-title">Who&apos;s in Charge</h1>
+            <p className={styles.headSub}>The power-sharing Executive, ministerial departments and committee chairs of the Northern Ireland Assembly.</p>
+          </header>
 
-        <div className={styles.execGrid}>
-          {[fm, dfm].filter(Boolean).map((role) => {
-            if (!role) return null
-            return (
-              <Link key={role.personId} href={`${basePath}/assembly/mlas/${role.personId}`} className={styles.execCard}>
-                <div className={styles.execMain}>
-                  <div className={styles.execPhoto}><PersonPhoto imgUrl={role.imgUrl} name={role.fullName} sizes="88px" priority /></div>
-                  <div className={styles.execInfo}>
-                    <span className={styles.execLabel}>{role.roleTitle}</span>
-                    <span className={styles.execName}>{formatMemberName(role.fullName)}</span>
-                    {role.constituency && <span className={styles.constituency}>{role.constituency}</span>}
-                  </div>
-                </div>
-                {role.party && <span className="party-pill" data-party={abbreviateParty(role.party)}>{abbreviateParty(role.party)}</span>}
-              </Link>
-            )
-          })}
-        </div>
+          <div className={styles.stack}>
+            <section className={styles.tile} aria-labelledby="executive-title">
+              <TileHead icon={Handshake} eyebrow="Power sharing" title="The Executive" id="executive-title">
+                The <a href="https://www.northernireland.gov.uk/" target="_blank" rel="noopener noreferrer">Northern Ireland Executive<span className="sr-only"> (opens in a new tab)</span></a> is the devolved government established under the <a href="https://en.wikipedia.org/wiki/Good_Friday_Agreement" target="_blank" rel="noopener noreferrer">Good Friday Agreement</a>. It operates on a mandatory power-sharing basis, with the First Minister and Deputy First Minister drawn from the largest unionist and nationalist parties respectively.
+              </TileHead>
+              {leaders.length > 0 && (
+                <ul className={styles.rows}>
+                  {leaders.map((m) => (
+                    <Row key={m.personId}>
+                      <Person {...m} role={m.roleTitle} priority />
+                    </Row>
+                  ))}
+                </ul>
+              )}
+              {juniorMinisters.length > 0 && (
+                <ul className={styles.rows}>
+                  {[...juniorMinisters].reverse().map((m) => (
+                    <Row key={m.personId}>
+                      <Person {...m} role="Junior Minister" />
+                    </Row>
+                  ))}
+                </ul>
+              )}
+            </section>
 
-        {juniorMinisters.length > 0 && (
-          <div className={styles.deptGrid} style={{ marginTop: 'var(--s-4)' }}>
-            {[...juniorMinisters].reverse().map((jm) => (
-              <div key={jm.personId} className={styles.deptBlock}>
-                <Link href={`${basePath}/assembly/mlas/${jm.personId}`} className={styles.deptItem}>
-                  <div className={styles.deptMain}>
-                    <div className={styles.deptPhoto}><PersonPhoto imgUrl={jm.imgUrl} name={jm.fullName} sizes="56px" /></div>
-                    <div className={styles.deptInfo}>
-                      <span className={styles.deptLabel}>Junior Minister</span>
-                      <span className={styles.deptMlaName}>{formatMemberName(jm.fullName)}</span>
-                      {jm.constituency && <span className={styles.constituency}>{jm.constituency}</span>}
-                    </div>
-                  </div>
-                  {jm.party && <span className="party-pill" data-party={abbreviateParty(jm.party)}>{abbreviateParty(jm.party)}</span>}
-                </Link>
-              </div>
-            ))}
+            <section className={styles.tile} aria-labelledby="officers-title">
+              <TileHead icon={Gavel} eyebrow="Assembly business" title="Presiding Officers" id="officers-title">
+                The presiding officers chair plenary sessions of the Assembly, maintain order in the chamber and oversee the conduct of Assembly business. The Speaker is elected by members at the start of each mandate.
+              </TileHead>
+              {presidingOfficers.length === 0 ? (
+                <p className={styles.empty}>Presiding officer data is not currently available.</p>
+              ) : (
+                <ul className={styles.rows}>
+                  {presidingOfficers.map((p) => (
+                    <Row key={p.personId}>
+                      <Person {...p} role={p.assemblyRole} />
+                    </Row>
+                  ))}
+                </ul>
+              )}
+            </section>
           </div>
-        )}
+        </div>
       </section>
 
-      <hr className={`section-rule ${styles.mobileRule}`} />
-
-      {/* Presiding Officers */}
-      <section aria-label="Presiding Officers" className={styles.section}>
-        <div className={styles.sectionHead}>
-          <span className={styles.sectionEyebrow}>Assembly business</span>
-          <h2 className={styles.sectionTitle}>
-            <Gavel className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-            Presiding Officers
-          </h2>
-        </div>
-        <p className={styles.sectionBlurb}>
-          The presiding officers chair plenary sessions of the Assembly, maintain order in the chamber and oversee the conduct of Assembly business. The Speaker is elected by members at the start of each mandate.
-        </p>
-        {presidingOfficers.length === 0 ? (
-          <p className={styles.emptyState}>Presiding officer data is not currently available.</p>
-        ) : (
-          <div className={styles.deptGrid}>
-            {presidingOfficers.map((p) => (
-              <div key={p.personId} className={styles.deptBlock}>
-                <Link href={`${basePath}/assembly/mlas/${p.personId}`} className={styles.deptItem}>
-                  <div className={styles.deptMain}>
-                    <div className={styles.deptPhoto}>
-                      <PersonPhoto imgUrl={p.imgUrl} name={p.fullName} sizes="56px" />
-                    </div>
-                    <div className={styles.deptInfo}>
-                      <span className={styles.deptLabel}>{p.assemblyRole}</span>
-                      <span className={styles.deptMlaName}>{formatMemberName(p.fullName)}</span>
-                      {p.constituency && <span className={styles.constituency}>{p.constituency}</span>}
-                    </div>
-                  </div>
-                  {p.party && <span className="party-pill" data-party={abbreviateParty(p.party)}>{abbreviateParty(p.party)}</span>}
-                </Link>
-              </div>
-            ))}
+      <section className={`${styles.band} ${styles.bandTint}`} aria-labelledby="departments-title">
+        <div className="container">
+          <div className={styles.stack}>
+            <div className={styles.tile}>
+              <TileHead icon={Building2} eyebrow="d'Hondt allocation" title="Departments" id="departments-title">
+                Each of the nine departments is led by a minister nominated by one of the Assembly parties. Posts are allocated sequentially using the <a href="https://en.wikipedia.org/wiki/D%27Hondt_method" target="_blank" rel="noopener noreferrer">d&apos;Hondt method<span className="sr-only"> (opens in a new tab)</span></a>, where parties take turns selecting departments in proportion to their seat share.
+              </TileHead>
+              {departments.length === 0 ? (
+                <p className={styles.empty}>Ministerial data is not currently available.</p>
+              ) : (
+                <ul className={`${styles.rows} ${styles.unitRows}`}>
+                  {departments.map((m) => (
+                    <Unit key={m.personId} title={m.department ?? ''} href={m.department ? officialLinks[m.department] : undefined}>
+                      <Person {...m} />
+                    </Unit>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </section>
 
-      {/* Departments */}
-      <section aria-label="Departments" className={styles.section}>
-        <div className={styles.sectionHead}>
-          <span className={styles.sectionEyebrow}>d&apos;Hondt allocation</span>
-          <h2 className={styles.sectionTitle}>
-            <Building2 className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-            Departments
-          </h2>
-        </div>
-        <p className={styles.sectionBlurb}>
-          Each of the nine departments is led by a minister nominated by one of the Assembly parties. Posts are allocated sequentially using the <a href="https://en.wikipedia.org/wiki/D%27Hondt_method" target="_blank" rel="noopener noreferrer">d&apos;Hondt method</a>, where parties take turns selecting departments in proportion to their seat share.
-        </p>
-
-        {departments.length === 0 ? (
-          <p className={styles.emptyState}>Ministerial data is not currently available.</p>
-        ) : (
-          <div className={styles.deptGrid}>
-            {departments.map((m) => (
-              <div key={m.personId} className={styles.deptBlock}>
-                <div className={styles.deptBlockHead}>
-                  {m.department && officialLinks[m.department]
-                    ? <a href={officialLinks[m.department]} target="_blank" rel="noopener noreferrer" className={styles.deptName}>{m.department}</a>
-                    : <span className={styles.deptName}>{m.department ?? ''}</span>
-                  }
-                </div>
-                <Link href={`${basePath}/assembly/mlas/${m.personId}`} className={styles.deptItem}>
-                  <div className={styles.deptMain}>
-                    <div className={styles.deptPhoto}>
-                      <PersonPhoto imgUrl={m.imgUrl} name={m.fullName} sizes="56px" />
-                    </div>
-                    <div className={styles.deptInfo}>
-                      <span className={styles.deptLabel}>Minister</span>
-                      <span className={styles.deptMlaName}>{formatMemberName(m.fullName)}</span>
-                      {m.constituency && <span className={styles.constituency}>{m.constituency}</span>}
-                    </div>
-                  </div>
-                  {m.party && <span className="party-pill" data-party={abbreviateParty(m.party)}>{abbreviateParty(m.party)}</span>}
-                </Link>
-              </div>
-            ))}
+      <section className={`${styles.band} ${styles.bandPage}`} aria-labelledby="chairs-title">
+        <div className="container">
+          <div className={styles.stack}>
+            <div className={styles.tile}>
+              <TileHead icon={ShieldCheck} eyebrow="Scrutiny" title="Committee Chairs" id="chairs-title">
+                The statutory committees shadow each of the nine departments, scrutinising legislation, examining spending and holding ministers to account. Chairs are allocated to parties in proportion to their Assembly seats.
+              </TileHead>
+              {chairs.length === 0 ? (
+                <p className={styles.empty}>Committee chair data is not currently available.</p>
+              ) : (
+                <ul className={`${styles.rows} ${styles.unitRows}`}>
+                  {chairs.map((c) => {
+                    const committee = c.committeeName.trim()
+                    return (
+                      <Unit key={c.personId} title={committee} href={officialLinks[committee]}>
+                        <Person {...c} role={c.assemblyRole} />
+                      </Unit>
+                    )
+                  })}
+                </ul>
+              )}
+            </div>
           </div>
-        )}
-      </section>
-
-      <hr className={`section-rule ${styles.mobileRule}`} />
-
-      {/* Committee chairs */}
-      <section aria-label="Committee Chairs" className={`${styles.section} ${styles.sectionLast}`}>
-        <div className={styles.sectionHead}>
-          <span className={styles.sectionEyebrow}>Scrutiny</span>
-          <h2 className={styles.sectionTitle}>
-            <ShieldCheck className={styles.sectionTitleIcon} size={22} strokeWidth={1.75} aria-hidden="true" />
-            Committee Chairs
-          </h2>
         </div>
-        <p className={styles.sectionBlurb}>
-          The statutory committees shadow each of the nine departments, scrutinising legislation, examining spending and holding ministers to account. Chairs are allocated to parties in proportion to their Assembly seats.
-        </p>
-
-        {chairs.length === 0 ? (
-          <p className={styles.emptyState}>Committee chair data is not currently available.</p>
-        ) : (
-          <div className={styles.deptGrid}>
-            {chairs.map((c) => (
-              <div key={c.personId} className={styles.deptBlock}>
-                <div className={styles.deptBlockHead}>
-                  {officialLinks[c.committeeName.trim()]
-                    ? <a href={officialLinks[c.committeeName.trim()]} target="_blank" rel="noopener noreferrer" className={styles.deptName}>{c.committeeName.trim()}</a>
-                    : <span className={styles.deptName}>{c.committeeName.trim()}</span>
-                  }
-                </div>
-                <Link href={`${basePath}/assembly/mlas/${c.personId}`} className={styles.deptItem}>
-                  <div className={styles.deptMain}>
-                    <div className={styles.deptPhoto}>
-                      <PersonPhoto imgUrl={c.imgUrl} name={c.fullName} sizes="56px" />
-                    </div>
-                    <div className={styles.deptInfo}>
-                      <span className={styles.deptLabel}>Chair</span>
-                      <span className={styles.nameRow}>
-                        <span className={styles.deptMlaName}>{formatMemberName(c.fullName)}</span>
-                        {c.assemblyRole && <span className={styles.speakerBadge}>{c.assemblyRole}</span>}
-                      </span>
-                      {c.constituency && <span className={styles.constituency}>{c.constituency}</span>}
-                    </div>
-                  </div>
-                  {c.party && <span className="party-pill" data-party={abbreviateParty(c.party)}>{abbreviateParty(c.party)}</span>}
-                </Link>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
     </>
   )

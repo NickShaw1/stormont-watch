@@ -16,7 +16,7 @@ import { drizzle } from 'drizzle-orm/neon-http'
 import { and, desc, eq, isNull, or } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 import { apiRoleToSalaryRole } from '../lib/salaries'
-import { updateMemberTermRoles } from '../lib/db/memberWrites'
+import { updateMemberTermRoles, syncMemberRoleHistory, type MemberRoleRow } from '../lib/db/memberWrites'
 import {
   BASE,
   type Db,
@@ -31,8 +31,10 @@ import {
   syncPlenaryItems,
 } from './syncShared'
 
-const CUTOFF = '2022-05-01'
-import { mandateIdForDate, mandateForToday } from '../lib/constants/mandates'
+import { mandateIdForDate, mandateForToday, EARLIEST_MANDATE_START } from '../lib/constants/mandates'
+
+const CUTOFF = EARLIEST_MANDATE_START
+const DIVISION_LOOKBACK_DAYS = 14
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -60,10 +62,12 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
 
     console.log(`[syncNewDivisions] Fetching divisions since ${since}...`)
 
-    // Fetch from the day after the latest division to today
-    const sinceDate = new Date(since)
-    sinceDate.setDate(sinceDate.getDate() + 1)
-    startDate = sinceDate.toISOString().slice(0, 10)
+    // Re-scan a rolling window so a division that failed or was published late is picked up
+    // on a later night. Every write below is idempotent, so re-fetching cannot duplicate rows.
+    const sinceDate = new Date(`${since}T00:00:00.000Z`)
+    sinceDate.setUTCDate(sinceDate.getUTCDate() - DIVISION_LOOKBACK_DAYS)
+    const windowStart = sinceDate.toISOString().slice(0, 10)
+    startDate = windowStart < CUTOFF ? CUTOFF : windowStart
   }
 
   const endDate = endDateOverride ?? new Date().toISOString().slice(0, 10)
@@ -76,6 +80,10 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
   const data = await apiFetch<any>(
     `/plenary.asmx/GetVotesOnDivision_JSON?startdate=${startDate}&enddate=${endDate}`
   )
+
+  if (data === null) {
+    throw new Error(`[syncNewDivisions] API request failed [${startDate} → ${endDate}]`)
+  }
 
   const raw = data?.DivisionList?.Division ?? []
   const newDivisions: any[] = Array.isArray(raw) ? raw : [raw]
@@ -167,7 +175,7 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
       }
     }
 
-    await db
+    const divisionStmt = db
       .insert(schema.divisions)
       .values({
         documentId,
@@ -211,7 +219,9 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
         },
       })
 
+    const divisionMandate = mandateIdForDate(divisionDate)
     const votedIds = new Set<string>()
+    const voteRows: (typeof schema.votes.$inferInsert)[] = []
 
     for (const v of memberVotes) {
       const personId = str(v?.PersonID)
@@ -226,16 +236,13 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
         ? str(v?.Vote)
         : 'ABSTAINED'
 
-      await db
-        .insert(schema.votes)
-        .values({
-          documentId,
-          personId,
-          vote: voteValue,
-          designation: str(v?.Designation) || null,
-          mandate: mandateIdForDate(divisionDate),
-        })
-        .onConflictDoNothing()
+      voteRows.push({
+        documentId,
+        personId,
+        vote: voteValue,
+        designation: str(v?.Designation) || null,
+        mandate: divisionMandate,
+      })
     }
 
     // No shows for all members who were serving at the time of this division
@@ -251,17 +258,21 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
       if (memberStart > divisionDateStr) continue
       if (memberEnd && memberEnd < divisionDateStr) continue
 
-      await db
-        .insert(schema.votes)
-        .values({
-          documentId,
-          personId: member.personId,
-          vote: 'NO_SHOW',
-          designation: null,
-          mandate: mandateIdForDate(divisionDate),
-        })
-        .onConflictDoNothing()
+      voteRows.push({
+        documentId,
+        personId: member.personId,
+        vote: 'NO_SHOW',
+        designation: null,
+        mandate: divisionMandate,
+      })
     }
+
+    // One atomic batch: a division is never left with only some of its votes.
+    const statements = [divisionStmt]
+    for (let n = 0; n < voteRows.length; n += 500) {
+      statements.push(db.insert(schema.votes).values(voteRows.slice(n, n + 500)).onConflictDoNothing() as unknown as typeof divisionStmt)
+    }
+    await db.batch(statements as [typeof divisionStmt, ...(typeof divisionStmt)[]])
 
     processed++
     if (processed % 10 === 0) {
@@ -359,6 +370,7 @@ async function syncCurrentMemberRoles(db: Db) {
 
       const MANDATE_START = todaysMandate.start
       const AD_HOC_RE = /concurrent|ad hoc/i
+      const roleRows: MemberRoleRow[] = []
 
       for (const r of roles) {
         const affiliationId = String(r?.AffiliationId ?? '')
@@ -387,27 +399,19 @@ async function syncCurrentMemberRoles(db: Db) {
         const salaryRole = apiRoleToSalaryRole(roleType, role, organisation)
         if (!salaryRole) continue
 
-        await db
-          .insert(schema.memberRoleHistory)
-          .values({
-            personId,
-            affiliationId,
-            roleType,
-            role,
-            organisation: organisation || null,
-            organisationId: organisationId || null,
-            startDate: effectiveStartDate,
-            endDate,
-            mandate: mandateIdForDate(effectiveStartDate),
-          })
-          .onConflictDoUpdate({
-            target: schema.memberRoleHistory.affiliationId,
-            set: {
-              endDate,
-              updatedAt: new Date(),
-            },
-          })
+        roleRows.push({
+          affiliationId,
+          roleType,
+          role,
+          organisation: organisation || null,
+          organisationId: organisationId || null,
+          startDate: effectiveStartDate,
+          endDate,
+          mandate: mandateIdForDate(effectiveStartDate),
+        })
       }
+
+      await syncMemberRoleHistory(db, personId, todaysMandate.id, roleRows)
 
       processed++
       if (processed % 10 === 0) {
@@ -448,13 +452,24 @@ async function main() {
     }
   }
 
-  const isMonday = new Date().getDay() === 1 || process.argv.includes('--force-monday')
+  const isMonday = new Date().getUTCDay() === 1 || process.argv.includes('--force-monday')
   const isBackfill2022 = process.argv.includes('--backfill-2022')
 
   // Weekly scripts — Mondays only
   let knownMemberIds = new Set<string>()
   let currentMemberIds: string[] = []
   let hasNewMembers = false
+
+  async function loadMembersFromDb() {
+    console.log('Loading member IDs from database...')
+    const allMembers = await db
+      .select({ personId: schema.members.personId, isCurrent: schema.members.isCurrent })
+      .from(schema.members)
+    knownMemberIds = new Set(allMembers.map(m => m.personId))
+    currentMemberIds = allMembers
+      .filter(m => m.isCurrent)
+      .map(m => m.personId)
+  }
 
   if (isMonday) {
     console.log('Monday — running weekly sync scripts...')
@@ -465,33 +480,37 @@ async function main() {
       .from(schema.members)
     const preSyncMemberIds = new Set(preSyncMembers.map(m => m.personId))
 
-    // syncMembers throws on critical failure — keep outside runSync to abort entire sync
-    const memberResult = await syncMembers(db)
-    knownMemberIds = memberResult.knownMemberIds
-    currentMemberIds = memberResult.currentMemberIds
-    syncResults.push({ script: 'syncMembers', status: 'success' })
-
-    const newMemberIds = currentMemberIds.filter(id => !preSyncMemberIds.has(id))
-    if (newMemberIds.length > 0) {
-      console.log(`[main] ${newMemberIds.length} new member(s) detected: ${newMemberIds.join(', ')} — will backfill past 7 days of divisions`)
-      hasNewMembers = true
+    // If the roster sync fails its guards, skip the weekly steps but still run the daily ones.
+    let rosterOk = false
+    try {
+      const memberResult = await syncMembers(db)
+      knownMemberIds = memberResult.knownMemberIds
+      currentMemberIds = memberResult.currentMemberIds
+      syncResults.push({ script: 'syncMembers', status: 'success' })
+      rosterOk = true
+    } catch (err) {
+      console.error('[syncMembers] Failed — weekly steps skipped, daily steps continue:', err)
+      syncResults.push({ script: 'syncMembers', status: 'error', note: String(err) })
+      await loadMembersFromDb()
     }
 
-    await runSync('syncCurrentMemberRoles', () => syncCurrentMemberRoles(db))
-    await runSync('syncContactDetails', () => syncContactDetails(db))
-    await runSync('syncRegisteredInterests', () => syncRegisteredInterests(db))
-    await runSync('syncQuestionStats', () => syncQuestionStats(db))
-    await runSync('syncHansardContributions', () => syncHansardContributions(db))
+    if (rosterOk) {
+      const newMemberIds = currentMemberIds.filter(id => !preSyncMemberIds.has(id))
+      if (newMemberIds.length > 0) {
+        console.log(`[main] ${newMemberIds.length} new member(s) detected: ${newMemberIds.join(', ')} — will backfill past 7 days of divisions`)
+        hasNewMembers = true
+      }
+
+      await runSync('syncCurrentMemberRoles', () => syncCurrentMemberRoles(db))
+      await runSync('syncContactDetails', () => syncContactDetails(db))
+      await runSync('syncRegisteredInterests', () => syncRegisteredInterests(db))
+      await runSync('syncQuestionStats', () => syncQuestionStats(db))
+      await runSync('syncHansardContributions', () => syncHansardContributions(db))
+    }
   } else {
     // On non-Monday days, load member IDs from DB directly for syncNewDivisions
-    console.log('Daily sync — loading member IDs from database...')
-    const allMembers = await db
-      .select({ personId: schema.members.personId, isCurrent: schema.members.isCurrent })
-      .from(schema.members)
-    knownMemberIds = new Set(allMembers.map(m => m.personId))
-    currentMemberIds = allMembers
-      .filter(m => m.isCurrent)
-      .map(m => m.personId)
+    console.log('Daily sync...')
+    await loadMembersFromDb()
   }
 
   // Daily scripts — run every time

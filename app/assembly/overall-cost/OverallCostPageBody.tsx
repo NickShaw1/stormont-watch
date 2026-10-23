@@ -1,21 +1,21 @@
-import { PoundSterling } from 'lucide-react'
-import { getAllMembers, getAllMemberRoleHistories, getTotalExpensesPerMember, mlaImg } from '@/lib/db/queries'
-import { calculateMandateEarnings, apiRoleToSalaryRole, salaryRatesPublished, hasServedOneYear, type RoleInterval } from '@/lib/salaries'
+import { Sigma, Crown, Calculator } from 'lucide-react'
+import { getAllMandateMembers, getAllMemberRoleHistories, getTotalExpensesPerMember, mlaImg } from '@/lib/db/queries'
+import { calculateMandateEarnings, apiRoleToSalaryRole, salaryRatesPublished, type RoleInterval } from '@/lib/salaries'
+import { formatMemberName, gbp } from '@/lib/format'
+import RankingShell, { rankTones } from '../stats/RankingShell'
 import OverallCostListClient from './OverallCostListClient'
-import StatsBreadcrumb from '../stats/StatsBreadcrumb'
-import styles from '../expenses/expenses.module.css'
-import { type Mandate, sittingAdjective } from '@/lib/constants/mandates'
+import { rankRows } from '../stats/rankUtils'
+import type { Mandate } from '@/lib/constants/mandates'
 
 // Shared by the live route and archive routes; mandate/basePath vary per route.
 export default async function OverallCostPageBody({
   mandate,
-  basePath,
 }: {
   mandate: Mandate
   basePath: string
 }) {
-  const [allMembers, allRoleHistories, totalExpensesData] = await Promise.all([
-    getAllMembers(mandate.id),
+  const [allMandateMembers, allRoleHistories, totalExpensesData] = await Promise.all([
+    getAllMandateMembers(mandate.id),
     getAllMemberRoleHistories(mandate.id),
     getTotalExpensesPerMember(mandate.id),
   ])
@@ -30,52 +30,51 @@ export default async function OverallCostPageBody({
   const today = new Date().toISOString().slice(0, 10)
   const ratesPublished = salaryRatesPublished(mandate.id)
 
-  const rows = allMembers
-    .filter(m => m.mandateStart && hasServedOneYear(m.mandateStart, today))
+  const rows = allMandateMembers
     .map(m => {
-      const history = rolesByPerson.get(m.personId) ?? []
-      const roleIntervals: RoleInterval[] = history
+      const roleIntervals: RoleInterval[] = (rolesByPerson.get(m.personId) ?? [])
         .map(r => {
           const salaryRole = apiRoleToSalaryRole(r.roleType, r.role, r.organisation ?? '')
           if (!salaryRole) return null
           return { salaryRole, startDate: r.startDate, endDate: r.endDate ?? null }
         })
         .filter((r): r is RoleInterval => r !== null)
-
       const mandateEarnings = calculateMandateEarnings(roleIntervals, today, mandate.id) ?? 0
       const totalExpenses = expenseTotalsMap.get(m.personId) ?? 0
-
+      const value = mandateEarnings + totalExpenses
       return {
-        personId: m.personId,
+        id: m.personId,
         fullName: m.fullName,
         party: m.party ?? null,
         constituency: m.constituency ?? null,
         imgUrl: mlaImg(m.personId),
-        mandateStart: m.mandateStart ?? null,
-        mandateEarnings,
-        totalExpenses,
-        totalCost: mandateEarnings + totalExpenses,
+        value,
+        display: gbp(value),
+        isCurrent: m.isCurrent,
+        note: !m.isCurrent && m.mandateEnd ? `Left ${new Date(m.mandateEnd).toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' })}` : undefined,
       }
     })
-    .sort((a, b) => b.totalCost - a.totalCost)
+    .sort((a, b) => b.value - a.value)
+
+  const ranked = rankRows(rows, r => r.value)
+  const grand = rows.reduce((s, r) => s + r.value, 0)
+  const top = rows[0]
 
   return (
-    <div className="container">
-      <header className={styles.pageHeader}>
-        <StatsBreadcrumb label="Overall cost" basePath={basePath} />
-        <span className={styles.pageHeaderEyebrow}>Rankings</span>
-        <h1 className={styles.pageHeaderTitle}>
-          <PoundSterling className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
-          Overall cost
-        </h1>
-        <p className={styles.lede}>Total estimated mandate salary plus all published expenses for every {sittingAdjective(mandate)} MLA. MLAs who joined within the last year are excluded as their figures are not comparable. Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</p>
-      </header>
-
+    <RankingShell
+      title="Overall cost"
+      sub={<>Total estimated mandate salary plus all published expenses for every MLA of the {mandate.label} mandate, current and former. Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</>}
+      stats={ratesPublished && rows.length > 0 ? [
+        { tone: rankTones.purple, icon: Sigma, label: 'Combined cost', figure: gbp(grand), sub: `all ${rows.length} MLAs this mandate, current and former` },
+        { tone: rankTones.amber, icon: Crown, label: 'Highest cost', figure: gbp(top.value), sub: formatMemberName(top.fullName) },
+        { tone: rankTones.blue, icon: Calculator, label: 'Average per MLA', figure: gbp(grand / rows.length), sub: `across all ${rows.length} MLAs, current and former` },
+      ] : []}
+    >
       {ratesPublished ? (
-        <OverallCostListClient rows={rows} />
+        <OverallCostListClient rows={ranked} />
       ) : (
         <div className="notice-card">Overall cost figures for the {mandate.label} mandate are not yet available: the salary component depends on the Assembly&apos;s published pay rates, which have not been released for this mandate.</div>
       )}
-    </div>
+    </RankingShell>
   )
 }

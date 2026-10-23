@@ -81,6 +81,9 @@ export async function getMemberVotingHistory(personId: string, mandate: string =
       outcome: divisions.outcome,
       documentId: divisions.documentId,
       divisionType: divisions.divisionType,
+      totalAyes: divisions.totalAyes,
+      totalNoes: divisions.totalNoes,
+      totalAbstains: divisions.totalAbstains,
     })
     .from(votes)
     .innerJoin(divisions, eq(votes.documentId, divisions.documentId))

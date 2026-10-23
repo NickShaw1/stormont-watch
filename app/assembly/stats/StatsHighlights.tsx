@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Vote, Handshake, Users2, Scale, Mic2, PoundSterling, CheckCircle2, Shuffle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import styles from './stats.module.css'
+import styles from './statsKit.module.css'
 import PartyName from '@/components/PartyName'
 
 type FactColor = 'amber' | 'green' | 'coral' | 'purple' | 'teal' | 'pink' | 'orange' | 'indigo' | 'blue'
@@ -112,7 +112,7 @@ export default function StatsHighlights({
   if (highestExpenseClaim) {
     facts.push({
       number: gbpShort(highestExpenseClaim.total),
-      text: `claimed in office expenses by ${highestExpenseClaim.fullName}${highestExpenseClaim.period ? ` in ${highestExpenseClaim.period}` : ''}: the highest of any MLA.`,
+      text: `claimed in expenses by ${highestExpenseClaim.fullName}${highestExpenseClaim.period ? ` in ${highestExpenseClaim.period}` : ''}: the highest of any MLA.`,
       icon: PoundSterling,
       color: 'orange',
     })
@@ -142,16 +142,16 @@ export default function StatsHighlights({
     setTimeout(() => setSpinning(false), 500)
   }
 
-  const FACT_COLOR_CLASS: Record<FactColor, string> = {
-    amber: styles.amber,
-    green: styles.green,
-    coral: styles.coral,
-    purple: styles.purple,
-    teal: styles.teal,
-    pink: styles.pink,
-    orange: styles.orange,
-    indigo: styles.indigo,
-    blue: styles.blue,
+  const FACT_COLOUR: Record<FactColor, string> = {
+    amber: 'var(--sw-accent-warm)',
+    green: 'var(--sw-success)',
+    coral: 'var(--c-coral)',
+    purple: 'var(--c-purple)',
+    teal: 'var(--c-teal)',
+    pink: 'var(--c-pink)',
+    orange: 'var(--c-orange)',
+    indigo: 'var(--c-indigo)',
+    blue: 'var(--sw-accent)',
   }
 
   if (facts.length === 0) return null
@@ -159,29 +159,29 @@ export default function StatsHighlights({
   const activeIndex = factIndex < facts.length ? factIndex : 0
 
   return (
-    <div className={styles.striking}>
-      <div className={styles.strikingStack}>
+    <div className={`${styles.factCard}${swapping ? ` ${styles.factSwapping}` : ''}`}>
+      <div className={styles.factStack}>
         {facts.map((fact, i) => {
           const FactIcon = fact.icon
           const active = i === activeIndex
-          const fade = active && swapping ? ` ${styles.strikingSwapping}` : ''
           return (
-            <div key={i} className={`${styles.strikingSlide}${active ? ` ${styles.strikingSlideActive}` : ''}`} aria-hidden={!active}>
-              <FactIcon className={`${styles.strikingIcon} ${FACT_COLOR_CLASS[fact.color]}${fade}`} size={28} strokeWidth={1.75} aria-hidden="true" />
-              <div className={`${styles.strikingNumber}${fade}`}>{fact.number}</div>
-              <div className={`${styles.strikingText}${fade}`}>{fact.text}</div>
+            <div key={i} className={`${styles.factSlide}${active ? ` ${styles.factSlideActive}` : ''}`} style={{ ['--fc' as string]: FACT_COLOUR[fact.color] }} aria-hidden={!active}>
+              <span className={styles.factIcon}><FactIcon size={36} strokeWidth={1.75} aria-hidden="true" /></span>
+              <div className={styles.factBody}>
+                <span className={styles.factNumber}>{fact.number}</span>
+                <p className={styles.factText}>{fact.text}</p>
+              </div>
             </div>
           )
         })}
       </div>
       <button
         type="button"
-        className={`${styles.strikingShuffle}${spinning ? ` ${styles.strikingShuffleSpin}` : ''}`}
+        className={`${styles.factShuffle}${spinning ? ` ${styles.factSpin}` : ''}`}
         onClick={shuffle}
         aria-label="Show another highlight"
-        title="Show another highlight"
       >
-        <Shuffle size={16} strokeWidth={1.75} aria-hidden="true" />
+        <Shuffle size={20} strokeWidth={2} aria-hidden="true" />
       </button>
     </div>
   )

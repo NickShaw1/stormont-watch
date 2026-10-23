@@ -6,11 +6,11 @@ import { CURRENT_MANDATE } from '@/lib/constants/mandates'
 
 export const metadata: Metadata = {
   title: 'MLA Overall Cost',
-  description: 'All current MLAs ranked by total public cost — mandate salary plus all published expenses.',
+  description: `Every ${CURRENT_MANDATE.label} MLA, current and former, ranked by estimated salary plus all published expenses.`,
   openGraph: {
     title: 'MLA Overall Cost - Stormont Watch',
-    description: 'All current MLAs ranked by total public cost — mandate salary plus all published expenses.',
-    images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
+    description: `Every ${CURRENT_MANDATE.label} MLA, current and former, ranked by estimated salary plus all published expenses.`,
+    images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch: NI Assembly Transparency' }],
   },
   alternates: { canonical: 'https://www.stormontwatch.com/assembly/overall-cost' },
 }

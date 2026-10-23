@@ -35,16 +35,16 @@ export async function syncPlenaryDiary(db: Db): Promise<void> {
   const now = new Date()
   const todayStr = now.toISOString().slice(0, 10)
 
-  const day = now.getDay()
+  const day = now.getUTCDay()
   // On Sat/Sun fetch next week; Mon–Fri fetch current week
   const daysToMonday = day === 6 ? 2 : day === 0 ? 1 : 1 - day
   const monday = new Date(now)
-  monday.setDate(now.getDate() + daysToMonday)
+  monday.setUTCDate(now.getUTCDate() + daysToMonday)
   const startDate = monday.toISOString().slice(0, 10)
 
   // Always fetch current display week + the week after (Mon → Sun+7)
   const endOfNextWeekSunday = new Date(monday)
-  endOfNextWeekSunday.setDate(monday.getDate() + 13) // Mon + 13 = following Sunday
+  endOfNextWeekSunday.setUTCDate(monday.getUTCDate() + 13) // Mon + 13 = following Sunday
   const endDate = endOfNextWeekSunday.toISOString().slice(0, 10)
 
   console.log(`[syncPlenaryDiary] Fetching diary from ${startDate} to ${endDate}...`)
@@ -54,8 +54,7 @@ export async function syncPlenaryDiary(db: Db): Promise<void> {
   )
 
   if (data === null) {
-    console.warn('[syncPlenaryDiary] API call failed — skipping')
-    return
+    throw new Error('[syncPlenaryDiary] API call failed')
   }
 
   const raw: any[] = data?.BusinessDiary?.DiaryItem ?? []

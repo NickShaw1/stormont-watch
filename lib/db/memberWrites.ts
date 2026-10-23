@@ -1,7 +1,7 @@
-import { sql, eq, and } from 'drizzle-orm'
+import { sql, eq, and, notInArray } from 'drizzle-orm'
 import type { NeonHttpDatabase } from 'drizzle-orm/neon-http'
 import * as schema from './schema'
-import { people, memberTerms } from './schema'
+import { people, memberTerms, memberRoleHistory } from './schema'
 import { mandateForToday } from '../constants/mandates'
 
 type Db = NeonHttpDatabase<typeof schema>
@@ -84,4 +84,47 @@ export async function updateMemberTermRoles(
       updatedAt: new Date(),
     })
     .where(and(eq(memberTerms.personId, personId), eq(memberTerms.mandate, mandateForToday().id)))
+}
+
+export type MemberRoleRow = {
+  affiliationId: string
+  roleType: string
+  role: string
+  organisation: string | null
+  organisationId: string | null
+  startDate: string
+  endDate: string | null
+  mandate: string
+}
+
+// Makes a member's salary-relevant role history for a mandate match the source exactly: every field is
+// refreshed (not only the end date), and rows the source no longer returns are removed. Nothing is
+// pruned when the source returned no usable roles, so a failed or empty fetch can never wipe a member.
+export async function syncMemberRoleHistory(db: Db, personId: string, mandateId: string, rows: MemberRoleRow[]): Promise<void> {
+  for (const r of rows) {
+    await db
+      .insert(memberRoleHistory)
+      .values({ personId, ...r })
+      .onConflictDoUpdate({
+        target: memberRoleHistory.affiliationId,
+        set: {
+          roleType: r.roleType,
+          role: r.role,
+          organisation: r.organisation,
+          organisationId: r.organisationId,
+          startDate: r.startDate,
+          endDate: r.endDate,
+          mandate: r.mandate,
+          updatedAt: new Date(),
+        },
+      })
+  }
+  if (rows.length === 0) return
+  await db
+    .delete(memberRoleHistory)
+    .where(and(
+      eq(memberRoleHistory.personId, personId),
+      eq(memberRoleHistory.mandate, mandateId),
+      notInArray(memberRoleHistory.affiliationId, rows.map((r) => r.affiliationId)),
+    ))
 }

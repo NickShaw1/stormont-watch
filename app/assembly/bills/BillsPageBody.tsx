@@ -1,8 +1,8 @@
-import Link from 'next/link'
-import { Scale, CalendarClock, Activity, CheckCircle2 } from 'lucide-react'
+import { Info } from 'lucide-react'
 import { getAllBills, getBillsProgressedThisWeek } from '@/lib/db/queries'
 import { groupProgressedBills } from '@/lib/bills/progressedThisWeekProgress'
-import BillsListClient from './BillsListClient'
+import { computeBillStats } from '@/lib/bills/billStats'
+import BillsExplorer from './BillsExplorer'
 import styles from './bills.module.css'
 import type { Mandate } from '@/lib/constants/mandates'
 
@@ -18,7 +18,6 @@ export interface BillItem {
   passed: boolean | null
   royalAssentDate: string | null
   actTitle: string | null
-  legislationUrl: string | null
   category: 'scheduled' | 'in-progress' | 'completed'
 }
 
@@ -37,7 +36,6 @@ function hasFinalStageFailed(b: { final_stage_has_division: boolean | null; fina
 // Shared by the live route and the archive route; mandate/basePath vary per route.
 export default async function BillsPageBody({
   mandate,
-  basePath,
 }: {
   mandate: Mandate
   basePath: string
@@ -45,7 +43,7 @@ export default async function BillsPageBody({
   const [allBills, progressedData] = await Promise.all([getAllBills(mandate.id), getBillsProgressedThisWeek(mandate.id)])
   const progressedThisWeek = groupProgressedBills(progressedData)
   const today = new Date().toISOString().slice(0, 10)
-const isCompleted = (b: typeof allBills[number]) =>
+  const isCompleted = (b: typeof allBills[number]) =>
     b.royal_assent_date != null ||
     (b.display_stage.toLowerCase() === 'final stage' && new Date(b.latest_date).toISOString().slice(0, 10) < today) ||
     hasFinalStagePassed(b) ||
@@ -69,7 +67,6 @@ const isCompleted = (b: typeof allBills[number]) =>
       passed,
       royalAssentDate: b.royal_assent_date,
       actTitle: b.act_title,
-      legislationUrl: b.legislation_url,
       category,
     }
   }
@@ -95,66 +92,60 @@ const isCompleted = (b: typeof allBills[number]) =>
       return new Date(bDate).getTime() - new Date(aDate).getTime()
     })
 
-  const total = scheduled.length + inProgress.length + completed.length
+  const stats = computeBillStats(scheduled, inProgress, completed)
+
+  const comingUp = scheduled.slice(0, 5).map(b => ({
+    slug: b.slug,
+    billId: b.billId,
+    billType: b.billType,
+    title: b.title,
+    stage: b.currentStage,
+    date: b.latestDate,
+  }))
+
+  const lawShare = stats.total > 0 ? Math.round((stats.becameLaw / stats.total) * 100) : 0
 
   return (
-    <div className="container">
-      <header className={styles.pageHeader}>
-        <span className={styles.pageHeaderEyebrow}>Legislation</span>
-        <h1 className={styles.pageHeaderTitle}>
-          <Scale className={styles.pageHeaderIcon} size={29} strokeWidth={1.75} aria-hidden="true" />
-          Bills &amp; Legislation
-        </h1>
-        <p className={styles.lede}>Tracking every Executive, Private Member and Committee bill introduced since {mandate.startLabel}, from First Reading through to Royal Assent.</p>
-
-        <div className={styles.statStrip}>
-          <div className={styles.statCell}>
-            <div className={styles.statLabelRow}>
-              <span className={styles.statLabel}>Total bills</span>
-              <Scale className={styles.statIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
+    <div className={styles.page}>
+      <BillsExplorer
+        head={(
+          <header className={styles.head}>
+            <span className={styles.eyebrow}>The Assembly</span>
+            <h1 className={styles.h1} id="bills-title">Bills &amp; Legislation</h1>
+            <p className={styles.headSub}>Every Executive, Private Member and Committee bill introduced since {mandate.startLabel}, from First Stage through to Royal Assent.</p>
+          </header>
+        )}
+        summary={(
+          <div className={styles.overview}>
+            <span className={styles.overviewFigure}>{stats.total}</span>
+            <div className={styles.overviewText}>
+              <span className={styles.overviewLabel}>bills introduced in the <span className={styles.nowrap}>{mandate.label}</span> mandate</span>
+              <p className={styles.overviewSub}>
+                {stats.becameLaw} became law ({lawShare}%), {stats.active} are before the Assembly ({stats.scheduled} scheduled for debate, {stats.inProgress} in progress)
+                {stats.awaiting > 0 ? `, and ${stats.awaiting} passed Final Stage and ${stats.awaiting === 1 ? 'is' : 'are'} awaiting Royal Assent` : ''}
+                {stats.failed > 0 ? `. ${stats.failed} ${stats.failed === 1 ? 'was' : 'were'} defeated at a vote` : ''}.
+              </p>
             </div>
-            <div className={styles.statVal}>{total}</div>
           </div>
-          <div className={styles.statCell} data-tone="warm">
-            <div className={styles.statLabelRow}>
-              <span className={styles.statLabel}>Scheduled</span>
-              <CalendarClock className={styles.statIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
-            </div>
-            <div className={styles.statVal}>{scheduled.length}</div>
-          </div>
-          <div className={styles.statCell} data-tone="success">
-            <div className={styles.statLabelRow}>
-              <span className={styles.statLabel}>In progress</span>
-              <Activity className={styles.statIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
-            </div>
-            <div className={styles.statVal}>{inProgress.length}</div>
-          </div>
-          <div className={styles.statCell} data-tone="neutral">
-            <div className={styles.statLabelRow}>
-              <span className={styles.statLabel}>Completed</span>
-              <CheckCircle2 className={styles.statIcon} size={18} strokeWidth={1.75} aria-hidden="true" />
-            </div>
-            <div className={styles.statVal}>{completed.length}</div>
-          </div>
-        </div>
-      </header>
-
-      <BillsListClient
+        )}
+        pipeline={stats.pipeline}
+        outcomes={stats.outcomes}
+        daysToLaw={stats.daysToLaw}
+        total={stats.total}
+        comingUp={comingUp}
         scheduled={scheduled}
         inProgress={inProgress}
         completed={completed}
         progressedThisWeek={progressedThisWeek}
-      />
-
-      <div className={`${styles.noticeBlock} ${styles.sectionLast}`}>
-        {mandate.hadEarlySuspension && (
-          <p className={styles.notice}>The Assembly did not sit between May 2022 and February 2024. No legislation progressed during this period.</p>
-        )}
-        <p className={styles.notice}>
-          Stage information is sourced from the NI Assembly Open Data API. Some stages may not be reflected immediately.{' '}
-          <Link href={`${basePath}/assembly/legislation-guide`}>Not sure what a stage means?</Link>
-        </p>
-      </div>
+        mandateStartLabel={mandate.startLabel}
+      >
+        <div className={styles.notes}>
+          <div className={styles.note}>
+            <span className={`${styles.iconTile} ${styles.tnBlue}`}><Info size={22} strokeWidth={2} aria-hidden="true" /></span>
+            <p>Stage information is sourced from the NI Assembly Open Data API. Some stages may not be reflected immediately.</p>
+          </div>
+        </div>
+      </BillsExplorer>
     </div>
   )
 }

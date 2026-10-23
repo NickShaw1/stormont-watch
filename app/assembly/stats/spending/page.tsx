@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Spending - Stormont Watch',
     description: `Salaries, office expenses and overall public cost of the Northern Ireland Assembly since ${CURRENT_MANDATE.startLabel}.`,
-    images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch — NI Assembly Transparency' }],
+    images: [{ url: 'https://www.stormontwatch.com/opengraph-image-v2.png', width: 1200, height: 630, alt: 'Stormont Watch: NI Assembly Transparency' }],
   },
   alternates: { canonical: 'https://www.stormontwatch.com/assembly/stats/spending' },
 }

@@ -7,7 +7,7 @@ export async function getAmendmentMotionTexts(baseTitle: string, divisionDateStr
   const result = await db.execute(sql`
     SELECT motion_text, title, outcome
     FROM divisions
-    WHERE title LIKE ${baseTitle + ' - Amendment %'}
+    WHERE title LIKE ${baseTitle.replace(/[\\%_]/g, '\\$&') + ' - Amendment %'}
       AND division_date::date = ${divisionDateStr}::date
       AND (
         outcome ILIKE '%carried%'
@@ -40,6 +40,8 @@ export async function getDivisionWithVotes(documentId: string, mandate: string =
       fullName: people.fullName,
       party: memberTerms.party,
       memberDesignation: memberTerms.designation,
+      constituency: memberTerms.constituency,
+      imgUrl: people.imgUrl,
     })
     .from(votes)
     .innerJoin(people, eq(votes.personId, people.personId))
@@ -74,6 +76,10 @@ export async function getAllDivisionsForList(mandate: string = CURRENT_MANDATE) 
       divisionType: divisions.divisionType,
       totalAyes: divisions.totalAyes,
       totalNoes: divisions.totalNoes,
+      nationalistAyes: divisions.nationalistAyes,
+      nationalistNoes: divisions.nationalistNoes,
+      unionistAyes: divisions.unionistAyes,
+      unionistNoes: divisions.unionistNoes,
       title: divisions.title,
       motionText: divisions.motionText,
     })
@@ -108,15 +114,19 @@ export async function getMostCrossCommunityAgreement(mandate: string = CURRENT_M
       mandate,
       updated_at as "updatedAt",
       CASE
-        WHEN nationalist_ayes > nationalist_noes AND unionist_ayes > unionist_noes THEN
+        WHEN nationalist_ayes > nationalist_noes AND unionist_ayes > unionist_noes
+          AND (other_ayes + other_noes = 0 OR other_ayes > other_noes) THEN
           LEAST(
             nationalist_ayes::float / NULLIF(nationalist_ayes + nationalist_noes, 0),
-            unionist_ayes::float / NULLIF(unionist_ayes + unionist_noes, 0)
+            unionist_ayes::float / NULLIF(unionist_ayes + unionist_noes, 0),
+            COALESCE(other_ayes::float / NULLIF(other_ayes + other_noes, 0), 1)
           )
-        WHEN nationalist_noes > nationalist_ayes AND unionist_noes > unionist_ayes THEN
+        WHEN nationalist_noes > nationalist_ayes AND unionist_noes > unionist_ayes
+          AND (other_ayes + other_noes = 0 OR other_noes > other_ayes) THEN
           LEAST(
             nationalist_noes::float / NULLIF(nationalist_ayes + nationalist_noes, 0),
-            unionist_noes::float / NULLIF(unionist_ayes + unionist_noes, 0)
+            unionist_noes::float / NULLIF(unionist_ayes + unionist_noes, 0),
+            COALESCE(other_noes::float / NULLIF(other_ayes + other_noes, 0), 1)
           )
         ELSE 0
       END as agreement_score
@@ -443,4 +453,24 @@ export async function getBlocAgreement(mandate: string = CURRENT_MANDATE): Promi
     totalDivisions,
     agreePct: comparable > 0 ? Math.round((agreed / comparable) * 1000) / 10 : 0,
   }
+}
+
+export type PartyVoteCounts = { party: string; AYE: number; NO: number; ABSTAINED: number; NO_SHOW: number }
+
+export async function getDivisionPartyVotes(documentId: string, mandate: string = CURRENT_MANDATE): Promise<PartyVoteCounts[]> {
+  const result = await db.execute(sql`
+    SELECT COALESCE(mt.party, 'Independent') AS party, v.vote, COUNT(*)::int AS n
+    FROM votes v
+    LEFT JOIN member_terms mt ON mt.person_id = v.person_id AND mt.mandate = ${mandate}
+    WHERE v.document_id = ${documentId}
+      AND (v.vote <> 'NO_SHOW' OR mt.assembly_role IS DISTINCT FROM 'Speaker')
+    GROUP BY COALESCE(mt.party, 'Independent'), v.vote
+  `)
+  const byParty = new Map<string, PartyVoteCounts>()
+  for (const row of result.rows as { party: string; vote: string; n: number }[]) {
+    const entry = byParty.get(row.party) ?? { party: row.party, AYE: 0, NO: 0, ABSTAINED: 0, NO_SHOW: 0 }
+    if (row.vote === 'AYE' || row.vote === 'NO' || row.vote === 'ABSTAINED' || row.vote === 'NO_SHOW') entry[row.vote] += row.n
+    byParty.set(row.party, entry)
+  }
+  return [...byParty.values()]
 }

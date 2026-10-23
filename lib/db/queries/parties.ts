@@ -119,7 +119,7 @@ export interface PartyStats {
 }
 
 interface PartyDetail extends PartyStats {
-  mlas: { personId: string; fullName: string; imgUrl: string | null; constituency: string | null; assemblyRole: string | null; assemblyRoleEnd: string | null; attendancePct: number | null }[]
+  mlas: { personId: string; fullName: string; imgUrl: string | null; constituency: string | null; assemblyRole: string | null; assemblyRoleEnd: string | null; attendancePct: number | null; attendancePctExact: number | null }[]
 }
 
 function makePartySlug(party: string): string {
@@ -229,7 +229,19 @@ export async function getPartyBySlug(slug: string, mandate: string = CURRENT_MAN
             ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
           ), 0)
         )
-      END as attendance_pct
+      END as attendance_pct,
+      CASE
+        WHEN m.assembly_role = 'Speaker' AND m.assembly_role_end IS NULL THEN NULL
+        ELSE
+          COUNT(v.id) FILTER (WHERE v.vote != 'NO_SHOW' AND
+            (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::timestamptz) AND
+            ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
+          ) * 100.0 /
+          NULLIF(COUNT(v.id) FILTER (WHERE
+            (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::timestamptz) AND
+            ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
+          ), 0)
+      END as attendance_exact
     FROM members m
     LEFT JOIN votes v ON m.person_id = v.person_id AND v.mandate = ${mandate}
     LEFT JOIN divisions d ON v.document_id = d.document_id AND d.mandate = ${mandate}
@@ -241,7 +253,7 @@ export async function getPartyBySlug(slug: string, mandate: string = CURRENT_MAN
     ORDER BY SPLIT_PART(REGEXP_REPLACE(m.full_name, '^(Mr|Mrs|Miss|Ms|Dr|Lord|Lady|Sir)\s+', '', 'i'), ' ', -1) ASC
   `)
 
-  type MlaRow = { person_id: string; full_name: string; img_url: string | null; constituency: string | null; assembly_role: string | null; assembly_role_end: string | null; attendance_pct: number | null }
+  type MlaRow = { person_id: string; full_name: string; img_url: string | null; constituency: string | null; assembly_role: string | null; assembly_role_end: string | null; attendance_pct: number | null; attendance_exact: string | number | null }
 
   const mlas = (mlasResult.rows as MlaRow[]).map((r) => ({
     personId: r.person_id,
@@ -251,6 +263,7 @@ export async function getPartyBySlug(slug: string, mandate: string = CURRENT_MAN
     assemblyRole: r.assembly_role,
     assemblyRoleEnd: r.assembly_role_end,
     attendancePct: r.attendance_pct !== null ? Number(r.attendance_pct) : null,
+    attendancePctExact: r.attendance_exact !== null && r.attendance_exact !== undefined ? Number(r.attendance_exact) : null,
   }))
 
   return { ...match, mlas }
@@ -276,7 +289,7 @@ export interface PartyVoteStats {
   total: number
   highestMla: MlaAttendanceStat
   lowestMla: MlaAttendanceStat
-  trend: { month: string; attendancePct: number }[]
+  trend: { month: string; attendancePct: number; assemblyPct: number | null }[]
   recentDivisions: {
     documentId: string
     subject: string
@@ -288,7 +301,7 @@ export interface PartyVoteStats {
 }
 
 export async function getPartyAssemblyStats(party: string, mandate: string = CURRENT_MANDATE): Promise<PartyVoteStats> {
-  const [votesResult, mlaResult, trendResult, divisionsResult] = await Promise.all([
+  const [votesResult, mlaResult, trendResult, divisionsResult, assemblyTrendResult] = await Promise.all([
     db.execute(sql`
       SELECT
         COUNT(CASE WHEN v.vote = 'AYE' THEN 1 END) as aye,
@@ -309,7 +322,7 @@ export async function getPartyAssemblyStats(party: string, mandate: string = CUR
       AND d.mandate = ${mandate}
       AND m.party = ${party}
       AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
-      AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
+      AND (m.mandate_end IS NULL OR d.division_date::date <= m.mandate_end::date)
       -- Only the Speaker is excluded (they don't vote by convention); Deputy/Principal Deputy
       -- Speaker do vote regularly, so their full record counts, including while presiding.
       AND ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
@@ -339,7 +352,7 @@ export async function getPartyAssemblyStats(party: string, mandate: string = CUR
         AND v.mandate = ${mandate}
         AND m.party = ${party}
         AND m.is_current = true
-        AND (m.assembly_role IS NULL OR m.assembly_role NOT ILIKE '%speaker%')
+        AND (m.assembly_role IS NULL OR m.assembly_role NOT ILIKE '%speaker%' OR m.assembly_role_end IS NOT NULL)
         AND NOT EXISTS (
           SELECT 1 FROM ministers mi
           WHERE mi.person_id = m.person_id
@@ -366,7 +379,7 @@ export async function getPartyAssemblyStats(party: string, mandate: string = CUR
       AND d.mandate = ${mandate}
       AND m.party = ${party}
       AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
-      AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
+      AND (m.mandate_end IS NULL OR d.division_date::date <= m.mandate_end::date)
       -- Only the Speaker is excluded (they don't vote by convention); Deputy/Principal Deputy
       -- Speaker do vote regularly, so their full record counts, including while presiding.
       AND ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
@@ -374,49 +387,61 @@ export async function getPartyAssemblyStats(party: string, mandate: string = CUR
       ORDER BY month_date ASC
     `),
     db.execute(sql`
-      SELECT document_id, subject, title, division_date, outcome, party_vote
-      FROM (
-        SELECT DISTINCT
-          d.document_id,
-          d.subject,
-          d.title,
-          d.division_date::text as division_date,
-          d.outcome,
-          d.division_date as sort_date,
-          (
-            SELECT v2.vote
-            FROM votes v2
-            JOIN members m2 ON m2.person_id = v2.person_id
-            WHERE v2.document_id = d.document_id
-            AND v2.mandate = ${mandate}
-            AND m2.party = ${party}
-            AND m2.mandate = ${mandate}
-            GROUP BY v2.vote
-            ORDER BY COUNT(*) DESC
-            LIMIT 1
-          ) as party_vote
-        FROM divisions d
-        JOIN votes v ON v.document_id = d.document_id
-        JOIN members m ON m.person_id = v.person_id
-        WHERE m.party = ${party}
-        AND m.mandate = ${mandate}
-        AND v.mandate = ${mandate}
-        AND d.mandate = ${mandate}
-      ) sub
-      ORDER BY sort_date DESC
+      SELECT
+        d.document_id, d.subject, d.title, d.division_date::text as division_date, d.outcome,
+        COUNT(*) FILTER (WHERE v.vote = 'AYE') as aye,
+        COUNT(*) FILTER (WHERE v.vote = 'NO') as no,
+        COUNT(*) FILTER (WHERE v.vote = 'ABSTAINED') as abstained,
+        COUNT(*) FILTER (WHERE v.vote = 'NO_SHOW') as no_show
+      FROM divisions d
+      JOIN votes v ON v.document_id = d.document_id AND v.mandate = ${mandate}
+      JOIN members m ON m.person_id = v.person_id AND m.mandate = ${mandate}
+      WHERE m.party = ${party}
+      AND d.mandate = ${mandate}
+      AND ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
+      GROUP BY d.document_id, d.subject, d.title, d.division_date, d.outcome
+      ORDER BY d.division_date DESC
       LIMIT 5
+    `),
+    db.execute(sql`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', d.division_date), 'Mon YYYY') as month,
+        ROUND(
+          COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) * 100.0 /
+          NULLIF(COUNT(*), 0), 1
+        ) as attendance_pct
+      FROM votes v
+      JOIN members m ON m.person_id = v.person_id
+      JOIN divisions d ON d.document_id = v.document_id
+      WHERE m.mandate = ${mandate}
+      AND v.mandate = ${mandate}
+      AND d.mandate = ${mandate}
+      AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
+      AND (m.mandate_end IS NULL OR d.division_date::date <= m.mandate_end::date)
+      AND ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
+      GROUP BY DATE_TRUNC('month', d.division_date)
     `),
   ])
 
   type VoteRow = { aye: string; no: string; abstained: string; no_show: string; attendance_pct: string }
   type MlaRow = { person_id: string; full_name: string; attendance_pct: string; present: string; total: string; constituency: string | null }
   type TrendRow = { month: string; attendance_pct: string }
-  type DivRow = { document_id: string; subject: string; title: string | null; division_date: string; outcome: string | null; party_vote: string | null }
+  type DivRow = { document_id: string; subject: string; title: string | null; division_date: string; outcome: string | null; aye: string; no: string; abstained: string; no_show: string }
+
+  // The party's stance is what most of its MLAs did, and not voting counts as something they did.
+  // An exact tie between the leading options is SPLIT, so the result never depends on row order.
+  const stanceOf = (r: DivRow): string => {
+    const tallies = [['AYE', parseInt(r.aye)], ['NO', parseInt(r.no)], ['ABSTAINED', parseInt(r.abstained)], ['NO_SHOW', parseInt(r.no_show)]] as const
+    const top = Math.max(...tallies.map((t) => t[1]))
+    const leaders = tallies.filter((t) => t[1] === top)
+    return leaders.length > 1 ? 'SPLIT' : leaders[0][0]
+  }
 
   type VoteRowFull = VoteRow & { present: string; total: string }
   const vr = votesResult.rows[0] as VoteRowFull
   const mlaRows = mlaResult.rows as MlaRow[]
   const trendRows = trendResult.rows as TrendRow[]
+  const assemblyByMonth = new Map((assemblyTrendResult.rows as TrendRow[]).map((r) => [r.month, parseFloat(r.attendance_pct)]))
   const divRows = divisionsResult.rows as DivRow[]
 
   const sorted = [...mlaRows].sort((a, b) => parseFloat(b.attendance_pct) - parseFloat(a.attendance_pct))
@@ -446,40 +471,45 @@ export async function getPartyAssemblyStats(party: string, mandate: string = CUR
     total: parseInt(vr?.total ?? '0'),
     highestMla,
     lowestMla,
-    trend: trendRows.map((r) => ({ month: r.month, attendancePct: parseFloat(r.attendance_pct) })),
+    trend: trendRows.map((r) => ({ month: r.month, attendancePct: parseFloat(r.attendance_pct), assemblyPct: assemblyByMonth.get(r.month) ?? null })),
     recentDivisions: divRows.map((r) => ({
       documentId: r.document_id,
       subject: r.subject,
       title: r.title,
       divisionDate: r.division_date,
       outcome: r.outcome,
-      partyVote: r.party_vote,
+      partyVote: stanceOf(r),
     })),
   }
 }
 
+// Mean of each current MLA's own attendance, by party, to one decimal: the same figure as each
+// party page (only the Speaker is excluded, and a serving Speaker is dropped entirely).
 export async function getPartyAttendanceAll(mandate: string = CURRENT_MANDATE): Promise<{ party: string; attendancePct: number; memberCount: number }[]> {
   const result = await db.execute(sql`
     SELECT
-      m.party,
-      COUNT(DISTINCT m.person_id) as member_count,
-      ROUND(
-        COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) * 100.0 /
-        NULLIF(COUNT(*), 0), 1
-      ) as attendance_pct
-    FROM votes v
-    JOIN members m ON m.person_id = v.person_id
-    JOIN divisions d ON d.document_id = v.document_id
-    WHERE m.mandate = ${mandate}
-    AND v.mandate = ${mandate}
-    AND d.mandate = ${mandate}
-    AND m.party IS NOT NULL
-    AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
-    AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
-    -- Only the Speaker is excluded (they don't vote by convention); Deputy/Principal Deputy
-    -- Speaker do vote regularly, so their full record counts, including while presiding.
-    AND ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
-    GROUP BY m.party
+      party,
+      COUNT(*) as member_count,
+      ROUND(AVG(attendance_pct)::numeric, 1) as attendance_pct
+    FROM (
+      SELECT
+        m.person_id,
+        m.party,
+        COUNT(*) FILTER (WHERE v.vote != 'NO_SHOW') * 100.0 / COUNT(*) as attendance_pct
+      FROM members m
+      JOIN votes v ON m.person_id = v.person_id
+      JOIN divisions d ON d.document_id = v.document_id
+      WHERE m.is_current = true
+      AND m.mandate = ${mandate}
+      AND v.mandate = ${mandate}
+      AND d.mandate = ${mandate}
+      AND m.party IS NOT NULL
+      AND NOT (COALESCE(m.assembly_role, '') = 'Speaker' AND m.assembly_role_end IS NULL)
+      AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
+      AND ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
+      GROUP BY m.person_id, m.party
+    ) per_mla
+    GROUP BY party
     ORDER BY attendance_pct DESC
   `)
   type Row = { party: string; attendance_pct: unknown; member_count: unknown }
@@ -509,7 +539,7 @@ export async function getAllPartyAttendanceTrends(mandate: string = CURRENT_MAND
     AND d.mandate = ${mandate}
     AND m.party IS NOT NULL
     AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
-    AND (m.mandate_end IS NULL OR d.division_date <= m.mandate_end::date)
+    AND (m.mandate_end IS NULL OR d.division_date::date <= m.mandate_end::date)
     -- Only the Speaker is excluded (they don't vote by convention); Deputy/Principal Deputy
     -- Speaker do vote regularly, so their full record counts, including while presiding.
     AND ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
@@ -767,4 +797,67 @@ export async function getBigTwoAgreedDivisions(mandate: string = CURRENT_MANDATE
       wonOverall: matchedOutcome(sharedVote, r.outcome),
     }
   })
+}
+
+
+export interface PartyTrendRanks {
+  rankAvgMonth: number
+  rankMonthsAbove: number
+  partyCount: number
+}
+
+// Ranks this party against every party on the two month-by-month measures shown on its Attendance tab.
+// Higher attendance ranks first. A month counts as above the Assembly only when the party is more than 1 point ahead.
+export async function getPartyTrendRanks(party: string, mandate: string = CURRENT_MANDATE): Promise<PartyTrendRanks | null> {
+  const result = await db.execute(sql`
+    SELECT
+      m.party,
+      TO_CHAR(DATE_TRUNC('month', d.division_date), 'Mon YYYY') as month,
+      COUNT(CASE WHEN v.vote != 'NO_SHOW' THEN 1 END) as present,
+      COUNT(*) as total
+    FROM votes v
+    JOIN members m ON m.person_id = v.person_id
+    JOIN divisions d ON d.document_id = v.document_id
+    WHERE m.mandate = ${mandate}
+    AND v.mandate = ${mandate}
+    AND d.mandate = ${mandate}
+    AND m.party IS NOT NULL
+    AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::date)
+    AND (m.mandate_end IS NULL OR d.division_date::date <= m.mandate_end::date)
+    AND ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
+    GROUP BY m.party, DATE_TRUNC('month', d.division_date)
+  `)
+  type Row = { party: string; month: string; present: string; total: string }
+  const rows = result.rows as Row[]
+  const round1 = (n: number) => Math.round(n * 10) / 10
+
+  const assembly = new Map<string, { present: number; total: number }>()
+  for (const r of rows) {
+    const a = assembly.get(r.month) ?? { present: 0, total: 0 }
+    a.present += parseInt(r.present)
+    a.total += parseInt(r.total)
+    assembly.set(r.month, a)
+  }
+  const assemblyPct = new Map([...assembly].map(([month, a]) => [month, round1((a.present * 100) / a.total)]))
+
+  const byParty = new Map<string, { avg: number; above: number; months: number }>()
+  const grouped = new Map<string, Row[]>()
+  for (const r of rows) grouped.set(r.party, [...(grouped.get(r.party) ?? []), r])
+  for (const [name, list] of grouped) {
+    const pcts = list.map((r) => ({ month: r.month, pct: round1((parseInt(r.present) * 100) / parseInt(r.total)) }))
+    const compared = pcts.filter((p) => assemblyPct.has(p.month))
+    if (compared.length === 0) continue
+    const avg = compared.reduce((x, p) => x + p.pct, 0) / compared.length
+    const above = compared.filter((p) => p.pct - (assemblyPct.get(p.month) as number) > 1).length
+    byParty.set(name, { avg, above, months: compared.length })
+  }
+  const mine = byParty.get(party)
+  if (!mine) return null
+  const all = [...byParty.values()]
+  const rankBy = (value: (x: { avg: number; above: number; months: number }) => number) => 1 + all.filter((x) => value(x) > value(mine)).length
+  return {
+    rankAvgMonth: rankBy((x) => x.avg),
+    rankMonthsAbove: rankBy((x) => x.above / x.months),
+    partyCount: all.length,
+  }
 }
