@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import MandateSwitcher from './MandateSwitcher'
-import { HOME_LINK, PRIMARY_LINKS, ABOUT_LINKS, type NavItem } from '@/lib/constants/navigation'
+import { HOME_LINK, PRIMARY_LINKS, type NavItem } from '@/lib/constants/navigation'
 import styles from './MobileMenu.module.css'
 
 const INERT_SELECTOR = '#main-content, footer, .skip-link'
@@ -98,12 +98,6 @@ export default function MobileMenu({
 
           <MandateSwitcher variant="list" onNavigate={onClose} />
         </div>
-
-        <nav className={styles.footer} aria-label="About">
-          {ABOUT_LINKS.map(({ href, label }) => (
-            <Link key={href} href={href} className={styles.footLink} onClick={onClose}>{label}</Link>
-          ))}
-        </nav>
       </div>
     </>,
     document.body,

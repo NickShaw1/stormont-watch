@@ -136,8 +136,8 @@ export default async function ActivityPageBody({
       <span className={styles.hSub}>{sub}</span>
     </li>
   )
-  const viewAll = (href: string, label = 'View full rankings') => (
-    <Link href={`${basePath}${href}`} className={styles.linkPill}>{label}<ArrowRight size={16} strokeWidth={2} aria-hidden="true" /></Link>
+  const viewAll = (href: string, label = 'View full rankings', hideOnPhone = false) => (
+    <Link href={`${basePath}${href}`} className={hideOnPhone ? `${styles.linkPill} ${styles.hideOnPhone}` : styles.linkPill}>{label}<ArrowRight size={16} strokeWidth={2} aria-hidden="true" /></Link>
   )
 
   const questions = questionTop5.length > 0 ? (
@@ -149,7 +149,7 @@ export default async function ActivityPageBody({
             <h2 className={styles.h2} id="questions-heading">Questions</h2>
             <p className={styles.sectionSub}>Who asks the most questions. Excludes current ministers, the Speaker and MLAs no longer sitting.</p>
           </div>
-          {viewAll('/assembly/questions')}
+          {viewAll('/assembly/questions', undefined, true)}
         </div>
         <div className={styles.stack}>
           {rankPair('q', styles.tnBlue, { title: 'Most questions asked', Icon: ArrowUpWideNarrow, rows: toRows(questionTop5, i => num(questionTop5[i].total)) }, { title: 'Fewest questions asked', Icon: ArrowDownWideNarrow, rows: toRows(questionBottom5, i => num(questionBottom5[i].total)) })}

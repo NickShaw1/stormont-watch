@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { CheckCircle2, XCircle, MinusCircle, ChevronDown, Search, FileText, Layers, ListFilter, Check, X, Minus, UserX, LayoutGrid, Users, User } from 'lucide-react'
 import SheetSelect from '@/app/assembly/mlas/[id]/SheetSelect'
@@ -43,6 +43,18 @@ export default function MobileVote({ ballots, verdict, passed, detail, insight, 
   const [filter, setFilter] = useState<VoteKey | 'ALL'>('ALL')
   const [query, setQuery] = useState('')
   const [showText, setShowText] = useState(false)
+  const [clamped, setClamped] = useState(true)
+  const motionRef = useRef<HTMLParagraphElement>(null)
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = motionRef.current
+      if (el && !showText) setClamped(el.scrollHeight > el.clientHeight + 1)
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [showText, originalText])
 
   const counts = useMemo(() => {
     const c: Record<VoteKey, number> = { AYE: 0, NO: 0, ABSTAINED: 0, NO_SHOW: 0 }
@@ -90,7 +102,7 @@ export default function MobileVote({ ballots, verdict, passed, detail, insight, 
       <span className={styles.mWho}>
         <Link href={`${basePath}/assembly/mlas/${b.personId}`} className={styles.mLink}>{formatMemberName(b.fullName)}</Link>
         {showParty && (
-          <span className={styles.mSub}><i style={{ background: partyBorderColor(b.party) }} aria-hidden="true" />{shortOf(partyKey(b))}</span>
+          <span className={`party-pill ${styles.mParty}`} data-party={shortOf(partyKey(b))} title={partyKey(b)}>{shortOf(partyKey(b))}</span>
         )}
       </span>
       {showVote && <span className={styles.mVote} data-vote={b.vote}>{VOTE_LABEL[b.vote]}</span>}
@@ -125,7 +137,7 @@ export default function MobileVote({ ballots, verdict, passed, detail, insight, 
           </div>
           <div className={styles.mMotionBody} data-open={showText ? '' : undefined}>
             <h3>{isAmendment ? 'Original motion' : amendTexts.length > 0 ? 'Original motion' : 'Motion'}</h3>
-            <p>{originalText}</p>
+            <p ref={motionRef}>{originalText}</p>
             {showText && amendTexts.length > 0 && (
               <>
                 <h3>{isAmendment ? 'The amendment' : 'Amended to'}</h3>
@@ -133,10 +145,12 @@ export default function MobileVote({ ballots, verdict, passed, detail, insight, 
               </>
             )}
           </div>
-          <button type="button" className={styles.mMotionBtn} aria-expanded={showText} onClick={() => setShowText(!showText)}>
-            {showText ? 'Show less' : amendTexts.length > 0 ? 'Read the motion and amendment' : 'Read the full motion'}
-            <ChevronDown size={16} strokeWidth={2} aria-hidden="true" data-open={showText ? '' : undefined} />
-          </button>
+          {(clamped || amendTexts.length > 0 || showText) && (
+            <button type="button" className={styles.mMotionBtn} aria-expanded={showText} onClick={() => setShowText(!showText)}>
+              {showText ? 'Show less' : amendTexts.length > 0 ? 'Read the motion and amendment' : 'Read the full motion'}
+              <ChevronDown size={16} strokeWidth={2} aria-hidden="true" data-open={showText ? '' : undefined} />
+            </button>
+          )}
         </section>
       )}
 
@@ -261,9 +275,14 @@ export default function MobileVote({ ballots, verdict, passed, detail, insight, 
           {VOTE_ORDER.map((v) => {
             const group = list.filter((b) => b.vote === v)
             if (group.length === 0) return null
+            const GroupIcon = VOTE_ICON[v]
             return (
-              <section key={v} className={styles.mGroup} data-vote={v} aria-label={VOTE_LABEL[v]}>
-                <h3 className={styles.mGroupHead}><i aria-hidden="true" />{VOTE_LABEL[v]}<span>{group.length}</span></h3>
+              <section key={v} className={styles.mGroup} data-vote={v} aria-labelledby={`m-group-${v}`}>
+                <div className={styles.mGroupTop}>
+                  <span className={styles.mGroupIcon}><GroupIcon size={22} strokeWidth={2.5} aria-hidden="true" /></span>
+                  <h3 className={styles.mGroupName} id={`m-group-${v}`}>{VOTE_LABEL[v]}</h3>
+                  <span className={styles.countPill}>{group.length}<span className="sr-only"> MLAs</span></span>
+                </div>
                 <ul className={styles.mRows}>{group.map((b) => row(b, true, false))}</ul>
               </section>
             )

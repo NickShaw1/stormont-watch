@@ -364,7 +364,8 @@
   .date { display: none; }
   .dayText { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
   .dayInfo { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  .empty { flex-wrap: wrap; }
+  .empty { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--s-4); }
+  .empty .pillBtn { grid-column: 1 / -1; justify-content: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {

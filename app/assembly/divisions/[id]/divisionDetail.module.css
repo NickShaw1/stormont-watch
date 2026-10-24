@@ -302,15 +302,16 @@
 .mChip[aria-pressed='true'] { background: var(--sw-accent-strong-solid); border-color: transparent; color: #ffffff; }
 .mChip[aria-pressed='true'] span { color: rgba(255, 255, 255, 0.78); }
 .mChip:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
-.mGroup { --k: var(--v-dnv); display: flex; flex-direction: column; gap: var(--s-3); }
+.mGroup { --k: var(--v-dnv); display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-5); border-radius: var(--r-lg); background: var(--tile-bg); border: 1px solid var(--sw-border); box-shadow: var(--lift); }
 .mGroup[data-vote='AYE'] { --k: var(--v-aye); }
 .mGroup[data-vote='NO'] { --k: var(--v-no); }
 .mGroup[data-vote='ABSTAINED'] { --k: var(--v-abs); }
-.mGroupHead { display: flex; align-items: center; gap: var(--s-2); margin: 0; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sw-text-secondary); }
-.mGroupHead i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--k); }
-.mGroupHead span { margin-left: auto; font-size: var(--fs-sm); letter-spacing: 0; color: var(--sw-text-primary); font-variant-numeric: tabular-nums; }
-.mRows { list-style: none; margin: var(--s-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-.mPanel .mRows { margin: 0; gap: var(--s-2); }
+.mGroupTop { display: flex; align-items: center; gap: var(--s-3); }
+.mGroupIcon { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--k); color: #ffffff; }
+.mGroup[data-vote='ABSTAINED'] .mGroupIcon { color: #1a1d21; }
+.mGroupName { margin: 0; min-width: 0; font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.02em; color: var(--sw-text-primary); }
+.mRows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s-2); }
+.mParty { align-self: flex-start; }
 .mRow { --k: var(--v-dnv); --ki: var(--i-dnv); position: relative; display: flex; align-items: center; gap: var(--s-3); min-height: 56px; padding: var(--s-2) var(--s-3); border-radius: 14px; background: color-mix(in srgb, var(--sw-accent) 6%, var(--tile-bg)); }
 .mAvatar { flex: none; width: 40px; height: 40px; border-radius: 12px; overflow: hidden; background: var(--sw-surface-subtle); }
 .mAvatar > span { display: block; width: 100% !important; height: 100% !important; min-width: 0 !important; border: 0 !important; border-radius: 0 !important; outline: none !important; }
@@ -321,8 +322,6 @@
 .mLink::before { content: ''; position: absolute; inset: 0; border-radius: 14px; }
 .mLink:focus-visible { outline: none; }
 .mLink:focus-visible::before { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
-.mSub { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--sw-text-secondary); }
-.mSub i { flex: none; width: 10px; height: 10px; border-radius: 3px; }
 .mVote { flex: none; display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--k, var(--v-dnv)) 16%, var(--tile-bg)); color: var(--ki, var(--i-dnv)); font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; }
 .mVote[data-vote='AYE'] { --k: var(--v-aye); --ki: var(--i-aye); }
 .mVote[data-vote='NO'] { --k: var(--v-no); --ki: var(--i-no); }
@@ -384,7 +383,7 @@
 }
 
 @media (forced-colors: active) {
-  .boardCell, .partySquare, .mPartyTag, .mChartBar > span, .mBar > span, .mSq, .mSub i, .mKey i, .desigLabel i, .ledgerKey i, .squares i, .stack > span, .pfDot, .lobbyIcon { forced-color-adjust: none; }
+  .boardCell, .partySquare, .mPartyTag, .mChartBar > span, .mBar > span, .mSq, .mGroupIcon, .mKey i, .desigLabel i, .ledgerKey i, .squares i, .stack > span, .pfDot, .lobbyIcon { forced-color-adjust: none; }
 }
 
 @media (max-width: 359px) {
