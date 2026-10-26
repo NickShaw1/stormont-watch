@@ -226,7 +226,10 @@
 .kpi .statValue { order: 1; flex: 1; display: flex; align-items: flex-end; margin: 0; font-size: var(--fs-num-md); font-weight: 700; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--sw-text-primary); }
 .kpi .statValue .ordinal { margin-left: 2px; font-size: 0.42em; font-weight: 700; letter-spacing: 0; line-height: 0; vertical-align: 1.05em; }
 .kpi .statLabel { order: 2; font-size: var(--fs-sm); font-weight: 600; color: var(--sw-text-secondary); }
-.empty { margin: 0; padding: var(--s-6); color: var(--sw-text-secondary); }
+.empty { display: flex; align-items: center; gap: var(--s-4); padding: var(--s-5) var(--s-6); border-radius: var(--r-lg); background: var(--tile-bg); border: 1px solid var(--sw-border); box-shadow: var(--lift); }
+.emptyBody { flex: 1; min-width: 0; }
+.emptyTitle { margin: 0 0 2px; font-size: var(--fs-xl); font-weight: 700; letter-spacing: -0.02em; color: var(--sw-text-primary); }
+.emptySub { margin: 0; font-size: var(--fs-base); line-height: 1.55; color: var(--sw-text-secondary); }
 
 /* Legislation */
 .rail { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(40px, 6vw, 96px); align-items: start; }
@@ -350,6 +353,8 @@
   .billRow { flex-direction: column; align-items: stretch; gap: var(--s-3); padding: var(--s-5); }
   .billTitle { white-space: normal; overflow: visible; text-overflow: clip; }
   .kpi { padding: var(--s-5); min-height: 140px; }
+  .empty { flex-direction: column; align-items: flex-start; gap: var(--s-3); padding: var(--s-5); }
+  .emptyTitle { font-size: var(--fs-lg); }
   .scheduleTile { padding: var(--s-3); border-radius: var(--r-md); }
 }
 

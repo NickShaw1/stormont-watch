@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import {
   Scale, FileText, Vote, Users, MapPin, Trophy, TrendingDown, PoundSterling, MessageCircleQuestion, Telescope,
-  CalendarDays, CheckCircle2, ArrowRight, BarChart3, Milestone, XCircle,
+  CalendarDays, CalendarOff, CheckCircle2, ArrowRight, BarChart3, Milestone, XCircle,
 } from 'lucide-react'
 import {
   getHomepageStats,
@@ -462,7 +462,13 @@ export default async function HomePageBody({ mandate, basePath }: { mandate: Man
             </ul>
             <div className={s.scheduleWrap}>
               {scheduleDays.length === 0 ? (
-                <p className={s.empty}>Nothing scheduled this week.</p>
+                <div className={s.empty}>
+                  <span className={`${s.iconTile} ${s.tnAmber}`}><CalendarOff size={22} strokeWidth={2} aria-hidden="true" /></span>
+                  <div className={s.emptyBody}>
+                    <p className={s.emptyTitle}>Nothing scheduled this week</p>
+                    <p className={s.emptySub}>No plenary sittings, bill stages or committee meetings are listed for this week.</p>
+                  </div>
+                </div>
               ) : (
                 <Schedule days={scheduleDays} />
               )}
