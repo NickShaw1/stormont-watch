@@ -51,7 +51,7 @@ export async function getDivisionWithVotes(documentId: string, mandate: string =
       // The Speaker doesn't vote by convention, so their routine NO_SHOW rows are hidden —
       // but a real cast vote (e.g. voting on their own Speaker nomination) is never hidden,
       // and Deputy/Principal Deputy Speaker are never excluded (they vote regularly).
-      sql`(${votes.vote} != 'NO_SHOW' OR ${memberTerms.assemblyRole} IS DISTINCT FROM 'Speaker')`
+      sql`(${votes.vote} != 'NO_SHOW' OR ${notServingAsSpeaker(sql`${votes.personId}`, sql`${division[0].divisionDate.toISOString()}::timestamptz`)})`
     ))
     .orderBy(votes.vote, people.fullName)
 
@@ -461,9 +461,10 @@ export async function getDivisionPartyVotes(documentId: string, mandate: string 
   const result = await db.execute(sql`
     SELECT COALESCE(mt.party, 'Independent') AS party, v.vote, COUNT(*)::int AS n
     FROM votes v
+    JOIN divisions d ON d.document_id = v.document_id AND d.mandate = ${mandate}
     LEFT JOIN member_terms mt ON mt.person_id = v.person_id AND mt.mandate = ${mandate}
     WHERE v.document_id = ${documentId}
-      AND (v.vote <> 'NO_SHOW' OR mt.assembly_role IS DISTINCT FROM 'Speaker')
+      AND (v.vote <> 'NO_SHOW' OR ${notServingAsSpeaker(sql`v.person_id`, sql`d.division_date`)})
     GROUP BY COALESCE(mt.party, 'Independent'), v.vote
   `)
   const byParty = new Map<string, PartyVoteCounts>()

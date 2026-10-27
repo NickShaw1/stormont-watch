@@ -27,7 +27,7 @@ export default async function QuestionsPageBody({
       const m = memberMap.get(r.personId)
       if (!m) return null
       if (!m.isCurrent) return null
-      if (m.assemblyRole === 'Speaker' || ministerIds.has(r.personId)) return null
+      if ((m.assemblyRole === 'Speaker' && !m.assemblyRoleEnd) || ministerIds.has(r.personId)) return null
       const total = Number(r.total)
       return {
         id: r.personId,

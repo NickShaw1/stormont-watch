@@ -100,7 +100,7 @@ export default async function MlaDetailPageBody({
 
   // isSpeaker drives the N/A and notice display; only true for a currently serving Speaker.
   const isSpeaker = member.assemblyRole === 'Speaker' && !roleEnd
-  const isDeputySpeaker = member.assemblyRole === 'Deputy Speaker' || member.assemblyRole === 'Principal Deputy Speaker'
+  const isDeputySpeaker = !roleEnd && (member.assemblyRole === 'Deputy Speaker' || member.assemblyRole === 'Principal Deputy Speaker')
 
   // Votes cast during Speaker tenure are excluded; deputies keep their full record.
   const everSpeaker = member.assemblyRole === 'Speaker'
@@ -166,7 +166,7 @@ export default async function MlaDetailPageBody({
   const memberLabel = member.isCurrent ? 'Member of the Legislative Assembly' : 'Former member of the Legislative Assembly'
   const memberLabelShort = member.isCurrent ? 'Member of the Assembly' : 'Former member of the Assembly'
 
-  const eyebrow = (member.assemblyRole?.replace(/\bPrincipal\b/g, 'Pr.'))
+  const eyebrow = (roleEnd ? null : member.assemblyRole?.replace(/\bPrincipal\b/g, 'Pr.'))
     ?? (structureRole?.type === 'minister' ? formatRoleTitle(structureRole.roleTitle) : null)
     ?? (structureRole?.type === 'committeeChair' ? `Chair, ${structureRole.committeeName}` : null)
     ?? memberLabel

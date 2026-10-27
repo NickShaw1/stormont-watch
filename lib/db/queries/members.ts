@@ -50,6 +50,7 @@ export async function getAllMandateMembers(mandate: string = CURRENT_MANDATE) {
       constituency: members.constituency,
       imgUrl: members.imgUrl,
       assemblyRole: members.assemblyRole,
+      assemblyRoleEnd: members.assemblyRoleEnd,
       mandateStart: members.mandateStart,
       mandateEnd: members.mandateEnd,
       isCurrent: members.isCurrent,
@@ -285,7 +286,7 @@ export async function getAllCommitteeChairs(mandate: string = CURRENT_MANDATE) {
       fullName: members.fullName,
       party: members.party,
       imgUrl: members.imgUrl,
-      assemblyRole: members.assemblyRole,
+      assemblyRole: sql<string | null>`CASE WHEN ${members.assemblyRoleEnd} IS NULL THEN ${members.assemblyRole} END`,
       constituency: members.constituency,
     })
     .from(committeeChairs)

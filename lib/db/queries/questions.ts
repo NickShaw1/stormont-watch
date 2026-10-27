@@ -46,7 +46,7 @@ export async function getQuestionRankForMember(personId: string, mandate: string
     .leftJoin(ministers, and(eq(questionStats.personId, ministers.personId), eq(ministers.mandate, mandate)))
     .where(and(
       eq(members.isCurrent, true),
-      sql`(${members.assemblyRole} is null OR ${members.assemblyRole} != 'Speaker')`,
+      sql`(${members.assemblyRole} is null OR ${members.assemblyRole} != 'Speaker' OR ${members.assemblyRoleEnd} is not null)`,
       sql`${ministers.personId} is null`,
       eq(questionStats.mandate, mandate),
     ))

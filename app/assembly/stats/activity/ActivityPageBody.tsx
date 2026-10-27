@@ -62,7 +62,7 @@ export default async function ActivityPageBody({
       oral: Number(r.oral),
       member: memberMap.get(r.personId),
     }))
-    .filter(r => r.member && r.member.assemblyRole !== 'Speaker' && !ministerIds.has(r.personId))
+    .filter(r => r.member && !(r.member.assemblyRole === 'Speaker' && !r.member.assemblyRoleEnd) && !ministerIds.has(r.personId))
     .sort((a, b) => b.total - a.total)
 
   const questionTop5 = questionRanking.slice(0, 5).map(r => ({
