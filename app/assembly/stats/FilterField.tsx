@@ -16,16 +16,17 @@ interface Props<K extends string> {
   value: K
   onPick: (k: K) => void
   sheetOnPhone?: boolean
+  disabled?: boolean
 }
 
-export default function FilterField<K extends string>({ label, options, value, onPick, sheetOnPhone = false }: Props<K>) {
+export default function FilterField<K extends string>({ label, options, value, onPick, sheetOnPhone = false, disabled = false }: Props<K>) {
   const id = useId()
   return (
     <div className={styles.rlField}>
       <span className={styles.rlFieldLabel} id={id}>{label}</span>
       <div className={`${styles.chipRow} ${styles.rlStretch} ${sheetOnPhone ? styles.rlChips : ''}`} role="group" aria-labelledby={id}>
         {options.map((o) => (
-          <button key={o.key} type="button" className={styles.chipBtn} aria-pressed={value === o.key} onClick={() => onPick(o.key)}>{o.label}</button>
+          <button key={o.key} type="button" className={styles.chipBtn} aria-pressed={value === o.key} disabled={disabled} onClick={() => onPick(o.key)}>{o.label}</button>
         ))}
       </div>
       {sheetOnPhone && (

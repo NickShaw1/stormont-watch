@@ -366,6 +366,19 @@
 .rankChip[data-tone='good'] { --rc: var(--sw-success-solid); --rci: var(--sw-success); }
 .rankChip[data-tone='warn'] { --rc: var(--sw-accent-warm); --rci: var(--sw-warning); }
 .rankChip[data-tone='bad'] { --rc: var(--sw-error-solid); --rci: var(--sw-error); }
+.monthCard { grid-column: 1 / -1; --rc: var(--sw-accent-solid); --rci: var(--sw-accent-strong); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--s-4) var(--s-5); padding: var(--s-5); border-radius: 16px; background: color-mix(in srgb, var(--rc) 10%, var(--tile-bg)); }
+.monthCard[data-tone='good'] { --rc: var(--sw-success-solid); --rci: var(--sw-success); }
+.monthCard[data-tone='warn'] { --rc: var(--sw-accent-warm); --rci: var(--sw-warning); }
+.monthCard[data-tone='bad'] { --rc: var(--sw-error-solid); --rci: var(--sw-error); }
+.monthIcon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: var(--rc); color: #ffffff; }
+.monthText { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; }
+.monthTitle { margin: 0; font-size: var(--fs-lg); font-weight: 700; letter-spacing: -0.02em; color: var(--sw-text-primary); }
+.monthDesc { margin: 0; max-width: 68ch; font-size: var(--fs-sm); line-height: 1.5; color: var(--sw-text-secondary); }
+.monthFigures { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; }
+.monthAmount { font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--sw-text-primary); white-space: nowrap; }
+.monthAmount small { font-size: var(--fs-sm); font-weight: 600; letter-spacing: 0; color: var(--sw-text-secondary); }
+.monthRank { font-size: var(--fs-base); font-weight: 700; color: var(--rci); white-space: nowrap; }
+@container (max-width: 640px) { .monthCard { grid-template-columns: auto minmax(0, 1fr); } .monthFigures { grid-column: 1 / -1; align-items: flex-start; text-align: left; flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: var(--s-3); } }
 .finMain { display: flex; flex-direction: column; gap: var(--s-8); container-type: inline-size; }
 .finCharts { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
 .yearDetail { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(0, 3fr); gap: var(--s-8); align-items: center; min-width: 0; }

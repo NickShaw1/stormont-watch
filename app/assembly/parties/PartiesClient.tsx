@@ -21,7 +21,14 @@ const PARTY_DESCRIPTIONS: Record<string, string> = {
 }
 
 const PARTY_DESCRIPTIONS_SHORT: Record<string, string> = {
-  'Independent': 'Not affiliated with any party.',
+  'Sinn Féin': 'Irish republican and democratic socialist party, founded in 1905.',
+  'Democratic Unionist Party': 'Unionist and social conservative party, founded in 1971.',
+  'Alliance Party': 'Cross-community liberal and centrist party, founded in 1970.',
+  'Ulster Unionist Party': 'Unionist and conservative party that governed until direct rule.',
+  'Social Democratic and Labour Party': 'Irish nationalist and social democratic party, founded in 1970.',
+  'People Before Profit Alliance': 'Left-wing socialist and anti-austerity party across Ireland.',
+  'Traditional Unionist Voice': 'Traditional unionist party in Northern Ireland, founded in 2007.',
+  'Independent': 'Independent MLAs sit in the Assembly without a party designation.',
 }
 
 export const PARTY_URLS: Record<string, string> = {
@@ -99,7 +106,7 @@ export default function PartiesClient({ parties, attendance, averageAttendance }
                 <span className={styles.track} aria-hidden="true">
                   <span className={styles.fill} style={{ width: `${share}%`, background: colour }} />
                 </span>
-                <span className={styles.shareText}>{party.mlaCount} {party.mlaCount === 1 ? 'MLA' : 'MLAs'} · {formatShare(party.mlaCount, total)}% of seats</span>
+                <span className={styles.shareText}><span className={styles.shareCount}>{party.mlaCount} {party.mlaCount === 1 ? 'MLA' : 'MLAs'} · </span>{formatShare(party.mlaCount, total)}% of seats</span>
               </div>
             </div>
             {att && (

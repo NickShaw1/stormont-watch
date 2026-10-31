@@ -80,6 +80,7 @@ interface Props {
   mandateEarnings: number | null
   mandateExpensesRank: number | null
   mandateExpensesTotalMembers: number | null
+  mandateMonthlyRank: { rank: number | null; total: number; months: number; perMonth: number } | null
   hansardRows: HansardRow[]
   hansardRank: { rank: number; eligibleCount: number } | null
   hansardDebateRank: { rank: number; eligibleCount: number; debates: number } | null
@@ -559,7 +560,7 @@ function MonthChart({ questionStats, hansardRows, hansardSittingsByMonth, showQu
 export default function ActivityTabsClient(props: Props) {
   const {
     votes, avgAttendance, attendanceFloor, notice, allExpenses: allExpensesRaw, interests, totalQuestions, writtenCount, oralCount, questionStats, hideQuestionsTab, isCurrent,
-    questionRank, currentSalary, mandateEarnings, mandateExpensesRank, mandateExpensesTotalMembers,
+    questionRank, currentSalary, mandateEarnings, mandateExpensesRank, mandateExpensesTotalMembers, mandateMonthlyRank,
     hansardRows, hansardRank, hansardDebateRank, hansardSittingsByMonth,
   } = props
   const { mandate, basePath } = useMandate()
@@ -625,6 +626,33 @@ export default function ActivityTabsClient(props: Props) {
         icon: c.icon,
       }))}
     />
+    {selectedYear === MANDATE_KEY && mandateMonthlyRank && (
+      <section
+        className={styles.monthCard}
+        data-tone={mandateMonthlyRank.rank !== null ? rankTone(mandateMonthlyRank.rank, mandateMonthlyRank.total, true) : undefined}
+        aria-labelledby="monthly-spend-title"
+      >
+        <span className={styles.monthIcon}><CalendarDays size={22} strokeWidth={2} aria-hidden="true" /></span>
+        <div className={styles.monthText}>
+          <h4 id="monthly-spend-title" className={styles.monthTitle}>Average monthly spend</h4>
+          <p className={styles.monthDesc}>
+            {mandateMonthlyRank.rank !== null
+              ? <>Whole-mandate expenses divided by the {mandateMonthlyRank.months.toFixed(1)} months this MLA has been in office, so MLAs who joined later can be compared fairly. Ranked against the {mandateMonthlyRank.total} MLAs with at least 12 months of published expenses; rank 1 is the highest.</>
+              : <>Only {mandateMonthlyRank.months.toFixed(1)} months of expenses are published for this MLA, too few for a fair monthly average. Monthly ranks only cover the {mandateMonthlyRank.total} MLAs with at least 12 months of published expenses.</>}
+          </p>
+        </div>
+        {mandateMonthlyRank.rank !== null ? (
+          <div className={styles.monthFigures}>
+            <span className={styles.monthAmount}>{gbpWhole(Math.round(mandateMonthlyRank.perMonth))}<small> a month</small></span>
+            <span className={styles.monthRank}>Ranked {mandateMonthlyRank.rank} of {mandateMonthlyRank.total}</span>
+          </div>
+        ) : (
+          <div className={styles.monthFigures}>
+            <span className={styles.monthRank}>Not ranked</span>
+          </div>
+        )}
+      </section>
+    )}
   </div>
   ) : null
 

@@ -79,8 +79,8 @@ export default function PartyExpensesClient({ expenses, mandateExpenses, mandate
           <p className={styles.sectionDesc}>All claims for {expenses.period}, with the party&apos;s position among all {expenses.partyCount} parties. The average is per MLA who claimed.</p>
           <div className={styles.yearCells}>
             <div className={styles.yearCell}>
-              <div className={m.tileHead}>
-                <span className={`${m.iconTile} ${m.tnTeal}`}><PoundSterling size={22} strokeWidth={2} aria-hidden="true" /></span>
+              <div className={`${m.tileHead} ${styles.yearHead}`}>
+                <span className={`${m.iconTile} ${m.tnTeal} ${styles.yearIcon}`}><PoundSterling size={22} strokeWidth={2} aria-hidden="true" /></span>
                 <span className={m.tileLabel}>Total expenses</span>
               </div>
               <div className={`${m.kpiTop} ${styles.kpiTopAligned}`}>
@@ -90,8 +90,8 @@ export default function PartyExpensesClient({ expenses, mandateExpenses, mandate
             </div>
 
             <div className={styles.yearCell}>
-              <div className={m.tileHead}>
-                <span className={`${m.iconTile} ${m.tnPurple}`}><Users size={22} strokeWidth={2} aria-hidden="true" /></span>
+              <div className={`${m.tileHead} ${styles.yearHead}`}>
+                <span className={`${m.iconTile} ${m.tnPurple} ${styles.yearIcon}`}><Users size={22} strokeWidth={2} aria-hidden="true" /></span>
                 <span className={m.tileLabel}>Average per MLA</span>
               </div>
               <div className={`${m.kpiTop} ${styles.kpiTopAligned}`}>
@@ -111,8 +111,8 @@ export default function PartyExpensesClient({ expenses, mandateExpenses, mandate
           <p className={styles.sectionDesc}>Visits declared on the Register of Interests since {mandate.startLabel}, with the party&apos;s position among all {expenses.partyCount} parties. This counts the whole mandate, not only the latest year.</p>
           <div className={styles.yearCells}>
             <div className={styles.yearCell}>
-              <div className={m.tileHead}>
-                <span className={`${m.iconTile} ${m.tnCoral}`}><MapPin size={22} strokeWidth={2} aria-hidden="true" /></span>
+              <div className={`${m.tileHead} ${styles.yearHead}`}>
+                <span className={`${m.iconTile} ${m.tnCoral} ${styles.yearIcon}`}><MapPin size={22} strokeWidth={2} aria-hidden="true" /></span>
                 <span className={m.tileLabel}>Visits declared</span>
               </div>
               <div className={`${m.kpiTop} ${styles.kpiTopAligned}`}>

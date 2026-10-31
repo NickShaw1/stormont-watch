@@ -72,6 +72,17 @@ const PARTY_ABBREVIATIONS: Record<string, string> = {
   'Independent': 'Ind',
 }
 
+// Party names as people say them: acronyms that are the name (DUP, UUP) stay, but words are never shortened.
+const PARTY_DISPLAY_OVERRIDES: Record<string, string> = {
+  Independent: 'Independent',
+  'People Before Profit Alliance': 'People Before Profit',
+}
+
+export function displayParty(party: string | null | undefined): string {
+  if (!party) return ''
+  return PARTY_DISPLAY_OVERRIDES[party] ?? abbreviateParty(party)
+}
+
 export function abbreviateParty(party: string | null | undefined): string {
   if (!party) return ''
   return PARTY_ABBREVIATIONS[party] ?? party

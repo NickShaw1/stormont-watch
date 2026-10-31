@@ -1,9 +1,10 @@
 import { notFound } from 'next/navigation'
 import { CalendarDays, CalendarX, Vote, Gauge, MessageCircleQuestion, Users, Mail, MapPin, Gavel, TrendingUp, TrendingDown, Inbox } from 'lucide-react'
-import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getAllMemberExpenses, getMandateExpensesRank, getRegisteredInterestsByMember, getQuestionStatsByMember, getQuestionRankForMember, getMemberRoleHistory, getHansardStatsByMember, getHansardRankForMember, getHansardSittingsByMonth, getHansardDebateRankForMember, getAverageAttendance, getMembersGroupedByParty } from '@/lib/db/queries'
+import { getMemberById, getMemberVotingHistory, getMemberStructureRole, getAllMemberExpenses, getMandateExpensesRank, getMandateExpenseServiceRows,getRegisteredInterestsByMember, getQuestionStatsByMember, getQuestionRankForMember, getMemberRoleHistory, getHansardStatsByMember, getHansardRankForMember, getHansardSittingsByMonth, getHansardDebateRankForMember, getAverageAttendance, getMembersGroupedByParty } from '@/lib/db/queries'
 import { formatDate, formatMemberName, formatRoleTitle, abbreviateParty, formatConstituency } from '@/lib/format'
 import { attendanceFloor, gradeAttendance } from '@/lib/attendance'
 import type { Mandate } from '@/lib/constants/mandates'
+import { financialYearEnd, monthsInOffice } from '@/lib/constituencies'
 import { calculateMandateEarnings, getCurrentAnnualSalary, apiRoleToSalaryRole, type RoleInterval } from '@/lib/salaries'
 import dynamic from 'next/dynamic'
 import MlaPhoto from '@/components/MlaPhoto'
@@ -11,6 +12,8 @@ import PartyName from '@/components/PartyName'
 import styles from './mlaDetail.module.css'
 
 const ActivityTabsClient = dynamic(() => import('./ActivityTabsClient'), { loading: () => <div /> })
+
+const MIN_MONTHS_RANKED = 12
 
 const GRADE_STROKE = {
   good: 'var(--sw-success-solid)',
@@ -70,6 +73,25 @@ export default async function MlaDetailPageBody({
   const mandateExpensesRankRow = await getMandateExpensesRank(member.personId, mandate.id)
   const mandateRank = mandateExpensesRankRow ? Number(mandateExpensesRankRow.rank) : null
   const mandateTotalMembers = mandateExpensesRankRow ? Number(mandateExpensesRankRow.total_members) : null
+
+  const serviceRows = await getMandateExpenseServiceRows(mandate.id)
+  const windowEnd = serviceRows[0]?.latestYear ? financialYearEnd(serviceRows[0].latestYear) : null
+  const dateOf = (d: string | Date | null) => (d ? new Date(d).toISOString().slice(0, 10) : null)
+  const monthsOf = (r: (typeof serviceRows)[number]) =>
+    windowEnd
+      ? Math.round(monthsInOffice({ mandateStart: dateOf(r.mandateStart), mandateEnd: r.isCurrent ? null : dateOf(r.mandateEnd) }, mandate.start, windowEnd) * 10) / 10
+      : 0
+  const perMonthRows = serviceRows
+    .map((r) => ({ personId: r.personId, months: monthsOf(r), perMonth: (parseFloat(r.total ?? '0') || 0) / (monthsOf(r) || 1) }))
+    .filter((r) => r.months >= MIN_MONTHS_RANKED)
+  const mine = serviceRows.find((r) => r.personId === member.personId)
+  const mineMonths = mine ? monthsOf(mine) : 0
+  const minePerMonth = perMonthRows.find((r) => r.personId === member.personId)
+  const monthlyRank = minePerMonth
+    ? { rank: perMonthRows.filter((r) => r.perMonth > minePerMonth.perMonth).length + 1, total: perMonthRows.length, months: mineMonths, perMonth: minePerMonth.perMonth }
+    : mine
+      ? { rank: null, total: perMonthRows.length, months: mineMonths, perMonth: 0 }
+      : null
 
   const roleIntervals: RoleInterval[] = roleHistory
     .map(r => {
@@ -377,6 +399,7 @@ export default async function MlaDetailPageBody({
                 mandateEarnings={mandateEarnings}
                 mandateExpensesRank={mandateRank}
                 mandateExpensesTotalMembers={mandateTotalMembers}
+                mandateMonthlyRank={monthlyRank}
                 hansardRows={hansardRows}
                 hansardRank={hansardRank}
                 hansardDebateRank={hansardDebateRank}

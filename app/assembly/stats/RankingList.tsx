@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Flag, X } from 'lucide-react'
+import { Flag, UserMinus, X } from 'lucide-react'
 import MlaPhoto from '@/components/MlaPhoto'
 import PartyName from '@/components/PartyName'
 import SheetSelect from '@/app/assembly/mlas/[id]/SheetSelect'
 import { formatMemberName, abbreviateParty, partyBorderColor, formatConstituency, orderedParties } from '@/lib/format'
 import { useMandate } from '@/components/MandateContext'
+import { rankRows } from './rankUtils'
 import styles from './statsKit.module.css'
 
 export interface RankRow {
@@ -20,6 +21,7 @@ export interface RankRow {
   display: string
   rank: string | number | null
   note?: string
+  detail?: string
   service?: string
 }
 
@@ -27,8 +29,9 @@ interface Props {
   rows: RankRow[]
   ariaLabel: string
   countSuffix?: string
+  toolbarTop?: React.ReactNode
   toolbar?: React.ReactNode
-  note?: React.ReactNode
+  note?: React.ReactNode | ((activeParty: string) => React.ReactNode)
   after?: (activeParty: string) => React.ReactNode
   dirty?: boolean
   onClear?: () => void
@@ -39,19 +42,32 @@ interface Props {
 
 const partyShort = (p: string) => abbreviateParty(p) || p
 
-export default function RankingList({ rows, ariaLabel, countSuffix = '', toolbar, note, after, dirty = false, onClear, showService = false, filterable = true, partyOptions }: Props) {
+export default function RankingList({ rows, ariaLabel, countSuffix = '', toolbarTop, toolbar, note, after, dirty = false, onClear, showService = false, filterable = true, partyOptions }: Props) {
   const { basePath } = useMandate()
   const [party, setParty] = useState('ALL')
   const parties = partyOptions ?? orderedParties(rows)
   const active = party === 'ALL' || parties.includes(party) ? party : 'ALL'
-  const shown = active === 'ALL' ? rows : rows.filter((r) => r.party === active)
+  const shown = active === 'ALL' ? rows : rankRows(rows.filter((r) => r.party === active), (r) => r.value)
   const max = Math.max(1, ...rows.map((r) => r.value))
   const counts = new Map(parties.map((p) => [p, rows.filter((r) => r.party === p).length]))
+  const noteNode = typeof note === 'function' ? note(active) : note
+  const clearButton =
+    active !== 'ALL' || dirty ? (
+      <button type="button" className={styles.rlClear} onClick={() => { setParty('ALL'); onClear?.() }}>
+        <X size={16} strokeWidth={2} aria-hidden="true" />Clear filters
+      </button>
+    ) : null
 
   return (
     <div className={styles.rlWrap}>
       {(toolbar || filterable) && (
         <div className={styles.rlToolbar}>
+          {toolbarTop && (
+            <div className={styles.rlToolbarRow}>
+              {toolbarTop}
+              {clearButton && <span className={styles.rlTopClear}>{clearButton}</span>}
+            </div>
+          )}
           {toolbar}
           {filterable && parties.length > 1 && (
             <div className={styles.rlField}>
@@ -85,29 +101,37 @@ export default function RankingList({ rows, ariaLabel, countSuffix = '', toolbar
           )}
           <div className={styles.rlCountRow}>
             <p className={styles.rlCount} aria-live="polite" aria-atomic="true">
-              <strong>{shown.length}</strong> {active === 'ALL' ? '' : `${partyShort(active)} `}MLA{shown.length !== 1 ? 's' : ''}{countSuffix}
+              <strong>{shown.length}</strong> {active === 'ALL' ? '' : `${partyShort(active)} `}MLA{shown.length !== 1 ? 's' : ''}{countSuffix && <span className={styles.rlCountSuffix}>{countSuffix}</span>}
             </p>
-            {(active !== 'ALL' || dirty) && (
-              <button type="button" className={styles.rlClear} onClick={() => { setParty('ALL'); onClear?.() }}>
-                <X size={16} strokeWidth={2} aria-hidden="true" />Clear filters
-              </button>
-            )}
+            {toolbarTop ? clearButton && <span className={styles.rlCountClear}>{clearButton}</span> : clearButton}
           </div>
-          {note}
+          {noteNode && <div className={styles.rlNoteTop}>{noteNode}</div>}
         </div>
       )}
 
       <ol className={styles.rlList} aria-label={ariaLabel}>
         {shown.map((r) => (
-          <li key={r.id} className={`${styles.rlRow} ${showService ? styles.rlWithService : ''}`} style={{ ['--pc' as string]: partyBorderColor(r.party) }}>
+          <li key={r.id} className={`${styles.rlRow} ${showService ? styles.rlWithService : ''}`} data-former={r.note ? '' : undefined} style={{ ['--pc' as string]: partyBorderColor(r.party) }}>
             <span className={styles.rlRank}>{r.rank ?? '-'}</span>
             <span className={styles.rankPhoto}><MlaPhoto name={r.fullName} imgUrl={r.imgUrl ?? ''} size={128} decorative square personId={r.id} /></span>
             <span className={styles.rlWho}>
               <Link href={`${basePath}/assembly/mlas/${r.id}`} className={styles.rlName}>{formatMemberName(r.fullName)}</Link>
-              {r.note && <span className={styles.rlNote}>{r.note}</span>}
+              {r.note && (
+                <span className={`${styles.leftPill} ${styles.rlNoteMobile}`}>
+                  <UserMinus size={14} strokeWidth={2} aria-hidden="true" />
+                  {r.note}
+                </span>
+              )}
               <span className={styles.rlMeta}>
                 {r.party && <span className="party-pill" data-party={abbreviateParty(r.party)}><PartyName party={r.party} /></span>}
+                {r.note && (
+                  <span className={styles.leftPill}>
+                    <UserMinus size={14} strokeWidth={2} aria-hidden="true" />
+                    {r.note}
+                  </span>
+                )}
               </span>
+              {r.detail && <span className={styles.rlDetail}>{r.detail}</span>}
               <span className={styles.rlMetaPhone}>
                 {r.party && <i style={{ background: partyBorderColor(r.party) }} aria-hidden="true" />}
                 <span>{r.party ? abbreviateParty(r.party) : ''}</span>
@@ -122,6 +146,7 @@ export default function RankingList({ rows, ariaLabel, countSuffix = '', toolbar
           </li>
         ))}
       </ol>
+      {(toolbar || filterable) && noteNode && <div className={styles.rlNoteBottom}>{noteNode}</div>}
       {after?.(active)}
     </div>
   )

@@ -65,16 +65,11 @@
 .arrow { flex: none; align-self: flex-start; color: var(--sw-text-primary); }
 
 
-/* The chart band fills the first screen (viewport minus the 68px nav), with the chart centred in it. */
-.chartBand { min-height: calc(100vh - 68px); min-height: calc(100svh - 68px); display: flex; align-items: center; }
 .chartBand > :global(.container) { width: 100%; }
-
-@media (max-width: 1100px) and (orientation: portrait) {
-  .chartBand { min-height: 0; }
-}
 
 /* Phones show the title as its own band, so the cards open the tinted section. */
 .phoneHead { display: none; }
+.headArt { display: block; width: 100%; max-width: 360px; height: auto; margin: var(--s-8) auto 0; overflow: visible; forced-color-adjust: none; }
 
 @media (max-width: 640px) {
   .chartBand { display: none; }
@@ -82,8 +77,12 @@
   .phoneHead { display: block; }
   .phoneHead .head { margin-bottom: 0; }
   .page { --gap: 48px; }
-  .card { gap: var(--s-4); padding: var(--s-4); }
-  .block { width: 88px; min-height: 88px; border-radius: 16px; }
+  .card { display: grid; grid-template-columns: 72px minmax(0, 1fr); grid-template-areas: 'block name' 'block share' 'desc desc' 'att att'; align-items: center; gap: var(--s-2) var(--s-4); padding: var(--s-4); }
+  .block { grid-area: block; align-self: stretch; width: auto; min-height: 72px; border-radius: 16px; }
+  .body { display: contents; }
+  .name { grid-area: name; align-self: end; }
+  .share { grid-area: share; align-self: start; margin-top: 0; }
+  .shareCount { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .name { font-size: var(--fs-xl); }
   .arrow { display: none; }
   .nameFull { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -91,11 +90,10 @@
   .descFull { display: none; }
   .description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 3em; }
   .chartHint { display: none; }
-  .card { flex-wrap: wrap; }
   .share { flex-wrap: wrap; row-gap: var(--s-2); }
   .shareText { order: -1; flex: 1 0 100%; min-width: 0; }
-  .body { flex: 1 1 0; }
-  .att { flex: 1 1 100%; flex-direction: row; align-items: center; justify-content: flex-start; gap: var(--s-4); width: auto; padding: var(--s-3) var(--s-4); border-radius: 16px; background: color-mix(in srgb, var(--grade) 10%, var(--tile-bg)); }
+  .description { grid-area: desc; margin-top: var(--s-1); }
+  .att { grid-area: att; align-self: stretch; flex-direction: row; align-items: center; justify-content: flex-start; gap: var(--s-4); width: auto; padding: var(--s-3) var(--s-4); border-radius: 16px; background: color-mix(in srgb, var(--grade) 10%, var(--tile-bg)); }
   .ring { width: 64px; height: 64px; }
   .ringNum { font-size: var(--fs-lg); }
   .ringNum small { font-size: var(--fs-xs); }

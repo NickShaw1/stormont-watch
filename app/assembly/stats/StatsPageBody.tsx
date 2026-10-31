@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Vote, Users, Handshake, PoundSterling, Trophy, Lightbulb, ArrowRight, Scale, PiggyBank, Activity, Wallet, Coins, MessageSquare, Mic, ListChecks } from 'lucide-react'
+import { Vote, Users, Handshake, PoundSterling, Trophy, Lightbulb, ArrowRight, Scale, PiggyBank, Activity, Wallet, Coins, MessageSquare, Mic, ListChecks, MapPin } from 'lucide-react'
 import {
   getAssemblyStats,
   getPassRateByYear,
@@ -78,6 +78,9 @@ export default async function StatsPageBody({
       { href: '/assembly/sittings', title: 'Sittings', desc: `All ${sittingAdjective(mandate)} MLAs except presiding officers, ranked by plenary sittings spoken in.`, Icon: Mic, tone: 'tnPurple' },
       { href: '/assembly/topics', title: 'Topics', desc: `All ${sittingAdjective(mandate)} MLAs except presiding officers, ranked by debate topics spoken on.`, Icon: ListChecks, tone: 'tnPurple' },
     ] },
+    { group: 'Constituencies', items: [
+      { href: '/assembly/stats/constituencies', title: 'Constituencies', desc: `Every constituency ranked on attendance, questions, expenses and the number of MLAs who have left across the ${mandate.label} mandate.`, Icon: MapPin, tone: 'tnBlue' },
+    ] },
   ]
 
   return (
@@ -151,7 +154,7 @@ export default async function StatsPageBody({
           <div className={styles.sectionHead}>
             <span className={styles.eyebrow}>Rankings</span>
             <h2 className={styles.h2} id="rankings-heading">Full rankings</h2>
-            <p className={styles.sectionSub}>Complete MLA rankings across salary, expenses, overall cost and parliamentary questions.</p>
+            <p className={styles.sectionSub}>Complete rankings of MLAs and constituencies across salary, expenses, overall cost and parliamentary activity.</p>
           </div>
           <div className={styles.rankGroups}>
           {rankings.map((g) => (

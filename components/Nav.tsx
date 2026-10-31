@@ -51,7 +51,7 @@ export default function Nav() {
             const current = pathname === target || pathname.startsWith(`${target}/`)
             return (
               <li key={href}>
-                <Link href={target} aria-current={current ? 'page' : undefined}>{label}</Link>
+                <Link href={target} data-label={label} aria-current={current ? 'page' : undefined}>{label}</Link>
               </li>
             )
           })}

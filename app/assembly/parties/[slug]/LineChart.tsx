@@ -12,8 +12,6 @@ export type LineItem = {
   benchmark: number | null
 }
 
-const pct = (v: number) => `${Math.round(v)}%`
-
 // Monotone cubic through the points, so the curve is smooth and never overshoots the data.
 function smooth(pts: { x: number; y: number }[]): string {
   const n = pts.length
@@ -45,20 +43,27 @@ function smooth(pts: { x: number; y: number }[]): string {
 
 // A line chart with a dashed benchmark (no chart library). Pointer users hover or tap; keyboard users focus
 // the chart and use the arrow keys; screen-reader users get the same values in a hidden table.
-export default function LineChart({ items, colour, ariaLabel, seriesLabel, benchmarkLabel }: {
+export default function LineChart({ items, colour, ariaLabel, seriesLabel, benchmarkLabel, unit = '%', domain = 'percent', emptyLabel = 'No divisions', thinLabels = false }: {
   items: LineItem[]
   colour: string
   ariaLabel: string
   seriesLabel: string
   benchmarkLabel: string
+  unit?: string
+  domain?: 'percent' | 'count'
+  emptyLabel?: string
+  thinLabels?: boolean
 }) {
   const [active, setActive] = useState<number | null>(null)
   const gradId = useId().replace(/:/g, '')
   const n = items.length
 
   const all = items.flatMap((it) => [it.value, it.benchmark].filter((v): v is number => v !== null))
-  const lo = Math.max(0, Math.floor((Math.min(...all) - 4) / 10) * 10)
-  const hi = 100
+  const peak = Math.max(...all)
+  const step = peak <= 20 ? 5 : peak <= 60 ? 10 : 20
+  const lo = domain === 'count' ? 0 : Math.max(0, Math.floor((Math.min(...all) - 4) / 10) * 10)
+  const hi = domain === 'count' ? Math.ceil((peak * 1.05) / (2 * step)) * 2 * step : 100
+  const pct = (v: number) => `${Math.round(v)}${unit}`
   const mid = (lo + hi) / 2
   const xOf = (i: number) => ((i + 0.5) / n) * 100
   const yOf = (v: number) => 100 - ((v - lo) / (hi - lo)) * 100
@@ -103,9 +108,13 @@ export default function LineChart({ items, colour, ariaLabel, seriesLabel, bench
   const last = n - 1
   const lastPresent = present[present.length - 1].i
   const labelled: { i: number; where: 'above' | 'below' | 'end' }[] = [{ i: lastPresent, where: 'end' }]
-  if (best !== lastPresent) labelled.push({ i: best, where: 'above' })
-  if (worst !== lastPresent && worst !== best) labelled.push({ i: worst, where: 'below' })
+  const clear = (i: number) => !thinLabels || Math.abs(i - lastPresent) > 5
+  if (best !== lastPresent && clear(best)) labelled.push({ i: best, where: 'above' })
+  if (worst !== lastPresent && worst !== best && clear(worst)) labelled.push({ i: worst, where: 'below' })
 
+  for (const l of labelled) {
+    if (l.where === 'below' && yOf(items[l.i].value as number) > 85) l.where = 'above'
+  }
   const current = active === null ? null : items[active]
   const px = active === null ? 0 : xOf(active)
   const tipPos = px <= 50 ? { left: `calc(${px}% + 14px)` } : { right: `calc(${100 - px}% + 14px)` }
@@ -137,7 +146,7 @@ export default function LineChart({ items, colour, ariaLabel, seriesLabel, bench
         <thead><tr><th scope="col">Month</th><th scope="col">{seriesLabel}</th><th scope="col">{benchmarkLabel}</th></tr></thead>
         <tbody>
           {items.map((it) => (
-            <tr key={it.key}><th scope="row">{it.label}</th><td>{it.value === null ? 'No divisions' : `${it.value}%`}</td><td>{it.benchmark === null ? 'No divisions' : `${it.benchmark}%`}</td></tr>
+            <tr key={it.key}><th scope="row">{it.label}</th><td>{it.value === null ? emptyLabel : `${it.value}${unit}`}</td><td>{it.benchmark === null ? emptyLabel : `${it.benchmark}${unit}`}</td></tr>
           ))}
         </tbody>
       </table>
@@ -145,13 +154,13 @@ export default function LineChart({ items, colour, ariaLabel, seriesLabel, bench
       <ul className={styles.lineLegend} aria-hidden="true">
         <li><span className={styles.legendLine} />{seriesLabel}</li>
         <li><span className={`${styles.legendLine} ${styles.legendDash}`} />{benchmarkLabel}</li>
-        <li><span className={styles.legendGap} />No divisions</li>
+        <li><span className={styles.legendGap} />{emptyLabel}</li>
       </ul>
 
       <div className={styles.lineBody} aria-hidden="true">
         <div className={styles.lineAxis}>
           {[hi, mid, lo].map((v) => (
-            <span key={v} style={{ top: `${yOf(v)}%` }}>{v}%</span>
+            <span key={v} style={{ top: `${yOf(v)}%` }}>{v}{unit}</span>
           ))}
         </div>
         <div className={styles.lineArea}>
@@ -173,7 +182,7 @@ export default function LineChart({ items, colour, ariaLabel, seriesLabel, bench
 
             {gaps.map((g) => (
               <span key={g.start} className={styles.lineGap} style={{ left: `${(g.start / n) * 100}%`, width: `${(g.len / n) * 100}%` }}>
-                {g.len >= 3 && <span>No divisions</span>}
+                {g.len >= 3 && <span>{emptyLabel}</span>}
               </span>
             ))}
 
@@ -213,12 +222,12 @@ export default function LineChart({ items, colour, ariaLabel, seriesLabel, bench
             {current && (
               <span className={m.chartTip} style={tipPos}>
                 <span className={m.tipHead}><span>{current.label}</span></span>
-                <span className={m.tipRow}><i style={{ background: colour }} />{seriesLabel}<b>{current.value === null ? 'No divisions' : `${current.value}%`}</b></span>
+                <span className={m.tipRow}><i style={{ background: colour }} />{seriesLabel}<b>{current.value === null ? emptyLabel : `${current.value}${unit}`}</b></span>
                 {current.benchmark !== null && (
-                  <span className={m.tipRow}><i className={styles.tipDash} />{benchmarkLabel}<b>{current.benchmark}%</b></span>
+                  <span className={m.tipRow}><i className={styles.tipDash} />{benchmarkLabel}<b>{current.benchmark}{unit}</b></span>
                 )}
                 {diff !== null && (
-                  <span className={m.tipRow}>Difference<b>{diff >= 0 ? '+' : '−'}{Math.abs(diff).toFixed(1)} percentage points</b></span>
+                  <span className={m.tipRow}>Difference<b>{diff >= 0 ? '+' : '−'}{Math.abs(diff).toFixed(1)}{domain === 'percent' ? ' percentage points' : ''}</b></span>
                 )}
               </span>
             )}
@@ -233,7 +242,7 @@ export default function LineChart({ items, colour, ariaLabel, seriesLabel, bench
       </div>
 
       <span className="sr-only" aria-live="polite">
-        {current ? (current.value === null ? `${current.label}: no divisions` : `${current.label}: ${seriesLabel} ${current.value}%${current.benchmark !== null ? `, ${benchmarkLabel} ${current.benchmark}%` : ''}`) : ''}
+        {current ? (current.value === null ? `${current.label}: ${emptyLabel.toLowerCase()}` : `${current.label}: ${seriesLabel} ${current.value}${unit}${current.benchmark !== null ? `, ${benchmarkLabel} ${current.benchmark}${unit}` : ''}`) : ''}
       </span>
     </div>
   )

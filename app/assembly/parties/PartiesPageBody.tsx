@@ -2,6 +2,7 @@ import { getAllPartiesWithStats, getMembersGroupedByParty, getAverageAttendance 
 import { attendanceFloor, gradeAttendance } from '@/lib/attendance'
 import PartiesClient from './PartiesClient'
 import AssemblyHemicycle from '@/components/AssemblyHemicycle'
+import HeadArt from './HeadArt'
 import styles from './parties.module.css'
 import type { Mandate } from '@/lib/constants/mandates'
 
@@ -50,6 +51,7 @@ export default async function PartiesPageBody({
             <h1 className={styles.h1} id="parties-title-phone">Parties</h1>
             <p className={styles.headSub}>Political parties represented in the Assembly.</p>
           </header>
+          <HeadArt className={styles.headArt} parties={parties.map(p => ({ party: p.party, slug: p.slug, mlaCount: p.mlaCount }))} />
         </div>
       </section>
 

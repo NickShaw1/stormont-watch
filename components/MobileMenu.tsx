@@ -33,7 +33,7 @@ export default function MobileMenu({
     inertTargets.forEach((el) => el.setAttribute('inert', ''))
 
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    const mq = window.matchMedia('(min-width: 900px)')
+    const mq = window.matchMedia('(min-width: 1025px)')
     const onResize = () => { if (mq.matches) onClose() }
     window.addEventListener('keydown', onKey)
     mq.addEventListener('change', onResize)

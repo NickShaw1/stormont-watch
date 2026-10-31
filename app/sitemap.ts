@@ -2,13 +2,15 @@ import type { MetadataRoute } from 'next'
 import { eq, and } from 'drizzle-orm'
 import { db } from '@/lib/db/client'
 import { divisions, members, bills } from '@/lib/db/schema'
+import { getConstituencyMlaRows } from '@/lib/db/queries/constituencies'
+import { constituencySlug } from '@/lib/utils/constituencySlug'
 import { CURRENT_MANDATE, ARCHIVED_MANDATES } from '@/lib/constants/mandates'
 
 /** Section landing pages, listed for the current mandate (bare) and each archive. */
 const SECTION_PATHS = [
   '/assembly/votes', '/assembly/mlas', '/assembly/bills', '/assembly/parties',
-  '/assembly/structure', '/assembly/stats', '/assembly/stats/spending',
-  '/assembly/stats/activity', '/assembly/stats/voting', '/assembly/salaries',
+  '/assembly/structure', '/assembly/constituencies', '/assembly/stats', '/assembly/stats/spending',
+  '/assembly/stats/activity', '/assembly/stats/voting', '/assembly/stats/constituencies', '/assembly/salaries',
   '/assembly/overall-cost', '/assembly/expenses', '/assembly/questions',
   '/assembly/sittings', '/assembly/topics',
 ]
@@ -25,10 +27,12 @@ const STATIC_URLS: MetadataRoute.Sitemap = [
   { url: `${BASE}/assembly/bills`, changeFrequency: 'daily', priority: 0.8 },
   { url: `${BASE}/assembly/parties`, changeFrequency: 'weekly', priority: 0.8 },
   { url: `${BASE}/assembly/structure`, changeFrequency: 'weekly', priority: 0.7 },
+  { url: `${BASE}/assembly/constituencies`, changeFrequency: 'weekly', priority: 0.7 },
   { url: `${BASE}/assembly/stats`, changeFrequency: 'daily', priority: 0.7 },
   { url: `${BASE}/assembly/stats/spending`, changeFrequency: 'monthly', priority: 0.6 },
   { url: `${BASE}/assembly/stats/activity`, changeFrequency: 'daily', priority: 0.6 },
   { url: `${BASE}/assembly/stats/voting`, changeFrequency: 'daily', priority: 0.6 },
+  { url: `${BASE}/assembly/stats/constituencies`, changeFrequency: 'weekly', priority: 0.6 },
   { url: `${BASE}/assembly/salaries`, changeFrequency: 'monthly', priority: 0.7 },
   { url: `${BASE}/assembly/overall-cost`, changeFrequency: 'monthly', priority: 0.7 },
   { url: `${BASE}/assembly/expenses`, changeFrequency: 'monthly', priority: 0.7 },
@@ -42,11 +46,12 @@ const STATIC_URLS: MetadataRoute.Sitemap = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
-    const [divisionRows, memberRows, billRows, partyRows] = await Promise.all([
+    const [divisionRows, memberRows, billRows, partyRows, constituencyRows] = await Promise.all([
       db.select({ documentId: divisions.documentId, divisionDate: divisions.divisionDate }).from(divisions).where(eq(divisions.mandate, CURRENT_MANDATE.id)),
       db.select({ personId: members.personId, updatedAt: members.updatedAt }).from(members).where(and(eq(members.isCurrent, true), eq(members.mandate, CURRENT_MANDATE.id))),
       db.select({ billId: bills.billId, latestDate: bills.latestDate }).from(bills).where(eq(bills.mandate, CURRENT_MANDATE.id)),
       db.selectDistinct({ party: members.party }).from(members).where(eq(members.isCurrent, true)),
+      getConstituencyMlaRows(CURRENT_MANDATE.id),
     ])
 
     const partySlug = (party: string) =>
@@ -79,6 +84,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }))
 
+    const constituencyUrls: MetadataRoute.Sitemap = [...new Set(constituencyRows.map((r) => constituencySlug(r.constituency)))].map((slug) => ({
+      url: `${BASE}/assembly/constituencies/${slug}`,
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    }))
+
     // Archive landing pages, kept crawlable so old-mandate content stays indexed.
     const archiveUrls: MetadataRoute.Sitemap = ARCHIVED_MANDATES.flatMap((m) =>
       SECTION_PATHS.map((p) => ({
@@ -88,7 +99,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
     )
 
-    return [...STATIC_URLS, ...voteUrls, ...divisionUrls, ...mlaUrls, ...partyUrls, ...archiveUrls]
+    return [...STATIC_URLS, ...voteUrls, ...divisionUrls, ...mlaUrls, ...partyUrls, ...constituencyUrls, ...archiveUrls]
   } catch {
     return STATIC_URLS
   }

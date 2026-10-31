@@ -128,13 +128,13 @@ type StatRowProps = {
 }
 
 // A spotlight card for a "highest" or "lowest" MLA: tinted by tone, big photo, the figure in the tone colour and a bar.
-export function StatRow({ personId, fullName, imgUrl, constituency, value, sub, label, tone, barPct, colour }: StatRowProps) {
+export function StatRow({ personId, fullName, imgUrl, constituency, value, sub, former, label, tone, barPct, colour }: StatRowProps) {
   const { basePath } = useMandate()
   const up = /^(Highest|Most)$/i.test(label)
   const down = /^(Lowest|Fewest)$/i.test(label)
   const width = Math.max(0, Math.min(100, barPct ?? 0))
   return (
-    <Link href={`${basePath}/assembly/mlas/${personId}`} className={styles.spot} data-tone={tone} style={colour ? ({ '--party': colour } as CSSProperties) : undefined}>
+    <Link href={`${basePath}/assembly/mlas/${personId}`} className={styles.spot} data-tone={tone} data-former={former ? '' : undefined} style={colour ? ({ '--party': colour } as CSSProperties) : undefined}>
       <span className={styles.spotPhoto}>
         <MlaPhoto name={fullName} imgUrl={imgUrl ?? ''} size={160} decorative square personId={personId} />
       </span>
@@ -176,11 +176,11 @@ type RankRowProps = {
 }
 
 // A compact ranked row for places four and below: rank, photo, name, and the value in a party-tinted pill.
-export function RankRow({ rank, personId, fullName, imgUrl, constituency, value, unit, colour }: RankRowProps) {
+export function RankRow({ rank, personId, fullName, imgUrl, constituency, value, unit, former, colour }: RankRowProps) {
   const { basePath } = useMandate()
   return (
     <li>
-      <Link href={`${basePath}/assembly/mlas/${personId}`} className={styles.rankCard} style={{ '--party': colour } as CSSProperties}>
+      <Link href={`${basePath}/assembly/mlas/${personId}`} className={styles.rankCard} data-former={former ? '' : undefined} style={{ '--party': colour } as CSSProperties}>
         <span className={styles.rankNum}><span className="sr-only">Rank </span>{rank}</span>
         <span className={styles.rankPhoto}>
           <MlaPhoto name={fullName} imgUrl={imgUrl ?? ''} size={96} decorative square personId={personId} />

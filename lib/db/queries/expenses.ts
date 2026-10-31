@@ -114,15 +114,14 @@ export async function getExpensesLeagueTable(mandate: string = CURRENT_MANDATE) 
 
 export async function getMlasWithoutExpenses(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
-    SELECT m.person_id, m.full_name, m.party, m.constituency, m.img_url, m.mandate_start
+    SELECT m.person_id, m.full_name, m.party, m.constituency, m.img_url, m.mandate_start, m.is_current, m.mandate_end
     FROM members m
     LEFT JOIN expenses e ON e.person_id = m.person_id AND e.mandate = ${mandate}
-    WHERE m.is_current = true
-      AND e.person_id IS NULL
+    WHERE e.person_id IS NULL
       AND m.mandate = ${mandate}
     ORDER BY m.full_name
   `)
-  return (result.rows as { person_id: string; full_name: string; party: string | null; constituency: string | null; img_url: string | null; mandate_start: string | null }[])
+  return (result.rows as { person_id: string; full_name: string; party: string | null; constituency: string | null; img_url: string | null; mandate_start: string | null; is_current: boolean; mandate_end: string | null }[])
     .map(row => ({ ...row, img_url: mlaImg(row.person_id) }))
 }
 
@@ -398,6 +397,30 @@ export async function getMandateExpensesRank(personId: string, mandate: string =
     SELECT rank, total_members FROM ranked WHERE person_id = ${personId}
   `)
   return result.rows[0] ?? null
+}
+
+export async function getMandateExpenseServiceRows(mandate: string = CURRENT_MANDATE) {
+  const result = await db.execute(sql`
+    SELECT
+      e.person_id AS "personId",
+      SUM(e.total) AS total,
+      m.mandate_start AS "mandateStart",
+      m.mandate_end AS "mandateEnd",
+      m.is_current AS "isCurrent",
+      (SELECT MAX(financial_year) FROM expenses WHERE mandate = ${mandate}) AS "latestYear"
+    FROM expenses e
+    INNER JOIN members m ON m.person_id = e.person_id AND m.mandate = ${mandate}
+    WHERE e.mandate = ${mandate}
+    GROUP BY e.person_id, m.mandate_start, m.mandate_end, m.is_current
+  `)
+  return result.rows as Array<{
+    personId: string
+    total: string | null
+    mandateStart: string | null
+    mandateEnd: string | null
+    isCurrent: boolean
+    latestYear: string | null
+  }>
 }
 
 export async function getRegisteredInterestsByMember(personId: string, mandate: string = CURRENT_MANDATE) {

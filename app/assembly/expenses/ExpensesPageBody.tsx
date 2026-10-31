@@ -1,6 +1,7 @@
 import { Coins, Crown, UserX } from 'lucide-react'
 import { getAllExpensesLeagueTable, getMlasWithoutExpenses } from '@/lib/db/queries'
 import { formatMemberName, gbp } from '@/lib/format'
+import { financialYearEnd } from '@/lib/constituencies'
 import ExpensesListClient from './ExpensesListClient'
 import RankingShell, { rankTones } from '../stats/RankingShell'
 import type { Mandate } from '@/lib/constants/mandates'
@@ -56,6 +57,7 @@ export default async function ExpensesPageBody({
     value: 0,
     display: 'No data',
     rank: '-',
+    note: !m.is_current && m.mandate_end ? `Left ${new Date(m.mandate_end).toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' })}` : undefined,
   }))
 
   return (
@@ -68,7 +70,7 @@ export default async function ExpensesPageBody({
         { tone: rankTones.indigo, icon: UserX, label: 'No record', figure: missing.length, sub: missing.length === 1 ? 'MLA has no expenses on record' : 'MLAs have no expenses on record' },
       ] : []}
     >
-      <ExpensesListClient rows={mappedRows} years={years} latestYear={latestYear} missing={missingRows} />
+      <ExpensesListClient rows={mappedRows} years={years} latestYear={latestYear} missing={missingRows} windowStart={mandate.start} windowEnd={latestYear ? financialYearEnd(latestYear) : null} />
     </RankingShell>
   )
 }

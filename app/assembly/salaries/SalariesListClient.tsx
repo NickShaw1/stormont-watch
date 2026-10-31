@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { gbp } from '@/lib/format'
 import RankingList from '../stats/RankingList'
-import FilterField from '../stats/FilterField'
+import styles from '../stats/statsKit.module.css'
 import { rankRows } from '../stats/rankUtils'
 
 export interface SalaryRow {
@@ -37,13 +37,13 @@ export default function SalariesListClient({ bySalary, byEarnings }: Props) {
     <RankingList
       rows={rows}
       ariaLabel="MLA salary ranked list"
-      toolbar={
-        <FilterField
-          label="Rank by"
-          value={sortMode}
-          onPick={setSortMode}
-          options={[{ key: 'salary', label: 'Current salaries' }, { key: 'earnings', label: 'Mandate earnings' }]}
-        />
+      dirty={sortMode !== 'salary'}
+      onClear={() => setSortMode('salary')}
+      toolbarTop={
+        <div className={styles.tabs} role="group" aria-label="Rank by">
+          <button type="button" className={styles.tabBtn} aria-pressed={sortMode === 'salary'} onClick={() => setSortMode('salary')}>Current salaries</button>
+          <button type="button" className={styles.tabBtn} aria-pressed={sortMode === 'earnings'} onClick={() => setSortMode('earnings')}>Mandate earnings</button>
+        </div>
       }
     />
   )

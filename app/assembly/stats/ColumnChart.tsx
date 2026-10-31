@@ -11,7 +11,7 @@ export interface Column {
   tick?: string
 }
 
-export default function ColumnChart({ data, unit, summary }: { data: Column[]; unit: string; summary: string }) {
+export default function ColumnChart({ data, unit, summary, height }: { data: Column[]; unit: string; summary: string; height?: number }) {
   const [hover, setHover] = useState<number | null>(null)
   if (data.length === 0) return null
   const max = Math.max(1, ...data.map((d) => d.value))
@@ -22,7 +22,7 @@ export default function ColumnChart({ data, unit, summary }: { data: Column[]; u
 
   return (
     <div className={styles.cols} role="img" aria-label={summary}>
-      <div className={styles.colsPlot} onMouseLeave={() => setHover(null)}>
+      <div className={styles.colsPlot} style={height ? { height } : undefined} onMouseLeave={() => setHover(null)}>
         {data.map((d, i) => (
           <div
             key={d.key}

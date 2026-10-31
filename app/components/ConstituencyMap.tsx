@@ -2,6 +2,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { inkFor } from '@/lib/partyInk'
 import styles from './ConstituencyMap.module.css'
 
 const NAME_MAP: Record<string, string> = {
@@ -29,6 +30,11 @@ interface ConstituencyMapProps {
   selected: string | null
   onSelect: (constituency: string) => void
   onError?: () => void
+  fills?: Record<string, string>
+  labelColors?: Record<string, string>
+  highlighted?: string | null
+  onHover?: (constituency: string | null) => void
+  interactive?: boolean
 }
 
 // Dedupes shared-border segments so they aren't double-stroked between regions.
@@ -70,14 +76,57 @@ function buildBoundaryMesh(features: any[], pathGen: any) {
   return { outerD, sharedD }
 }
 
-export default function ConstituencyMap({ selected, onSelect, onError }: ConstituencyMapProps) {
+function separateLabels(svg: SVGSVGElement) {
+  const texts = Array.from(svg.querySelectorAll<SVGTextElement>('.map-labels text')).filter((t) => t.textContent)
+  try {
+    for (let pass = 0; pass < 6; pass++) {
+      let moved = false
+      for (let i = 0; i < texts.length; i++) {
+        for (let j = i + 1; j < texts.length; j++) {
+          const a = texts[i].getBBox()
+          const b = texts[j].getBBox()
+          const overlapX = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x) + 2
+          const overlapY = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y)
+          if (overlapX > 0 && overlapY > 0) {
+            const shift = overlapX / 2
+            const [left, right] = a.x <= b.x ? [texts[i], texts[j]] : [texts[j], texts[i]]
+            left.setAttribute('x', String(parseFloat(left.getAttribute('x') ?? '0') - shift))
+            right.setAttribute('x', String(parseFloat(right.getAttribute('x') ?? '0') + shift))
+            moved = true
+          }
+        }
+      }
+      if (!moved) return
+    }
+  } catch {
+    return
+  }
+}
+
+export default function ConstituencyMap({ selected, onSelect, onError, fills, labelColors, highlighted = null, onHover, interactive = true }: ConstituencyMapProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const pathsRef = useRef<any>(null)
   const labelsRef = useRef<any>(null)
   const selectedRef = useRef<string | null>(selected)
   const onSelectRef = useRef(onSelect)
   const onErrorRef = useRef(onError)
+  const fillsRef = useRef(fills)
+  const labelColorsRef = useRef(labelColors)
+  const highlightedRef = useRef(highlighted)
+  const onHoverRef = useRef(onHover)
   const drawnRef = useRef(false)
+
+  const fillFor = (name: string | undefined) => (name && fillsRef.current?.[name]) || 'var(--sw-map-fill)'
+  const labelFor = (name: string | undefined) => {
+    const forced = name ? labelColorsRef.current?.[name] : undefined
+    if (forced) return forced
+    const fill = name ? fillsRef.current?.[name] : undefined
+    return fill && /^#[0-9a-f]{6}$/i.test(fill) ? inkFor(fill) : 'var(--sw-map-label)'
+  }
+  const hoverFillFor = (name: string | undefined) => {
+    const base = name ? fillsRef.current?.[name] : undefined
+    return base ? `color-mix(in srgb, ${base} 78%, #000000)` : 'var(--sw-map-fill-hover)'
+  }
   const [tooltip, setTooltip] = useState<{ x: number; y: number; name: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -86,6 +135,10 @@ export default function ConstituencyMap({ selected, onSelect, onError }: Constit
   useEffect(() => { onSelectRef.current = onSelect })
   useEffect(() => { onErrorRef.current = onError })
   useEffect(() => { selectedRef.current = selected }, [selected])
+  useEffect(() => { fillsRef.current = fills }, [fills])
+  useEffect(() => { labelColorsRef.current = labelColors }, [labelColors])
+  useEffect(() => { highlightedRef.current = highlighted }, [highlighted])
+  useEffect(() => { onHoverRef.current = onHover })
 
   // Draw once on mount only
   useEffect(() => {
@@ -128,16 +181,17 @@ export default function ConstituencyMap({ selected, onSelect, onError }: Constit
           .enter()
           .append('path')
           .attr('d', pathGen as any)
-          .attr('fill', (d: any) => NAME_MAP[d.properties?.PC_NAME] === selectedRef.current ? 'var(--sw-map-selected)' : 'var(--sw-map-fill)')
+          .attr('fill', (d: any) => NAME_MAP[d.properties?.PC_NAME] === selectedRef.current ? 'var(--sw-map-selected)' : fillFor(NAME_MAP[d.properties?.PC_NAME]))
           .attr('stroke', 'none')
           .attr('cursor', 'pointer')
           .on('mouseover', function (event: MouseEvent, d: any) {
             const dbName = NAME_MAP[d.properties?.PC_NAME]
             if (dbName !== selectedRef.current) {
-              d3.select(this).attr('fill', 'var(--sw-map-fill-hover)')
+              d3.select(this).attr('fill', hoverFillFor(dbName))
               const rect = svgRef.current!.getBoundingClientRect()
               setTooltip({ x: event.clientX - rect.left, y: event.clientY - rect.top, name: dbName ?? d.properties?.PC_NAME })
             }
+            if (dbName) onHoverRef.current?.(dbName)
           })
           .on('mousemove', function (event: MouseEvent, d: any) {
             const dbName = NAME_MAP[d.properties?.PC_NAME]
@@ -148,7 +202,7 @@ export default function ConstituencyMap({ selected, onSelect, onError }: Constit
           })
           .on('mouseout', function (_: MouseEvent, d: any) {
             const dbName = NAME_MAP[d.properties?.PC_NAME]
-            if (dbName !== selectedRef.current) d3.select(this).attr('fill', 'var(--sw-map-fill)')
+            if (dbName !== selectedRef.current && dbName !== highlightedRef.current) d3.select(this).attr('fill', fillFor(dbName))
             setTooltip(null)
           })
           .on('click', (_: MouseEvent, d: any) => {
@@ -188,7 +242,7 @@ export default function ConstituencyMap({ selected, onSelect, onError }: Constit
           .attr('pointer-events', 'none')
           .attr('font-size', '8')
           .attr('font-family', 'var(--sw-font-family)')
-          .attr('fill', (d: any) => NAME_MAP[d.properties?.PC_NAME] === selectedRef.current ? '#ffffff' : 'var(--sw-map-label)')
+          .attr('fill', (d: any) => NAME_MAP[d.properties?.PC_NAME] === selectedRef.current ? '#ffffff' : labelFor(NAME_MAP[d.properties?.PC_NAME]))
           .text((d: any) => {
             const dbName = NAME_MAP[d.properties?.PC_NAME]
             if (!dbName) return ''
@@ -207,12 +261,22 @@ export default function ConstituencyMap({ selected, onSelect, onError }: Constit
     drawMap()
   }, []) // empty deps — truly runs once
 
+  useEffect(() => {
+    if (loading || error || !svgRef.current) return
+    const svg = svgRef.current
+    document.fonts.ready.then(() => requestAnimationFrame(() => separateLabels(svg)))
+  }, [loading, error])
+
   // Update fills/labels on selection change only — no redraw
   useEffect(() => {
     if (!pathsRef.current || !labelsRef.current) return
-    pathsRef.current.attr('fill', (d: any) => NAME_MAP[d.properties?.PC_NAME] === selected ? 'var(--sw-map-selected)' : 'var(--sw-map-fill)')
-    labelsRef.current.attr('fill', (d: any) => NAME_MAP[d.properties?.PC_NAME] === selected ? '#ffffff' : 'var(--sw-map-label)')
-  }, [selected])
+    pathsRef.current.attr('fill', (d: any) => {
+      const name = NAME_MAP[d.properties?.PC_NAME]
+      if (name === selected) return 'var(--sw-map-selected)'
+      return name === highlighted ? hoverFillFor(name) : fillFor(name)
+    })
+    labelsRef.current.attr('fill', (d: any) => NAME_MAP[d.properties?.PC_NAME] === selected ? '#ffffff' : labelFor(NAME_MAP[d.properties?.PC_NAME]))
+  }, [selected, fills, labelColors, highlighted])
 
   if (error) return null
 
@@ -222,7 +286,7 @@ export default function ConstituencyMap({ selected, onSelect, onError }: Constit
       <svg
         ref={svgRef}
         viewBox="0 0 480 360"
-        style={{ width: '100%', height: '100%', maxHeight: '100%', display: loading ? 'none' : 'block' }}
+        style={{ width: '100%', height: '100%', maxHeight: '100%', display: loading ? 'none' : 'block', pointerEvents: interactive ? undefined : 'none' }}
         aria-hidden="true"
         focusable="false"
       />
