@@ -285,7 +285,7 @@ export default async function ActivityPageBody({
           </header>
           <ul className={`${styles.headline} ${styles.headline4}`} aria-label="Headline figures">
             {stat(styles.tnBlue, CalendarCheck, 'Sitting days', num(sittingDays), `since ${mandate.startLabel}`)}
-            {stat(styles.tnPink, MessageCircleQuestion, 'Questions asked', num(totalQuestions), 'by current MLAs, written and oral')}
+            {stat(styles.tnPink, MessageCircleQuestion, 'Questions asked', num(totalQuestions), 'written and oral, by current MLAs including ministers and the Speaker')}
             {stat(styles.tnAmber, Flame, 'Busiest month', busiest?.total_divisions ?? 0, `divisions, ${busiestLabel}`)}
             {stat(styles.tnGreen, Gauge, 'Average month', avgPerMonth, 'divisions, excluding months with none')}
           </ul>

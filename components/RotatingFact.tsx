@@ -89,7 +89,7 @@ export default function RotatingFact({
     },
     {
       number: totalQuestions.toLocaleString('en-GB'),
-      text: `questions have been asked in the Assembly since ${mandate.startLabel}.`,
+      text: `questions have been asked by current and former MLAs since ${mandate.startLabel}.`,
       icon: MessageCircleQuestion,
       color: 'purple',
     },
