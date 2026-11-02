@@ -29,6 +29,7 @@ import {
   syncCommitteeChairs,
   syncRegisteredInterests,
   syncPlenaryItems,
+  syncQuestionTimes,
 } from './syncShared'
 
 import { mandateIdForDate, mandateForToday, EARLIEST_MANDATE_START } from '../lib/constants/mandates'
@@ -515,6 +516,7 @@ async function main() {
 
   // Daily scripts — run every time
   await runSync('syncPlenaryItems', () => syncPlenaryItems(db))
+  await runSync('syncQuestionTimes', () => syncQuestionTimes(db))
   await runSync('syncHansardReports', () => syncHansardReports(db))
   await runSync('syncMinisters', () => syncMinisters(db))
   await runSync('syncCommitteeChairs', () => syncCommitteeChairs(db))

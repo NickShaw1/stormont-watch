@@ -39,6 +39,7 @@ import {
   syncCommitteeChairs,
   syncRegisteredInterests,
   syncPlenaryItems,
+  syncQuestionTimes,
 } from './syncShared'
 
 import { mandateIdForDate, mandateForToday, EARLIEST_MANDATE_START } from '../lib/constants/mandates'
@@ -426,6 +427,7 @@ async function main() {
   await runSync('syncDivisionsAndVotes', () => syncDivisionsAndVotes(db))
   await runSync('syncBills', () => syncBills(db, false, CUTOFF))
   await runSync('syncPlenaryItems', () => syncPlenaryItems(db))
+  await runSync('syncQuestionTimes', () => syncQuestionTimes(db))
   await runSync('syncContactDetails', () => syncContactDetails(db))
   await runSync('syncHansardContributions', () => syncHansardContributions(db))
   await runSync('syncQuestionStats', () => syncQuestionStats(db))

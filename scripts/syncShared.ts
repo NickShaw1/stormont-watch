@@ -561,3 +561,70 @@ export async function syncPlenaryItems(db: Db) {
   }
   console.log(`[syncPlenaryItems] Complete — ${written} written, ${skipped} skipped`)
 }
+
+const QUESTION_TIME_LOOKBACK_DAYS = 28
+
+export async function syncQuestionTimes(db: Db) {
+  console.log('[syncQuestionTimes] Syncing Question Time sessions for current week...')
+
+  const now = new Date()
+  const day = now.getUTCDay()
+  const diffToMonday = day === 0 ? -6 : 1 - day
+  const monday = new Date(now)
+  monday.setUTCDate(now.getUTCDate() + diffToMonday)
+  const sunday = new Date(monday)
+  sunday.setUTCDate(monday.getUTCDate() + 6)
+  const lookbackStart = new Date(monday)
+  lookbackStart.setUTCDate(monday.getUTCDate() - QUESTION_TIME_LOOKBACK_DAYS)
+
+  const weekStart = monday.toISOString().slice(0, 10)
+  const weekEnd = sunday.toISOString().slice(0, 10)
+
+  const data = await apiFetch<any>(
+    `/questions.asmx/GetQuestionsForOralAnswer_TabledInRange_JSON?startDate=${lookbackStart.toISOString().slice(0, 10)}&endDate=${weekEnd}`
+  )
+
+  if (data === null) {
+    throw new Error('[syncQuestionTimes] API call failed')
+  }
+
+  const raw: any[] = data?.QuestionsList?.Question ?? []
+  const questions = Array.isArray(raw) ? raw : [raw]
+
+  const sessions = new Map<string, { date: string; minister: string }>()
+  for (const q of questions) {
+    const date = str(q?.AnswerByDate).slice(0, 10)
+    const minister = str(q?.MinisterTitle).trim()
+    if (!date || !minister || date < weekStart || date > weekEnd) continue
+    const slug = minister.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    sessions.set(`qt-${date}-${slug}`, { date, minister })
+  }
+
+  if (sessions.size === 0) {
+    console.log('[syncQuestionTimes] No Question Time sessions this week — skipping')
+    return
+  }
+
+  for (const [documentId, { date, minister }] of sessions) {
+    await db.execute(sql`
+      INSERT INTO plenary_items
+        (document_id, title, plenary_date, plenary_type, plenary_type_id, mandate, updated_at)
+      VALUES
+        (${documentId}, ${`Question Time: ${minister}`}, ${date}, 'Question Time', 'QT', ${mandateIdForDate(date)}, NOW())
+      ON CONFLICT (document_id) DO UPDATE SET
+        title = EXCLUDED.title,
+        updated_at = NOW()
+    `)
+  }
+
+  const keepIds = [...sessions.keys()]
+  await db.execute(sql`
+    DELETE FROM plenary_items
+    WHERE plenary_type_id = 'QT'
+      AND plenary_date >= ${weekStart}::date
+      AND plenary_date <= ${weekEnd}::date
+      AND document_id NOT IN (${sql.join(keepIds.map((id) => sql`${id}`), sql`, `)})
+  `)
+
+  console.log(`[syncQuestionTimes] Complete — ${sessions.size} sessions written`)
+}
