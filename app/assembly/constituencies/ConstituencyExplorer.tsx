@@ -1002,6 +1002,18 @@ export default function ConstituencyExplorer({
                             <span className={styles.mapClearText}>Clear<span className="sr-only"> selection</span></span>
                           </button>
                         )}
+                        <div className={styles.mapSheet}>
+                          <SheetSelect
+                            options={sheetOptions}
+                            value={selected ?? ''}
+                            onPick={(key) => setSelected(key === '' ? null : key)}
+                            eyebrow="Choose"
+                            title="Constituency"
+                            headIcon={MapPin}
+                            hideTriggerMeta
+                            closeAbove={1101}
+                          />
+                        </div>
                         <div className={styles.mapMenu} ref={menuRef}>
                           <button
                             ref={triggerRef}

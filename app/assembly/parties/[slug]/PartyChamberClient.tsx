@@ -64,9 +64,9 @@ export default function PartyChamberClient({ hansardStats, hansardPartyRank, han
         <Kpi
           icon={MessagesSquare}
           tone="tnCoral"
-          label="Average debates per current MLA"
+          label="Average topics per current MLA"
           value={hansardPartyDebateRank ? hansardPartyDebateRank.avgDebates.toFixed(1) : '-'}
-          sub="Topics contributed to."
+          sub="Topics spoken on."
           scale={hansardPartyDebateRank ? activityScale(hansardPartyDebateRank.rank, hansardPartyDebateRank.totalParties) : undefined}
         />
 

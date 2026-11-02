@@ -738,10 +738,10 @@ export default function ActivityTabsClient(props: Props) {
         span={styles.tHalf}
         icon={MessagesSquare}
         tone="tnCoral"
-        label="Debates contributed to"
+        label="Topics spoken on"
         value={distinctDebates.toLocaleString()}
         scale={hansardDebateRank ? { rank: hansardDebateRank.rank, total: hansardDebateRank.eligibleCount, highIsBad: false, top: 'Most', bottom: 'Fewest' } : undefined}
-        sub="Debates spoken in since mandate start."
+        sub="Counted once per topic since mandate start."
       />
     ) } as unknown as ReactNode)
   }

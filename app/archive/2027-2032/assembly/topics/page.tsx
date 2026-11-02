@@ -8,7 +8,7 @@ const mandate = mandateById('2027-2032')!
 
 export const metadata: Metadata = {
   title: `MLA Topics - ${mandate.label} archive`,
-  description: `Debate topics spoken on by MLAs during the ${mandate.label} mandate.`,
+  description: `Topics spoken on by MLAs during the ${mandate.label} mandate.`,
 }
 
 export default function ArchiveTopicsPage() {

@@ -175,7 +175,7 @@ export default async function ActivityPageBody({
           <div>
             <span className={styles.eyebrow}>Plenary chamber</span>
             <h2 className={styles.h2} id="chamber-heading">Chamber activity</h2>
-            <p className={styles.sectionSub}>Plenary sittings spoken in and debate topics contributed to since {mandate.startLabel}. Excludes presiding officers.</p>
+            <p className={styles.sectionSub}>Plenary sittings spoken in and topics spoken on since {mandate.startLabel}. Excludes presiding officers.</p>
           </div>
           <div className={styles.sectionActions}>
             {viewAll('/assembly/sittings', 'Sittings rankings')}
@@ -187,7 +187,7 @@ export default async function ActivityPageBody({
             {stat(styles.tnBlue, CalendarDays, 'Sittings', num(hansardSiteStats.totalSittings), `since ${mandate.startLabel}`)}
             {stat(styles.tnGreen, CalendarClock, 'This month', num(hansardThisMonth), Number(hansardThisMonth) === 1 ? 'sitting' : 'sittings')}
             {stat(styles.tnAmber, Trophy, 'Most active MLA', topSitter ? <span className={styles.hFigureText}>{formatMemberName(topSitter.fullName)}</span> : '-', topSitter ? `${num(topSitter.sittings)} sittings` : '')}
-            {stat(styles.tnPurple, MessageSquare, 'Topics debated', num(hansardSiteStats.totalDebates), `${num(hansardSiteStats.totalParticipations)} contributions`)}
+            {stat(styles.tnPurple, MessageSquare, 'Topics spoken on', num(hansardSiteStats.totalDebates), `${num(hansardSiteStats.totalParticipations)} contributions`)}
           </ul>
             {rankPair('cs', styles.tnBlue, { title: 'Most sittings spoken in', Icon: ArrowUpWideNarrow, rows: hansard(hansardTopBySittings, 'sittings') }, { title: 'Fewest sittings spoken in', Icon: ArrowDownWideNarrow, rows: hansard(hansardBottomBySittings, 'sittings') })}
           {rankPair('ct', styles.tnPurple, { title: 'Most topics spoken on', Icon: ArrowUpWideNarrow, rows: hansard(hansardTopByTopics, 'debates') }, { title: 'Fewest topics spoken on', Icon: ArrowDownWideNarrow, rows: hansard(hansardBottomByTopics, 'debates') })}

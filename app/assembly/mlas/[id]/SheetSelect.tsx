@@ -26,13 +26,14 @@ type Props = {
   headIcon: OptionIcon
   className?: string
   hideTriggerMeta?: boolean
+  closeAbove?: number
 }
 
 function tileStyle(o: SheetOption): CSSProperties | undefined {
   return o.color ? { background: o.color, color: o.on ?? '#ffffff' } : undefined
 }
 
-export default function SheetSelect({ options, value, onPick, eyebrow, title, headIcon: HeadIcon, className, hideTriggerMeta }: Props) {
+export default function SheetSelect({ options, value, onPick, eyebrow, title, headIcon: HeadIcon, className, hideTriggerMeta, closeAbove = 641 }: Props) {
   const uid = useId()
   const dropdown = useDropdown()
   const sheetRef = useRef<HTMLDivElement>(null)
@@ -53,7 +54,7 @@ export default function SheetSelect({ options, value, onPick, eyebrow, title, he
     const inertTargets = Array.from(document.querySelectorAll<HTMLElement>('#main-content, footer, .skip-link'))
     inertTargets.forEach((el) => el.setAttribute('inert', ''))
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
-    const mq = window.matchMedia('(min-width: 641px)')
+    const mq = window.matchMedia(`(min-width: ${closeAbove}px)`)
     const onResize = () => { if (mq.matches) close() }
     window.addEventListener('keydown', onKey)
     mq.addEventListener('change', onResize)

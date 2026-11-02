@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import {
   Scale, FileText, Vote, Users, MapPin, Trophy, TrendingDown, PoundSterling, MessageCircleQuestion, Telescope,
-  CalendarDays, CalendarOff, CheckCircle2, ArrowRight, BarChart3, Milestone, XCircle,
+  CalendarDays, CalendarOff, CheckCircle2, ArrowRight, BarChart3, Milestone, XCircle, User,
 } from 'lucide-react'
 import {
   getHomepageStats,
@@ -28,6 +28,12 @@ import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import { formatDate, dayMonthOrdinalParts, abbreviateParty } from '@/lib/format'
 import type { Mandate } from '@/lib/constants/mandates'
 import s from './homePage.module.css'
+
+const SEAL_POINTS = Array.from({ length: 48 }, (_, i) => {
+  const angle = (i / 48) * Math.PI * 2 - Math.PI / 2
+  const radius = i % 2 === 0 ? 96 : 87
+  return `${(100 + radius * Math.cos(angle)).toFixed(1)},${(100 + radius * Math.sin(angle)).toFixed(1)}`
+}).join(' ')
 
 const BILL_ID_RE = /\s*\(NIA Bill [^)]*\)?$/
 
@@ -284,6 +290,7 @@ export default async function HomePageBody({ mandate, basePath }: { mandate: Man
               <div className={s.heroShade} />
             </div>
             <div className={s.heroInner}>
+              <div className={s.heroMain}>
               <div className={s.heroCopy}>
                 <span className={s.heroEyebrow}>
                   <span className={s.heroDot} aria-hidden="true" />
@@ -304,6 +311,23 @@ export default async function HomePageBody({ mandate, basePath }: { mandate: Man
                   <a href="#find-your-mla" className={s.heroBtnPrimary}>Find your MLA</a>
                   <Link href={`${basePath}/assembly/stats`} className={s.heroBtnGhost}>Explore the data</Link>
                 </div>
+              </div>
+              {basePath === '' && (
+                <Link href="/assembly/mlas/compare" className={s.heroSeal}>
+                  <svg className={s.heroSealShape} viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+                    <polygon points={SEAL_POINTS} />
+                    <circle cx="100" cy="100" r="76" />
+                  </svg>
+                  <span className={s.heroSealBody}>
+                    <span className={s.heroSealNew}>New</span>
+                    <span className={s.heroSealTitle}>Compare<br />MLAs</span>
+                    <span className={s.heroSealDuo} aria-hidden="true">
+                      <span className={s.heroSealA}><User size={16} strokeWidth={2.25} /></span>
+                      <span className={s.heroSealB}><User size={16} strokeWidth={2.25} /></span>
+                    </span>
+                  </span>
+                </Link>
+              )}
               </div>
             </div>
             <ul className={s.heroStats}>

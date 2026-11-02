@@ -583,6 +583,7 @@
 
 
 .phoneControls { display: none; }
+.mapSheet { display: none; }
 .goLink { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); min-width: 0; min-height: 44px; padding: 0 var(--s-6); border-radius: 999px; background: var(--sw-accent-strong-solid); color: #ffffff; font-size: var(--fs-base); font-weight: 600; text-decoration: none; transition: background var(--sw-transition); }
 .goLink:hover { background: var(--sw-accent-solid); color: #ffffff; text-decoration: none; }
 .goLink:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 3px; }
@@ -598,7 +599,9 @@
   .mapCol .mapControls { grid-area: ctrl; width: 100%; margin-left: 0; }
   .mapCol > .heroMap { grid-area: map; align-self: start; margin-top: -3.7%; }
   .mapCol > .mapFoot { grid-area: foot; min-height: 0; margin-top: var(--s-4); }
-  .mapMenu { flex: 1 1 auto; min-width: 0; }
+  .mapMenu { display: none; }
+  .mapSheet { display: block; flex: 1 1 auto; min-width: 0; }
+  .mapSheet > div { display: block; margin-bottom: 0; }
   .mapControls .mapClear { order: 2; }
   .mapTrigger { width: 100%; }
   .heroMap > * { width: 100%; }
@@ -1097,6 +1100,10 @@
 @media (max-width: 1100px) {
   .headRow { flex-direction: column; align-items: stretch; gap: var(--s-5); }
   .rankBadge { width: 100%; max-width: 420px; }
+}
+
+@media (min-width: 641px) and (max-width: 1100px) {
+  header.headRow { gap: var(--s-6); margin-bottom: var(--s-6); }
 }
 
 @media (max-width: 640px) {

@@ -4,7 +4,7 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } f
 import { createPortal } from 'react-dom'
 import type { CSSProperties } from 'react'
 import Link from 'next/link'
-import { Search, SearchX, CalendarX, X, Users, MapPin, UserMinus, Gauge, SlidersHorizontal, ArrowDown, ChevronDown, Check, Flag, ArrowRight } from 'lucide-react'
+import { Search, SearchX, CalendarX, X, Users, MapPin, UserMinus, Gauge, SlidersHorizontal, ArrowDown, ChevronDown, Check, Flag, ArrowRight, GitCompareArrows, User } from 'lucide-react'
 import MlaPhoto from '@/components/MlaPhoto'
 import { useMandate } from '@/components/MandateContext'
 import { useDropdown } from '@/lib/useDropdown'
@@ -283,10 +283,27 @@ export default function MlasListClient({
     <>
       <section className={`${styles.band} ${styles.bandPage}`} aria-labelledby="mlas-title">
         <div className="container">
-          <header className={styles.head}>
-            <span className={styles.eyebrow}>The Assembly</span>
-            <h1 className={styles.h1} id="mlas-title">All {totalMlas} MLAs</h1>
-            <p className={styles.headSub}>Every member of the Legislative Assembly elected to the {mandateLabel} mandate.</p>
+          <header className={`${styles.head} ${basePath === '' ? styles.headRow : ''}`}>
+            <div className={styles.headText}>
+              <span className={styles.eyebrow}>The Assembly</span>
+              <h1 className={styles.h1} id="mlas-title">All {totalMlas} MLAs</h1>
+              <p className={styles.headSub}>Every member of the Legislative Assembly elected to the {mandateLabel} mandate.</p>
+            </div>
+            {basePath === '' && (
+              <Link href="/assembly/mlas/compare" className={styles.rankBadge}>
+                <span className={styles.rankArt} aria-hidden="true">
+                  <User size={26} strokeWidth={2} className={styles.artA} />
+                  <User size={26} strokeWidth={2} className={styles.artB} />
+                  <b className={styles.artVs}>VS</b>
+                </span>
+                <span className={`${styles.iconTile} ${styles.tnPink} ${styles.rankIcon}`}><GitCompareArrows size={22} strokeWidth={2} aria-hidden="true" /></span>
+                <span className={styles.rankBadgeText}>
+                  <span className={styles.rankBadgeTitle}>Compare MLAs</span>
+                  <span className={styles.rankBadgeSub}>See how any two compare</span>
+                </span>
+                <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
+              </Link>
+            )}
           </header>
 
           <div className={styles.bento}>

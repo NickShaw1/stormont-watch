@@ -76,7 +76,7 @@ export default async function StatsPageBody({
     { group: 'Parliamentary activity', items: [
       { href: '/assembly/questions', title: 'Questions', desc: `All ${sittingAdjective(mandate)} MLAs except ministers and the Speaker, ranked by questions tabled since the ${mandate.label} mandate began.`, Icon: MessageSquare, tone: 'tnPurple' },
       { href: '/assembly/sittings', title: 'Sittings', desc: `All ${sittingAdjective(mandate)} MLAs except presiding officers, ranked by plenary sittings spoken in.`, Icon: Mic, tone: 'tnPurple' },
-      { href: '/assembly/topics', title: 'Topics', desc: `All ${sittingAdjective(mandate)} MLAs except presiding officers, ranked by debate topics spoken on.`, Icon: ListChecks, tone: 'tnPurple' },
+      { href: '/assembly/topics', title: 'Topics', desc: `All ${sittingAdjective(mandate)} MLAs except presiding officers, ranked by topics spoken on.`, Icon: ListChecks, tone: 'tnPurple' },
     ] },
     { group: 'Constituencies', items: [
       { href: '/assembly/stats/constituencies', title: 'Constituencies', desc: `Every constituency ranked on attendance, questions, expenses and the number of MLAs who have left across the ${mandate.label} mandate.`, Icon: MapPin, tone: 'tnBlue' },

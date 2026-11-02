@@ -24,6 +24,7 @@ const STATIC_URLS: MetadataRoute.Sitemap = [
   { url: BASE, changeFrequency: 'daily', priority: 1.0 },
   { url: `${BASE}/assembly/votes`, changeFrequency: 'daily', priority: 0.9 },
   { url: `${BASE}/assembly/mlas`, changeFrequency: 'weekly', priority: 0.8 },
+  { url: `${BASE}/assembly/mlas/compare`, changeFrequency: 'weekly', priority: 0.7 },
   { url: `${BASE}/assembly/bills`, changeFrequency: 'daily', priority: 0.8 },
   { url: `${BASE}/assembly/parties`, changeFrequency: 'weekly', priority: 0.8 },
   { url: `${BASE}/assembly/structure`, changeFrequency: 'weekly', priority: 0.7 },

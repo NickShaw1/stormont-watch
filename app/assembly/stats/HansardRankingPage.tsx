@@ -33,7 +33,7 @@ export default async function HansardRankingPage({ mandate, metric, basePath }: 
   return (
     <RankingShell
       title={sittings ? 'MLA sittings' : 'MLA topics'}
-      sub={<>{sittings ? 'Plenary sittings spoken in' : 'Debate topics spoken on'} by every {sittingAdjective(mandate)} MLA since the {mandate.label} mandate began. Excludes presiding officers. Data sourced from Hansard.</>}
+      sub={<>{sittings ? 'Plenary sittings spoken in' : 'Topics spoken on'} by every {sittingAdjective(mandate)} MLA since the {mandate.label} mandate began. Excludes presiding officers. Data sourced from Hansard.</>}
       stats={rows.length > 0 ? [
         { tone: sittings ? rankTones.blue : rankTones.purple, icon: Icon, label: sittings ? 'Sittings spoken in' : 'Topics spoken on', figure: total.toLocaleString('en-GB'), sub: `by ${rows.length} MLAs, each counted once` },
         { tone: rankTones.amber, icon: Crown, label: `Most ${noun}`, person: { href: `${basePath}/assembly/mlas/${top.id}`, personId: top.id, fullName: top.fullName, party: top.party, constituency: top.constituency, imgUrl: top.imgUrl, kind: 'top', pct: 100, value: `${top.value.toLocaleString('en-GB')} ${noun}`, context: `top of ${rows.length} MLAs` } },

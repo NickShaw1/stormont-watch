@@ -68,6 +68,7 @@ export default function AccessibilityPage() {
                 <li>Checks for sideways scrolling and clipped content on every type of page at 320 and 640 CSS pixels wide, which match 400% and 200% zoom.</li>
                 <li>Keyboard checks of the skip link on every page, of visible focus on the main page types, and of how the menu and pickers open, trap focus and close.</li>
               </ul>
+              <p>The Compare MLAs page was added after that date. On 2 November 2026 it was checked with the same automated rules, in light and dark mode at widths of 1280, 820 and 390 CSS pixels, including with its pickers open.</p>
               <p>This statement will be reviewed whenever the site changes significantly.</p>
             </>
           ),
