@@ -832,7 +832,7 @@ export default function ConstituencyExplorer({
               <span className={`${statsStyles.iconTile} ${statsStyles.tnPink}`}><Trophy size={22} strokeWidth={2} aria-hidden="true" /></span>
               <span className={styles.rankBadgeText}>
                 <span className={styles.rankBadgeTitle}>Constituency rankings</span>
-                <span className={styles.rankBadgeSub}>See how all of them compare</span>
+                <span className={styles.rankBadgeSub}>See how all of them compare.</span>
               </span>
               <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
             </Link>

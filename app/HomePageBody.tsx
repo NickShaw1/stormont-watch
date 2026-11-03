@@ -26,14 +26,9 @@ import MlaFinder from './components/homepage/MlaFinder'
 import Schedule, { type ScheduleDay, type ScheduleEntry } from './components/homepage/Schedule'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import { formatDate, dayMonthOrdinalParts, abbreviateParty } from '@/lib/format'
+import { SEAL_POINTS } from '@/lib/sealPoints'
 import type { Mandate } from '@/lib/constants/mandates'
 import s from './homePage.module.css'
-
-const SEAL_POINTS = Array.from({ length: 48 }, (_, i) => {
-  const angle = (i / 48) * Math.PI * 2 - Math.PI / 2
-  const radius = i % 2 === 0 ? 96 : 87
-  return `${(100 + radius * Math.cos(angle)).toFixed(1)},${(100 + radius * Math.sin(angle)).toFixed(1)}`
-}).join(' ')
 
 const BILL_ID_RE = /\s*\(NIA Bill [^)]*\)?$/
 

@@ -9,6 +9,7 @@ import MlaPhoto from '@/components/MlaPhoto'
 import { useMandate } from '@/components/MandateContext'
 import { useDropdown } from '@/lib/useDropdown'
 import { formatDate, formatMemberName, abbreviateParty, partyBorderColor, formatConstituency } from '@/lib/format'
+import { SEAL_POINTS } from '@/lib/sealPoints'
 import styles from './mlas.module.css'
 
 interface MlaRow {
@@ -299,9 +300,23 @@ export default function MlasListClient({
                 <span className={`${styles.iconTile} ${styles.tnPink} ${styles.rankIcon}`}><GitCompareArrows size={22} strokeWidth={2} aria-hidden="true" /></span>
                 <span className={styles.rankBadgeText}>
                   <span className={styles.rankBadgeTitle}>Compare MLAs</span>
-                  <span className={styles.rankBadgeSub}>See how any two compare</span>
+                  <span className={styles.rankBadgeSub}>See how any two compare.</span>
                 </span>
                 <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
+                <span className={styles.sealWrap} aria-hidden="true">
+                  <svg className={styles.sealShape} viewBox="0 0 200 200" focusable="false">
+                    <polygon points={SEAL_POINTS} />
+                    <circle cx="100" cy="100" r="78" />
+                  </svg>
+                  <span className={styles.sealBody}>
+                    <span className={styles.sealNew}>New</span>
+                    <span className={styles.sealTitle}>Compare<br />MLAs</span>
+                    <span className={styles.sealDuo}>
+                      <span className={styles.sealA}><User size={16} strokeWidth={2.25} /></span>
+                      <span className={styles.sealB}><User size={16} strokeWidth={2.25} /></span>
+                    </span>
+                  </span>
+                </span>
               </Link>
             )}
           </header>

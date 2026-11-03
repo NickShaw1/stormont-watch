@@ -14,6 +14,7 @@ import { heroColours } from '@/lib/partyInk'
 import type { CompareData, CompareDivision, CompareMla, CompareRank, CompareRanks, ComparePools, CompareExtremes, Extreme } from '@/lib/db/queries/compare'
 import MlaSheet from './MlaSheet'
 import DivisionSheet from './DivisionSheet'
+import CompareArt from './CompareArt'
 import { SEARCH_MAX, cleanQuery, filterMlas } from './search'
 import styles from './compare.module.css'
 
@@ -88,12 +89,12 @@ type Metric = {
 }
 
 const TEASERS = [
-  { icon: Handshake, tone: 'tnGreen', title: 'How often they vote alike', desc: 'The share of divisions where both cast the same vote.' },
+  { icon: Handshake, tone: 'tnGreen', title: 'How often they agree', desc: 'The share of divisions where both cast the same vote.' },
   { icon: Gauge, tone: 'tnBlue', title: 'Attendance and time served', desc: 'Division attendance and how long each has been in the Assembly.' },
   { icon: PoundSterling, tone: 'tnAmber', title: 'Expenses', desc: 'Mandate totals and monthly figures, with rankings.' },
-  { icon: MessageCircleQuestion, tone: 'tnPurple', title: 'Questions and topics', desc: 'Questions asked, sittings and topics spoken on.' },
-  { icon: LayoutGrid, tone: 'tnTeal', title: 'Every vote side by side', desc: 'A block for each division, with the splits listed.' },
-  { icon: UserSearch, tone: 'tnBlue', title: 'Find a match', desc: 'Which MLAs vote most and least like each of them.' },
+  { icon: MessageCircleQuestion, tone: 'tnPurple', title: 'Questions and topics', desc: 'Questions asked, and the sittings and topics each has spoken in.' },
+  { icon: LayoutGrid, tone: 'tnTeal', title: 'Every vote side by side', desc: 'Every division as a block, showing how each of them voted.' },
+  { icon: UserSearch, tone: 'tnBlue', title: 'Find a match', desc: 'The MLAs who most and least often vote the same way as each of them.' },
 ] as const
 
 const METRICS: Metric[] = [
@@ -117,6 +118,8 @@ function usePhone(query = '(max-width: 640px)') {
   }, [query])
   return phone
 }
+
+const NAV_CLEARANCE = 68
 
 const RECORD_PARTS = [
   { code: 'A', label: 'Aye', cls: 'segAye' },
@@ -179,6 +182,7 @@ function SlotCard({
   const [changing, setChanging] = useState(false)
   const [active, setActive] = useState(0)
   const wrapRef = useRef<HTMLDivElement>(null)
+  const slotRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const listId = `${side}-listbox`
@@ -212,7 +216,18 @@ function SlotCard({
   }, [active, open])
 
   useEffect(() => {
-    if (changing) inputRef.current?.focus()
+    if (!changing) return
+    const input = inputRef.current
+    if (!input) return
+    input.focus({ preventScroll: true })
+    const card = slotRef.current
+    if (!card) return
+    const top = card.getBoundingClientRect().top
+    const fieldBottom = input.getBoundingClientRect().bottom
+    if (top < NAV_CLEARANCE || fieldBottom > window.innerHeight) {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      window.scrollBy({ top: top - NAV_CLEARANCE - 16, behavior: reduce ? 'auto' : 'smooth' })
+    }
   }, [changing])
 
   useEffect(() => {
@@ -258,6 +273,7 @@ function SlotCard({
 
   return (
     <div
+      ref={slotRef}
       className={`${styles.slot} ${side === 'a' ? styles.sideA : styles.sideB}${hero ? ` ${styles.slotParty}` : ''}${selected && !searching ? '' : ` ${styles.slotIsEmpty}`}${!selected && !searching ? ` ${styles.slotBlank}` : ''}`}
       style={hero && tint ? ({ '--party': tint, '--hero-bg': hero.bg, '--hero-ink': hero.ink } as CSSProperties) : undefined}
     >
@@ -396,7 +412,7 @@ function SlotCard({
         cta={!selected && !searching ? (
           <>
             <span className={styles.ctaLabel}>Browse by party</span>
-            <span className={styles.ctaHint}>Tap anywhere on this card to choose</span>
+            <span className={styles.ctaHint}>Tap anywhere on this card to choose.</span>
             <span className={styles.ctaChips}>
               {parties.map((party) => (
                 <button
@@ -629,6 +645,7 @@ export default function CompareClient({ data, mandateLabel }: { data: CompareDat
   const [aId, setAId] = useState<string | null>(null)
   const [bId, setBId] = useState<string | null>(null)
   const [matchSide, setMatchSide] = useState<'a' | 'b'>('a')
+  const slotsRef = useRef<HTMLDivElement>(null)
   const [mosaicFilter, setMosaicFilter] = useState<'all' | 'splits'>('all')
   const [active, setActive] = useState<number | null>(null)
   const [splitsShown, setSplitsShown] = useState(SPLITS_STEP)
@@ -695,7 +712,16 @@ export default function CompareClient({ data, mandateLabel }: { data: CompareDat
     setMatchSide('a')
     setMosaicFilter('all')
     setActive(null)
-    window.setTimeout(() => document.getElementById('compare-title')?.focus(), 0)
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+      document.getElementById('compare-title')?.focus({ preventScroll: true })
+      const slots = slotsRef.current
+      if (!slots) return
+      const top = slots.getBoundingClientRect().top
+      if (top < NAV_CLEARANCE || top > window.innerHeight - NAV_CLEARANCE) {
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        window.scrollBy({ top: top - NAV_CLEARANCE - 16, behavior: reduce ? 'auto' : 'smooth' })
+      }
+    }))
   }
 
   const swap = () => {
@@ -731,9 +757,10 @@ export default function CompareClient({ data, mandateLabel }: { data: CompareDat
               <span className={styles.eyebrow}>Compare</span>
               <h1 id="compare-title" tabIndex={-1} className={styles.h1}>Head to head</h1>
               <p className={styles.headSub}>
-                Pick any two MLAs and see how often they vote the same way, division by division, and how they compare on attendance, questions, speaking and expenses across the {mandateLabel} mandate.
+                Pick any two MLAs to see how often they vote the same way and how they compare on attendance, questions, speeches and expenses in the {mandateLabel} mandate.
               </p>
             </div>
+            {!a && !b && <CompareArt className={styles.headArt} />}
             {(a || b) && (
               <button type="button" className={`${styles.slotBtn} ${styles.slotBtnAuto} ${styles.clearHead}`} onClick={reset}>
                 <RotateCcw size={16} strokeWidth={2} aria-hidden="true" />
@@ -743,7 +770,7 @@ export default function CompareClient({ data, mandateLabel }: { data: CompareDat
           </header>
           <div className={styles.heroStack}>
             <h2 className="sr-only">Choose two MLAs</h2>
-            <div className={styles.slots}>
+            <div ref={slotsRef} className={styles.slots}>
               <SlotCard side="a" label="First MLA" mlas={mlas} selected={a} otherId={bId} onPick={setAId} />
               <div className={styles.versus}>
                 <span className={styles.vsMark} aria-hidden="true">vs</span>
@@ -771,7 +798,7 @@ export default function CompareClient({ data, mandateLabel }: { data: CompareDat
                     <div className={styles.agreeFig}>
                       <span className={styles.agreeNum}>{pct === null ? 'n/a' : <>{pct}<span>%</span></>}</span>
                       <span className={styles.agreeCap}>
-                        {pct === null ? 'No shared votes' : `of the ${result.same + result.split} divisions where both voted went the same way`}
+                        {pct === null ? 'No shared votes' : `of the ${result.same + result.split} divisions where both voted, they voted the same way`}
                       </span>
                     </div>
                     <div className={styles.agreeBody}>
@@ -792,12 +819,17 @@ export default function CompareClient({ data, mandateLabel }: { data: CompareDat
                   <div className={styles.tileHead}>
                     <span className={`${styles.iconTile} ${styles.tnPurple}`}><Gauge size={22} strokeWidth={2} aria-hidden="true" /></span>
                     <h2 id="sbs-title" className={styles.tileLabel}>Side by side</h2>
-                    <span className={`${styles.tileMeta} ${styles.sbsHint}`}>Select a measure to see all MLAs</span>
+                    <span className={`${styles.tileMeta} ${styles.sbsHint}`}>Select a measure to see all MLAs.</span>
                   </div>
                   <SideBySide a={both.a} b={both.b} nameA={shortA} nameB={shortB} pools={data.pools} servedPool={servedPool} extremes={data.extremes} />
-                  <p className={styles.footnote}>
-                    1st is the highest figure. Attendance ranks current MLAs. Questions, sittings and topics use the same rankings as MLA profiles: questions leave out the Speaker and ministers, and sittings and topics leave out the Speaker and deputies. Expenses rank every MLA with published expenses, current and former, on mandate totals to date. Time served counts from the day each MLA took their seat in this mandate. Expenses per month divide the mandate total by the months in office up to the end of the latest published financial year, and only MLAs with at least 12 months are ranked, as on MLA profiles.
-                  </p>
+                  <ul className={styles.footnoteList}>
+                    <li>Attendance: current MLAs only.</li>
+                    <li>Questions: leaves out the Speaker and ministers.</li>
+                    <li>Sittings and topics: leave out the Speaker and deputies.</li>
+                    <li>Expenses: every MLA with published expenses, current and former, on mandate totals to date.</li>
+                    <li>Time served: counted from the day each MLA took their seat this mandate.</li>
+                    <li>Expenses per month: the mandate total divided by months in office, up to the end of the latest published financial year. Only MLAs with at least 12 months are ranked.</li>
+                  </ul>
                 </div>
               </>
             )}
@@ -832,7 +864,7 @@ export default function CompareClient({ data, mandateLabel }: { data: CompareDat
                   </div>
 
                   <p className="sr-only">
-                    {nameA} and {nameB} voted the same way in {result.same} divisions and differently in {result.split}. In {result.missed} at least one of them was absent. The blocks below are a visual summary, and every division where they voted differently is listed after them.
+                    {nameA} and {nameB} voted the same way in {result.same} divisions and differently in {result.split}. In {result.missed} divisions at least one of them was absent. Each block below is one division, and the ones where they split are listed underneath.
                   </p>
                   <div className={styles.legendCard}>
                     <p id="mosaic-key" className={styles.legendTitle}>Key:</p>

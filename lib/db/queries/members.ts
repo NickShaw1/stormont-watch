@@ -437,3 +437,81 @@ export async function getMostEngagedMLA(mandate: string = CURRENT_MANDATE) {
     total: Number(row.total),
   }
 }
+
+const PAIR_MIN_SHARED = 25
+
+export type PairMla = { personId: string; fullName: string; party: string | null; constituency: string | null; imgUrl: string | null }
+export type MlaPair = { a: PairMla; b: PairMla; pct: number; same: number; shared: number }
+export type PairLeftOut = { personId: string; fullName: string; reason: string }
+export type MlaPairAgreement = { minShared: number; compared: number; members: number; leftOut: PairLeftOut[]; leastAlike: MlaPair[]; crossParty: MlaPair[] }
+
+export async function getMlaPairAgreement(mandate: string = CURRENT_MANDATE): Promise<MlaPairAgreement> {
+  const [pairRows, memberRows, speakerRows] = await Promise.all([
+    db.execute(sql`
+      WITH v AS (
+        SELECT vt.person_id, vt.document_id, vt.vote
+        FROM votes vt
+        JOIN members m ON m.person_id = vt.person_id AND m.mandate = ${mandate}
+        JOIN divisions d ON d.document_id = vt.document_id AND d.mandate = ${mandate}
+        WHERE vt.mandate = ${mandate}
+        AND m.is_current = true
+        AND vt.vote <> 'NO_SHOW'
+        AND (m.mandate_start IS NULL OR d.division_date >= m.mandate_start::timestamptz)
+        AND ${notServingAsSpeaker(sql`m.person_id`, sql`d.division_date`)}
+      )
+      SELECT a.person_id AS a, b.person_id AS b, COUNT(*)::int AS shared, (COUNT(*) FILTER (WHERE a.vote = b.vote))::int AS same
+      FROM v a
+      JOIN v b ON a.document_id = b.document_id AND a.person_id < b.person_id
+      GROUP BY a.person_id, b.person_id
+      HAVING COUNT(*) >= ${PAIR_MIN_SHARED}
+    `),
+    db
+      .select({ personId: members.personId, fullName: members.fullName, party: members.party, constituency: members.constituency, mandateStart: members.mandateStart })
+      .from(members)
+      .where(and(eq(members.isCurrent, true), eq(members.mandate, mandate))),
+    db.execute(sql`SELECT person_id FROM member_role_history WHERE role = 'Speaker' AND end_date IS NULL`),
+  ])
+
+  const byId = new Map<string, PairMla>(memberRows.map((r) => [r.personId, { personId: r.personId, fullName: r.fullName, party: r.party, constituency: r.constituency, imgUrl: mlaImg(r.personId) }]))
+  const pairs: MlaPair[] = []
+  for (const r of pairRows.rows as { a: string; b: string; shared: number; same: number }[]) {
+    const a = byId.get(r.a)
+    const b = byId.get(r.b)
+    if (!a || !b) continue
+    pairs.push({ a, b, same: r.same, shared: r.shared, pct: (r.same * 100) / r.shared })
+  }
+
+  const order = (x: MlaPair, y: MlaPair) => y.shared - x.shared || x.a.fullName.localeCompare(y.a.fullName) || x.b.fullName.localeCompare(y.b.fullName)
+  const topFive = (list: MlaPair[], best: 'high' | 'low') =>
+    [...list].sort((x, y) => (best === 'high' ? y.pct - x.pct : x.pct - y.pct) || order(x, y)).slice(0, 5)
+
+  const inParty = (m: PairMla) => !!m.party && m.party !== 'Independent'
+  const partyPairs = pairs.filter((p) => inParty(p.a) && inParty(p.b))
+  const compared = new Set<string>()
+  for (const p of partyPairs) {
+    compared.add(p.a.personId)
+    compared.add(p.b.personId)
+  }
+  const speakerIds = new Set((speakerRows.rows as { person_id: string }[]).map((r) => r.person_id))
+  const mandateStart = new Date(mandateStartOf(mandate)).getTime()
+  const joined = (d: string | Date | null) =>
+    d && new Date(d).getTime() > mandateStart + 30 * 86400000
+      ? `joined in ${new Date(d).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'Europe/London' })}`
+      : null
+  const leftOut: PairLeftOut[] = memberRows
+    .filter((r) => !compared.has(r.personId))
+    .map((r) => ({
+      personId: r.personId,
+      fullName: r.fullName,
+      reason: speakerIds.has(r.personId) ? 'Speaker' : !r.party || r.party === 'Independent' ? 'independent' : (joined(r.mandateStart) ?? 'too few divisions'),
+    }))
+
+  return {
+    minShared: PAIR_MIN_SHARED,
+    compared: compared.size,
+    members: memberRows.length,
+    leftOut,
+    leastAlike: topFive(partyPairs, 'low'),
+    crossParty: topFive(partyPairs.filter((p) => p.a.party !== p.b.party), 'high'),
+  }
+}

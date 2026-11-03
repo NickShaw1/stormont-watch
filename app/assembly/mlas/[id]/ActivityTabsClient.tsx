@@ -280,7 +280,7 @@ function YearChart({ rows, selected, onSelect, mandate, detail }: {
                       <span className={styles.tipHead}><span>{isMandate ? 'Mandate' : r.financial_year}</span></span>
                       <span className={styles.tipRow}>Ranked<b>{r.rank} of {r.total_members}</b></span>
                       <span className={styles.tipRow}>Spend<b>{shortGbp(total)}</b></span>
-                      <span className={styles.tipNote}>Rank 1 is the highest spend</span>
+                      <span className={styles.tipNote}>Rank 1 is the highest spend.</span>
                     </span>
                   )}
                 </span>

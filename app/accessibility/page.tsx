@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Accessibility, ListChecks, Mail, FlaskConical } from 'lucide-react'
 import LegalPage from '../components/LegalPage'
 
-const DESCRIPTION = 'How accessible Stormont Watch is, what has been tested, known limitations, and how to report an accessibility problem.'
+const DESCRIPTION = 'How accessible Stormont Watch is, what has been tested, known limitations and how to report an accessibility problem.'
 
 export const metadata: Metadata = {
   title: 'Accessibility statement',
@@ -30,7 +30,7 @@ export default function AccessibilityPage() {
               <li>Use the site in light or dark mode, following your device setting or the toggle in the header.</li>
               <li>Move around the whole site with a keyboard, with a visible focus indicator on links, buttons and search fields.</li>
               <li>Skip straight to the main content with the &quot;Skip to main content&quot; link, which is the first thing you reach by keyboard on every page.</li>
-              <li>Open and close the menu and the filter pickers by keyboard. Focus stays inside while they are open, Escape closes them, and focus returns to where you were.</li>
+              <li>Open and close the menu and the filter pickers by keyboard. Focus stays inside while they are open, Escape closes them and focus returns to where you were.</li>
               <li>Pick your constituency from a list as well as from the map on the homepage.</li>
               <li>Use the site with less movement if your device is set to reduce motion.</li>
             </ul>
@@ -43,7 +43,7 @@ export default function AccessibilityPage() {
           Icon: ListChecks,
           children: (
             <ul>
-              <li>Every page has one main heading, headings in order, and its language set to British English.</li>
+              <li>Every page has one main heading, headings in order and its language set to British English.</li>
               <li>Page regions are labelled, so screen reader users can jump between navigation, main content and footer.</li>
               <li>Every search box and filter has a label.</li>
               <li>MLA photographs have an empty text alternative because the MLA&apos;s name is always written next to them. The photograph of Parliament Buildings has a description.</li>
@@ -66,7 +66,7 @@ export default function AccessibilityPage() {
               <ul>
                 <li>Automated checks with axe-core against the WCAG 2.0, 2.1 and 2.2 A and AA rules, plus its best-practice rules. These cover colour contrast, headings, page regions, form labels and image alternatives. They ran on every type of page, in light and dark mode, at widths of 1280, 820 and 390 CSS pixels, in a Chromium browser.</li>
                 <li>Checks for sideways scrolling and clipped content on every type of page at 320 and 640 CSS pixels wide, which match 400% and 200% zoom.</li>
-                <li>Keyboard checks of the skip link on every page, of visible focus on the main page types, and of how the menu and pickers open, trap focus and close.</li>
+                <li>Keyboard checks of the skip link on every page, of visible focus on the main page types and of how the menu and pickers open, trap focus and close.</li>
               </ul>
               <p>The Compare MLAs page was added after that date. On 2 November 2026 it was checked with the same automated rules, in light and dark mode at widths of 1280, 820 and 390 CSS pixels, including with its pickers open.</p>
               <p>This statement will be reviewed whenever the site changes significantly.</p>
@@ -81,12 +81,12 @@ export default function AccessibilityPage() {
           children: (
             <>
               <p>
-                If you have difficulty using this site, need information in a different format, or want
+                If you have difficulty using this site, need information in a different format or want
                 to report an accessibility problem, email{' '}
                 <a href="mailto:hello@stormontwatch.com">hello@stormontwatch.com</a>.
               </p>
               <p>
-                Please include the page address, what you were trying to do, and the device, browser and
+                Please include the page address, what you were trying to do and the device, browser and
                 any assistive technology used. Accessibility problems are treated as faults to be fixed.
               </p>
             </>

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CheckCircle2, Handshake, Scale, Users, CalendarCheck, ArrowLeftRight, Gauge, ArrowRight, Info, Flame } from 'lucide-react'
+import { CheckCircle2, Handshake, Scale, Users, CalendarCheck, ArrowLeftRight, Gauge, ArrowRight, Info, Flame, Split, ChevronDown } from 'lucide-react'
 import {
   getMlaLeaderboard,
   getAverageAttendance,
@@ -13,9 +13,11 @@ import {
   getBlocAgreement,
   getPartyAgreedDivisions,
   getBigTwoAgreedDivisions,
+  getMlaPairAgreement,
 } from '@/lib/db/queries'
 import RankingTile from '../RankingTile'
 import PartyBars from '../PartyBars'
+import PairRows from '../PairRows'
 import PartyAlliances from '../PartyAlliances'
 import AgreementPair from '../AgreementPair'
 import BlocTrends from '../BlocTrends'
@@ -36,7 +38,7 @@ export default async function VotingPageBody({
   mandate: Mandate
   basePath: string
 }) {
-  const [leaderboard, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, crossCommunityTrends, partyAttendance, partyAlignment, bigTwoAgreement, blocAgreement, agreedDivisions, bigTwoAgreedDivisions] = await Promise.all([
+  const [leaderboard, avgAttendance, partyCohesion, rebelliousMla, crossCommunity, crossCommunityTrends, partyAttendance, partyAlignment, bigTwoAgreement, blocAgreement, agreedDivisions, bigTwoAgreedDivisions, pairAgreement] = await Promise.all([
     getMlaLeaderboard(mandate.id),
     getAverageAttendance(mandate.id),
     getPartyCohesion(mandate.id),
@@ -49,6 +51,7 @@ export default async function VotingPageBody({
     getBlocAgreement(mandate.id),
     getPartyAgreedDivisions(mandate.id),
     getBigTwoAgreedDivisions(mandate.id),
+    getMlaPairAgreement(mandate.id),
   ])
 
   type RawDivisionRow = { document_id?: string; documentId?: string; subject?: string }
@@ -63,6 +66,9 @@ export default async function VotingPageBody({
         { label: 'Other', aye: Number(crossCommunity.otherAyes), no: Number(crossCommunity.otherNoes) },
       ]
     : []
+  const leftOutNames = pairAgreement.leftOut.map((m) => `${formatMemberName(m.fullName)} (${m.reason})`)
+  const pairNote = `Compares ${pairAgreement.compared} of the ${pairAgreement.members} current MLAs on divisions where both cast a vote, using the same method as Compare MLAs. Pairs need at least ${pairAgreement.minShared} such divisions. Independents are left out, as they sit outside the party system and some have recently left a party.${leftOutNames.length > 0 ? ` Not included: ${leftOutNames.length > 1 ? `${leftOutNames.slice(0, -1).join(', ')} and ${leftOutNames[leftOutNames.length - 1]}` : leftOutNames[0]}.` : ''}`
+
   const mostCohesive = partyCohesion.length > 0 ? [...partyCohesion].sort((a, b) => b.cohesionPct - a.cohesionPct)[0] : null
 
   const attendance = (
@@ -71,7 +77,7 @@ export default async function VotingPageBody({
         <div className={styles.sectionHead}>
           <span className={styles.eyebrow}>Individual performance</span>
           <h2 className={styles.h2} id="attendance-heading">Attendance and voting</h2>
-          <p className={styles.sectionSub}>Who shows up, who votes Aye and who votes No. The top five {sittingAdjective(mandate)} MLAs for each measure, excluding presiding officers.</p>
+          <p className={styles.sectionSub}>Who shows up, who votes Aye and who votes No. The top five {sittingAdjective(mandate)} MLAs for each measure, excluding presiding officers. Below, the pairs of MLAs who vote most and least alike.</p>
         </div>
         <div className={styles.bento}>
           <section className={`${styles.span7} ${styles.tile}`} aria-labelledby="ranking-heading">
@@ -97,6 +103,42 @@ export default async function VotingPageBody({
               <PartyBars rows={partyAttendance.map((r) => ({ party: r.party, value: r.attendancePct }))} format={(v) => `${v.toFixed(1)}%`} label="Average attendance by party" />
             </section>
           )}
+          <section className={`${styles.span12} ${styles.tile}`} aria-label="Who votes alike">
+            <div className={styles.pairCols}>
+              <div className={styles.pairGroup} role="group" aria-labelledby="pair-cross-heading">
+                <div className={styles.tileHead}>
+                  <span className={`${styles.iconTile} ${styles.tnIndigo}`}><ArrowLeftRight size={22} strokeWidth={2} aria-hidden="true" /></span>
+                  <div className={styles.tileTitles}>
+                    <h3 className={styles.tileTitle} id="pair-cross-heading">Closest across parties</h3>
+                    <p className={styles.tileSub}>MLAs from different parties who most often vote the same way.</p>
+                  </div>
+                </div>
+                <PairRows pairs={pairAgreement.crossParty} mode="agree" label="Closest across parties" />
+              </div>
+              <div className={styles.pairGroup} role="group" aria-labelledby="pair-apart-heading">
+                <div className={styles.tileHead}>
+                  <span className={`${styles.iconTile} ${styles.tnCoral}`}><Split size={22} strokeWidth={2} aria-hidden="true" /></span>
+                  <div className={styles.tileTitles}>
+                    <h3 className={styles.tileTitle} id="pair-apart-heading">Furthest apart</h3>
+                    <p className={styles.tileSub}>MLAs who most often vote differently when both voted.</p>
+                  </div>
+                </div>
+                <PairRows pairs={pairAgreement.leastAlike} mode="split" label="Furthest apart" />
+              </div>
+            </div>
+            <div className={`${styles.note} ${styles.pairFoot}`}>
+              <Info size={18} strokeWidth={2} aria-hidden="true" />
+              <p>{pairNote}</p>
+            </div>
+            <details className={styles.pairMore}>
+              <summary className={styles.pairMoreSummary}>
+                <Info size={18} strokeWidth={2} aria-hidden="true" />
+                <span>About these figures</span>
+                <ChevronDown className={styles.pairMoreChev} size={18} strokeWidth={2} aria-hidden="true" />
+              </summary>
+              <p className={styles.pairMoreBody}>{pairNote}</p>
+            </details>
+          </section>
         </div>
       </div>
     </section>

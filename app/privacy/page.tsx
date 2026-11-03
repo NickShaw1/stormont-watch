@@ -25,7 +25,7 @@ export default function PrivacyPage() {
           children: (
             <p>
               Stormont Watch does not collect any personal data from visitors. We do not use
-              cookies, tracking scripts, analytics, or advertising technologies of any kind.
+              cookies, tracking scripts, analytics or advertising technologies of any kind.
             </p>
           ),
         },

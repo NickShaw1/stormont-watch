@@ -54,7 +54,7 @@ export default function Footer() {
               </ul>
             </div>
 
-            <div className={`${styles.col} ${styles.about}`}>
+            <div className={styles.col}>
               <p className={styles.heading}>About</p>
               <ul className={styles.links} role="list">
                 {ABOUT_LINKS.map((l) => (

@@ -81,17 +81,51 @@
   .headRow { flex-direction: column; align-items: stretch; gap: var(--s-5); }
   .rankBadge { width: 100%; max-width: 420px; }
 }
+@media (max-width: 640px) {
+  .rankBadge { padding: var(--s-4) var(--s-5); border-radius: var(--r-lg); }
+  .rankArt { display: none; }
+  .rankIcon { display: grid; }
+  .rankBadgeSub { position: static; width: auto; height: auto; margin: 0; overflow: visible; clip: auto; white-space: normal; }
+}
+.sealWrap { display: none; }
 @media (min-width: 641px) and (max-width: 1100px) {
   header.headRow { flex-direction: row; align-items: flex-end; justify-content: space-between; gap: var(--s-6); margin-bottom: var(--s-6); }
-  .rankBadge { width: auto; max-width: none; padding: var(--s-2) var(--s-5) var(--s-2) var(--s-2); }
-  .rankArt { width: 100px; height: 52px; }
-  .artA, .artB { padding: 15px; }
-  .artVs { width: 28px; height: 28px; font-size: 10px; }
+}
+@media (min-width: 641px) {
+  .rankBadge { position: relative; flex: none; display: grid; place-items: center; width: 128px; height: 128px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; overflow: visible; color: #1a1d21; transform: rotate(-8deg); filter: drop-shadow(0 14px 24px rgba(14, 26, 42, 0.28)); transition: transform 400ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .rankBadge:hover, .rankBadge:focus-visible { background: none; color: #1a1d21; text-decoration: none; transform: rotate(-8deg) scale(1.04); }
+  .rankBadge:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 6px; border-radius: 50%; }
+  .rankArt, .rankBadge > svg { display: none; }
+  .rankBadgeText { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .sealWrap { position: absolute; inset: 0; display: grid; place-items: center; }
+  .sealShape { position: absolute; inset: 0; width: 100%; height: 100%; transition: transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .rankBadge:hover .sealShape, .rankBadge:focus-visible .sealShape { transform: rotate(45deg); }
+  .sealShape polygon { fill: var(--amber); stroke: var(--amber); stroke-width: 5; stroke-linejoin: round; }
+  .sealShape circle { fill: none; stroke: #1a1d21; stroke-width: 1.5; stroke-dasharray: 3 5; opacity: 0.4; }
+  .sealBody { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--s-1); text-align: center; }
+  .sealNew { padding: 2px 10px; border-radius: 999px; background: #1a1d21; color: var(--amber); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+  .sealTitle { font-size: var(--fs-md); font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+  .sealDuo { display: inline-flex; }
+  .sealA, .sealB { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: #ffffff; box-shadow: 0 0 0 3px var(--amber); }
+  .sealA { background: #274563; }
+  .sealB { margin-left: -8px; background: #ec4899; }
+}
+@media (min-width: 641px) and (prefers-reduced-motion: reduce) {
+  .rankBadge, .sealShape { transition: none; }
+  .rankBadge:hover, .rankBadge:focus-visible { transform: rotate(-8deg); }
+  .rankBadge:hover .sealShape, .rankBadge:focus-visible .sealShape { transform: none; }
+}
+@media (forced-colors: active) {
+  .sealShape polygon { forced-color-adjust: none; }
 }
 @media (min-width: 1101px) {
   header.headRow { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--s-4); }
   .headText { grid-column: 1 / span 8; }
-  .rankBadge { grid-column: 9 / span 4; width: auto; }
+  .rankBadge { grid-column: 9 / span 4; justify-self: end; align-self: start; width: 150px; height: 150px; margin-bottom: -12px; }
+  .sealBody { gap: var(--s-2); }
+  .sealNew { padding: 4px 12px; }
+  .sealTitle { font-size: var(--fs-xl); }
+  .sealA, .sealB { width: 28px; height: 28px; }
 }
 
 /* Tiles and bento (homepage pattern) */

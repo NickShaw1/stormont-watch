@@ -128,7 +128,7 @@ export default async function VotesPageBody({
   return (
     <VotesFiltersProvider>
     <div className={styles.page}>
-      <section className={`${styles.band} ${styles.bandPage} ${styles.intro}`} aria-labelledby="votes-title">
+      <section className={`${styles.band} ${styles.bandPage}`} aria-labelledby="votes-title">
         <div className="container">
           <div className={styles.introInner}>
             <header className={styles.head}>

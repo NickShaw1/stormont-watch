@@ -76,6 +76,7 @@
 .tileLabel { flex: 1; min-width: 0; margin: 0; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sw-text-secondary); }
 .tileMeta { flex: none; font-size: var(--fs-sm); font-weight: 600; color: var(--sw-text-secondary); font-variant-numeric: tabular-nums; }
 .footnote { margin: 0; font-size: var(--fs-sm); line-height: 1.6; color: var(--sw-text-secondary); }
+.footnoteList { display: flex; flex-direction: column; gap: var(--s-1); margin: 0; padding: 0 0 0 1.25em; font-size: var(--fs-sm); line-height: 1.6; color: var(--sw-text-secondary); }
 
 .sideA { --side: var(--side-a); }
 .sideB { --side: var(--side-b); }
@@ -346,6 +347,7 @@ a.profileRow:hover { background: color-mix(in srgb, var(--sw-accent) 13%, var(--
 
 
 .headRow { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s-6); }
+.headArt { flex: none; align-self: center; width: min(390px, 34%); height: auto; }
 .headCopy { min-width: 0; }
 .heroStack { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
 .chip:focus-visible, .cmpRow:focus-visible { outline-offset: -2px; }
@@ -426,6 +428,7 @@ a.profileRow:hover { background: color-mix(in srgb, var(--sw-accent) 13%, var(--
 
 @media (max-width: 1024px) {
   .headRow { flex-direction: column; align-items: flex-start; gap: var(--s-5); }
+  .headArt { display: none; }
   .clearHead { display: none; }
   .clearBelow { display: inline-flex; grid-column: 1 / -1; justify-self: end; width: auto; }
   .slots { margin-bottom: var(--s-4); }
