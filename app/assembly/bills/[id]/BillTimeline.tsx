@@ -629,7 +629,7 @@ function EventBody({ event, basePath }: { event: TimelineEvent; basePath: string
           <div key={month.label} className={styles.group}>
             <div className={styles.groupHead}>
               <span className={styles.groupIcon}><Users size={16} strokeWidth={2} aria-hidden="true" /></span>
-              {month.label} ({month.rows.length})
+              {month.label} ({plural(month.rows.length, 'item', 'items')})
             </div>
             <ul className={styles.list} role="list">
               {month.rows.map(row => (
