@@ -202,7 +202,8 @@ export default function VotesListClient({ allItems, note }: Props) {
     { key: 'ALL', label: 'All types', icon: Layers, meta: `${allItems.length} divisions` },
     { key: 'BILLS', label: 'Bills', icon: Scale, color: '#8b5cf6', meta: `${typeCount('BILLS')} divisions` },
     { key: 'MOTIONS', label: 'Motions', icon: Megaphone, color: 'var(--sw-accent-solid)', meta: `${typeCount('MOTIONS')} divisions` },
-    { key: 'REGULATIONS', label: 'Regulations', icon: Stamp, color: 'var(--c-pink)', meta: `${typeCount('REGULATIONS')} divisions` },  ]
+    { key: 'REGULATIONS', label: 'Regulations', icon: Stamp, color: '#ec4899', meta: `${typeCount('REGULATIONS')} divisions` },
+  ]
   const resultOptions: SheetOption[] = [
     { key: 'ALL', label: 'All outcomes', icon: Vote, meta: `${allItems.length} divisions` },
     { key: 'PASSED', label: 'Passed', icon: Check, color: 'var(--sw-success-solid)', meta: `${resultCount('PASSED')} divisions` },
