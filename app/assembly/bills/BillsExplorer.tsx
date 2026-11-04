@@ -2,9 +2,9 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Search, X, SearchX, TrendingUp, Landmark, Layers, Timer, Crown, Check, CalendarClock, BarChart3, ArrowRight, ArrowDown, BookOpen, SlidersHorizontal, Gauge, User, Users, Building2, Milestone } from 'lucide-react'
+import { Search, X, SearchX, TrendingUp, Landmark, Layers, Timer, Crown, Check, CalendarClock, BarChart3, ArrowRight, ArrowDown, BookOpen, SlidersHorizontal, Gauge, User, Users, Building2, Milestone, Zap, Hourglass, Clock } from 'lucide-react'
 import { formatDate } from '@/lib/format'
-import { computeBillProgress } from '@/lib/bills/billProgress'
+import { computeBillProgress, BILL_STAGES } from '@/lib/bills/billProgress'
 import { PIPELINE_LABELS, pipelineIndex } from '@/lib/bills/billStats'
 import { STAGE_INFO, stageSlug } from '@/lib/bills/stageInfo'
 import { billTypeKey } from '@/lib/bills/billType'
@@ -58,9 +58,10 @@ interface TableBill {
   introduced: string | null
   latest: string
   latestLabel: string
+  hasPetition: boolean
 }
 
-type StatusFilter = 'all' | 'active' | 'completed'
+type StatusFilter = 'all' | 'active' | 'completed' | 'petition'
 
 const AWAITING = 'Awaiting Royal Assent'
 const LAW = 'Became law'
@@ -68,13 +69,18 @@ const DEFEATED = 'Defeated'
 const DAY_MS = 86_400_000
 const WEEK_LIMIT = 5
 
+function scheduledDate(raw: string) {
+  const full = formatDate(raw)
+  return full.endsWith(` ${new Date().getFullYear()}`) ? full.slice(0, -5) : full
+}
+
 const TYPE_ICON = { executive: Landmark, private: User, committee: Users, other: Building2 } as const
 const TYPE_TONE = { executive: styles.tnGrey, private: styles.tnSky, committee: styles.tnTeal, other: styles.tnGrey } as const
 
 const FOCUS_KIND: Record<string, TableKind> = { [AWAITING]: 'awaiting', [LAW]: 'law', [DEFEATED]: 'failed' }
 
 function toTableBill(bill: BillItem): TableBill {
-  const { stageIdx, scheduledIdx } = computeBillProgress(bill.stageHistory, bill.royalAssentDate, bill.passed === true)
+  const { stageIdx, scheduledIdx } = computeBillProgress(bill.stageHistory, bill.royalAssentDate, bill.passed === true, { isAccelerated: bill.isAccelerated })
   const dates = bill.stageHistory.map(h => h.plenaryDate).filter(d => !isNaN(new Date(d).getTime())).sort()
   const kind: TableKind =
     bill.category === 'scheduled' ? 'scheduled'
@@ -82,9 +88,16 @@ function toTableBill(bill: BillItem): TableBill {
     : bill.royalAssentDate ? 'law'
     : bill.passed === false ? 'failed'
     : 'awaiting'
+  const nextStage = kind === 'scheduled' && scheduledIdx !== null ? BILL_STAGES[scheduledIdx] : null
+  const nextDate = nextStage
+    ? bill.stageHistory
+        .filter(h => h.stage.toLowerCase() === nextStage.toLowerCase() && !isNaN(new Date(h.plenaryDate).getTime()) && new Date(h.plenaryDate) > new Date())
+        .map(h => h.plenaryDate)
+        .sort()[0] ?? null
+    : null
   const latestLabel =
-    kind === 'scheduled' ? 'Scheduled'
-    : kind === 'active' ? 'Last activity'
+    kind === 'scheduled' ? (nextStage && nextDate ? `Scheduled: ${nextStage.replace(/ Stage$/, '')}` : 'Scheduled')
+    : kind === 'active' ? 'Last in Assembly'
     : kind === 'law' ? 'Royal Assent'
     : kind === 'awaiting' ? 'Final Stage'
     : 'Defeated'
@@ -100,8 +113,9 @@ function toTableBill(bill: BillItem): TableBill {
     stageIdx: Math.max(stageIdx, 0),
     scheduledIdx,
     introduced: dates[0] ?? null,
-    latest: kind === 'law' && bill.royalAssentDate ? bill.royalAssentDate : bill.latestDate,
+    latest: kind === 'law' && bill.royalAssentDate ? bill.royalAssentDate : nextDate ?? bill.latestDate,
     latestLabel,
+    hasPetition: bill.hasPetition,
   }
 }
 
@@ -153,7 +167,10 @@ function DayRail({ groups }: { groups: [string, DayItem[]][] }) {
                   {stages.map(stage => (
                     <span key={stage} className={`${sch.pill} ${styles.dayPill}`}>
                       <span className={sch.pillIcon}><Landmark size={14} strokeWidth={2.25} aria-hidden="true" /></span>
-                      <span className={`${sch.pillLabel} ${styles.dayPillLabel}`}>{stage}</span>
+                      <span className={`${sch.pillLabel} ${styles.dayPillLabel}`}>
+                        <span className={styles.stageFull}>{stage}</span>
+                        <span className={styles.stageShort} aria-hidden="true">{stage.replace(/ Stage$/, '')}</span>
+                      </span>
                       <span className={sch.pillCount}>{items.filter(item => item.stage === stage).length}</span>
                     </span>
                   ))}
@@ -234,14 +251,21 @@ export default function BillsExplorer({ head, summary, pipeline, outcomes, daysT
 
   const allRows: TableBill[] = [...scheduled, ...inProgress, ...completed].map(toTableBill)
   const isActive = (b: TableBill) => b.kind === 'scheduled' || b.kind === 'active'
-  const statusCount = (s: StatusFilter) => allRows.filter(b => s === 'all' || (s === 'active' ? isActive(b) : !isActive(b))).length
+  const matchesStatus = (b: TableBill, s: StatusFilter) => s === 'all' || (s === 'petition' ? b.hasPetition : s === 'active' ? isActive(b) : !isActive(b))
+  const statusCount = (s: StatusFilter) => allRows.filter(b => matchesStatus(b, s)).length
+  const showPills: [StatusFilter, string][] = [
+    ['all', 'All'],
+    ['active', 'Before the Assembly'],
+    ['completed', 'Completed'],
+    ...(statusCount('petition') > 0 ? [['petition', 'Petition of Concern'] as [StatusFilter, string]] : []),
+  ]
 
   const focusKind = focus ? FOCUS_KIND[focus] : null
   const rows = allRows.filter(b => {
     if (isSearching && !b.title.toLowerCase().includes(q)) return false
     if (isSearching) return true
     if (focus !== null) return focusKind ? b.kind === focusKind : isActive(b) && b.stageLabel === focus
-    return statusFilter === 'all' || (statusFilter === 'active' ? isActive(b) : !isActive(b))
+    return matchesStatus(b, statusFilter)
   })
 
   const kindRank: Record<TableKind, number> = { scheduled: 0, active: 1, awaiting: 2, law: 3, failed: 4 }
@@ -266,6 +290,34 @@ export default function BillsExplorer({ head, summary, pipeline, outcomes, daysT
   const topStage = stageRows
     .filter(r => r.row.kind === 'stage')
     .reduce<(typeof stageRows)[number] | null>((best, r) => (best === null || r.row.count > best.row.count ? r : best), null)
+  const shareCard = (headingId: string, className: string) => (
+    <section className={`${styles.tile} ${className}`} aria-labelledby={headingId}>
+      <div className={styles.tileHead}>
+        <span className={`${styles.iconTile} ${styles.tnGreen}`}><Gauge size={22} strokeWidth={2} aria-hidden="true" /></span>
+        <h2 className={styles.tileLabel} id={headingId}>Share at each stage</h2>
+      </div>
+      {topStage && (
+        <div className={styles.keyFigure}>
+          <span className={styles.keyBig}>{topStage.pct}<small>%</small></span>
+          <p className={styles.keyText}>of bills are at {topStage.row.label}, the most common place to be.</p>
+        </div>
+      )}
+      <ul className={styles.keyList}>
+        {stageRows.map(r => (
+          <li key={r.row.label} className={styles.keyRow} style={{ '--k': r.colour } as React.CSSProperties}>
+            <span className={styles.keyRowTop}>
+              <span className={styles.keyRowTitle}>{r.row.label.replace(/ Stage$/, '')}</span>
+              <span className={styles.keyRowCount}>{r.row.count} {r.row.count === 1 ? 'bill' : 'bills'}</span>
+              <b className={styles.keyRowPct}>{r.pct}%</b>
+            </span>
+            <span className={styles.keyMeter} aria-hidden="true">
+              <span style={{ width: `${total > 0 ? (r.row.count / total) * 100 : 0}%` }} />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
   const stageOptions: SheetOption[] = [
     { key: 'all', label: 'All stages', icon: Layers, meta: `${total} bills` },
     ...pipeline.filter(r => r.count > 0).map(r => ({
@@ -437,16 +489,22 @@ export default function BillsExplorer({ head, summary, pipeline, outcomes, daysT
             </div>
             {daysToLaw ? (
               <div className={styles.timeBody}>
-                <div className={styles.timeTop}>
-                  <span className={styles.figure}>{daysToLaw.median}<small>days</small></span>
-                  <p className={styles.kpiSub}>Median time from an Act&apos;s first recorded stage to Royal Assent, across {daysToLaw.count} {daysToLaw.count === 1 ? 'Act' : 'Acts'}.</p>
-                </div>
                 <ul className={styles.extremes}>
-                  {[['Quickest', daysToLaw.acts[0]], ['Slowest', daysToLaw.acts[daysToLaw.acts.length - 1]]].map(([label, act]) => {
-                    const a = act as { slug: string; title: string; days: number }
+                  <li className={`${styles.extreme} ${styles.extremeStatic}`}>
+                    <span className={`${styles.iconTile} ${styles.extremeIcon} ${styles.tnPurple}`}><Clock size={20} strokeWidth={2} aria-hidden="true" /></span>
+                    <span className={styles.extremeLabel}>Median</span>
+                    <span className={styles.extremeDays}>{daysToLaw.median} days</span>
+                    <span className={styles.extremeArrow} aria-hidden="true" />
+                    <span className={styles.extremeNote}>Time from an Act&apos;s first recorded stage to Royal Assent, across {daysToLaw.count} {daysToLaw.count === 1 ? 'Act' : 'Acts'}.</span>
+                  </li>
+                  {[
+                    { label: 'Quickest', act: daysToLaw.acts[0], Icon: Zap, tone: styles.tnGreen },
+                    { label: 'Slowest', act: daysToLaw.acts[daysToLaw.acts.length - 1], Icon: Hourglass, tone: styles.tnAmber },
+                  ].map(({ label, act: a, Icon, tone }) => {
                     return (
-                      <li key={label as string} className={styles.extreme}>
-                        <span className={styles.extremeLabel}>{label as string}</span>
+                      <li key={label} className={styles.extreme}>
+                        <span className={`${styles.iconTile} ${styles.extremeIcon} ${tone}`}><Icon size={20} strokeWidth={2} aria-hidden="true" /></span>
+                        <span className={styles.extremeLabel}>{label}</span>
                         <span className={styles.extremeDays}>{a.days} days</span>
                         <ArrowRight className={styles.extremeArrow} size={18} strokeWidth={2} aria-hidden="true" />
                         <Link href={`${basePath}/assembly/bills/${a.slug}`} className={styles.extremeLink}>{a.title}</Link>
@@ -462,6 +520,8 @@ export default function BillsExplorer({ head, summary, pipeline, outcomes, daysT
               </>
             )}
           </section>
+
+            {shareCard('stand-heading-tablet', `${styles.tFull} ${styles.tabletOnly}`)}
 
             {hasAgenda && (
               <section className={`${styles.tile} ${styles.tFull}`} aria-labelledby="coming-heading">
@@ -529,7 +589,7 @@ export default function BillsExplorer({ head, summary, pipeline, outcomes, daysT
               <div className={`${styles.fField} ${styles.deskOnly}`}>
                 <span className={styles.fLabel} id="show-label">Show</span>
                 <div className={styles.fPills} role="group" aria-labelledby="show-label">
-                  {([['all', 'All'], ['active', 'Before the Assembly'], ['completed', 'Completed']] as const).map(([key, label]) => (
+                  {showPills.map(([key, label]) => (
                     <button key={key} type="button" className={styles.pillBtn} aria-pressed={focus === null && !isSearching && statusFilter === key} onClick={() => chooseStatus(key)}>
                       {label}
                       <span className={styles.pillCount}>{statusCount(key)}</span>
@@ -566,32 +626,7 @@ export default function BillsExplorer({ head, summary, pipeline, outcomes, daysT
                 <ArrowDown size={18} strokeWidth={2.25} aria-hidden="true" />
               </button>
             </section>
-            <section className={`${styles.tile} ${styles.tFour} ${styles.deskOnly}`} aria-labelledby="stand-heading">
-              <div className={styles.tileHead}>
-                <span className={`${styles.iconTile} ${styles.tnGreen}`}><Gauge size={22} strokeWidth={2} aria-hidden="true" /></span>
-                <h2 className={styles.tileLabel} id="stand-heading">Share at each stage</h2>
-              </div>
-              {topStage && (
-                <div className={styles.keyFigure}>
-                  <span className={styles.keyBig}>{topStage.pct}<small>%</small></span>
-                  <p className={styles.keyText}>of bills are at {topStage.row.label}, the most common place to be.</p>
-                </div>
-              )}
-              <ul className={styles.keyList}>
-                {stageRows.map(r => (
-                  <li key={r.row.label} className={styles.keyRow} style={{ '--k': r.colour } as React.CSSProperties}>
-                    <span className={styles.keyRowTop}>
-                      <span className={styles.keyRowTitle}>{r.row.label.replace(/ Stage$/, '')}</span>
-                      <span className={styles.keyRowCount}>{r.row.count} {r.row.count === 1 ? 'bill' : 'bills'}</span>
-                      <b className={styles.keyRowPct}>{r.pct}%</b>
-                    </span>
-                    <span className={styles.keyMeter} aria-hidden="true">
-                      <span style={{ width: `${total > 0 ? (r.row.count / total) * 100 : 0}%` }} />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            {shareCard('stand-heading', `${styles.tFour} ${styles.wideOnly}`)}
 
           <div className={`${styles.tile} ${styles.tFull} ${styles.sectionTile}`} ref={listRef} tabIndex={-1}>
             <div className={styles.tileHead}>
@@ -649,7 +684,7 @@ export default function BillsExplorer({ head, summary, pipeline, outcomes, daysT
                   {focusQuiet !== null && (
                     <span className={styles.focusStat}>
                       <b>{focusQuiet}</b>
-                      <span>days since last activity (median)</span>
+                      <span>days since last in the Assembly (median)</span>
                     </span>
                   )}
                 </div>
@@ -688,7 +723,7 @@ export default function BillsExplorer({ head, summary, pipeline, outcomes, daysT
                       accelerated={b.accelerated}
                       facts={[
                         ...(b.introduced ? [{ label: 'Introduced', value: formatDate(b.introduced) }] : []),
-                        { label: b.latestLabel, value: formatDate(b.latest) },
+                        { label: b.latestLabel, value: b.kind === 'scheduled' ? scheduledDate(b.latest) : formatDate(b.latest) },
                       ]}
                       progress={{ stageIdx: b.stageIdx, scheduledIdx: b.scheduledIdx }}
                     />

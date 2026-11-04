@@ -5,9 +5,10 @@ import { mandateIdForDate, EARLIEST_MANDATE_START } from '../lib/constants/manda
 
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
-import { eq, desc, sql } from 'drizzle-orm'
+import { eq, desc, lte, sql } from 'drizzle-orm'
 import * as schema from '../lib/db/schema'
 import { bills, billStages } from '../lib/db/schema'
+import { fetchWithRetry } from './syncShared'
 
 type Db = ReturnType<typeof drizzle<typeof schema>>
 
@@ -16,9 +17,31 @@ interface PlenaryItem {
   Title: string
   DocumentID: string
   PlenaryDate: string
+  PlenaryType?: string
+  Text?: string
 }
 
+type EventType =
+  | 'stage'
+  | 'extension'
+  | 'extension_amendment'
+  | 'petition_of_concern'
+  | 'accelerated_passage'
+  | 'closure_of_debate'
+  | 'ad_hoc_committee'
+  | 'standing_order_suspension'
+
+const PROCEDURAL_EVENTS: { re: RegExp; eventType: EventType; stage: string | null }[] = [
+  { re: /^extension of committee stage\b/i, eventType: 'extension', stage: 'Extension of Committee Stage' },
+  { re: /^petition of concern\b/i, eventType: 'petition_of_concern', stage: 'Petition of Concern' },
+  { re: /^accelerated passage\b/i, eventType: 'accelerated_passage', stage: 'Accelerated Passage' },
+  { re: /^closure of debate\b/i, eventType: 'closure_of_debate', stage: null },
+  { re: /^establishment of an ad hoc committee\b/i, eventType: 'ad_hoc_committee', stage: 'Establishment of an Ad Hoc Committee' },
+  { re: /^suspension of standing order\b/i, eventType: 'standing_order_suspension', stage: null },
+]
+
 const BASE = 'http://data.niassembly.gov.uk/plenary.asmx'
+const LOOKBACK_DAYS = 14
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -26,8 +49,8 @@ function sleep(ms: number) {
 
 async function fetchPlenaryItems(startDate: string, endDate: string): Promise<PlenaryItem[]> {
   const url = `${BASE}/GetPlenaryItemsPlenaryDate_JSON?startDate=${startDate}&endDate=${endDate}`
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`[syncBills] Plenary API returned ${res.status} for ${startDate}–${endDate}`)
+  const res = await fetchWithRetry(url)
+  if (!res) throw new Error(`[syncBills] Plenary API request failed for ${startDate}–${endDate}`)
   const data = await res.json()
   const items = data?.PlenaryList?.Plenary ?? []
   if (!Array.isArray(items)) {
@@ -39,7 +62,8 @@ async function fetchPlenaryItems(startDate: string, endDate: string): Promise<Pl
 
 async function fetchMotionBill(documentId: string) {
   const url = `${BASE}/GetMotionBill_JSON?documentId=${documentId}`
-  const res = await fetch(url)
+  const res = await fetchWithRetry(url)
+  if (!res) throw new Error(`[syncBills] MotionBill request failed for ${documentId}`)
   const data = await res.json()
   return data?.MotionBill?.Bill ?? null
 }
@@ -68,24 +92,68 @@ function extractItemTitle(title: string): string | null {
   return null
 }
 
-function extractBillId(title: string): string | null {
-  const match = title.match(/NIA\s+Bill\s+(\d+\/\d{2}-\d{2,4})/i)
-  return match ? `NIA Bill ${match[1]}` : null
+const BILL_REF_RE = /NIA\s*(?:Bill\s*)?(\d+)\s*\/\s*(\d{2})-(\d{1,4})/i
+const STRICT_BILL_REF_RE = /NIA\s*Bill\s*(\d+)\s*\/\s*(\d{2})-(\d{1,4})/i
+
+function parseBillRef(text: string, strict = false): { key: string; newId: string } | null {
+  const match = text.match(strict ? STRICT_BILL_REF_RE : BILL_REF_RE)
+  if (!match) return null
+  const num = parseInt(match[1], 10)
+  const start = match[2]
+  const end = match[3].length >= 2 ? match[3] : String(parseInt(start, 10) + 5)
+  return {
+    key: `${num}/${start}`,
+    newId: `NIA Bill ${String(num).padStart(2, '0')}/${start}-${end}`,
+  }
 }
 
-export async function syncBills(db: Db, forceTitles = false, forceStartDate?: string) {
+function normaliseTitle(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+function shortTitleFromItem(title: string): string | null {
+  const cleaned = title
+    .replace(/^establishment of an ad hoc committee to consider the\s+/i, '')
+    .replace(/\s*\(\s*NIA[^)]*\)?/i, '')
+    .replace(/\s*\(Day\s+\d+\)\s*$/i, '')
+    .trim()
+  const idx = cleaned.lastIndexOf(': ')
+  const name = (idx === -1 ? cleaned : cleaned.slice(idx + 2)).trim()
+  return name || null
+}
+
+function classifyEvent(title: string, plenaryType?: string): { eventType: EventType; stage: string | null } {
+  if (plenaryType === 'Motion Amendment' && /^extension of committee stage\b/i.test(title)) {
+    return { eventType: 'extension_amendment', stage: 'Extension of Committee Stage' }
+  }
+  for (const p of PROCEDURAL_EVENTS) {
+    if (p.re.test(title)) return { eventType: p.eventType, stage: p.stage }
+  }
+  return { eventType: 'stage', stage: null }
+}
+
+function isBillCandidate(item: PlenaryItem): boolean {
+  if (/^legislative consent motion/i.test(item.Title)) return false
+  if (STRICT_BILL_REF_RE.test(item.Title)) return true
+  if (PROCEDURAL_EVENTS.some(p => p.re.test(item.Title))) return /\bBill\b/i.test(item.Title)
+  return item.PlenaryType === 'Motion' && /\bStage:\s.*\bBill\b/i.test(item.Title)
+}
+
+export async function syncBills(db: Db, forceTitles = false, forceStartDate?: string, dryRun = false) {
   console.log('[syncBills] Starting...')
 
-  // 1. Incremental sync — only fetch months we haven't seen yet
+  // 1. Incremental sync. Anchored on the latest stage already held, not a scheduled future one,
+  // with a lookback so late-published or re-dated items are picked up on a later night.
   const latestStage = await db.select({ plenaryDate: billStages.plenaryDate })
     .from(billStages)
+    .where(lte(billStages.plenaryDate, new Date()))
     .orderBy(desc(billStages.plenaryDate))
     .limit(1)
 
   const syncFrom = forceStartDate
     ? new Date(forceStartDate)
     : latestStage.length > 0
-      ? new Date(latestStage[0].plenaryDate)
+      ? new Date(latestStage[0].plenaryDate.getTime() - LOOKBACK_DAYS * 86_400_000)
       : new Date(EARLIEST_MANDATE_START)
 
   // Start from the beginning of the month containing syncFrom
@@ -118,9 +186,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
     return
   }
 
-  const billItems = allItems.filter((item) =>
-    item.Title && /NIA\s+Bill/i.test(item.Title)
-  )
+  const billItems = allItems.filter((item) => item.Title && isBillCandidate(item))
 
   console.log(`[syncBills] Bill-related items found: ${billItems.length}`)
 
@@ -139,13 +205,27 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
     skipped++
   }
 
+  const knownBills = await db.select({ billId: bills.billId, shortTitle: bills.shortTitle }).from(bills)
+  const idByRef = new Map<string, string>()
+  const idByTitle = new Map<string, string | null>()
+  const rememberBill = (billId: string, shortTitle: string) => {
+    const ref = parseBillRef(billId)
+    if (ref) idByRef.set(ref.key, billId)
+    const titleKey = normaliseTitle(shortTitle)
+    const known = idByTitle.get(titleKey)
+    idByTitle.set(titleKey, known !== undefined && known !== billId ? null : billId)
+  }
+  for (const b of knownBills) rememberBill(b.billId, b.shortTitle)
+
   for (const item of billItems) {
     try {
-      const billId = extractBillId(item.Title)
-      if (!billId) {
-        countSkip('no bill id')
-        continue
-      }
+      const ref = parseBillRef(item.Title)
+      const itemTitleName = shortTitleFromItem(item.Title)
+      const { eventType, stage: eventStage } = classifyEvent(item.Title, item.PlenaryType)
+      let billId =
+        (ref && idByRef.get(ref.key)) ||
+        (itemTitleName && idByTitle.get(normaliseTitle(itemTitleName))) ||
+        null
 
       const existing = await db.select()
         .from(billStages)
@@ -161,77 +241,119 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
       if (existing.length > 0) {
         const existingDate = existing[0].plenaryDate.toISOString().slice(0, 10)
         if (existingDate === dateStr) {
-          countSkip('already exists')
+          const itemTitle = extractItemTitle(item.Title)
+          if (existing[0].rawTitle == null || existing[0].eventType !== eventType || (existing[0].itemTitle ?? null) !== itemTitle) {
+            if (!dryRun) {
+              await db.update(billStages)
+                .set({
+                  rawTitle: item.Title,
+                  itemTitle,
+                  ...(eventStage ? { stage: eventStage } : {}),
+                  eventType,
+                  itemText: eventType === 'stage' ? null : (item.Text?.trim() || null),
+                  updatedAt: new Date(),
+                })
+                .where(eq(billStages.documentId, item.DocumentID))
+            }
+            countSkip('raw title backfilled')
+          } else {
+            countSkip('already exists')
+          }
           continue
         }
         console.log(`[syncBills] Date changed for documentId ${item.DocumentID}: ${existingDate} → ${dateStr} — updating`)
       }
 
-      await sleep(200)
-      const billData = await fetchMotionBill(item.DocumentID)
+      let billData: Awaited<ReturnType<typeof fetchMotionBill>> = null
+      if (eventType === 'stage' || !billId) {
+        await sleep(200)
+        billData = await fetchMotionBill(item.DocumentID)
+      }
 
-      if (!billData) {
-        console.warn(`[syncBills] No bill data for documentId ${item.DocumentID}`)
-        countSkip('no bill data')
+      let createdBill = false
+      if (!billId && billData?.ReferenceNumber) {
+        const dataRef = parseBillRef(billData.ReferenceNumber)
+        if (dataRef) billId = idByRef.get(dataRef.key) ?? null
+      }
+
+      if (!billId) {
+        const newRef = parseBillRef(item.Title, true) ?? (billData?.ReferenceNumber ? parseBillRef(billData.ReferenceNumber, true) : null)
+        const newTitle = billData?.ShortTitle?.trim() ?? itemTitleName
+        if (!newRef || !newTitle || eventType !== 'stage') {
+          console.warn(`[syncBills] Unresolved bill for documentId ${item.DocumentID}: ${item.Title}`)
+          countSkip(eventType === 'stage' ? 'no bill id' : 'unresolved procedural')
+          continue
+        }
+        billId = newRef.newId
+        createdBill = true
+      }
+
+      const stage = eventStage ?? extractStage(item.Title) ?? billData?.Stage ?? 'Unknown'
+
+      if (dryRun) {
+        console.log(`[syncBills][dry-run] ${item.DocumentID} ${dateStr} ${billId} [${eventType}] ${stage}${createdBill ? ' (new bill)' : ''}`)
+        processed++
         continue
       }
 
-      const stage = extractStage(item.Title) ?? billData.Stage ?? 'Unknown'
+      if (eventType === 'stage') {
+        const isAccelerated = billData?.IsAcceleratedPassage === 'true'
+        const shortTitle = billData?.ShortTitle?.trim() ?? itemTitleName ?? billId
+        const titleSet = forceTitles ? {
+          shortTitle,
+          longTitle: billData?.LongTitle?.trim() ?? null,
+          billType: billData?.BillType?.trim() ?? null,
+          isAccelerated,
+          currentStage: stage,
+          latestDate: plenaryDate,
+          updatedAt: new Date(),
+        } : {
+          // Title fields written on INSERT only — never clobbered by a later lower-priority item
+          isAccelerated,
+          currentStage: stage,
+          latestDate: plenaryDate,
+          updatedAt: new Date(),
+        }
 
-      // 7. --force-titles: overwrite title fields when explicitly requested
-      const isAccelerated = billData.IsAcceleratedPassage === 'true'
-      const titleSet = forceTitles ? {
-        shortTitle: billData.ShortTitle?.trim() ?? billId,
-        longTitle: billData.LongTitle?.trim() ?? null,
-        billType: billData.BillType?.trim() ?? null,
-        isAccelerated,
-        currentStage: stage,
-        latestDate: plenaryDate,
-        updatedAt: new Date(),
-      } : {
-        // Title fields written on INSERT only — never clobbered by a later lower-priority item
-        isAccelerated,
-        currentStage: stage,
-        latestDate: plenaryDate,
-        updatedAt: new Date(),
+        await db.insert(bills).values({
+          billId,
+          shortTitle,
+          longTitle: billData?.LongTitle?.trim() ?? null,
+          billType: billData?.BillType?.trim() ?? null,
+          isAccelerated,
+          currentStage: stage,
+          latestDate: plenaryDate,
+          mandate: mandateIdForDate(plenaryDate),
+          updatedAt: new Date(),
+        }).onConflictDoUpdate({
+          target: bills.billId,
+          set: titleSet,
+        })
+        rememberBill(billId, shortTitle)
       }
 
-      await db.insert(bills).values({
-        billId,
-        shortTitle: billData.ShortTitle?.trim() ?? billId,
-        longTitle: billData.LongTitle?.trim() ?? null,
-        billType: billData.BillType?.trim() ?? null,
-        isAccelerated,
-        currentStage: stage,
-        latestDate: plenaryDate,
+      const rowFields = {
+        stage,
+        plenaryDate,
         mandate: mandateIdForDate(plenaryDate),
+        itemTitle: extractItemTitle(item.Title),
+        eventType,
+        rawTitle: item.Title,
+        itemText: eventType === 'stage' ? null : (item.Text?.trim() || null),
         updatedAt: new Date(),
-      }).onConflictDoUpdate({
-        target: bills.billId,
-        set: titleSet,
-      })
+      }
 
       await db.insert(billStages).values({
         documentId: item.DocumentID,
         billId,
-        stage,
-        plenaryDate,
         hasDivision: false,
         divisionId: null,
-        mandate: mandateIdForDate(plenaryDate),
-        itemTitle: extractItemTitle(item.Title),
-        updatedAt: new Date(),
+        ...rowFields,
       }).onConflictDoUpdate({
         target: billStages.documentId,
         // hasDivision/divisionId are left alone — the backfill step below re-derives them
         // from the divisions table regardless, so don't risk clobbering an existing link.
-        set: {
-          stage,
-          plenaryDate,
-          mandate: mandateIdForDate(plenaryDate),
-          itemTitle: extractItemTitle(item.Title),
-          updatedAt: new Date(),
-        },
+        set: rowFields,
       })
 
       processed++
@@ -242,6 +364,12 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
     }
   }
 
+  if (dryRun) {
+    const skipBreakdown = Object.entries(skipReasons).map(([r, n]) => `${r}: ${n}`).join(', ')
+    console.log(`[syncBills][dry-run] Would write: ${processed}, Skipped: ${skipped}${skipBreakdown ? ` (${skipBreakdown})` : ''}, Errors: ${errors}. No changes made.`)
+    return
+  }
+
   // 4. Single SQL query to find highest-priority stage per bill
   const stageUpdates = await db.execute(sql`
     SELECT DISTINCT ON (bill_id)
@@ -249,6 +377,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
       stage,
       plenary_date
     FROM bill_stages
+    WHERE event_type = 'stage'
     ORDER BY bill_id,
       CASE
         WHEN LOWER(stage) = 'final stage'                      THEN 10
@@ -266,6 +395,13 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
       plenary_date DESC
   `)
 
+  const latestRows = await db.execute(sql`
+    SELECT bill_id, MAX(plenary_date) AS latest_date FROM bill_stages GROUP BY bill_id
+  `)
+  const latestByBill = new Map(
+    (latestRows.rows as { bill_id: string; latest_date: string }[]).map(r => [r.bill_id, new Date(r.latest_date)])
+  )
+
   const existingStages = await db.select({ billId: bills.billId, currentStage: bills.currentStage }).from(bills)
   const existingStageMap = new Map(existingStages.map(b => [b.billId, b.currentStage]))
 
@@ -276,7 +412,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
     await db.update(bills)
       .set({
         currentStage: row.stage,
-        latestDate: new Date(row.plenary_date),
+        latestDate: latestByBill.get(row.bill_id) ?? new Date(row.plenary_date),
         updatedAt: new Date(),
       })
       .where(eq(bills.billId, row.bill_id))
@@ -310,9 +446,11 @@ async function main() {
   const url = process.env.DATABASE_URL
   if (!url) throw new Error('DATABASE_URL is not set in .env.local')
   const forceTitles = process.argv.includes('--force-titles')
+  const dryRun = process.argv.includes('--dry-run')
+  const fromArg = process.argv.find(a => a.startsWith('--from='))?.slice('--from='.length)
   const sql = neon(url)
   const db = drizzle(sql, { schema })
-  await syncBills(db, forceTitles)
+  await syncBills(db, forceTitles, fromArg, dryRun)
 }
 
 if (require.main === module) {

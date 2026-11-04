@@ -1,7 +1,7 @@
 import { eq, desc, sql, and } from 'drizzle-orm'
 import { db } from '../client'
 import { divisions, votes, people, memberTerms } from '../schema'
-import { CURRENT_MANDATE, trendBounds, notServingAsSpeaker } from './helpers'
+import { CURRENT_MANDATE, trendBounds, notServingAsSpeaker, effectiveStageDate } from './helpers'
 
 export async function getAmendmentMotionTexts(baseTitle: string, divisionDateStr: string) {
   const result = await db.execute(sql`
@@ -82,6 +82,7 @@ export async function getAllDivisionsForList(mandate: string = CURRENT_MANDATE) 
       unionistNoes: divisions.unionistNoes,
       title: divisions.title,
       motionText: divisions.motionText,
+      petitionDocumentId: divisions.petitionDocumentId,
     })
     .from(divisions)
     .where(eq(divisions.mandate, mandate))
@@ -328,16 +329,16 @@ export async function getWeeklyDiary(weekStart: string): Promise<WeeklyDiaryDay[
       ORDER BY plenary_date, title
     `),
     db.execute(sql`
-      SELECT DISTINCT ON (bs.bill_id, bs.stage, bs.plenary_date::date)
+      SELECT DISTINCT ON (bs.bill_id, bs.stage, (${effectiveStageDate('bs')})::date)
         bs.bill_id,
         b.short_title,
         bs.stage,
-        bs.plenary_date::date::text AS plenary_date
+        (${effectiveStageDate('bs')})::date::text AS plenary_date
       FROM bill_stages bs
       JOIN bills b ON bs.bill_id = b.bill_id
-      WHERE bs.plenary_date::date >= ${weekStart}::date
-        AND bs.plenary_date::date <= ${weekEnd}::date
-      ORDER BY bs.bill_id, bs.stage, bs.plenary_date::date, bs.plenary_date DESC
+      WHERE (${effectiveStageDate('bs')})::date >= ${weekStart}::date
+        AND (${effectiveStageDate('bs')})::date <= ${weekEnd}::date
+      ORDER BY bs.bill_id, bs.stage, (${effectiveStageDate('bs')})::date, ${effectiveStageDate('bs')} DESC
     `),
   ])
 

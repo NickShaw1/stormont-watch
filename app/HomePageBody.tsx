@@ -10,8 +10,7 @@ import {
   getLeastEngagedMLA,
   getMostEngagedMLA,
   getLatestDivisions,
-  getInProgressBills,
-  getActiveBillsCount,
+  getAllBills,
   getDivisionsPerMonth,
   getBillsPassedPerMonth,
   getWeeklyDiary,
@@ -26,6 +25,7 @@ import MlaFinder from './components/homepage/MlaFinder'
 import Schedule, { type ScheduleDay, type ScheduleEntry } from './components/homepage/Schedule'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import { formatDate, dayMonthOrdinalParts, abbreviateParty } from '@/lib/format'
+import { homeBillOverview } from '@/lib/bills/billOverview'
 import { SEAL_POINTS } from '@/lib/sealPoints'
 import type { Mandate } from '@/lib/constants/mandates'
 import s from './homePage.module.css'
@@ -97,8 +97,8 @@ export default async function HomePageBody({ mandate, basePath }: { mandate: Man
   weekStartDate.setUTCDate(now.getUTCDate() - ((now.getUTCDay() + 6) % 7))
   const weekStart = weekStartDate.toISOString().slice(0, 10)
 
-  const [stats, avgAttendance, leastEngaged, mostEngaged, latestDivisions, inProgressBills,
-    inProgressBillsCount, divisionsPerMonth, billsPassedPerMonth, weeklyDiary, mlasByConstituency,
+  const [stats, avgAttendance, leastEngaged, mostEngaged, latestDivisions, allBills,
+    divisionsPerMonth, billsPassedPerMonth, weeklyDiary, mlasByConstituency,
     sittingDays, overallAgreementRate, totalExpensesData, questionTotalsRaw] =
     await Promise.all([
       getHomepageStats(mandate.id),
@@ -106,8 +106,7 @@ export default async function HomePageBody({ mandate, basePath }: { mandate: Man
       getLeastEngagedMLA(mandate.id),
       getMostEngagedMLA(mandate.id),
       getLatestDivisions(4, mandate.id),
-      getInProgressBills(5, mandate.id),
-      getActiveBillsCount(mandate.id),
+      getAllBills(mandate.id),
       getDivisionsPerMonth(mandate.id),
       getBillsPassedPerMonth(mandate.id),
       getWeeklyDiary(weekStart),
@@ -118,6 +117,7 @@ export default async function HomePageBody({ mandate, basePath }: { mandate: Man
       getQuestionTotalsAllMembers(mandate.id),
     ])
 
+  const { pendingCount: inProgressBillsCount, active: inProgressBills } = homeBillOverview(allBills, 5)
   const lastSat = dayMonthOrdinalParts(stats.lastSat)
   const totalExpensesClaimed = totalExpensesData.reduce((sum, r) => sum + parseFloat(r.totalExpenses), 0)
   const totalQuestionCount = questionTotalsRaw.reduce((sum, r) => sum + Number(r.total), 0)
@@ -522,12 +522,10 @@ export default async function HomePageBody({ mandate, basePath }: { mandate: Man
                         <span className={s.billMeta}>
                           {[bill.latestDate ? formatDate(String(bill.latestDate)) : null, bill.billType].filter(Boolean).join(' · ')}
                         </span>
-                        {bill.currentStage && (
-                          <span className={s.stagePill}>
-                            <Milestone size={14} strokeWidth={2} aria-hidden="true" />
-                            {bill.latestDate && new Date(bill.latestDate) > now ? `Scheduled: ${bill.currentStage}` : bill.currentStage}
-                          </span>
-                        )}
+                        <span className={s.stagePill}>
+                          <Milestone size={14} strokeWidth={2} aria-hidden="true" />
+                          {bill.stageLabel}
+                        </span>
                       </span>
                     </span>
                     <ArrowRight className={s.rowArrow} size={18} strokeWidth={2} aria-hidden="true" />

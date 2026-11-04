@@ -84,6 +84,11 @@ export const divisions = pgTable('divisions', {
   isMotionAmendment: boolean('is_motion_amendment').default(false),
   parentMotionText: text('parent_motion_text'),
   mandate: text('mandate').notNull(),
+  petitionDocumentId: text('petition_document_id'),
+  petitionTabledDate: date('petition_tabled_date'),
+  petitionPlenaryDate: date('petition_plenary_date'),
+  petitionSignatories: integer('petition_signatories'),
+  petitionCheckedAt: timestamp('petition_checked_at', { withTimezone: true }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
@@ -193,8 +198,44 @@ export const billStages = pgTable('bill_stages', {
   divisionId: text('division_id').references(() => divisions.documentId),
   mandate: text('mandate').notNull(),
   itemTitle: text('item_title'),
+  eventType: text('event_type').notNull().default('stage'),
+  rawTitle: text('raw_title'),
+  itemText: text('item_text'),
+  decisionMethod: text('decision_method'),
+  decisionOutcome: text('decision_outcome'),
+  decisionDate: date('decision_date'),
+  decisionCheckedAt: timestamp('decision_checked_at', { withTimezone: true }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
+
+export const billItemTablers = pgTable('bill_item_tablers', {
+  documentId: text('document_id').notNull().references(() => billStages.documentId, { onDelete: 'cascade' }),
+  tablerOrder: integer('tabler_order').notNull(),
+  personId: text('person_id'),
+  tablerName: text('tabler_name').notNull(),
+  tablerTitle: text('tabler_title'),
+  mandate: text('mandate').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.documentId, t.tablerOrder] }),
+}))
+
+export const billCommitteeItems = pgTable('bill_committee_items', {
+  eventId: text('event_id').notNull(),
+  itemId: text('item_id').notNull(),
+  itemOrder: integer('item_order').notNull(),
+  billId: text('bill_id').references(() => bills.billId),
+  billTitle: text('bill_title').notNull(),
+  committeeName: text('committee_name').notNull(),
+  meetingDate: date('meeting_date').notNull(),
+  itemType: text('item_type').notNull(),
+  itemTitle: text('item_title').notNull(),
+  session: text('session'),
+  mandate: text('mandate').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.eventId, t.itemId, t.itemOrder] }),
+}))
 
 export type Member = typeof members.$inferSelect
 export type Division = typeof divisions.$inferSelect

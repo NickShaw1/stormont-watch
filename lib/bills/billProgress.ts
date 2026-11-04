@@ -13,6 +13,9 @@ const PROCEDURAL_STAGES = [
   'Accelerated Passage',
   'Suspension of Standing Order 39',
   'Extension of Committee Stage',
+  'Petition of Concern',
+  'Closure of Debate',
+  'Establishment of an Ad Hoc Committee',
 ] as const
 
 interface BillProgress {
@@ -22,8 +25,11 @@ interface BillProgress {
   percent: number
   proceduralFlags: string[]
   unmatchedStages: string[]
+  committeeInferred: boolean
 }
 
+const SECOND_STAGE_IDX = BILL_STAGES.indexOf('Second Stage')
+const COMMITTEE_STAGE_IDX = BILL_STAGES.indexOf('Committee Stage')
 const BILL_STAGES_LOWER = BILL_STAGES.map(s => s.toLowerCase())
 const PROCEDURAL_LOWER = PROCEDURAL_STAGES.map(s => s.toLowerCase())
 
@@ -31,6 +37,7 @@ export function computeBillProgress(
   stageHistory: { stage: string; plenaryDate: string | Date }[],
   royalAssentDate: string | Date | null,
   billPassed?: boolean,
+  opts?: { isAccelerated?: boolean },
 ): BillProgress {
   if (royalAssentDate) {
     const d = new Date(royalAssentDate)
@@ -42,6 +49,7 @@ export function computeBillProgress(
         percent: 100,
         proceduralFlags: [],
         unmatchedStages: [],
+        committeeInferred: false,
       }
     }
   }
@@ -68,7 +76,7 @@ export function computeBillProgress(
       continue
     }
 
-    const procIdx = PROCEDURAL_LOWER.indexOf(stageLower)
+    const procIdx = PROCEDURAL_LOWER.findIndex(p => stageLower === p || stageLower.startsWith(`${p} - `))
     if (procIdx !== -1) {
       const flag = PROCEDURAL_STAGES[procIdx]
       if (!proceduralFlags.includes(flag)) proceduralFlags.push(flag)
@@ -87,6 +95,10 @@ export function computeBillProgress(
     if (ladderIdx > stageIdx) stageIdx = ladderIdx
   }
 
+  const accelerated = opts?.isAccelerated === true || proceduralFlags.includes('Accelerated Passage')
+  const committeeInferred = stageIdx === SECOND_STAGE_IDX && !accelerated
+  if (committeeInferred) stageIdx = COMMITTEE_STAGE_IDX
+
   if (billPassed === true && !royalAssentDate) {
     scheduledIdx = BILL_STAGES.length - 1
   }
@@ -98,5 +110,6 @@ export function computeBillProgress(
     percent: stageIdx < 0 ? 0 : Math.round((stageIdx / (BILL_STAGES.length - 1)) * 100),
     proceduralFlags,
     unmatchedStages,
+    committeeInferred,
   }
 }

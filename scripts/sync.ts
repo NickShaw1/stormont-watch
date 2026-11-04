@@ -7,6 +7,10 @@
 // syncNewDivisions and syncCurrentMemberRoles below are local to this file only.
 import './load-env'
 import { syncBills } from './sync-bills'
+import { syncBillCommitteeItems } from './sync-bill-committee-items'
+import { syncBillTablers } from './sync-bill-tablers'
+import { syncBillDecisions } from './sync-bill-decisions'
+import { syncDivisionPetitions } from './sync-division-petitions'
 import { syncPlenaryDiary } from './sync-plenary-diary'
 import { syncContactDetails } from './sync-contact-details'
 import { syncQuestionStats } from './sync-question-stats'
@@ -536,7 +540,11 @@ async function main() {
   if (fromFlag) {
     await runSync('syncNewDivisions:range', () => syncNewDivisions(db, knownMemberIds, currentMemberIds, fromFlag, toFlag))
   }
+  await runSync('syncDivisionPetitions', () => syncDivisionPetitions(db))
   await runSync('syncBills', () => syncBills(db, false, isBackfill2022 ? '2022-05-01' : undefined))
+  await runSync('syncBillCommitteeItems', () => syncBillCommitteeItems(db))
+  await runSync('syncBillTablers', () => syncBillTablers(db))
+  await runSync('syncBillDecisions', () => syncBillDecisions(db))
   await runSync('syncPlenaryDiary', () => syncPlenaryDiary(db))
 
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')

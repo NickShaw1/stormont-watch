@@ -91,3 +91,7 @@
 @media (prefers-reduced-motion: reduce) {
   .row { transition: none; }
 }
+
+@media (max-width: 400px) {
+  .rolePill { max-width: 100%; height: auto; min-height: 28px; padding-block: 4px; border-radius: 14px; line-height: 1.3; white-space: normal; }
+}

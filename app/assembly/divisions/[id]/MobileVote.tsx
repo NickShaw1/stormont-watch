@@ -30,13 +30,14 @@ interface Props {
   originalText: string | null
   amendTexts: string[]
   isAmendment: boolean
+  afterMotion?: React.ReactNode
 }
 
 const VOTE_SHORT: Record<VoteKey, string> = { AYE: 'Aye', NO: 'No', ABSTAINED: 'Abs', NO_SHOW: 'DNV' }
 const partyKey = (b: Ballot) => b.party ?? 'Independent'
 const shortOf = (p: string) => (p === 'Independent' ? 'Independent' : abbreviateParty(p))
 
-export default function MobileVote({ ballots, verdict, passed, detail, insight, originalText, amendTexts, isAmendment }: Props) {
+export default function MobileVote({ ballots, verdict, passed, detail, insight, originalText, amendTexts, isAmendment, afterMotion }: Props) {
   const { basePath } = useMandate()
   const [tab, setTab] = useState<Tab>('overview')
   const [open, setOpen] = useState<string | null>(null)
@@ -153,6 +154,8 @@ export default function MobileVote({ ballots, verdict, passed, detail, insight, 
           )}
         </section>
       )}
+
+      {afterMotion}
 
       <SheetSelect
         options={[

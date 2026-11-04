@@ -13,6 +13,7 @@ export default function BillProgressedRow({ bill, basePath }: { bill: BillProgre
     bill.fullHistory.map(r => ({ stage: r.stage, plenaryDate: r.plenaryDate })),
     bill.royalAssentDate,
     false,
+    { isAccelerated: bill.isAccelerated },
   )
   const { label } = getPillInfo(bill)
   const events = bill.events.map((e) => {

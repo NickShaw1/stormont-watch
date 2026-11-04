@@ -24,6 +24,10 @@ import * as schema from '../lib/db/schema'
 import { updateMemberTermRoles, syncMemberRoleHistory, type MemberRoleRow } from '../lib/db/memberWrites'
 import { syncContactDetails } from './sync-contact-details'
 import { syncBills } from './sync-bills'
+import { syncBillCommitteeItems } from './sync-bill-committee-items'
+import { syncBillTablers } from './sync-bill-tablers'
+import { syncBillDecisions } from './sync-bill-decisions'
+import { syncDivisionPetitions } from './sync-division-petitions'
 import { syncHansardContributions } from './sync-hansard-contributions'
 import { syncQuestionStats } from './sync-question-stats'
 import { apiRoleToSalaryRole } from '../lib/salaries'
@@ -405,10 +409,10 @@ async function main() {
 
   const syncResults: { script: string; status: 'success' | 'skipped' | 'error'; note?: string }[] = []
 
-  async function runSync(name: string, fn: () => Promise<void>) {
+  async function runSync(name: string, fn: () => Promise<string | void>) {
     try {
-      await fn()
-      syncResults.push({ script: name, status: 'success' })
+      const summary = await fn()
+      syncResults.push({ script: name, status: 'success', note: summary ?? undefined })
     } catch (err) {
       console.error(`[${name}] Failed:`, err)
       syncResults.push({ script: name, status: 'error', note: String(err) })
@@ -425,7 +429,11 @@ async function main() {
   await runSync('syncCommitteeChairs', () => syncCommitteeChairs(db))
   await runSync('syncRegisteredInterests', () => syncRegisteredInterests(db))
   await runSync('syncDivisionsAndVotes', () => syncDivisionsAndVotes(db))
+  await runSync('syncDivisionPetitions', () => syncDivisionPetitions(db, true))
   await runSync('syncBills', () => syncBills(db, false, CUTOFF))
+  await runSync('syncBillCommitteeItems', () => syncBillCommitteeItems(db, CUTOFF))
+  await runSync('syncBillTablers', () => syncBillTablers(db, true))
+  await runSync('syncBillDecisions', () => syncBillDecisions(db, true))
   await runSync('syncPlenaryItems', () => syncPlenaryItems(db))
   await runSync('syncQuestionTimes', () => syncQuestionTimes(db))
   await runSync('syncContactDetails', () => syncContactDetails(db))

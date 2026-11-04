@@ -4,8 +4,9 @@ import React from 'react'
 import Link from 'next/link'
 import {
   Vote, Scale, Megaphone, Stamp, Calendar, CalendarRange, SearchX, SlidersHorizontal, Search, X, Check, Layers,
-  Users, Info, ArrowRight, ChartColumn, CheckCircle2, XCircle,
+  Users, Info, ArrowRight, ChartColumn, CheckCircle2, XCircle, ShieldAlert,
 } from 'lucide-react'
+import PetitionPill from '@/components/PetitionPill'
 import { formatMonthGroup, monthKey, formatDate } from '@/lib/format'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import SheetSelect, { type SheetOption } from '@/app/assembly/mlas/[id]/SheetSelect'
@@ -91,6 +92,7 @@ export interface VoteItem {
   outcome?: string | null
   motionText?: string | null
   isCrossCommunity?: boolean
+  isPetition?: boolean
   isBill?: boolean
   isStatutory?: boolean
   totalAyes?: number | null
@@ -124,7 +126,7 @@ export default function VotesListClient({ allItems, note }: Props) {
     (yearFilter === 'ALL' || item.latestDate.slice(0, 4) === yearFilter) &&
     matchesResult(item, resultFilter) &&
     matchesType(item, typeFilter) &&
-    (crossFilter === 'ALL' || item.crossClass === crossFilter) &&
+    (crossFilter === 'ALL' || (crossFilter === 'petition' ? item.isPetition === true : item.crossClass === crossFilter)) &&
     (dayFilter === 'ALL' || item.latestDate.slice(0, 10) === dayFilter) &&
     (!closeOnly || isNailBiter(item)) &&
     (!q || formatDivisionSubject(item.rawTitle ?? item.subject).title.toLowerCase().includes(q)),
@@ -188,8 +190,9 @@ export default function VotesListClient({ allItems, note }: Props) {
     { key: 'divided', label: 'Divided', colour: 'var(--sw-accent-warm)', on: '#1a1d21' },
     { key: 'against', label: 'Both sides against', colour: 'var(--sw-error-solid)' },
     { key: 'level', label: 'Level', colour: 'var(--sw-text-tertiary)' },
+    { key: 'petition', label: 'Petition of Concern', colour: 'var(--sw-error-solid)' },
   ]
-  const crossCount = (k: CrossFilter) => allItems.filter(i => (k === 'ALL' ? i.isCrossCommunity === true : i.crossClass === k)).length
+  const crossCount = (k: CrossFilter) => allItems.filter(i => (k === 'ALL' ? i.isCrossCommunity === true : k === 'petition' ? i.isPetition === true : i.crossClass === k)).length
 
   const yearOptions: SheetOption[] = [
     { key: 'ALL', label: 'All years', icon: CalendarRange },
@@ -199,8 +202,7 @@ export default function VotesListClient({ allItems, note }: Props) {
     { key: 'ALL', label: 'All types', icon: Layers, meta: `${allItems.length} divisions` },
     { key: 'BILLS', label: 'Bills', icon: Scale, color: '#8b5cf6', meta: `${typeCount('BILLS')} divisions` },
     { key: 'MOTIONS', label: 'Motions', icon: Megaphone, color: 'var(--sw-accent-solid)', meta: `${typeCount('MOTIONS')} divisions` },
-    { key: 'REGULATIONS', label: 'Regulations', icon: Stamp, color: 'var(--c-pink)', meta: `${typeCount('REGULATIONS')} divisions` },
-  ]
+    { key: 'REGULATIONS', label: 'Regulations', icon: Stamp, color: 'var(--c-pink)', meta: `${typeCount('REGULATIONS')} divisions` },  ]
   const resultOptions: SheetOption[] = [
     { key: 'ALL', label: 'All outcomes', icon: Vote, meta: `${allItems.length} divisions` },
     { key: 'PASSED', label: 'Passed', icon: Check, color: 'var(--sw-success-solid)', meta: `${resultCount('PASSED')} divisions` },
@@ -209,7 +211,7 @@ export default function VotesListClient({ allItems, note }: Props) {
 
   const crossOptions: SheetOption[] = [
     { key: 'ALL', label: 'All votes', icon: Layers },
-    ...CROSS.filter(k => crossCount(k.key) > 0).map(k => ({ key: k.key, label: k.label, icon: Users, color: k.colour, on: k.on, meta: `${crossCount(k.key)} divisions` })),
+    ...CROSS.filter(k => crossCount(k.key) > 0).map(k => ({ key: k.key, label: k.label, icon: k.key === 'petition' ? ShieldAlert : Users, color: k.colour, on: k.on, meta: `${crossCount(k.key)} divisions` })),
   ]
 
   return (
@@ -468,11 +470,18 @@ export default function VotesListClient({ allItems, note }: Props) {
                                           {ayes + noes} voted
                                         </span>
                                       )
-                                      const chips = (label || item.isCrossCommunity) && (
-                                        <span className={styles.oLabel}>
+                                      const chips = (label || item.isCrossCommunity || item.isPetition) && (
+                                        <span className={styles.oLabel} data-multi={item.isCrossCommunity && item.isPetition ? '' : undefined}>
                                           {label}
-                                          {item.isCrossCommunity && (
-                                            <span className={styles.xc}><Users size={14} strokeWidth={2} aria-hidden="true" />Cross-community</span>
+                                          {(item.isCrossCommunity || item.isPetition) && (
+                                            <span className={styles.oChips}>
+                                              {item.isCrossCommunity && (
+                                                <span className={styles.xc}><Users size={14} strokeWidth={2} aria-hidden="true" /><span className={styles.pillText}>Cross-community</span></span>
+                                              )}
+                                              {item.isPetition && (
+                                                <PetitionPill iconOnlyOnPhone={item.isCrossCommunity} />
+                                              )}
+                                            </span>
                                           )}
                                         </span>
                                       )

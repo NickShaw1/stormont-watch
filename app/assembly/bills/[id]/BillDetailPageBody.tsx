@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation'
 import {
-  GitBranch, FileText, History, CalendarCheck, CalendarClock,
-  Milestone, ArrowUpRight, Timer, Vote,
+  GitBranch, FileText, CalendarCheck, CalendarClock,
+  Milestone, ArrowUpRight, Timer, Vote, Users, Landmark, ScrollText,
 } from 'lucide-react'
-import { getAllBills, getBillStages } from '@/lib/db/queries'
+import { getAllBills, getBillStages, getBillCommitteeItems, getBillTablers, getMembersGroupedByParty } from '@/lib/db/queries'
+import MlaRow, { type MlaRowPerson } from '@/components/MlaRow'
+import { buildCommitteeSummary, buildPetitions, findSponsors, groupTablersByDocument } from '@/lib/bills/billActivity'
 import { computeBillProgress } from '@/lib/bills/billProgress'
 import { billStatus } from '@/lib/bills/billStatus'
 import { daysToLawOf } from '@/lib/bills/billStats'
@@ -13,6 +15,7 @@ import { formatDate, dayMonthOrdinalParts } from '@/lib/format'
 import { railModel, splitBillId, type BillKind } from '@/components/bills/BillCard'
 import type { Mandate } from '@/lib/constants/mandates'
 import BillTimeline from './BillTimeline'
+import PetitionsTile from './PetitionsTile'
 import styles from './billDetail.module.css'
 
 function billSlug(billId: string): string {
@@ -33,7 +36,7 @@ type ImpactLevel = typeof LEVEL_ORDER[number]
 
 const DATE_LABEL: Record<BillKind, string> = {
   scheduled: 'Scheduled',
-  active: 'Last activity',
+  active: 'Last in Assembly',
   awaiting: 'Final Stage',
   law: 'Royal Assent',
   failed: 'Defeated',
@@ -59,6 +62,35 @@ function ImpactDots({ level }: { level: ImpactLevel }) {
   )
 }
 
+interface CardRequest {
+  key: string
+  personId: string
+  fullName: string
+  constituency: string | null
+  imgUrl: string | null
+  party: string | null
+}
+
+async function mlaCards(requests: CardRequest[], mandateId: string) {
+  const cards = new Map<string, MlaRowPerson>()
+  if (requests.length === 0) return cards
+  const partyGroups = await getMembersGroupedByParty(mandateId)
+  const allMlas = partyGroups.flatMap(g => g.mlas)
+  for (const r of requests) {
+    const m = allMlas.find(x => x.person_id === r.personId)
+    cards.set(r.key, {
+      id: r.personId,
+      fullName: m?.full_name ?? r.fullName,
+      constituency: m?.constituency ?? r.constituency,
+      imgUrl: m?.img_url ?? r.imgUrl,
+      party: m?.party ?? r.party,
+      roles: [],
+      attendance: null,
+    })
+  }
+  return cards
+}
+
 // Shared by the live route and the archive route; mandate/basePath vary per route.
 export default async function BillDetailPageBody({
   id,
@@ -75,9 +107,11 @@ export default async function BillDetailPageBody({
 
   const displayTitle = bill.royal_assent_date && bill.act_title ? bill.act_title : bill.short_title
 
-  const [stages, summary] = await Promise.all([
+  const [stages, summary, committeeItems, tablers] = await Promise.all([
     getBillStages(bill.bill_id),
     getBillSummary(id),
+    getBillCommitteeItems(bill.bill_id),
+    getBillTablers(bill.bill_id),
   ])
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.stormontwatch.com'
@@ -91,10 +125,39 @@ export default async function BillDetailPageBody({
   }
 
   const { kind, passed } = billStatus(bill)
-  const { stageIdx, scheduledIdx } = computeBillProgress(bill.stage_history, bill.royal_assent_date, passed === true)
+  const { stageIdx, scheduledIdx, committeeInferred } = computeBillProgress(bill.stage_history, bill.royal_assent_date, passed === true, { isAccelerated: bill.is_accelerated })
   const { nodes } = railModel({ stageIdx: Math.max(stageIdx, 0), scheduledIdx }, kind)
 
   const today = new Date().toISOString().slice(0, 10)
+  const petitions = buildPetitions(stages, tablers)
+  const committeeSummary = buildCommitteeSummary(committeeItems, stages, today)
+  const sponsors = findSponsors(stages, tablers)
+  const sponsorRequests: CardRequest[] = sponsors
+    .filter(t => t.person_id)
+    .map(t => ({ key: `s-${t.document_id}-${t.tabler_order}`, personId: t.person_id as string, fullName: t.tabler_name, constituency: t.constituency, imgUrl: t.img_url, party: t.party }))
+  const signatoryRequests: CardRequest[] = [...new Map(petitions.flatMap(g => g.signatories).map(sg => [sg.personId, sg])).values()]
+    .map(sg => ({ key: `g-${sg.personId}`, personId: sg.personId, fullName: sg.name, constituency: null, imgUrl: null, party: sg.party }))
+  const cards = await mlaCards([...sponsorRequests, ...signatoryRequests], mandate.id)
+  const sponsorList = sponsorRequests.map(r => ({ key: r.key, person: cards.get(r.key) as MlaRowPerson }))
+  const signatoryCards = Object.fromEntries(signatoryRequests.map(r => [r.personId, cards.get(r.key) as MlaRowPerson]))
+  const introducer = (() => {
+    if (bill.bill_type === 'Committee Bill') {
+      const committee = sponsors.map(t => t.tabler_title?.match(/^Committee Chair\s*-\s*(.+)$/i)?.[1]?.trim()).find(Boolean)
+      return committee ? { title: committee, Icon: Users } : null
+    }
+    if (bill.bill_type === 'Executive Bill') {
+      const minister = sponsors.map(t => t.tabler_title?.trim()).find(t => t && /\bMinister\b/i.test(t))
+      return minister ? { title: minister.replace(/\bdeputy\b/g, 'Deputy'), Icon: Landmark } : null
+    }
+    if (bill.bill_type === 'Assembly Commission Bill') return { title: 'Assembly Commission', Icon: Landmark }
+    return null
+  })()
+  const showTablers = sponsorList.length > 0 && sponsorList.length <= 2 && !/\bFirst Minister\b/.test(introducer?.title ?? '')
+  const sponsorStage = sponsors[0] ? stages.find(s => s.document_id === sponsors[0].document_id) : undefined
+  const sponsorDate = showTablers && sponsorStage
+    ? `${sponsorStage.plenary_date.slice(0, 10) > today ? 'Scheduled' : 'Tabled'} ${formatDate(sponsorStage.plenary_date)}`
+    : undefined
+  const tablersByDoc = groupTablersByDocument(tablers)
   const dates = stages.map(s => s.plenary_date).filter(d => !isNaN(new Date(d).getTime())).sort()
   const latest = kind === 'law' && bill.royal_assent_date ? bill.royal_assent_date : bill.latest_date
   const { prefix: idPrefix, number: idNumber } = splitBillId(bill.bill_id)
@@ -120,9 +183,10 @@ export default async function BillDetailPageBody({
     return { ...n, date: days[0] ?? null, votes: rows.filter(r => r.has_division && r.division_id).length }
   })
   const reached = journey.filter(j => j.state === 'done' || j.state === 'current')
-  const focus = journey.find(j => j.state === 'scheduled') ?? reached[reached.length - 1] ?? journey[0]
+  const nextNode = journey.find(j => j.state === 'scheduled') ?? null
+  const focus = reached[reached.length - 1] ?? nextNode ?? journey[0]
   const focusKey = kind === 'law' ? 'Became law' : kind === 'awaiting' ? 'Awaiting Royal Assent' : kind === 'failed' ? 'Defeated' : focus.stage
-  const focusLabel = kind === 'scheduled' ? 'Next stage' : kind === 'active' ? 'Current stage' : focusKey
+  const focusLabel = kind === 'scheduled' ? (focus === nextNode ? 'Next stage' : 'Current stage') : kind === 'active' ? 'Current stage' : focusKey
   const focusExplain = STAGE_INFO[focusKey]?.summary ?? ''
   const lastReached = reached.length - 1
   const tiles = journey.map((j) => ({
@@ -139,7 +203,15 @@ export default async function BillDetailPageBody({
   const dateIcon = kind === 'scheduled' ? CalendarClock : CalendarCheck
   const dateTone = kind === 'law' ? 'tnGreen' : kind === 'awaiting' ? 'tnAmber' : kind === 'failed' ? 'tnRed' : 'tnBlue'
   const panelFacts: { label: string; value: React.ReactNode; sub?: string; Icon: typeof Timer; tone: string }[] = [
-    ...(focusParts
+    ...(kind === 'scheduled' && nextNode?.date
+      ? [{
+          label: 'Next stage',
+          value: formatDate(nextNode.date),
+          sub: nextNode.stage,
+          Icon: CalendarClock,
+          tone: 'tnBlue',
+        }]
+      : focusParts
       ? [{
           label: DATE_LABEL[kind],
           value: formatDate(latest),
@@ -177,8 +249,11 @@ export default async function BillDetailPageBody({
               {bill.long_title && <p className={styles.headSub}>{bill.long_title}</p>}
               {bill.legislation_url && (
                 <a href={bill.legislation_url} target="_blank" rel="noopener noreferrer" className={styles.actLink}>
-                  View Act
-                  <ArrowUpRight size={16} strokeWidth={2} aria-hidden="true" />
+                  <span className={styles.actIcon}><ScrollText size={26} strokeWidth={2} aria-hidden="true" /></span>
+                  <span className={styles.actLabel}>View Act</span>
+                  <span className={styles.actDesc}>Read the law as passed, on legislation.gov.uk.</span>
+                  <ScrollText className={styles.actMark} size={160} strokeWidth={1.5} aria-hidden="true" />
+                  <ArrowUpRight className={styles.actArrow} size={16} strokeWidth={2} aria-hidden="true" />
                   <span className={styles.srOnly}>(opens in a new tab)</span>
                 </a>
               )}
@@ -210,6 +285,26 @@ export default async function BillDetailPageBody({
               </li>
             ))}
           </ol>
+
+          {(showTablers || introducer) && (
+            <div className={styles.attribution}>
+              {introducer && (
+                <div className={styles.introCard}>
+                  <span className={`${styles.iconTile} ${styles.tnBlue} ${styles.introIcon}`}>
+                    <introducer.Icon size={40} strokeWidth={2} aria-hidden="true" />
+                  </span>
+                  <span className={styles.introText}>
+                    <span className={styles.introEyebrow}>Introduced by</span>
+                    <span className={styles.introTitle}>{introducer.title}</span>
+                    {bill.bill_type && <span className={styles.introSub}>{bill.bill_type}</span>}
+                  </span>
+                </div>
+              )}
+              {showTablers && sponsorList.map(c => (
+                <MlaRow key={c.key} person={c.person} basePath={basePath} surface eyebrow="Second Stage tabled by" showAttendance={false} date={sponsorDate} />
+              ))}
+            </div>
+          )}
 
           <section className={styles.focusTile} aria-labelledby="journey-heading">
             <div className={styles.focusMain}>
@@ -253,7 +348,15 @@ export default async function BillDetailPageBody({
         </div>
       </section>
 
-      <section className={`${styles.band} ${styles.bandTint}`} aria-label="Bill details">
+      {petitions.length > 0 && (
+        <section className={`${styles.band} ${styles.bandTint}`} aria-label="Petitions of concern">
+          <div className="container">
+            <PetitionsTile groups={petitions} basePath={basePath} signatoryCards={signatoryCards} />
+          </div>
+        </section>
+      )}
+
+      <section className={`${styles.band} ${petitions.length > 0 ? styles.bandPage : styles.bandTint}`} aria-label="Bill details">
         <div className="container">
           <div className={styles.bento}>
             {summary && (
@@ -290,14 +393,16 @@ export default async function BillDetailPageBody({
             )}
 
             <section className={`${styles.tile} ${styles.tFull}`} aria-labelledby="stages-heading">
-              <div className={styles.tileHead}>
-                <span className={`${styles.iconTile} ${styles.tnBlue}`}><History size={22} strokeWidth={2} aria-hidden="true" /></span>
-                <h2 className={styles.tileTitle} id="stages-heading">Legislative stages</h2>
-              </div>
-              <p className={styles.tileDesc}>
-                Every plenary day this bill has been on the agenda, newest first. A stage can appear more than once if the Assembly sat on it across several days.
-              </p>
-              <BillTimeline stages={stages} royalAssentDate={bill.royal_assent_date} latestDate={bill.latest_date} today={today} />
+              <BillTimeline
+                stages={stages}
+                committeeItems={committeeItems}
+                tablersByDoc={tablersByDoc}
+                royalAssentDate={bill.royal_assent_date}
+                latestDate={bill.latest_date}
+                today={today}
+                committeeInferred={committeeInferred}
+                committeeSummary={committeeSummary}
+              />
             </section>
           </div>
         </div>

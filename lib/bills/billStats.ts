@@ -7,6 +7,7 @@ interface StatsBill {
   stageHistory: { stage: string; plenaryDate: string }[]
   royalAssentDate: string | null
   passed: boolean | null
+  isAccelerated?: boolean
 }
 
 export interface BillStats {
@@ -52,7 +53,7 @@ export function computeBillStats(scheduled: StatsBill[], inProgress: StatsBill[]
 
   const counts = new Array(PIPELINE_LABELS.length).fill(0) as number[]
   for (const b of [...scheduled, ...inProgress]) {
-    const { stageIdx } = computeBillProgress(b.stageHistory, b.royalAssentDate, b.passed === true)
+    const { stageIdx } = computeBillProgress(b.stageHistory, b.royalAssentDate, b.passed === true, { isAccelerated: b.isAccelerated })
     counts[pipelineIndex(stageIdx)] += 1
   }
   const awaiting = completed.filter((b) => !b.royalAssentDate && b.passed !== false).length

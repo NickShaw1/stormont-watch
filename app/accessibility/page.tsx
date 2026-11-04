@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function AccessibilityPage() {
   return (
     <LegalPage
-      eyebrow="Last reviewed: 23 October 2026"
+      eyebrow="Last reviewed: 4 November 2026"
       title="Accessibility statement"
       layout="single"
       intro="This statement applies to Stormont Watch at www.stormontwatch.com, which aims to be usable by as many people as possible. To the best of the site owner's knowledge, it meets the Web Content Accessibility Guidelines (WCAG) 2.2 at level AA."
@@ -62,14 +62,13 @@ export default function AccessibilityPage() {
           Icon: FlaskConical,
           children: (
             <>
-              <p>The site was last tested on 23 October 2026. Testing included:</p>
+              <p>The site was last tested on 4 November 2026. Testing covered:</p>
               <ul>
-                <li>Automated checks with axe-core against the WCAG 2.0, 2.1 and 2.2 A and AA rules, plus its best-practice rules. These cover colour contrast, headings, page regions, form labels and image alternatives. They ran on every type of page, in light and dark mode, at widths of 1280, 820 and 390 CSS pixels, in a Chromium browser.</li>
-                <li>Checks for sideways scrolling and clipped content on every type of page at 320 and 640 CSS pixels wide, which match 400% and 200% zoom.</li>
-                <li>Keyboard checks of the skip link on every page, of visible focus on the main page types and of how the menu and pickers open, trap focus and close.</li>
+                <li>Automated accessibility checks (axe-core, WCAG 2.2 level AA) on every type of page, in light and dark mode, at desktop, tablet and phone widths.</li>
+                <li>Sideways scrolling and clipped content at widths that match 200% and 400% zoom.</li>
+                <li>Keyboard use: the skip link, visible focus, and opening and closing the menu and pickers.</li>
               </ul>
-              <p>The Compare MLAs page was added after that date. On 2 November 2026 it was checked with the same automated rules, in light and dark mode at widths of 1280, 820 and 390 CSS pixels, including with its pickers open.</p>
-              <p>This statement will be reviewed whenever the site changes significantly.</p>
+              <p>This statement is reviewed whenever the site changes significantly.</p>
             </>
           ),
         },

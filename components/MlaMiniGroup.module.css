@@ -1,0 +1,25 @@
+.partyGroup { display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-4); border-radius: 16px; background: var(--tile-bg); }
+.partyGroupHead { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.partySquare { flex: none; width: 28px; height: 28px; border-radius: 9px; }
+.partyFull { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; color: var(--sw-text-primary); }
+.partyShort { display: none; }
+.partyGroupCount { margin-left: auto; font-size: var(--fs-sm); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--sw-text-secondary); }
+.minis { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-4) var(--s-3); }
+.mini { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-2); width: 72px; }
+.miniPhoto { flex: none; display: block; width: 72px; height: 72px; border-radius: 14px; overflow: hidden; background: var(--sw-surface-subtle); }
+.miniPhoto > span { display: block; width: 100% !important; height: 100% !important; min-width: 0 !important; border: 0 !important; border-radius: 0 !important; outline: none !important; }
+.miniPhoto img { width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: top center !important; }
+.miniName { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; width: 100%; color: var(--sw-text-primary); font-size: var(--fs-xs); font-weight: 600; line-height: 1.25; text-decoration: none; overflow-wrap: anywhere; }
+.miniName::before { content: ''; position: absolute; inset: 0; border-radius: 14px; }
+.miniName:hover { color: var(--sw-accent-strong); text-decoration: none; }
+.miniName:focus-visible { outline: none; }
+.miniName:focus-visible::before { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
+
+@media (max-width: 640px) {
+  .partyLong { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+  .partyShort { display: inline; }
+}
+
+@media (forced-colors: active) {
+  .partySquare { forced-color-adjust: none; }
+}

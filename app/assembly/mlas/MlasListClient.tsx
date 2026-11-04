@@ -10,6 +10,7 @@ import { useMandate } from '@/components/MandateContext'
 import { useDropdown } from '@/lib/useDropdown'
 import { formatDate, formatMemberName, abbreviateParty, partyBorderColor, formatConstituency } from '@/lib/format'
 import { SEAL_POINTS } from '@/lib/sealPoints'
+import { rolesOf } from '@/lib/mlaRow'
 import styles from './mlas.module.css'
 
 interface MlaRow {
@@ -75,16 +76,6 @@ const GROUP_ICON = { party: Users, constituency: MapPin, former: UserMinus } as 
 const GRADE_TEXT: Record<Grade, string> = { good: 'at or above average', low: 'below average', poor: 'far below average', na: '' }
 
 const slug = (s: string) => s.replace(/[^a-z0-9]/gi, '-').toLowerCase()
-
-function rolesOf(m: MlaRow, roleLookup: Record<string, string>): string[] {
-  const roles: string[] = []
-  if (m.assembly_role && !m.assembly_role_end) {
-    roles.push(m.assembly_role.replace(/\bPrincipal Deputy\b/g, 'Pr. Dep.').replace(/\bPrincipal\b/g, 'Pr.'))
-  }
-  const other = roleLookup[m.person_id]
-  if (other && !roles.some((r) => r.toLowerCase() === other.toLowerCase())) roles.push(other)
-  return roles
-}
 
 export default function MlasListClient({
   partyGroups,

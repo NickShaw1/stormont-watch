@@ -4,7 +4,7 @@ import { createContext, useContext, useMemo, useState } from 'react'
 
 export type TypeFilter = 'ALL' | 'BILLS' | 'MOTIONS' | 'REGULATIONS'
 export type ResultFilter = 'ALL' | 'PASSED' | 'FAILED'
-export type CrossFilter = 'ALL' | 'both' | 'divided' | 'against' | 'level'
+export type CrossFilter = 'ALL' | 'both' | 'divided' | 'against' | 'level' | 'petition'
 export type FilterDim = 'result' | 'type' | 'year' | 'cross'
 
 interface VotesFilters {

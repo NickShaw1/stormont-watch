@@ -252,6 +252,18 @@
 .mKey li { display: inline-flex; align-items: center; gap: 6px; }
 .mKey i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--k, var(--v-dnv)); }
 .mKey b { font-size: var(--fs-lg); font-weight: 700; color: var(--sw-text-primary); font-variant-numeric: tabular-nums; }
+.poc { position: relative; overflow: hidden; isolation: isolate; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'icon text cta'; align-items: center; column-gap: var(--s-6); padding: var(--s-8); border-radius: var(--r-lg); background: #a4301f; color: #ffffff; text-decoration: none; box-shadow: var(--lift); transition: background var(--sw-transition); }
+.poc:hover { background: color-mix(in srgb, #a4301f 88%, #000000); color: #ffffff; text-decoration: none; }
+.poc[data-static]:hover { background: #a4301f; }
+.poc:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 3px; }
+.pocIcon { grid-area: icon; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 18px; background: rgba(255, 255, 255, 0.18); }
+.pocText { grid-area: text; display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; }
+.pocEyebrow { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255, 255, 255, 0.82); }
+.pocTitle { font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+.pocSub { font-size: var(--fs-base); line-height: 1.5; color: rgba(255, 255, 255, 0.9); }
+.pocCta { grid-area: cta; display: inline-flex; align-items: center; gap: var(--s-2); min-height: 44px; padding: 0 var(--s-5); border-radius: 999px; background: #ffffff; color: #a4301f; font-size: var(--fs-md); font-weight: 600; white-space: nowrap; }
+.pocArrow { display: none; }
+.pocMark { position: absolute; z-index: -1; right: 150px; bottom: -48px; width: 190px; height: 190px; color: rgba(255, 255, 255, 0.1); transform: rotate(12deg); pointer-events: none; }
 .mMotion { display: flex; flex-direction: column; gap: var(--s-4); padding: var(--s-5); border-radius: var(--r-lg); background: var(--tile-bg); border: 1px solid var(--sw-border); box-shadow: var(--lift); }
 .mMotionHead { display: flex; align-items: center; gap: var(--s-3); }
 .mMotionTitle { margin: 0; font-size: var(--fs-xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; color: var(--sw-text-primary); }
@@ -356,6 +368,12 @@
 @media (max-width: 640px) {
   .page { --gap: 48px; }
   .desktopOnly { display: none; }
+  .poc { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'icon arrow' 'text text'; align-items: start; row-gap: var(--s-4); padding: var(--s-6); }
+  .pocIcon { width: 52px; height: 52px; border-radius: 16px; }
+  .pocTitle { font-size: var(--fs-xl); }
+  .pocCta { display: none; }
+  .pocArrow { grid-area: arrow; display: block; justify-self: end; }
+  .pocMark { right: -24px; bottom: -30px; width: 160px; height: 160px; }
   .mobileVote { display: flex; }
   .board { flex-wrap: wrap; min-height: 0; }
   .boardCell { flex: 1 1 calc(50% - var(--s-1)); min-width: 0; padding: var(--s-4); gap: var(--s-3); }

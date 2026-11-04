@@ -4,6 +4,9 @@ import { CURRENT_MANDATE as CURRENT_MANDATE_CONFIG, mandateById } from '@/lib/co
 export const mlaImg = (personId: string | null | undefined): string | null =>
   personId ? `/mla-images/${personId}.jpg` : null
 
+export const effectiveStageDate = (alias: string) =>
+  sql.raw(`COALESCE((${alias}.decision_date + time '12:00') AT TIME ZONE 'UTC', ${alias}.plenary_date)`)
+
 export const CURRENT_MANDATE = CURRENT_MANDATE_CONFIG.id
 /** First day of the current mandate, e.g. '2022-05-05'. */
 export const CURRENT_MANDATE_START = CURRENT_MANDATE_CONFIG.start

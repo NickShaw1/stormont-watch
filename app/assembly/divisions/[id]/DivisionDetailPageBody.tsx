@@ -13,6 +13,7 @@ import type { Mandate } from '@/lib/constants/mandates'
 import LobbiesClient from './LobbiesClient'
 import MobileVote from './MobileVote'
 import TabledBy from './TabledBy'
+import PetitionNotice from './PetitionNotice'
 import PartyChart from './PartyChart'
 import DesignationChart from './DesignationChart'
 import { toBallots, VOTE_ORDER, VOTE_LABEL, type VoteKey } from './voteMeta'
@@ -131,6 +132,16 @@ export default async function DivisionDetailPageBody({
   const { label: catLabel, Icon: CatIcon } = CAT[cat]
   const crossCommunity = division.divisionType === 'Cross-Community'
 
+  const amendmentLabel = /Amendment\s+\d+/i.exec(division.title ?? division.subject)?.[0].replace(/\s+/, ' ')
+  const petitionNotice = division.petitionDocumentId ? (
+    <PetitionNotice
+      petition={{ tabledDate: division.petitionTabledDate, plenaryDate: division.petitionPlenaryDate, signatories: division.petitionSignatories }}
+      target={amendmentLabel ?? (division.isMotionAmendment ? 'this amendment' : 'this motion')}
+      href={billStage[0]?.billId ? `${basePath}/assembly/bills/${billSlug(billStage[0].billId)}#petitions` : null}
+      crossCommunity={crossCommunity}
+    />
+  ) : null
+
   const byDesignation = (d: 'Unionist' | 'Nationalist' | 'Other') => {
     const members = ballots.filter((b) => (b.designation ?? 'Other') === d)
     return {
@@ -242,7 +253,7 @@ export default async function DivisionDetailPageBody({
           </header>
 
           {ballots.length > 0 && (
-            <MobileVote ballots={ballots} verdict={verdict} passed={passed} detail={passed === null ? null : `${passed ? 'Carried' : 'Defeated'} by ${margin} ${margin === 1 ? 'vote' : 'votes'}`} insight={insight} originalText={originalText ?? null} amendTexts={showSplit ? amendTexts : []} isAmendment={isAmendment} />
+            <MobileVote ballots={ballots} verdict={verdict} passed={passed} detail={passed === null ? null : `${passed ? 'Carried' : 'Defeated'} by ${margin} ${margin === 1 ? 'vote' : 'votes'}`} insight={insight} originalText={originalText ?? null} amendTexts={showSplit ? amendTexts : []} isAmendment={isAmendment} afterMotion={petitionNotice} />
           )}
           <div className={`${styles.bandStack} ${styles.desktopOnly}`}>
           {motionText && (
@@ -307,6 +318,7 @@ export default async function DivisionDetailPageBody({
           )}
         </section>
           )}
+          {petitionNotice}
             <section className={`${styles.tile} ${styles.result}`} data-tone={passed === null ? 'none' : passed ? 'pass' : 'fail'} aria-labelledby="result-heading">
               <div className={styles.resultTop}>
                 <div className={styles.verdictBlock}>

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db/client'
 import { divisions, members, bills } from '@/lib/db/schema'
 import { getConstituencyMlaRows } from '@/lib/db/queries/constituencies'
@@ -49,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const [divisionRows, memberRows, billRows, partyRows, constituencyRows] = await Promise.all([
       db.select({ documentId: divisions.documentId, divisionDate: divisions.divisionDate }).from(divisions).where(eq(divisions.mandate, CURRENT_MANDATE.id)),
-      db.select({ personId: members.personId, updatedAt: members.updatedAt }).from(members).where(and(eq(members.isCurrent, true), eq(members.mandate, CURRENT_MANDATE.id))),
+      db.select({ personId: members.personId, updatedAt: members.updatedAt, isCurrent: members.isCurrent }).from(members).where(eq(members.mandate, CURRENT_MANDATE.id)),
       db.select({ billId: bills.billId, latestDate: bills.latestDate }).from(bills).where(eq(bills.mandate, CURRENT_MANDATE.id)),
       db.selectDistinct({ party: members.party }).from(members).where(eq(members.isCurrent, true)),
       getConstituencyMlaRows(CURRENT_MANDATE.id),
@@ -76,7 +76,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${BASE}/assembly/mlas/${m.personId}`,
       lastModified: m.updatedAt ?? new Date(),
       changeFrequency: 'weekly',
-      priority: 0.6,
+      priority: m.isCurrent ? 0.6 : 0.4,
     }))
 
     const partyUrls: MetadataRoute.Sitemap = partyRows.map((p) => ({
@@ -93,7 +93,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Archive landing pages, kept crawlable so old-mandate content stays indexed.
     const archiveUrls: MetadataRoute.Sitemap = ARCHIVED_MANDATES.flatMap((m) =>
-      SECTION_PATHS.map((p) => ({
+      ['', ...SECTION_PATHS].map((p) => ({
         url: `${BASE}/archive/${m.id}${p}`,
         changeFrequency: 'yearly' as const,
         priority: 0.3,

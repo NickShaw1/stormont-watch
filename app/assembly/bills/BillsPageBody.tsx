@@ -2,6 +2,7 @@ import { Info } from 'lucide-react'
 import { getAllBills, getBillsProgressedThisWeek } from '@/lib/db/queries'
 import { groupProgressedBills } from '@/lib/bills/progressedThisWeekProgress'
 import { computeBillStats } from '@/lib/bills/billStats'
+import { billStatus } from '@/lib/bills/billStatus'
 import BillsExplorer from './BillsExplorer'
 import styles from './bills.module.css'
 import type { Mandate } from '@/lib/constants/mandates'
@@ -18,19 +19,12 @@ export interface BillItem {
   passed: boolean | null
   royalAssentDate: string | null
   actTitle: string | null
+  hasPetition: boolean
   category: 'scheduled' | 'in-progress' | 'completed'
 }
 
 function billSlug(billId: string): string {
   return billId.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')
-}
-
-function hasFinalStagePassed(b: { final_stage_has_division: boolean | null; final_stage_outcome: string | null }): boolean {
-  return b.final_stage_has_division === true && /carried/i.test(b.final_stage_outcome ?? '')
-}
-
-function hasFinalStageFailed(b: { final_stage_has_division: boolean | null; final_stage_outcome: string | null }): boolean {
-  return b.final_stage_has_division === true && /negatived|fell/i.test(b.final_stage_outcome ?? '')
 }
 
 // Shared by the live route and the archive route; mandate/basePath vary per route.
@@ -42,19 +36,8 @@ export default async function BillsPageBody({
 }) {
   const [allBills, progressedData] = await Promise.all([getAllBills(mandate.id), getBillsProgressedThisWeek(mandate.id)])
   const progressedThisWeek = groupProgressedBills(progressedData)
-  const today = new Date().toISOString().slice(0, 10)
-  const isCompleted = (b: typeof allBills[number]) =>
-    b.royal_assent_date != null ||
-    (b.display_stage.toLowerCase() === 'final stage' && new Date(b.latest_date).toISOString().slice(0, 10) < today) ||
-    hasFinalStagePassed(b) ||
-    hasFinalStageFailed(b)
-
   function toItem(b: typeof allBills[number], category: BillItem['category']): BillItem {
-    const passed = b.royal_assent_date != null ? true
-      : hasFinalStagePassed(b) ? true
-      : hasFinalStageFailed(b) ? false
-      : b.final_stage_nodiv_date && new Date(b.final_stage_nodiv_date) < new Date() ? true
-      : null
+    const { passed } = billStatus(b)
     return {
       slug: billSlug(b.bill_id),
       billId: b.bill_id,
@@ -67,22 +50,23 @@ export default async function BillsPageBody({
       passed,
       royalAssentDate: b.royal_assent_date,
       actTitle: b.act_title,
+      hasPetition: b.has_petition,
       category,
     }
   }
 
   const scheduled = allBills
-    .filter(b => !isCompleted(b) && new Date(b.latest_date).toISOString().slice(0, 10) >= today)
+    .filter(b => billStatus(b).kind === 'scheduled')
     .map(b => toItem(b, 'scheduled'))
     .sort((a, b) => new Date(a.latestDate).getTime() - new Date(b.latestDate).getTime())
 
   const inProgress = allBills
-    .filter(b => !isCompleted(b) && new Date(b.latest_date).toISOString().slice(0, 10) < today)
+    .filter(b => billStatus(b).kind === 'active')
     .map(b => toItem(b, 'in-progress'))
     .sort((a, b) => new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime())
 
   const completed = allBills
-    .filter(b => isCompleted(b))
+    .filter(b => { const { kind } = billStatus(b); return kind !== 'scheduled' && kind !== 'active' })
     .map(b => toItem(b, 'completed'))
     .sort((a, b) => {
       if (!a.royalAssentDate && b.royalAssentDate) return -1

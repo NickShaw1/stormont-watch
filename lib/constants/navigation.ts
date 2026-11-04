@@ -1,5 +1,5 @@
 import {
-  Home, Users, Users2, Scale, Vote, BarChart3, Building2,
+  Home, Users, Flag, Scale, Vote, BarChart3, Building2,
   Receipt, Wallet, MessageCircleQuestion, CalendarDays, MapPin,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -16,7 +16,7 @@ export const HOME_LINK: NavItem = { href: '/', label: 'Home', icon: Home }
 
 export const PRIMARY_LINKS: NavItem[] = [
   { href: '/assembly/mlas', label: 'MLAs', icon: Users, footerLabel: 'MLAs', footerOrder: 1 },
-  { href: '/assembly/parties', label: 'Parties', icon: Users2, footerLabel: 'Parties', footerOrder: 2 },
+  { href: '/assembly/parties', label: 'Parties', icon: Flag, footerLabel: 'Parties', footerOrder: 2 },
   { href: '/assembly/constituencies', label: 'Constituencies', icon: MapPin },
   { href: '/assembly/bills', label: 'Legislation', icon: Scale, footerLabel: 'Bills', footerOrder: 4 },
   { href: '/assembly/votes', label: 'Votes', icon: Vote, footerLabel: 'Divisions', footerOrder: 3 },

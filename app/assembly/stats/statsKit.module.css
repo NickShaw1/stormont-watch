@@ -390,7 +390,7 @@
 .rlName:focus-visible { outline: none; }
 .rlName:focus-visible::before { outline: 2px solid var(--sw-focus); outline-offset: 2px; }
 .rlDetail { font-size: var(--fs-sm); font-weight: 600; color: var(--sw-text-secondary); }
-.leftPill { display: inline-flex; align-items: center; gap: var(--s-1); height: 28px; padding: 0 12px 0 10px; border-radius: 999px; background: color-mix(in srgb, var(--sw-accent-warm) 32%, var(--tile-bg)); color: var(--sw-warning); font-size: var(--fs-sm); font-weight: 700; white-space: nowrap; }
+.leftPill { display: inline-flex; align-items: center; gap: var(--s-1); height: 28px; padding: 0 12px 0 10px; border-radius: 999px; background: color-mix(in srgb, var(--sw-accent-warm) 18%, var(--tile-bg)); color: var(--sw-warning); font-size: var(--fs-sm); font-weight: 700; white-space: nowrap; }
 .leftPill svg { flex: none; }
 .rlNoteMobile { display: none; }
 .rlRow[data-former] .rankPhoto img { filter: grayscale(1); opacity: 0.6; }

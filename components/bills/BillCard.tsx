@@ -40,11 +40,11 @@ export function railModel(progress: BillProgress, kind: BillKind) {
   const done = Math.min(Math.max(completedUpTo, 0), STAGE_COUNT)
   const kindLabel = KIND_LABEL[kind]
   const scheduledStage = kind === 'scheduled' && scheduledIdx !== null ? NUMBERED_STAGES[scheduledIdx - 1] : undefined
-  const label = kindLabel ?? (scheduledStage ? `${scheduledStage} scheduled` : done > 0 ? NUMBERED_STAGES[done - 1] : 'First Stage')
+  const label = kindLabel ?? (stageIdx >= 1 ? NUMBERED_STAGES[stageIdx - 1] : scheduledStage ? `${scheduledStage} scheduled` : done > 0 ? NUMBERED_STAGES[done - 1] : 'First Stage')
   const nodes = NUMBERED_STAGES.map((stage, j) => {
     const i = j + 1
     const baseState = stateOf(i)
-    const state = baseState === 'done' && i === done && done < STAGE_COUNT && pendingIdx === null ? 'current' : baseState
+    const state = baseState === 'done' && i === done && done < STAGE_COUNT && (pendingIdx === null || done === stageIdx) ? 'current' : baseState
     return {
       stage,
       index: i,
@@ -110,7 +110,7 @@ export default function BillCard({ href, billId, billType, title, kind, accelera
             {dates.map((f) => (
               <span key={f.label} className={styles.tag} data-tone={kind === 'scheduled' ? 'solid' : undefined}>
                 <CalendarDays size={14} strokeWidth={2.25} aria-hidden="true" />
-                {f.label} {f.value}
+                {f.label}{f.label.includes(':') ? ' - ' : ' '}<span className={styles.nowrap}>{f.value}</span>
               </span>
             ))}
           </span>

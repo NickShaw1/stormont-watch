@@ -1,0 +1,6 @@
+.pill { position: relative; flex: none; align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px 0 10px; border-radius: 999px; background: color-mix(in srgb, var(--sw-error-solid) 14%, var(--tile-bg)); color: var(--sw-error); font-size: var(--fs-sm); font-weight: 600; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .iconOnly { justify-content: center; width: 28px; padding: 0; }
+  .iconOnly .text { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+}

@@ -1,4 +1,4 @@
-type BillEventType = 'voted' | 'passed'
+type BillEventType = 'voted' | 'oral' | 'passed'
 
 interface BillEvent {
   stage: string
@@ -22,10 +22,9 @@ export interface BillProgressedThisWeek {
 const PROCEDURAL = [
   'Accelerated Passage',
   'Suspension of Standing Order 39',
-  'Extension of Committee Stage',
 ]
 
-const PRECEDENCE: Record<BillEventType, number> = { voted: 2, passed: 1 }
+const PRECEDENCE: Record<BillEventType, number> = { voted: 3, oral: 2, passed: 1 }
 
 function deriveHeadlineEvent(events: BillEvent[]): BillEvent {
   if (events.length === 0) throw new Error('deriveHeadlineEvent called with empty array')
@@ -41,6 +40,11 @@ function deriveHeadlineEvent(events: BillEvent[]): BillEvent {
 export function getPillInfo(bill: BillProgressedThisWeek): { label: string; cls: string } {
   if (bill.royalAssentDate) return { label: 'Became law', cls: 'pass' }
   const e = bill.headlineEvent
+  if (e.eventType === 'oral') {
+    if (/carried|agreed/i.test(e.outcome ?? '')) return { label: 'Passed by oral vote', cls: 'pass' }
+    if (/negatived|fell/i.test(e.outcome ?? '')) return { label: 'Failed by oral vote', cls: 'fail' }
+    return { label: 'Decided by oral vote', cls: 'neutral' }
+  }
   if (e.eventType === 'voted') {
     if (/carried|agreed/i.test(e.outcome ?? '')) return { label: 'Passed by vote', cls: 'pass' }
     if (/negatived|fell/i.test(e.outcome ?? '')) return { label: 'Failed by vote', cls: 'fail' }
@@ -60,6 +64,10 @@ export function formatEventLine(event: BillEvent, omitAction = false): string {
   let action: string
   if (event.eventType === 'passed') {
     action = 'heard'
+  } else if (event.eventType === 'oral') {
+    action = /carried|agreed/i.test(event.outcome ?? '') ? 'passed by oral vote'
+      : /negatived|fell/i.test(event.outcome ?? '') ? 'failed by oral vote'
+      : 'decided by oral vote'
   } else if (/carried|agreed/i.test(event.outcome ?? '')) {
     action = 'passed by vote'
   } else if (/negatived|fell/i.test(event.outcome ?? '')) {

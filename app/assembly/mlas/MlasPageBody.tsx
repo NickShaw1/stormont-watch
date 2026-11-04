@@ -1,6 +1,7 @@
 import { getMembersGroupedByParty, getAllMinisters, getAllCommitteeChairs, getFormerMembers, getAverageAttendance } from '@/lib/db/queries'
 import type { Mandate } from '@/lib/constants/mandates'
 import { attendanceFloor } from '@/lib/attendance'
+import { buildRoleLookup } from '@/lib/mlaRow'
 import MlasListClient from './MlasListClient'
 import styles from './mlas.module.css'
 
@@ -14,21 +15,7 @@ export default async function MlasPageBody({ mandate }: { mandate: Mandate }) {
     getAverageAttendance(mandate.id),
   ])
 
-  const roleLookup: Record<string, string> = {}
-  for (const m of ministers) {
-    if (m.roleTitle === 'First Minister') {
-      roleLookup[m.personId] = 'First Minister'
-    } else if (m.roleTitle === 'deputy First Minister') {
-      roleLookup[m.personId] = 'Deputy FM'
-    } else if (m.roleTitle?.toLowerCase() === 'junior minister') {
-      roleLookup[m.personId] = 'Junior Minister'
-    } else {
-      roleLookup[m.personId] = 'Minister'
-    }
-  }
-  for (const c of chairs) {
-    if (!roleLookup[c.personId]) roleLookup[c.personId] = 'Chair'
-  }
+  const roleLookup = buildRoleLookup(ministers, chairs)
 
   const allMlas = partyGroups.flatMap((g) => g.mlas)
 

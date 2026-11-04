@@ -19,6 +19,7 @@ export type Db = ReturnType<typeof drizzle<typeof schema>>
 
 const FETCH_TIMEOUT_MS = 30_000
 const FETCH_ATTEMPTS = 3
+export const MAX_CONSECUTIVE_FAILURES = 3
 
 const sleepMs = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 

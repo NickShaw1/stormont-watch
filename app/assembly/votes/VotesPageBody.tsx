@@ -50,6 +50,7 @@ export default async function VotesPageBody({
       isStatutory: statutory,
       isBill: !statutory && (/NIA Bill/i.test(d.subject ?? '') || /(?:First|Second|Committee|Consideration|Further Consideration|Final) Stage:/i.test(d.subject ?? '')),
       isCrossCommunity: d.divisionType === 'Cross-Community',
+      isPetition: d.petitionDocumentId !== null,
       totalAyes: d.totalAyes ?? null,
       totalNoes: d.totalNoes ?? null,
       crossClass: classOf(d),

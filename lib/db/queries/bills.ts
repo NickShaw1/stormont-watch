@@ -1,7 +1,7 @@
-import { eq, desc, sql, and, count, isNull, lte } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { db } from '../client'
-import { hansardReports, bills } from '../schema'
-import { CURRENT_MANDATE, mandateStartOf } from './helpers'
+import { hansardReports } from '../schema'
+import { CURRENT_MANDATE, mandateStartOf, effectiveStageDate } from './helpers'
 
 export async function getAllBills(mandate: string = CURRENT_MANDATE) {
   const result = await db.execute(sql`
@@ -21,6 +21,7 @@ export async function getAllBills(mandate: string = CURRENT_MANDATE) {
       b.act_title,
       b.legislation_url,
       b.latest_date,
+      EXISTS (SELECT 1 FROM bill_stages p WHERE p.bill_id = b.bill_id AND p.event_type = 'petition_of_concern') AS has_petition,
       COUNT(bs.document_id)::int as stage_count,
       COUNT(bs.division_id)::int as division_count,
       fs_plain.has_division as final_stage_has_division,
@@ -32,23 +33,23 @@ export async function getAllBills(mandate: string = CURRENT_MANDATE) {
           ORDER BY h.plenary_date ASC
         ), '[]'::jsonb)
         FROM (
-          SELECT DISTINCT ON (bs2.stage, bs2.plenary_date::date)
-            bs2.stage, bs2.plenary_date
+          SELECT DISTINCT ON (bs2.stage, (${effectiveStageDate('bs2')})::date)
+            bs2.stage, ${effectiveStageDate('bs2')} AS plenary_date
           FROM bill_stages bs2
           WHERE bs2.bill_id = b.bill_id
-          ORDER BY bs2.stage, bs2.plenary_date::date,
+          ORDER BY bs2.stage, (${effectiveStageDate('bs2')})::date,
                    (bs2.item_title IS NULL) DESC, bs2.document_id ASC
         ) h
       ) as stage_history
     FROM bills b
     LEFT JOIN bill_stages bs ON b.bill_id = bs.bill_id
     LEFT JOIN LATERAL (
-      SELECT bs.document_id, bs.plenary_date, bs.has_division, bs.division_id
+      SELECT bs.document_id, ${effectiveStageDate('bs')} AS plenary_date, bs.has_division, bs.division_id
       FROM bill_stages bs
       WHERE bs.bill_id = b.bill_id
         AND LOWER(bs.stage) = 'final stage'
         AND bs.item_title IS NULL
-      ORDER BY bs.plenary_date DESC
+      ORDER BY ${effectiveStageDate('bs')} DESC
       LIMIT 1
     ) fs_plain ON true
     LEFT JOIN divisions d ON d.document_id = fs_plain.division_id
@@ -68,6 +69,7 @@ export async function getAllBills(mandate: string = CURRENT_MANDATE) {
     act_title: string | null
     legislation_url: string | null
     latest_date: string
+    has_petition: boolean
     stage_count: number
     division_count: number
     final_stage_has_division: boolean | null
@@ -77,36 +79,122 @@ export async function getAllBills(mandate: string = CURRENT_MANDATE) {
   }[]
 }
 
+export interface BillStageRow {
+  document_id: string
+  stage: string
+  plenary_date: string
+  has_division: boolean
+  division_id: string | null
+  item_title: string | null
+  event_type: string
+  raw_title: string | null
+  item_text: string | null
+  decision_method: string | null
+  decision_outcome: string | null
+  outcome: string | null
+  total_ayes: number | null
+  total_noes: number | null
+  division_type: string | null
+  nationalist_ayes: number | null
+  unionist_ayes: number | null
+  other_ayes: number | null
+  nationalist_noes: number | null
+  unionist_noes: number | null
+  other_noes: number | null
+  petition_plenary_date: string | null
+}
+
 export async function getBillStages(billId: string) {
   const result = await db.execute(sql`
     SELECT
       bs.document_id,
       bs.stage,
-      bs.plenary_date,
+      ${effectiveStageDate('bs')} AS plenary_date,
       bs.has_division,
       bs.division_id,
       bs.item_title,
+      bs.event_type,
+      bs.raw_title,
+      bs.item_text,
+      bs.decision_method,
+      bs.decision_outcome,
       d.outcome,
       d.total_ayes,
       d.total_noes,
-      d.division_type
+      d.division_type,
+      d.nationalist_ayes,
+      d.unionist_ayes,
+      d.other_ayes,
+      d.nationalist_noes,
+      d.unionist_noes,
+      d.other_noes,
+      d.petition_plenary_date::text AS petition_plenary_date
     FROM bill_stages bs
     LEFT JOIN divisions d ON bs.division_id = d.document_id
     WHERE bs.bill_id = ${billId}
-    ORDER BY bs.plenary_date ASC, bs.stage ASC
+    ORDER BY ${effectiveStageDate('bs')} ASC, bs.stage ASC
   `)
-  return result.rows as {
-    document_id: string
-    stage: string
-    plenary_date: string
-    has_division: boolean
-    division_id: string | null
-    item_title: string | null
-    outcome: string | null
-    total_ayes: number | null
-    total_noes: number | null
-    division_type: string | null
-  }[]
+  return result.rows as unknown as BillStageRow[]
+}
+
+export interface BillCommitteeRow {
+  event_id: string
+  item_id: string
+  item_order: number
+  committee_name: string
+  meeting_date: string
+  item_type: string
+  item_title: string
+  bill_title: string
+}
+
+export async function getBillCommitteeItems(billId: string) {
+  const result = await db.execute(sql`
+    SELECT
+      event_id,
+      item_id,
+      item_order,
+      committee_name,
+      meeting_date::text AS meeting_date,
+      item_type,
+      item_title,
+      bill_title
+    FROM bill_committee_items
+    WHERE bill_id = ${billId}
+    ORDER BY meeting_date DESC, event_id, item_order
+  `)
+  return result.rows as unknown as BillCommitteeRow[]
+}
+
+export interface BillTablerRow {
+  document_id: string
+  tabler_order: number
+  person_id: string | null
+  tabler_name: string
+  tabler_title: string | null
+  party: string | null
+  img_url: string | null
+  constituency: string | null
+}
+
+export async function getBillTablers(billId: string) {
+  const result = await db.execute(sql`
+    SELECT
+      t.document_id,
+      t.tabler_order,
+      t.person_id,
+      t.tabler_name,
+      t.tabler_title,
+      m.party,
+      m.img_url,
+      m.constituency
+    FROM bill_item_tablers t
+    JOIN bill_stages bs ON bs.document_id = t.document_id
+    LEFT JOIN members m ON m.person_id = t.person_id
+    WHERE bs.bill_id = ${billId}
+    ORDER BY t.document_id, t.tabler_order
+  `)
+  return result.rows as unknown as BillTablerRow[]
 }
 
 export async function getHansardReportId(plenaryDate: string): Promise<string | null> {
@@ -180,7 +268,7 @@ export async function getBillsProgressedThisWeek(mandate: string = CURRENT_MANDA
     plenary_date: string
     has_division: boolean
     outcome: string | null
-    event_type: 'voted' | 'passed'
+    event_type: 'voted' | 'oral' | 'passed'
   }[]
   fullHistory: {
     bill_id: string
@@ -193,7 +281,7 @@ export async function getBillsProgressedThisWeek(mandate: string = CURRENT_MANDA
   // DISTINCT ON (bill_id, stage, plenary_date) collapses clause/amendment rows into one
   // representative row per stage event, preferring plain rows (item_title IS NULL) then lowest doc_id.
   const weekResult = await db.execute(sql`
-    SELECT DISTINCT ON (bs.bill_id, bs.stage, bs.plenary_date)
+    SELECT DISTINCT ON (bs.bill_id, bs.stage, ${effectiveStageDate('bs')})
       b.bill_id,
       b.short_title,
       b.bill_type,
@@ -201,20 +289,22 @@ export async function getBillsProgressedThisWeek(mandate: string = CURRENT_MANDA
       b.royal_assent_date::text as royal_assent_date,
       b.mandate,
       bs.stage,
-      bs.plenary_date::text as plenary_date,
+      ${effectiveStageDate('bs')}::text as plenary_date,
       bs.has_division,
-      d.outcome,
+      COALESCE(d.outcome, bs.decision_outcome) AS outcome,
       CASE
         WHEN bs.has_division = true THEN 'voted'
+        WHEN bs.decision_method = 'Oral Vote' THEN 'oral'
         ELSE 'passed'
       END as event_type
     FROM bill_stages bs
     JOIN bills b ON bs.bill_id = b.bill_id
     LEFT JOIN divisions d ON bs.division_id = d.document_id
     WHERE bs.mandate = ${mandate}
-      AND bs.plenary_date >= date_trunc('week', NOW() AT TIME ZONE 'UTC')
-      AND bs.plenary_date < CURRENT_DATE AT TIME ZONE 'UTC'
-    ORDER BY bs.bill_id, bs.stage, bs.plenary_date,
+      AND bs.event_type = 'stage'
+      AND ${effectiveStageDate('bs')} >= date_trunc('week', NOW() AT TIME ZONE 'UTC')
+      AND ${effectiveStageDate('bs')} < CURRENT_DATE AT TIME ZONE 'UTC'
+    ORDER BY bs.bill_id, bs.stage, ${effectiveStageDate('bs')},
              (bs.item_title IS NULL) DESC,
              bs.document_id ASC
   `)
@@ -222,7 +312,7 @@ export async function getBillsProgressedThisWeek(mandate: string = CURRENT_MANDA
   const weekEvents = weekResult.rows as {
     bill_id: string; short_title: string; bill_type: string | null; is_accelerated: boolean
     royal_assent_date: string | null; mandate: string; stage: string; plenary_date: string
-    has_division: boolean; outcome: string | null; event_type: 'voted' | 'passed'
+    has_division: boolean; outcome: string | null; event_type: 'voted' | 'oral' | 'passed'
   }[]
 
   if (weekEvents.length === 0) return { weekEvents: [], fullHistory: [] }
@@ -230,16 +320,17 @@ export async function getBillsProgressedThisWeek(mandate: string = CURRENT_MANDA
   // fullHistory has NO date filter — future rows drive the striped "scheduled" segment on the progress bar.
   // Same DISTINCT ON pattern to deduplicate clause/amendment rows.
   const histResult = await db.execute(sql`
-    SELECT DISTINCT ON (bs.bill_id, bs.stage, bs.plenary_date)
-      bs.bill_id, bs.stage, bs.plenary_date::text as plenary_date, bs.has_division
+    SELECT DISTINCT ON (bs.bill_id, bs.stage, ${effectiveStageDate('bs')})
+      bs.bill_id, bs.stage, ${effectiveStageDate('bs')}::text as plenary_date, bs.has_division
     FROM bill_stages bs
     WHERE bs.bill_id IN (
-      SELECT DISTINCT bill_id FROM bill_stages
-      WHERE mandate = ${mandate}
-        AND plenary_date >= date_trunc('week', NOW() AT TIME ZONE 'UTC')
-        AND plenary_date <= NOW()
+      SELECT DISTINCT bs3.bill_id FROM bill_stages bs3
+      WHERE bs3.mandate = ${mandate}
+        AND bs3.event_type = 'stage'
+        AND ${effectiveStageDate('bs3')} >= date_trunc('week', NOW() AT TIME ZONE 'UTC')
+        AND ${effectiveStageDate('bs3')} <= NOW()
     )
-    ORDER BY bs.bill_id, bs.stage, bs.plenary_date,
+    ORDER BY bs.bill_id, bs.stage, ${effectiveStageDate('bs')},
              (bs.item_title IS NULL) DESC,
              bs.document_id ASC
   `)
@@ -248,32 +339,4 @@ export async function getBillsProgressedThisWeek(mandate: string = CURRENT_MANDA
     weekEvents,
     fullHistory: histResult.rows as { bill_id: string; stage: string; plenary_date: string; has_division: boolean }[],
   }
-}
-
-export async function getInProgressBills(limit = 5, mandate: string = CURRENT_MANDATE) {
-  return db
-    .select({
-      billId: bills.billId,
-      shortTitle: bills.shortTitle,
-      billType: bills.billType,
-      currentStage: bills.currentStage,
-      isAccelerated: bills.isAccelerated,
-      latestDate: bills.latestDate,
-    })
-    .from(bills)
-    .where(and(
-      isNull(bills.royalAssentDate),
-      lte(bills.latestDate, sql`NOW()`),
-      eq(bills.mandate, mandate)
-    ))
-    .orderBy(desc(bills.latestDate))
-    .limit(limit)
-}
-
-export async function getActiveBillsCount(mandate: string = CURRENT_MANDATE): Promise<number> {
-  const result = await db
-    .select({ count: count() })
-    .from(bills)
-    .where(and(isNull(bills.royalAssentDate), eq(bills.mandate, mandate)))
-  return result[0]?.count ?? 0
 }
