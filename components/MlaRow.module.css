@@ -15,12 +15,12 @@
 @media (min-width: 1200px), (min-width: 641px) and (max-width: 760px) {
   .noAtt.hasDate { grid-template-columns: 103px minmax(0, 1fr); column-gap: var(--s-5); }
   .hasDate .photo { width: 103px; height: 103px; }
-  .hasDate .main { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'eyebrow eyebrow' 'name tags' 'place date'; align-content: space-between; align-items: center; align-self: stretch; column-gap: var(--s-4); }
+  .hasDate .main { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'eyebrow eyebrow' 'name tags' 'place place'; align-content: space-between; align-items: center; align-self: stretch; column-gap: var(--s-4); }
   .hasDate .eyebrow { grid-area: eyebrow; align-self: start; }
   .hasDate .name { grid-area: name; font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.02em; }
   .hasDate .tags { grid-area: tags; height: auto; margin-top: 0; justify-self: end; flex-wrap: nowrap; overflow: visible; }
   .hasDate .constituency { grid-area: place; align-self: end; display: flex; align-items: center; gap: 6px; }
-  .hasDate .dateMeta { grid-area: date; align-self: end; display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--sw-text-secondary); }
+  .hasDate .dateMeta { grid-area: 3 / 1 / 4 / 3; justify-self: end; align-self: end; display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--sw-text-secondary); }
   .hasDate .metaIcon { display: block; flex: none; color: var(--sw-accent-strong); }
 }
 .surface { background: var(--tile-bg); border: 1px solid var(--sw-border); box-shadow: var(--lift); }

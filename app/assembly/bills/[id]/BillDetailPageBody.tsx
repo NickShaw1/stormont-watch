@@ -155,7 +155,7 @@ export default async function BillDetailPageBody({
   const showTablers = sponsorList.length > 0 && sponsorList.length <= 2 && !/\bFirst Minister\b/.test(introducer?.title ?? '')
   const sponsorStage = sponsors[0] ? stages.find(s => s.document_id === sponsors[0].document_id) : undefined
   const sponsorDate = showTablers && sponsorStage
-    ? `${sponsorStage.plenary_date.slice(0, 10) > today ? 'Scheduled' : 'Tabled'} ${formatDate(sponsorStage.plenary_date)}`
+    ? `Second Stage ${sponsorStage.plenary_date.slice(0, 10) > today ? 'scheduled' : 'tabled'} ${formatDate(sponsorStage.plenary_date)}`
     : undefined
   const tablersByDoc = groupTablersByDocument(tablers)
   const dates = stages.map(s => s.plenary_date).filter(d => !isNaN(new Date(d).getTime())).sort()
@@ -301,7 +301,7 @@ export default async function BillDetailPageBody({
                 </div>
               )}
               {showTablers && sponsorList.map(c => (
-                <MlaRow key={c.key} person={c.person} basePath={basePath} surface eyebrow="Second Stage tabled by" showAttendance={false} date={sponsorDate} />
+                <MlaRow key={c.key} person={c.person} basePath={basePath} surface eyebrow="Bill sponsor" showAttendance={false} date={sponsorDate} />
               ))}
             </div>
           )}

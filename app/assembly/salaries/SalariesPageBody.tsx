@@ -52,13 +52,19 @@ export default async function SalariesPageBody({
   const bySalary = [...rows].sort((a, b) => b.currentSalary - a.currentSalary)
   const byEarnings = [...rows].sort((a, b) => b.mandateEarnings - a.mandateEarnings)
   const earningsTotal = rows.reduce((s, r) => s + r.mandateEarnings, 0)
+  const topSalaryHolders = bySalary.filter(r => r.currentSalary === bySalary[0]?.currentSalary)
+  const topSalarySub = topSalaryHolders.length === 2
+    ? `${formatMemberName(topSalaryHolders[0].fullName)} and ${formatMemberName(topSalaryHolders[1].fullName)}`
+    : topSalaryHolders.length > 2
+      ? `Shared by ${topSalaryHolders.length} MLAs`
+      : formatMemberName(bySalary[0]?.fullName ?? '')
 
   return (
     <RankingShell
       title="MLA salaries"
       sub={<>Estimated salaries for all {sittingAdjective(mandate)} MLAs based on published Assembly rates. Each MLA is paid the full published salary for the highest-paid role they hold on any given day (for example minister, statutory committee chair or the basic MLA rate), not a supplement on top of the basic salary. Salary estimates are based on published Assembly rates and may not reflect all personal circumstances.</>}
       stats={ratesPublished && rows.length > 0 ? [
-        { tone: rankTones.green, icon: Banknote, label: 'Highest salary', figure: gbp(bySalary[0].currentSalary), sub: formatMemberName(bySalary[0].fullName) },
+        { tone: rankTones.green, icon: Banknote, label: 'Highest salary', figure: gbp(bySalary[0].currentSalary), sub: topSalarySub },
         { tone: rankTones.teal, icon: PiggyBank, label: 'Highest earnings', figure: gbp(byEarnings[0].mandateEarnings), sub: `${formatMemberName(byEarnings[0].fullName)}, this mandate` },
         { tone: rankTones.purple, icon: Sigma, label: 'Combined earnings', figure: gbp(earningsTotal), sub: `estimated, across ${rows.length} ${sittingAdjective(mandate)} MLAs` },
       ] : []}
