@@ -66,7 +66,7 @@ export default async function SalariesPageBody({
       stats={ratesPublished && rows.length > 0 ? [
         { tone: rankTones.green, icon: Banknote, label: 'Highest salary', figure: gbp(bySalary[0].currentSalary), sub: topSalarySub },
         { tone: rankTones.teal, icon: PiggyBank, label: 'Highest earnings', figure: gbp(byEarnings[0].mandateEarnings), sub: `${formatMemberName(byEarnings[0].fullName)}, this mandate` },
-        { tone: rankTones.purple, icon: Sigma, label: 'Combined earnings', figure: gbp(earningsTotal), sub: `estimated, across ${rows.length} ${sittingAdjective(mandate)} MLAs` },
+        { tone: rankTones.purple, icon: Sigma, label: 'Combined earnings', figure: gbp(earningsTotal), sub: `estimated, this mandate, across ${rows.length} ${sittingAdjective(mandate)} MLAs` },
       ] : []}
     >
       {ratesPublished ? (
