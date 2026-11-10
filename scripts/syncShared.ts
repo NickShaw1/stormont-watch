@@ -55,6 +55,13 @@ export function str(val: unknown): string {
   return String(val)
 }
 
+export function tablerRole(tablers: any[]): string | null {
+  const chair = tablers
+    .map((t) => str(t?.TablerTitle).trim())
+    .find((r) => /^Committee Chair - /i.test(r))
+  return chair ?? null
+}
+
 export function isoDate(val: unknown): string {
   const s = str(val)
   if (!s) return ''

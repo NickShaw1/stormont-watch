@@ -280,13 +280,13 @@ button.head:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 
 
 /* Petitions of Concern */
 .petitions { display: flex; flex-direction: column; min-width: 0; border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--lift); }
-.petHead { position: relative; overflow: hidden; isolation: isolate; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: var(--s-6); padding: var(--s-8); background: #a4301f; color: #ffffff; }
-.petIcon { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 18px; background: rgba(255, 255, 255, 0.18); }
+.petHead { position: relative; overflow: hidden; isolation: isolate; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: var(--s-6); padding: var(--s-8); background: color-mix(in srgb, var(--sw-error-solid) 7%, var(--tile-bg)); border-bottom: 1px solid color-mix(in srgb, var(--sw-error-solid) 28%, var(--sw-border)); color: var(--sw-text-primary); }
+.petIcon { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 18px; background: color-mix(in srgb, var(--sw-error-solid) 16%, var(--tile-bg)); color: var(--sw-error); }
 .petText { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; }
-.petEyebrow { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255, 255, 255, 0.82); }
-.petTitle { margin: 0; font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; color: #ffffff; }
-.petSub { margin: 0; font-size: var(--fs-base); line-height: 1.5; color: rgba(255, 255, 255, 0.9); }
-.petMark { position: absolute; z-index: -1; right: 40px; bottom: -48px; width: 190px; height: 190px; color: rgba(255, 255, 255, 0.1); transform: rotate(12deg); pointer-events: none; }
+.petEyebrow { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sw-error); }
+.petTitle { margin: 0; font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; color: var(--sw-text-primary); }
+.petSub { margin: 0; font-size: var(--fs-base); line-height: 1.5; color: var(--sw-text-secondary); }
+.petMark { position: absolute; z-index: -1; right: 40px; bottom: -48px; width: 190px; height: 190px; color: color-mix(in srgb, var(--sw-error-solid) 10%, transparent); transform: rotate(12deg); pointer-events: none; }
 .petBody { display: flex; flex-direction: column; gap: var(--s-5); padding: var(--s-8); background: var(--tile-bg); }
 .pocGroups { display: flex; flex-direction: column; gap: var(--s-8); }
 .pocGroup { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
@@ -312,15 +312,15 @@ button.head:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 
 .itemScheduled .nodeDot { background: var(--sw-accent-solid); border-color: var(--sw-accent-solid); }
 .headDate { display: none; }
 .headNote { font-size: var(--fs-sm); font-weight: 400; line-height: 1.4; color: var(--sw-text-secondary); overflow-wrap: anywhere; }
-.itemPetition .card { position: relative; isolation: isolate; background: #a4301f; border-color: #a4301f; box-shadow: var(--lift); }
-.itemPetition .nodeDot { background: #a4301f; border-color: #a4301f; }
-.itemPetition .date, .itemPetition .headDate { background: rgba(255, 255, 255, 0.18); color: #ffffff; }
-.itemPetition .dateWeekday, .itemPetition .dateMonth { color: #ffffff; }
-.itemPetition .dateNum, .itemPetition .headLabel { color: #ffffff; }
-.itemPetition .headNote { color: rgba(255, 255, 255, 0.9); }
+.itemPetition .card { position: relative; isolation: isolate; background: color-mix(in srgb, var(--sw-error-solid) 7%, var(--tile-bg)); border-color: color-mix(in srgb, var(--sw-error-solid) 28%, var(--sw-border)); box-shadow: var(--lift); }
+.itemPetition .nodeDot { background: var(--sw-error-solid); border-color: var(--sw-error-solid); }
+.itemPetition .date, .itemPetition .headDate { background: color-mix(in srgb, var(--sw-error-solid) 16%, var(--tile-bg)); color: var(--sw-error); }
+.itemPetition .dateWeekday, .itemPetition .dateMonth { color: var(--sw-error); }
+.itemPetition .dateNum, .itemPetition .headLabel { color: var(--sw-text-primary); }
+.itemPetition .headNote { color: var(--sw-text-secondary); }
 .itemPetition .headLabel { display: flex; align-items: center; gap: var(--s-2); }
 .labelIcon { flex: none; }
-.itemMark { position: absolute; z-index: -1; right: var(--s-6); bottom: -26px; width: 120px; height: 120px; color: rgba(255, 255, 255, 0.1); transform: rotate(12deg); pointer-events: none; }
+.itemMark { position: absolute; z-index: -1; right: var(--s-6); bottom: -26px; width: 120px; height: 120px; color: color-mix(in srgb, var(--sw-error-solid) 10%, transparent); transform: rotate(12deg); pointer-events: none; }
 .entryText { align-items: flex-start; padding-block: var(--s-3); }
 .entryText .entryTitle { line-height: 1.5; overflow-wrap: anywhere; }
 

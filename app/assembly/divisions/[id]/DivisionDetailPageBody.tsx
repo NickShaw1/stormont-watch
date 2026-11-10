@@ -14,6 +14,8 @@ import LobbiesClient from './LobbiesClient'
 import MobileVote from './MobileVote'
 import TabledBy from './TabledBy'
 import PetitionNotice from './PetitionNotice'
+import CrossCommunityNotice from './CrossCommunityNotice'
+import { failedDespiteMajority, MAJORITY_NOT_ENOUGH } from '@/lib/utils/crossCommunity'
 import PartyChart from './PartyChart'
 import DesignationChart from './DesignationChart'
 import { toBallots, VOTE_ORDER, VOTE_LABEL, type VoteKey } from './voteMeta'
@@ -125,12 +127,15 @@ export default async function DivisionDetailPageBody({
   const raw = division.title ?? division.subject
   const { title: displayTitle, subtitle } = formatDivisionSubject(raw)
   const tabledByClean = formatTabledBy(division.tabledBy)
+  const committeeMotion = /^Committee Motion$/i.test(division.motionCategory ?? '')
+  const committeeName = committeeMotion ? /^Committee Chair - (.+)$/i.exec(division.tabledByRole ?? '')?.[1] ?? null : null
 
   const statutory = /^The draft /i.test(division.title ?? '') || /^Prayer of Annulment:/i.test(division.title ?? '') || /^Applicability Motion/i.test(division.title ?? '')
   const isBill = !statutory && (!!billStage[0]?.billId || /NIA Bill/i.test(division.subject ?? ''))
   const cat = statutory ? 'regs' : isBill ? 'bill' : 'motion'
   const { label: catLabel, Icon: CatIcon } = CAT[cat]
   const crossCommunity = division.divisionType === 'Cross-Community'
+  const majorityNotEnough = failedDespiteMajority(crossCommunity, passed, totalAyes, totalNoes)
 
   const amendmentLabel = /Amendment\s+\d+/i.exec(division.title ?? division.subject)?.[0].replace(/\s+/, ' ')
   const petitionNotice = division.petitionDocumentId ? (
@@ -169,6 +174,15 @@ export default async function DivisionDetailPageBody({
           : { label: 'Divided', tone: 'warn' }
       : null
 
+  const crossCommunityNotice = crossCommunity && hasDesignation ? (
+    <CrossCommunityNotice
+      passed={passed}
+      overall={{ ayes: totalAyes, noes: totalNoes }}
+      unionist={{ ayes: designations[0].ayes, noes: designations[0].noes }}
+      nationalist={{ ayes: designations[1].ayes, noes: designations[1].noes }}
+    />
+  ) : null
+
   const isAmendment = division.isMotionAmendment === true
   const motionText = division.motionText
   const asAmendedNoText = !isAmendment && amendmentTexts.length === 0 && /as amended/i.test(division.outcome ?? '')
@@ -205,7 +219,6 @@ export default async function DivisionDetailPageBody({
             <ul className={styles.chips} aria-label="Type">
               <li><span className={styles.pill} data-cat={cat}><CatIcon size={14} strokeWidth={2} aria-hidden="true" />{catLabel}</span></li>
               {subtitle && <li><span className={styles.pill} data-cat="neutral"><Pencil size={14} strokeWidth={2} aria-hidden="true" />{subtitle}</span></li>}
-              {crossCommunity && <li><span className={styles.pill} data-cat="xc">Cross-community</span></li>}
             </ul>
             <ul className={styles.facts} aria-label="Details">
               <li className={styles.fact}>
@@ -221,6 +234,7 @@ export default async function DivisionDetailPageBody({
                   <span className={styles.factBody}>
                     <span className={styles.factLabel}>Tabled by</span>
                     <TabledBy names={tabledByClean.split(', ')} />
+                    {committeeName && <span className={styles.factSub}>Chair of the {committeeName}</span>}
                   </span>
                 </li>
               )}
@@ -253,7 +267,7 @@ export default async function DivisionDetailPageBody({
           </header>
 
           {ballots.length > 0 && (
-            <MobileVote ballots={ballots} verdict={verdict} passed={passed} detail={passed === null ? null : `${passed ? 'Carried' : 'Defeated'} by ${margin} ${margin === 1 ? 'vote' : 'votes'}`} insight={insight} originalText={originalText ?? null} amendTexts={showSplit ? amendTexts : []} isAmendment={isAmendment} afterMotion={petitionNotice} />
+            <MobileVote ballots={ballots} verdict={verdict} passed={passed} detail={passed === null ? null : majorityNotEnough ? MAJORITY_NOT_ENOUGH : `${passed ? 'Carried' : 'Defeated'} by ${margin} ${margin === 1 ? 'vote' : 'votes'}`} insight={insight} originalText={originalText ?? null} amendTexts={showSplit ? amendTexts : []} isAmendment={isAmendment} afterMotion={<>{crossCommunityNotice}{petitionNotice}</>} />
           )}
           <div className={`${styles.bandStack} ${styles.desktopOnly}`}>
           {motionText && (
@@ -318,6 +332,7 @@ export default async function DivisionDetailPageBody({
           )}
         </section>
           )}
+          {crossCommunityNotice}
           {petitionNotice}
             <section className={`${styles.tile} ${styles.result}`} data-tone={passed === null ? 'none' : passed ? 'pass' : 'fail'} aria-labelledby="result-heading">
               <div className={styles.resultTop}>
@@ -329,7 +344,7 @@ export default async function DivisionDetailPageBody({
                   </div>
                   {passed !== null && (
                     <p className={styles.verdictSub}>
-                      {passed ? 'Carried' : 'Defeated'} by <b>{margin}</b> {margin === 1 ? 'vote' : 'votes'}.
+                      {majorityNotEnough ? `${MAJORITY_NOT_ENOUGH}.` : <>{passed ? 'Carried' : 'Defeated'} by <b>{margin}</b> {margin === 1 ? 'vote' : 'votes'}.</>}
                     </p>
                   )}
                   {outcomeNote && <p className={styles.outcomeNote}>Recorded as: {outcomeNote}</p>}

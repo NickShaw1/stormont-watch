@@ -27,6 +27,7 @@ import {
   apiFetch,
   str,
   isoDate,
+  tablerRole,
   syncMembers,
   syncHansardReports,
   syncMinisters,
@@ -153,6 +154,8 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
     const tablers: any[] = tablersData?.TablerList?.Tabler ?? []
     const tablerArray = Array.isArray(tablers) ? tablers : [tablers]
     const tabledBy = tablerArray.map((t: any) => str(t?.TablerName)).filter(Boolean).join(', ') || null
+    const tabledByRole = tablerRole(tablerArray)
+    const motionCategory = str(plenaryData?.PlenaryList?.Plenary?.MotionCategory) || null
 
     if (!motionText) {
       console.warn(`[syncNewDivisions] Division ${documentId} has no motion text — writing division without it`)
@@ -201,6 +204,8 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
         motionText: motionText || null,
         title,
         tabledBy,
+        tabledByRole,
+        motionCategory,
         isMotionAmendment,
         parentMotionText,
         mandate: mandateIdForDate(divisionDate),
@@ -218,6 +223,8 @@ async function syncNewDivisions(db: Db, knownMemberIds: Set<string>, currentMemb
           motionText: motionText || null,
           title,
           tabledBy,
+          tabledByRole,
+          motionCategory,
           isMotionAmendment,
           parentMotionText,
           updatedAt: new Date(),

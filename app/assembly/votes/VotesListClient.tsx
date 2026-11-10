@@ -11,6 +11,7 @@ import { formatMonthGroup, monthKey, formatDate } from '@/lib/format'
 import { formatDivisionSubject } from '@/lib/utils/formatSubject'
 import SheetSelect, { type SheetOption } from '@/app/assembly/mlas/[id]/SheetSelect'
 import { useVotesFilters, type TypeFilter, type ResultFilter, type CrossFilter } from './VotesFilters'
+import { failedDespiteMajority, MAJORITY_NOT_ENOUGH } from '@/lib/utils/crossCommunity'
 import styles from './votes.module.css'
 
 function getBaseTitle(rawTitle: string): string {
@@ -466,7 +467,7 @@ export default function VotesListClient({ allItems, note }: Props) {
                                       const gap = Math.abs(ayes - noes)
                                                                             const foot = ayes + noes > 0 && (
                                         <span className={styles.oFoot}>
-                                          {gap === 0 ? 'Tied vote' : `Decided by ${gap} ${gap === 1 ? 'vote' : 'votes'}`}
+                                          {failedDespiteMajority(item.isCrossCommunity, item.passed, ayes, noes) ? MAJORITY_NOT_ENOUGH : gap === 0 ? 'Tied vote' : `Decided by ${gap} ${gap === 1 ? 'vote' : 'votes'}`}
                                           <span aria-hidden="true"> · </span>
                                           {ayes + noes} voted
                                         </span>

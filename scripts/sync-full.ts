@@ -37,6 +37,7 @@ import {
   apiFetch,
   str,
   isoDate,
+  tablerRole,
   syncMembers,
   syncHansardReports,
   syncMinisters,
@@ -261,6 +262,8 @@ async function syncDivisionsAndVotes(db: Db) {
     const tablers: any[] = tablersData?.TablerList?.Tabler ?? []
     const tablerArray = Array.isArray(tablers) ? tablers : [tablers]
     const tabledBy = tablerArray.map((t: any) => str(t?.TablerName)).filter(Boolean).join(', ') || null
+    const tabledByRole = tablerRole(tablerArray)
+    const motionCategory = str(plenaryData?.PlenaryList?.Plenary?.MotionCategory) || null
 
     if (!motionText) {
       console.warn(`[syncDivisionsAndVotes] Division ${documentId} has no motion text — writing division without it`)
@@ -309,6 +312,8 @@ async function syncDivisionsAndVotes(db: Db) {
         motionText: motionText || null,
         title,
         tabledBy,
+        tabledByRole,
+        motionCategory,
         isMotionAmendment,
         parentMotionText,
         mandate: mandateIdForDate(divisionDate),
@@ -326,6 +331,8 @@ async function syncDivisionsAndVotes(db: Db) {
           motionText: motionText || null,
           title,
           tabledBy,
+          tabledByRole,
+          motionCategory,
           isMotionAmendment,
           parentMotionText,
           updatedAt: new Date(),
