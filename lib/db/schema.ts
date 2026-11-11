@@ -207,6 +207,11 @@ export const billStages = pgTable('bill_stages', {
   decisionOutcome: text('decision_outcome'),
   decisionDate: date('decision_date'),
   decisionCheckedAt: timestamp('decision_checked_at', { withTimezone: true }),
+  hansardCheckedAt: timestamp('hansard_checked_at', { withTimezone: true }),
+  hansardReportComplete: boolean('hansard_report_complete'),
+  hansardDebated: boolean('hansard_debated'),
+  hansardOutcome: text('hansard_outcome'),
+  hansardPetitionDate: date('hansard_petition_date'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 

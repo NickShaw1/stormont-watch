@@ -148,7 +148,7 @@ interface DayItem {
 
 function DayRail({ groups }: { groups: [string, DayItem[]][] }) {
   return (
-    <div className={sch.rail} style={{ '--head-h': '88px' } as React.CSSProperties}>
+    <div className={`${sch.rail} ${styles.dayRail}`}>
       {groups.map(([day, items]) => {
         const d = dateParts(day)
         const stages = [...new Set(items.map(item => item.stage))]
@@ -162,28 +162,30 @@ function DayRail({ groups }: { groups: [string, DayItem[]][] }) {
                 <span className={sch.dateMonth}>{d.month}</span>
               </span>
               <div className={styles.dayMain}>
-                <h3 className={styles.dayTitle}>
-                  <span className="sr-only">{formatDate(day)}: </span>
-                  {stages.map(stage => (
-                    <span key={stage} className={`${sch.pill} ${styles.dayPill}`}>
-                      <span className={sch.pillIcon}><Landmark size={14} strokeWidth={2.25} aria-hidden="true" /></span>
-                      <span className={`${sch.pillLabel} ${styles.dayPillLabel}`}>
-                        <span className={styles.stageFull}>{stage}</span>
-                        <span className={styles.stageShort} aria-hidden="true">{stage.replace(/ Stage$/, '')}</span>
-                      </span>
-                      <span className={sch.pillCount}>{items.filter(item => item.stage === stage).length}</span>
-                    </span>
-                  ))}
-                </h3>
-                <div className={styles.dayList}>
-                  {items.map(item => (
-                    <Link key={item.key} href={item.href} title={item.title} className={`${sch.entry} ${sch.entryLink} ${styles.dayEntry}`}>
-                      <span className={`${sch.entryTitle} ${styles.dayEntryTitle}`}>{item.title}</span>
-                      {item.note && <span className={styles.entryNote}>{item.note}</span>}
-                      {item.type && <span className={styles.typeTag} data-type={billTypeKey(item.type)}>{item.type}</span>}
-                    </Link>
-                  ))}
-                </div>
+                {stages.map(stage => {
+                  const stageItems = items.filter(item => item.stage === stage)
+                  return (
+                    <div key={stage} className={styles.dayGroup}>
+                      <h3 className={styles.dayTitle}>
+                        <span className="sr-only">{formatDate(day)}: </span>
+                        <span className={`${sch.pill} ${styles.dayPill}`}>
+                          <span className={sch.pillIcon}><Landmark size={14} strokeWidth={2.25} aria-hidden="true" /></span>
+                          <span className={`${sch.pillLabel} ${styles.dayPillLabel}`}>{stage}</span>
+                          <span className={`${sch.pillCount} ${styles.dayPillCount}`}>{stageItems.length}</span>
+                        </span>
+                      </h3>
+                      <div className={styles.dayList}>
+                        {stageItems.map(item => (
+                          <Link key={item.key} href={item.href} title={item.title} className={`${sch.entry} ${sch.entryLink} ${styles.dayEntry}`}>
+                            <span className={`${sch.entryTitle} ${styles.dayEntryTitle}`}>{item.title}</span>
+                            {item.note && <span className={styles.entryNote}>{item.note}</span>}
+                            {item.type && <span className={styles.typeTag} data-type={billTypeKey(item.type)}>{item.type}</span>}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>

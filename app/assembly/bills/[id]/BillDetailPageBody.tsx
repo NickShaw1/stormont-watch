@@ -130,6 +130,9 @@ export default async function BillDetailPageBody({
 
   const today = new Date().toISOString().slice(0, 10)
   const petitions = buildPetitions(stages, tablers)
+  const notedPetitionDate = stages.map(s => s.hansard_petition_date).find((d): d is string => !!d)
+  const pendingPetition = notedPetitionDate ? { date: notedPetitionDate.slice(0, 10), resolved: passed !== null } : null
+  const showPetitionTile = petitions.length > 0 || pendingPetition !== null
   const committeeSummary = buildCommitteeSummary(committeeItems, stages, today)
   const sponsors = findSponsors(stages, tablers)
   const sponsorRequests: CardRequest[] = sponsors
@@ -348,15 +351,15 @@ export default async function BillDetailPageBody({
         </div>
       </section>
 
-      {petitions.length > 0 && (
+      {showPetitionTile && (
         <section className={`${styles.band} ${styles.bandTint}`} aria-label="Petitions of concern">
           <div className="container">
-            <PetitionsTile groups={petitions} basePath={basePath} signatoryCards={signatoryCards} />
+            <PetitionsTile groups={petitions} basePath={basePath} signatoryCards={signatoryCards} pending={pendingPetition} />
           </div>
         </section>
       )}
 
-      <section className={`${styles.band} ${petitions.length > 0 ? styles.bandPage : styles.bandTint}`} aria-label="Bill details">
+      <section className={`${styles.band} ${showPetitionTile ? styles.bandPage : styles.bandTint}`} aria-label="Bill details">
         <div className="container">
           <div className={styles.bento}>
             {summary && (
@@ -398,7 +401,7 @@ export default async function BillDetailPageBody({
                 committeeItems={committeeItems}
                 tablersByDoc={tablersByDoc}
                 royalAssentDate={bill.royal_assent_date}
-                latestDate={bill.latest_date}
+                passed={passed}
                 today={today}
                 committeeInferred={committeeInferred}
                 committeeSummary={committeeSummary}

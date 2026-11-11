@@ -10,6 +10,7 @@ import { syncBills } from './sync-bills'
 import { syncBillCommitteeItems } from './sync-bill-committee-items'
 import { syncBillTablers } from './sync-bill-tablers'
 import { syncBillDecisions } from './sync-bill-decisions'
+import { syncBillHansard } from './sync-bill-hansard'
 import { syncDivisionPetitions } from './sync-division-petitions'
 import { syncPlenaryDiary } from './sync-plenary-diary'
 import { syncContactDetails } from './sync-contact-details'
@@ -552,6 +553,7 @@ async function main() {
   await runSync('syncBillCommitteeItems', () => syncBillCommitteeItems(db))
   await runSync('syncBillTablers', () => syncBillTablers(db))
   await runSync('syncBillDecisions', () => syncBillDecisions(db))
+  await runSync('syncBillHansard', () => syncBillHansard(db))
   await runSync('syncPlenaryDiary', () => syncPlenaryDiary(db))
 
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')

@@ -299,8 +299,6 @@ button.head:focus-visible { outline: 2px solid var(--sw-focus); outline-offset: 
 .itemQuiet { --head-h: 76px; }
 .itemQuiet .card { border-radius: 16px; background: var(--tile-bg); }
 .itemQuiet .nodeDot { width: 8px; height: 8px; margin: -4px 0 0 -4px; }
-.itemQuiet .date { width: 56px; height: 52px; border-radius: 12px; background: color-mix(in srgb, var(--sw-text-primary) 6%, var(--tile-bg)); }
-.itemQuiet .dateNum { font-size: var(--fs-xl); }
 .itemQuiet .headLabel { font-size: var(--fs-base); }
 .itemScheduled.itemQuiet .date { background: var(--sw-accent-solid); }
 .itemCommittee .nodeDot { border-color: var(--c-teal); }

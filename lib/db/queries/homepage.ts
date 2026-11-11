@@ -1,7 +1,7 @@
 import { eq, sql, and, count, countDistinct, isNotNull, gte, desc } from 'drizzle-orm'
 import { db } from '../client'
 import { members, divisions, hansardReports, bills, billStages, registeredInterests } from '../schema'
-import { CURRENT_MANDATE, effectiveStageDate } from './helpers'
+import { CURRENT_MANDATE, effectiveStageDate, stageWasHeld } from './helpers'
 
 export async function getHomepageStats(mandate: string = CURRENT_MANDATE) {
   const [
@@ -26,7 +26,8 @@ export async function getHomepageStats(mandate: string = CURRENT_MANDATE) {
           eq(billStages.mandate, mandate),
           eq(billStages.eventType, 'stage'),
           sql`${effectiveStageDate('bill_stages')} >= date_trunc('week', NOW())`,
-          sql`${effectiveStageDate('bill_stages')} <= NOW()`
+          sql`${effectiveStageDate('bill_stages')} <= NOW()`,
+          sql`${stageWasHeld('bill_stages')}`
         )
       ),
     db.select({ plenaryDate: hansardReports.plenaryDate })

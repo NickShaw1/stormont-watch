@@ -56,11 +56,12 @@
 }
 
 .entryNote { flex: none; font-size: var(--fs-xs); font-weight: 600; color: var(--sw-text-secondary); white-space: nowrap; }
+.dayRail { --head-h: 88px; }
 .dayCard { display: grid; grid-template-columns: 60px minmax(0, 1fr); align-items: start; gap: var(--s-4); padding: var(--s-3) var(--s-4); }
-.dayMain { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.dayMain { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
+.dayGroup { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .dayTitle { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); margin: 0; font: inherit; }
 .dayTitle > * { height: 28px; }
-.stageShort { display: none; }
 .dayList { display: flex; flex-direction: column; gap: 4px; }
 .dayList .dayEntry { height: auto; min-height: 44px; padding-block: var(--s-2); }
 .dayList .dayEntryTitle { overflow: visible; text-overflow: clip; white-space: normal; line-height: 1.4; }
@@ -410,14 +411,15 @@
 
 @media (max-width: 640px) {
   .page { --gap: 48px; }
-  .dayCard { grid-template-columns: 56px minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; gap: var(--s-3); padding: var(--s-3); }
-  .dayMain { display: contents; }
-  .dayTitle { grid-column: 2; grid-row: 1; }
-  .dayList { grid-column: 1 / -1; grid-row: 2; gap: 6px; }
+  .dayCard { grid-template-columns: 56px minmax(0, 1fr); align-items: start; gap: var(--s-3); padding: var(--s-3); }
+  .dayCard > :first-child { grid-column: 1; grid-row: 1; }
+  .dayMain, .dayGroup { display: contents; }
+  .dayTitle { grid-column: 1 / -1; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: var(--s-2); min-width: 0; }
+  .dayGroup:not(:first-child) .dayTitle { margin-top: var(--s-2); }
+  .dayTitle .dayPillCount { margin-left: auto; }
+  .dayList { grid-column: 1 / -1; gap: 6px; }
   .dayTitle .dayPill { height: auto; min-height: 34px; padding-block: 4px; border-radius: 18px; }
-  .dayTitle .dayPillLabel { position: static; width: auto; height: auto; margin: 0; overflow: visible; clip: auto; white-space: normal; }
-  .dayTitle .stageFull { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
-  .dayTitle .stageShort { display: inline; }
+  .dayTitle .dayPillLabel { position: static; width: auto; height: auto; margin: 0; overflow: hidden; clip: auto; text-overflow: ellipsis; white-space: nowrap; }
   .dayList .dayEntry { height: auto; min-height: 52px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: var(--s-3); }
   .dayList .dayEntry .entryNote { margin-top: var(--s-2); white-space: normal; }
   .dayList .dayEntry .typeTag { order: -1; height: auto; padding: 0; border-radius: 0; background: none; font-size: var(--fs-xs); letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, var(--sky) 35%, var(--sw-text-primary)); }

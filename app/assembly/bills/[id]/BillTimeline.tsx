@@ -127,6 +127,7 @@ interface StageEvent extends EventBase {
   day: number | null
   singlePassed: boolean | null
   agreed: boolean
+  petitionNoted: string | null
   crossCommunity: boolean
 }
 
@@ -145,6 +146,8 @@ interface PetitionEvent extends EventBase {
   kind: 'petition'
   count: number
   amendments: string
+  label?: string
+  note?: string
 }
 
 interface CommitteeMonth {
@@ -231,6 +234,7 @@ function buildStageEvent(group: StageGroup, billConfirmedPassed: boolean, today:
     petitioned: new Map(group.items.flatMap(i => (i.petition_plenary_date ? [[i.document_id, i.petition_plenary_date.slice(0, 10)] as [string, string]] : []))),
     singlePassed: isPassed(singleItem?.outcome ?? singleItem?.decision_outcome),
     agreed: isFinalStage && stageInPast && billConfirmedPassed && group.items.every(i => !i.has_division && !i.division_id && !i.decision_outcome),
+    petitionNoted: group.items.map(i => i.hansard_petition_date).find((d): d is string => !!d)?.slice(0, 10) ?? null,
     crossCommunity: group.items.some(s => s.division_type === 'Cross-Community'),
     scheduled: !stageInPast,
     rank: 10 - getStagePriority(group.label),
@@ -302,6 +306,24 @@ function buildEvents(
       count: rows.length,
       amendments,
       scheduled: date > today,
+      rank: 30,
+      hasVotes: false,
+      expandable: false,
+      plenary: true,
+    })
+  }
+
+  const notedPetitionDates = [...new Set(stages.map(r => r.hansard_petition_date?.slice(0, 10)).filter((d): d is string => !!d))]
+  for (const date of notedPetitionDates) {
+    events.push({
+      kind: 'petition',
+      key: `petition-noted-${date}`,
+      date,
+      count: 1,
+      amendments: '',
+      label: 'Petition of Concern tabled',
+      note: 'The Final Stage vote was deferred for a 14-day consideration period.',
+      scheduled: false,
       rank: 30,
       hasVotes: false,
       expandable: false,
@@ -429,7 +451,7 @@ function headLines(event: TimelineEvent, count: number): { label: string; lines:
     return { label: event.label, lines: [], pills }
   }
   if (event.kind === 'petition') {
-    return { label: 'Petitions of Concern confirmed', lines: event.amendments ? [event.amendments] : [], pills: [] }
+    return { label: event.label ?? 'Petitions of Concern confirmed', lines: event.note ? [event.note] : event.amendments ? [event.amendments] : [], pills: [] }
   }
   const pills: InfoPill[] = []
   if (event.meetingCount > 0) {
@@ -447,7 +469,7 @@ function EventHead({ event, count }: { event: TimelineEvent; count: number }) {
   const d = dateBlock(event.date)
   const { label, lines, pills } = headLines(event, count)
   const outcome = event.kind === 'procedural' ? isPassed(event.vote?.outcome ?? event.oralOutcome) : event.kind === 'stage' ? event.singlePassed : null
-  const hasStatus = event.scheduled || outcome !== null || (event.kind === 'stage' && event.agreed) || (event.kind === 'committee' && event.ongoing)
+  const hasStatus = event.scheduled || outcome !== null || (event.kind === 'stage' && (event.agreed || (event.petitionNoted !== null && event.petitionNoted !== event.date))) || (event.kind === 'committee' && event.ongoing)
   return (
     <>
       <DateBlock date={event.date} />
@@ -473,6 +495,7 @@ function EventHead({ event, count }: { event: TimelineEvent; count: number }) {
                 Agreed
               </span>
             )}
+            {event.kind === 'stage' && event.petitionNoted && event.petitionNoted !== event.date && <PetitionPill>{`Petition of Concern, ${shortDate(event.petitionNoted)}`}</PetitionPill>}
             {event.kind === 'committee' && event.ongoing && <span className={styles.pill} data-tone="date">In progress</span>}
             {pills.map(pill => (
               <span key={pill.label} className={styles.pill} data-tone={pill.tone ?? 'neutral'}>
@@ -658,18 +681,18 @@ interface Props {
   committeeItems: BillCommitteeRow[]
   tablersByDoc: Record<string, BillTablerRow[]>
   royalAssentDate?: string | null
-  latestDate?: string | null
+  passed: boolean | null
   today: string
   committeeInferred: boolean
   committeeSummary: CommitteeSummary | null
 }
 
-export default function BillTimeline({ stages, committeeItems, tablersByDoc, royalAssentDate, latestDate, today, committeeInferred, committeeSummary }: Props) {
+export default function BillTimeline({ stages, committeeItems, tablersByDoc, royalAssentDate, passed, today, committeeInferred, committeeSummary }: Props) {
   const uid = useId()
   const { basePath } = useMandate()
   const [open, setOpen] = useState<Set<string>>(() => new Set())
 
-  const billConfirmedPassed = !!royalAssentDate || (!!latestDate && latestDate.slice(0, 10) <= today)
+  const billConfirmedPassed = !!royalAssentDate || passed === true
   const visible = buildEvents(stages, committeeItems, tablersByDoc, billConfirmedPassed, today, committeeInferred, committeeSummary)
   const expandable = visible.filter(e => e.expandable)
   const allOpen = expandable.length > 0 && expandable.every(e => open.has(e.key))

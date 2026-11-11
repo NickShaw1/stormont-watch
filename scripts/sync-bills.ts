@@ -333,6 +333,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
       }
 
       const rowFields = {
+        ...(existing.length > 0 ? { hansardCheckedAt: null, hansardReportComplete: null, hansardDebated: null, hansardOutcome: null } : {}),
         stage,
         plenaryDate,
         mandate: mandateIdForDate(plenaryDate),
@@ -370,7 +371,32 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
     return
   }
 
-  // 4. Single SQL query to find highest-priority stage per bill
+  const stagesResolved = await refreshBillStageSummary(db)
+
+  const backfillResult = await db.execute(sql`
+    UPDATE bill_stages
+    SET has_division = true,
+        division_id = document_id,
+        updated_at = NOW()
+    WHERE has_division = false
+      AND document_id IN (
+        SELECT document_id FROM divisions
+      )
+  `)
+  console.log(`[syncBills] Backfill complete — ${backfillResult.rowCount ?? 0} bill stage(s) linked to divisions`)
+
+  // 6. Improved summary logging
+  const skipBreakdown = Object.entries(skipReasons).map(([r, n]) => `${r}: ${n}`).join(', ')
+  console.log(`[syncBills] Done. New stages: ${processed}, Skipped: ${skipped}${skipBreakdown ? ` (${skipBreakdown})` : ''}, Errors: ${errors}, Bills stage-resolved: ${stagesResolved}`)
+
+  // Surface a total failure: errors occurred and nothing was written. (processed === 0 with
+  // zero errors is normal — every stage already existed — so don't throw in that case.)
+  if (processed === 0 && errors > 0) {
+    throw new Error(`[syncBills] Zero stages written with ${errors} error(s) — possible API/data failure`)
+  }
+}
+
+export async function refreshBillStageSummary(db: Db): Promise<number> {
   const stageUpdates = await db.execute(sql`
     SELECT DISTINCT ON (bill_id)
       bill_id,
@@ -378,6 +404,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
       plenary_date
     FROM bill_stages
     WHERE event_type = 'stage'
+      AND NOT (hansard_report_complete IS TRUE AND hansard_debated IS FALSE AND decision_outcome IS NULL AND division_id IS NULL)
     ORDER BY bill_id,
       CASE
         WHEN LOWER(stage) = 'final stage'                      THEN 10
@@ -396,7 +423,9 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
   `)
 
   const latestRows = await db.execute(sql`
-    SELECT bill_id, MAX(plenary_date) AS latest_date FROM bill_stages GROUP BY bill_id
+    SELECT bill_id, MAX(plenary_date) AS latest_date FROM bill_stages
+    WHERE NOT (hansard_report_complete IS TRUE AND hansard_debated IS FALSE AND decision_outcome IS NULL AND division_id IS NULL)
+    GROUP BY bill_id
   `)
   const latestByBill = new Map(
     (latestRows.rows as { bill_id: string; latest_date: string }[]).map(r => [r.bill_id, new Date(r.latest_date)])
@@ -418,27 +447,7 @@ export async function syncBills(db: Db, forceTitles = false, forceStartDate?: st
       .where(eq(bills.billId, row.bill_id))
   }
 
-  const backfillResult = await db.execute(sql`
-    UPDATE bill_stages
-    SET has_division = true,
-        division_id = document_id,
-        updated_at = NOW()
-    WHERE has_division = false
-      AND document_id IN (
-        SELECT document_id FROM divisions
-      )
-  `)
-  console.log(`[syncBills] Backfill complete — ${backfillResult.rowCount ?? 0} bill stage(s) linked to divisions`)
-
-  // 6. Improved summary logging
-  const skipBreakdown = Object.entries(skipReasons).map(([r, n]) => `${r}: ${n}`).join(', ')
-  console.log(`[syncBills] Done. New stages: ${processed}, Skipped: ${skipped}${skipBreakdown ? ` (${skipBreakdown})` : ''}, Errors: ${errors}, Bills stage-resolved: ${stageUpdates.rows.length}`)
-
-  // Surface a total failure: errors occurred and nothing was written. (processed === 0 with
-  // zero errors is normal — every stage already existed — so don't throw in that case.)
-  if (processed === 0 && errors > 0) {
-    throw new Error(`[syncBills] Zero stages written with ${errors} error(s) — possible API/data failure`)
-  }
+  return stageUpdates.rows.length
 }
 
 // Standalone entrypoint

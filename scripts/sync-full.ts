@@ -27,6 +27,7 @@ import { syncBills } from './sync-bills'
 import { syncBillCommitteeItems } from './sync-bill-committee-items'
 import { syncBillTablers } from './sync-bill-tablers'
 import { syncBillDecisions } from './sync-bill-decisions'
+import { syncBillHansard } from './sync-bill-hansard'
 import { syncDivisionPetitions } from './sync-division-petitions'
 import { syncHansardContributions } from './sync-hansard-contributions'
 import { syncQuestionStats } from './sync-question-stats'
@@ -441,6 +442,7 @@ async function main() {
   await runSync('syncBillCommitteeItems', () => syncBillCommitteeItems(db, CUTOFF))
   await runSync('syncBillTablers', () => syncBillTablers(db, true))
   await runSync('syncBillDecisions', () => syncBillDecisions(db, true))
+  await runSync('syncBillHansard', () => syncBillHansard(db, true))
   await runSync('syncPlenaryItems', () => syncPlenaryItems(db))
   await runSync('syncQuestionTimes', () => syncQuestionTimes(db))
   await runSync('syncContactDetails', () => syncContactDetails(db))

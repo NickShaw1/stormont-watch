@@ -371,10 +371,11 @@
   .heroCtas { margin-top: var(--s-5); }
   .heroBtnGhost { display: none; }
   .heroBtnPrimary { width: 100%; }
-  .divRow { display: grid; grid-template-columns: 48px minmax(0, 1fr); column-gap: var(--s-3); row-gap: var(--s-2); align-items: center; padding: var(--s-3); }
+  .divRow { display: grid; grid-template-columns: 48px auto minmax(0, 1fr); column-gap: var(--s-3); row-gap: var(--s-2); align-items: center; padding: var(--s-3); }
   .divDate { grid-row: 1 / 3; }
-  .divTitle { white-space: normal; overflow: visible; text-overflow: clip; }
-  .divRow .badge { grid-column: 2; justify-self: start; }
+  .divMain { display: contents; }
+  .divTitle { grid-column: 2 / -1; grid-row: 1; white-space: normal; overflow: visible; text-overflow: clip; }
+  .divRow .chip, .divRow .badge { grid-row: 2; justify-self: start; }
   .sTile { padding: var(--s-6); }
   .sIcon { width: 52px; height: 52px; border-radius: 16px; margin-bottom: var(--s-3); }
   .sTitle { font-size: var(--fs-2xl); }

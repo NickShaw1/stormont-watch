@@ -7,6 +7,9 @@ export const mlaImg = (personId: string | null | undefined): string | null =>
 export const effectiveStageDate = (alias: string) =>
   sql.raw(`COALESCE((${alias}.decision_date + time '12:00') AT TIME ZONE 'UTC', ${alias}.plenary_date)`)
 
+export const stageWasHeld = (alias: string) =>
+  sql.raw(`NOT (${alias}.hansard_report_complete IS TRUE AND ${alias}.hansard_debated IS FALSE AND ${alias}.decision_outcome IS NULL AND ${alias}.division_id IS NULL)`)
+
 export const CURRENT_MANDATE = CURRENT_MANDATE_CONFIG.id
 /** First day of the current mandate, e.g. '2022-05-05'. */
 export const CURRENT_MANDATE_START = CURRENT_MANDATE_CONFIG.start
