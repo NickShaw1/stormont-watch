@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Search, X, SearchX, TrendingUp, Landmark, Layers, Timer, Crown, Check, CalendarClock, BarChart3, ArrowRight, ArrowDown, BookOpen, SlidersHorizontal, Gauge, User, Users, Building2, Milestone, Zap, Hourglass, Clock } from 'lucide-react'
+import { Search, X, SearchX, TrendingUp, Landmark, Layers, Timer, Crown, Check, CalendarClock, BarChart3, ArrowRight, ArrowDown, BookOpen, SlidersHorizontal, Gauge, User, Users, Building2, Milestone, Zap, Hourglass, Clock, CalendarDays } from 'lucide-react'
 import { formatDate } from '@/lib/format'
 import { computeBillProgress, BILL_STAGES } from '@/lib/bills/billProgress'
 import { PIPELINE_LABELS, pipelineIndex } from '@/lib/bills/billStats'
@@ -132,6 +132,8 @@ function dateParts(iso: string) {
   const d = new Date(`${iso.slice(0, 10)}T12:00:00Z`)
   return {
     weekday: new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'UTC' }).format(d),
+    weekdayLong: new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone: 'UTC' }).format(d),
+    numeric: new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(d),
     day: d.getUTCDate(),
     month: new Intl.DateTimeFormat('en-GB', { month: 'short', timeZone: 'UTC' }).format(d),
   }
@@ -156,10 +158,15 @@ function DayRail({ groups }: { groups: [string, DayItem[]][] }) {
           <div key={day} className={sch.item}>
             <span className={sch.track} aria-hidden="true"><span className={sch.node} /></span>
             <div className={`${sch.card} ${styles.dayCard}`}>
-              <span className={sch.date} aria-hidden="true">
-                <span className={sch.dateWeekday}>{d.weekday}</span>
-                <span className={sch.dateNum}>{d.day}</span>
-                <span className={sch.dateMonth}>{d.month}</span>
+              <span className={`${sch.date} ${styles.dayDate}`} aria-hidden="true">
+                <span className={`${sch.pillIcon} ${styles.dayDateIcon}`}><CalendarDays size={14} strokeWidth={2.25} aria-hidden="true" /></span>
+                <span className={sch.dateWeekday}>
+                  <span className={styles.dayShort}>{d.weekday}</span>
+                  <span className={styles.dayLong}>{d.weekdayLong}</span>
+                </span>
+                <span className={`${sch.dateNum} ${styles.dayHideMobile}`}>{d.day}</span>
+                <span className={`${sch.dateMonth} ${styles.dayHideMobile}`}>{d.month}</span>
+                <span className={styles.dayNumeric}>{d.numeric}</span>
               </span>
               <div className={styles.dayMain}>
                 {stages.map(stage => {

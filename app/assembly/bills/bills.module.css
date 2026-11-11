@@ -58,6 +58,9 @@
 .entryNote { flex: none; font-size: var(--fs-xs); font-weight: 600; color: var(--sw-text-secondary); white-space: nowrap; }
 .dayRail { --head-h: 88px; }
 .dayCard { display: grid; grid-template-columns: 60px minmax(0, 1fr); align-items: start; gap: var(--s-4); padding: var(--s-3) var(--s-4); }
+.dayDateIcon { display: none; }
+.dayLong { display: none; }
+.dayNumeric { display: none; }
 .dayMain { display: flex; flex-direction: column; gap: var(--s-4); min-width: 0; }
 .dayGroup { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .dayTitle { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); margin: 0; font: inherit; }
@@ -412,7 +415,13 @@
 @media (max-width: 640px) {
   .page { --gap: 48px; }
   .dayCard { grid-template-columns: 56px minmax(0, 1fr); align-items: start; gap: var(--s-3); padding: var(--s-3); }
-  .dayCard > :first-child { grid-column: 1; grid-row: 1; }
+  .dayCard > .dayDate { grid-column: 1 / -1; grid-row: 1; flex-direction: row; justify-content: flex-start; gap: 5px; width: 100%; height: auto; min-height: 34px; padding: 4px var(--s-3) 4px 5px; border-radius: 18px; background: color-mix(in srgb, var(--sw-accent-solid) 10%, var(--sw-surface)); }
+  .dayDate > span { font-size: var(--fs-md); font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--sw-text-primary); }
+  .dayDate > .dayHideMobile { display: none; }
+  .dayDate > .dayNumeric { display: inline; }
+  .dayDate .dayShort { display: none; }
+  .dayDate .dayLong { display: inline; }
+  .dayDate > .dayDateIcon { display: grid; flex: none; margin-right: 3px; background: var(--sw-text-secondary); color: #ffffff; }
   .dayMain, .dayGroup { display: contents; }
   .dayTitle { grid-column: 1 / -1; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: var(--s-2); min-width: 0; }
   .dayGroup:not(:first-child) .dayTitle { margin-top: var(--s-2); }
